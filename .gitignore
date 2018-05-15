@@ -103,3 +103,6 @@ ENV/
 
 # Intellij files
 /.idea
+
+# Data files
+/data
