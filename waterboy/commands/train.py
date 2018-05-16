@@ -3,17 +3,13 @@ import torch.optim
 import torch.nn.functional as F
 
 
-use_cuda = True
-
-
 class SimpleTrainCommand:
     """ Very simple training command - just run the supplied generators """
 
     def __init__(self, epochs, callbacks):
         self.epochs = epochs
         self.callbacks = callbacks
-
-        self.device = torch.device("cuda" if use_cuda else "cpu")
+        self.device = None
 
     def run(self, model, source, model_config):
         """ Run the command with supplied configuration """
@@ -21,6 +17,7 @@ class SimpleTrainCommand:
         # val_source = source.val_source
         # print("Running training:", model, source, model_config)
 
+        self.device = torch.device(model_config.device)
         optimizer = torch.optim.Adadelta(model.parameters())
         model = model.to(self.device)
 

@@ -7,8 +7,9 @@ from ..exceptions import WbInitializationException
 class ModelConfig:
     """ Read from YAML configuration of a model, specifying all details of the run """
 
-    def __init__(self, filename, run_number, project_config):
+    def __init__(self, filename, run_number, project_config, **kwargs):
         self.filename = filename
+        self.device = kwargs.get('device', 'cuda')
 
         with open(self.filename, 'r') as f:
             self.contents = yaml.safe_load(f)
