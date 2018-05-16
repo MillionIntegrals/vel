@@ -11,14 +11,13 @@ class SimpleTrainCommand:
         self.callbacks = callbacks
         self.device = None
 
-    def run(self, model, source, model_config):
+    def run(self, model, optimizer, source, model_config):
         """ Run the command with supplied configuration """
         # train_source = source.train_source
         # val_source = source.val_source
         # print("Running training:", model, source, model_config)
 
         self.device = torch.device(model_config.device)
-        optimizer = torch.optim.Adadelta(model.parameters())
         model = model.to(self.device)
 
         for i in range(1, self.epochs+1):

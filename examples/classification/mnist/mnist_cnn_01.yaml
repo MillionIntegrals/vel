@@ -1,5 +1,8 @@
 name: 'mnist_cnn_01'
 
+optimizer:
+  name: waterboy.optimizers.adadelta
+
 model:
   name: waterboy.models.classification.mnist_cnn_01
   img_rows: 28
