@@ -64,5 +64,5 @@ class ModelConfig:
     def banner(self, command_name) -> None:
         """ Print a banner for running the system """
         print("=" * 80)
-        print("Running model {}, run {} -- command {}".format(self.name, self.run_number, command_name))
+        print("Running model {}, run {} -- command {} -- device {}".format(self.name, self.run_number, command_name, self.device))
         print("=" * 80)
