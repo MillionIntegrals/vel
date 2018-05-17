@@ -2,64 +2,88 @@ import torch
 import torch.optim
 import torch.nn.functional as F
 
+from waterboy.internals.metrics.epoch_result import EpochResultAccumulator
+from waterboy.internals.metrics.loss_metric import Loss
+
 
 class SimpleTrainCommand:
     """ Very simple training command - just run the supplied generators """
 
-    def __init__(self, epochs, callbacks):
+    def __init__(self, epochs, optimizer, callbacks, log_frequency):
         self.epochs = epochs
         self.callbacks = callbacks
-        self.device = None
+        self.optimizer = optimizer
+        self.log_frequency = log_frequency
 
-    def run(self, model, optimizer, source, model_config):
+    def run(self, model, source, model_config, metrics):
         """ Run the command with supplied configuration """
-        # train_source = source.train_source
-        # val_source = source.val_source
-        # print("Running training:", model, source, model_config)
-
-        self.device = torch.device(model_config.device)
-        model = model.to(self.device)
+        device = torch.device(model_config.device)
+        model = model.to(device)
+        metrics = [Loss()] + metrics
 
         for i in range(1, self.epochs+1):
-            print("Epoch", i)
-            self.run_epoch(i, model, source, model_config, optimizer)
+            raise RuntimeError()
+            print("|-------- Epoch {:06} ----------|".format(i))
+            self.run_epoch(i, model, source, self.optimizer, metrics, device)
 
-    def run_epoch(self, epoch_idx, model, source, model_config, optimizer):
+    def run_epoch(self, epoch_idx, model, source, optimizer, metrics, device):
         """ Run single epoch of training """
+        result_accumulator = EpochResultAccumulator(epoch_idx, metrics)
 
         model.train()
 
-        # First run the training
+        # TRAINING PART
         for batch_idx, (data, target) in enumerate(source.train_source):
-            data, target = data.to(self.device), target.to(self.device)
+            data, target = data.to(device), target.to(device)
+
             optimizer.zero_grad()
             output = model(data)
             loss = F.nll_loss(output, target)
+
             loss.backward()
             optimizer.step()
 
-            if batch_idx % 100 == 0:
-                print('Train Epoch: {} [{}/{} ({:.0f}%)]\tLoss: {:.6f}'.format(epoch_idx, batch_idx * len(data), len(source.train_source.dataset), 100. * batch_idx / len(source.train_source), loss.item()))
+            # No need for gradient calculations
+            with torch.no_grad():
+                result_accumulator.calculate(data, target, output, loss=loss)
 
+            if batch_idx % self.log_frequency == 0:
+                print('Train Epoch: {:04} [{:06}/{:06} ({:02.0f}%)]\t{}'.format(
+                    epoch_idx,
+                    batch_idx * len(data),
+                    len(source.train_source.dataset), 100. * batch_idx / len(source.train_source),
+                    result_accumulator.value_string())
+                )
+
+        print()
+        print('Training:   {}'.format(result_accumulator.value_string()))
+        result_accumulator.freeze_train_results()
+
+        # EVALUATION PART
         model.eval()
-        test_loss = 0
-        correct = 0
+
         with torch.no_grad():
             for data, target in source.val_source:
-                data, target = data.to(self.device), target.to(self.device)
+                data, target = data.to(device), target.to(device)
                 output = model(data)
-                test_loss += F.nll_loss(output, target, size_average=False).item()  # sum up batch loss
-                pred = output.max(1, keepdim=True)[1]  # get the index of the max log-probability
-                correct += pred.eq(target.view_as(pred)).sum().item()
 
-        test_loss /= len(source.val_source.dataset)
-        print('\nTest set: Average loss: {:.4f}, Accuracy: {}/{} ({:.2f}%)\n'.format(
-            test_loss, correct, len(source.val_source.dataset),
-            100. * correct / len(source.val_source.dataset)))
+                loss = F.nll_loss(output, target)
+
+                result_accumulator.calculate(data, target, output, loss=loss)
+
+        print('Validation: {}'.format(result_accumulator.value_string()))
+        print()
+
+        result_accumulator.freeze_validation_results()
+
+        return result_accumulator.result()
 
 
-def create(epochs, callbacks=None):
+def create(epochs, optimizer, callbacks=None, log_frequency=100):
     """ Simply train the model """
+    import warnings
+    warnings.filterwarnings("error")
+
     callbacks = callbacks or []
 
-    return SimpleTrainCommand(epochs=epochs, callbacks=callbacks)
+    return SimpleTrainCommand(epochs=epochs, optimizer=optimizer, callbacks=callbacks, log_frequency=log_frequency)

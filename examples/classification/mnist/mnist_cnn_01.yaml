@@ -1,7 +1,5 @@
 name: 'mnist_cnn_01'
 
-optimizer:
-  name: waterboy.optimizers.adadelta
 
 model:
   name: waterboy.models.classification.mnist_cnn_01
@@ -14,7 +12,13 @@ source:
   name: waterboy.sources.classic.mnist
   batch_size: 128
 
+metrics:
+  - name: waterboy.metrics.accuracy
+
 commands:
   train:
     name: waterboy.commands.train
     epochs: 12
+    log_frequency: 20
+    optimizer:
+      name: waterboy.optimizers.adadelta

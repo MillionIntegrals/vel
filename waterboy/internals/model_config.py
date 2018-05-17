@@ -1,4 +1,5 @@
 import yaml
+import datetime as dtm
 
 from .provider import Provider
 from ..exceptions import WbInitializationException
@@ -65,4 +66,12 @@ class ModelConfig:
         """ Print a banner for running the system """
         print("=" * 80)
         print("Running model {}, run {} -- command {} -- device {}".format(self.name, self.run_number, command_name, self.device))
+        print(dtm.datetime.now().strftime("%Y/%m/%d - %H:%M:%S"))
+        print("=" * 80)
+
+    def quit_banner(self) -> None:
+        """ Print a banner for running the system """
+        print("=" * 80)
+        print("Done.")
+        print(dtm.datetime.now().strftime("%Y/%m/%d - %H:%M:%S"))
         print("=" * 80)

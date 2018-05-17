@@ -43,7 +43,7 @@ class Provider:
             module = importlib.import_module(name)
             return self.resolve_and_call(module.create, extra_env=object_data)
         elif isinstance(object_data, list):
-            raise NotImplementedError
+            return [self.instantiate_from_data(x) for x in object_data]
         else:
             return object_data
 

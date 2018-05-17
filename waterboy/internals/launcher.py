@@ -1,7 +1,7 @@
 import argparse
 
-from .project_config import ProjectConfig
-from .model_config import ModelConfig
+from waterboy.internals.project_config import ProjectConfig
+from waterboy.internals.model_config import ModelConfig
 
 
 def main():
@@ -20,9 +20,10 @@ def main():
     project_config = ProjectConfig(args.config)
 
     model_config = ModelConfig(args.config, args.run_number, project_config, device=args.device)
-    model_config.banner(args.command)
 
+    model_config.banner(args.command)
     model_config.run_command(args.command)
+    model_config.quit_banner()
 
 
 if __name__ == '__main__':
