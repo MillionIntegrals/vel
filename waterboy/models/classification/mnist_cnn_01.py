@@ -5,6 +5,7 @@ https://github.com/keras-team/keras/blob/master/examples/mnist_cnn.py
 Under MIT license.
 """
 import torch.nn as nn
+import torch.nn.init as init
 import torch.nn.functional as F
 
 
@@ -21,6 +22,11 @@ class Net(nn.Module):
     Dense - output (softmax)
     """
 
+    @staticmethod
+    def _weight_initializer(tensor):
+        init.xavier_uniform_(tensor.weight, gain=init.calculate_gain('relu'))
+        init.constant_(tensor.bias, 0.0)
+
     def __init__(self, img_rows, img_cols, img_channels, num_classes):
         super(Net, self).__init__()
 
@@ -29,13 +35,16 @@ class Net(nn.Module):
         self.conv1 = nn.Conv2d(in_channels=img_channels, out_channels=32, kernel_size=(3, 3))
         self.conv2 = nn.Conv2d(in_channels=32, out_channels=64, kernel_size=(3, 3))
 
-        # 1179648
-
         self.dropout1 = nn.Dropout2d(p=0.25)
         self.dropout2 = nn.Dropout(p=0.5)
 
         self.fc1 = nn.Linear(self.flattened_size, 128)
         self.fc2 = nn.Linear(128, num_classes)
+
+        self._weight_initializer(self.conv1)
+        self._weight_initializer(self.conv2)
+        self._weight_initializer(self.fc1)
+        self._weight_initializer(self.fc2)
 
     def forward(self, x):
         x = F.relu(self.conv1(x))
