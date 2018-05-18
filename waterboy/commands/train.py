@@ -1,9 +1,6 @@
 import torch
-import torch.optim
-import torch.nn.functional as F
 
 from waterboy.internals.metrics.epoch_result import EpochResultAccumulator
-from waterboy.internals.metrics.loss_metric import Loss
 
 
 class SimpleTrainCommand:
@@ -15,14 +12,13 @@ class SimpleTrainCommand:
         self.optimizer = optimizer
         self.log_frequency = log_frequency
 
-    def run(self, model, source, model_config, metrics):
+    def run(self, model, source, model_config):
         """ Run the command with supplied configuration """
         device = torch.device(model_config.device)
         model = model.to(device)
-        metrics = [Loss()] + metrics
+        metrics = model.metrics()
 
         for i in range(1, self.epochs+1):
-            raise RuntimeError()
             print("|-------- Epoch {:06} ----------|".format(i))
             self.run_epoch(i, model, source, self.optimizer, metrics, device)
 
@@ -37,8 +33,8 @@ class SimpleTrainCommand:
             data, target = data.to(device), target.to(device)
 
             optimizer.zero_grad()
-            output = model(data)
-            loss = F.nll_loss(output, target)
+
+            output, loss = model.loss(data, target)
 
             loss.backward()
             optimizer.step()
@@ -65,9 +61,7 @@ class SimpleTrainCommand:
         with torch.no_grad():
             for data, target in source.val_source:
                 data, target = data.to(device), target.to(device)
-                output = model(data)
-
-                loss = F.nll_loss(output, target)
+                output, loss = model.loss(data, target)
 
                 result_accumulator.calculate(data, target, output, loss=loss)
 

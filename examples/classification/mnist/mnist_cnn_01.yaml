@@ -12,9 +12,6 @@ source:
   name: waterboy.sources.classic.mnist
   batch_size: 128
 
-metrics:
-  - name: waterboy.metrics.accuracy
-
 commands:
   train:
     name: waterboy.commands.train

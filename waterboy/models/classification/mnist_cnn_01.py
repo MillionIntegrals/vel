@@ -8,8 +8,12 @@ import torch.nn as nn
 import torch.nn.init as init
 import torch.nn.functional as F
 
+from waterboy.internals.model import Model
+from waterboy.metrics.loss_metric import Loss
+from waterboy.metrics.accuracy import Accuracy
 
-class Net(nn.Module):
+
+class Net(Model):
     """
     A simple MNIST classification model.
 
@@ -56,6 +60,14 @@ class Net(nn.Module):
         x = self.dropout2(x)
         x = self.fc2(x)
         return F.log_softmax(x, dim=1)
+
+    def loss_value(self, x_data, y_true, y_pred):
+        """ Calculate a value of loss function """
+        return F.nll_loss(y_pred, y_true)
+
+    def metrics(self):
+        """ Set of metrics for this model """
+        return [Loss(), Accuracy()]
 
 
 def create(img_rows, img_cols, img_channels, num_classes):
