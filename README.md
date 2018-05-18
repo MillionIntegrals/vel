@@ -7,12 +7,12 @@ My goal is to establish a Rails-like convention-over-configuration opionated set
 
 - [x] Metric/aggregation API
 - [x] Training progress pretty print
-- [ ] Integrate loss/metrics with a model
+- [x] Integrate loss/metrics with a model
 - [ ] Refine source API
-- [ ] Database storage of experiment results
-- [ ] Model checkpointing
 - [ ] CIFAR 10 dataset and models
 - [ ] Learning rate scheduling
+- [ ] Database storage of experiment results
+- [ ] Model checkpointing
 - [ ] Augmentations and input transformation pipeline
 
 
