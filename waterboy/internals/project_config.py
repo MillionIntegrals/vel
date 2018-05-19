@@ -27,6 +27,10 @@ class ProjectConfig:
         with open(os.path.join(self.project_dir, ProjectConfig.PROJECT_FILE_NAME), 'r') as fp:
             self.contents = yaml.safe_load(fp)
 
+    def project_data_dir(self, *args):
+        """ Directories where to store project files """
+        return os.path.join(self.project_dir, 'data', *args)
+
     def project_output_dir(self, *args):
         """ Directories where to store project files """
         return os.path.join(self.project_dir, 'output', *args)

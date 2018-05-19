@@ -18,7 +18,6 @@ def main():
     args = parser.parse_args()
 
     project_config = ProjectConfig(args.config)
-
     model_config = ModelConfig(args.config, args.run_number, project_config, device=args.device)
 
     model_config.banner(args.command)

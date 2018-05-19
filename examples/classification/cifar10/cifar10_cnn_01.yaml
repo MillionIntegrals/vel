@@ -1,0 +1,24 @@
+name: 'cifar10_cnn_01'
+
+
+model:
+  name: waterboy.models.classification.cifar10_cnn_01
+  img_rows: 32
+  img_cols: 32
+  img_channels: 3
+  num_classes: 10
+
+source:
+  name: waterboy.sources.classic.cifar10
+#  batch_size: 128
+  batch_size: 32
+  num_workers: 4
+  normalize: True
+
+commands:
+  train:
+    name: waterboy.commands.train
+    epochs: 12
+    log_frequency: 20
+    optimizer:
+      name: waterboy.optimizers.adadelta

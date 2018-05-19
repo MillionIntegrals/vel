@@ -51,6 +51,10 @@ class ModelConfig:
         """ Return checkpoint directory for this model """
         return self.project_config.project_output_dir('checkpoints', self.run_name)
 
+    def data_dir(self, *args) -> str:
+        """ Return data directory for given dataset """
+        return self.project_config.project_data_dir(*args)
+
     def checkpoint_filename(self, epoch) -> str:
         """ Return checkpoint filename for this model """
         return self.project_config.project_output_dir(

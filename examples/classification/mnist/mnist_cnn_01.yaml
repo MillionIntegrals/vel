@@ -11,6 +11,7 @@ model:
 source:
   name: waterboy.sources.classic.mnist
   batch_size: 128
+  normalize: False
 
 commands:
   train:
