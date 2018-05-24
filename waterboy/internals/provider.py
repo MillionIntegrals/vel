@@ -47,6 +47,10 @@ class Provider:
         else:
             return object_data
 
+    def has_name(self, object_name):
+        """ Check if given name is available in the provider """
+        return object_name in self.instances or object_name in self.environment
+
     def instantiate_by_name(self, object_name):
         """ Instantiate object from the environment, possibly giving some extra arguments """
         if object_name not in self.instances:

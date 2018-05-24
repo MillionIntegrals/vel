@@ -1,4 +1,4 @@
-from waterboy.internals.metrics.averaging_metric import AveragingMetric
+from waterboy.api.metrics.averaging_metric import AveragingMetric
 
 
 class Loss(AveragingMetric):

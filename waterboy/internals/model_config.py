@@ -61,6 +61,18 @@ class ModelConfig:
             'checkpoints', self.run_name, 'checkpoint_{:08}.npy'.format(epoch)
         )
 
+    def checkpoint_best_filename(self, epoch) -> str:
+        """ Return checkpoint filename for this model """
+        return self.project_config.project_output_dir(
+            'checkpoints', self.run_name, 'checkpoint_best_{:08}.npy'.format(epoch)
+        )
+
+    def checkpoint_opt_filename(self, epoch) -> str:
+        """ Return checkpoint filename for this model """
+        return self.project_config.project_output_dir(
+            'checkpoints', self.run_name, 'checkpoint_opt_{:08}.npy'.format(epoch)
+        )
+
     @property
     def run_name(self) -> str:
         """ Return name of the run """

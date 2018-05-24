@@ -106,3 +106,4 @@ ENV/
 
 # Data files
 /data
+/output

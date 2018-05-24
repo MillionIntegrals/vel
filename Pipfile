@@ -11,6 +11,7 @@ scikit-learn = "*"
 torchvision = "*"
 matplotlib = "*"
 torchsummary = "*"
+pymongo = "*"
 
 [requires]
 python_version = "3.6"

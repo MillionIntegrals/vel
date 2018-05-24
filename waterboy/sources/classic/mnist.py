@@ -4,7 +4,7 @@ import torch.utils.data
 from torchvision import datasets, transforms
 
 
-from waterboy.internals.source import Source
+from waterboy.api.source import Source
 
 
 def create(batch_size, model_config, normalize=True, num_workers=0):
