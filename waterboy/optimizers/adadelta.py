@@ -1,6 +1,6 @@
 import torch.optim
 
 
-def create(model):
+def create():
     """ Return an ADADELTA optimizer """
-    return torch.optim.Adadelta(model.parameters())
+    return torch.optim.Adadelta

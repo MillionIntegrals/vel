@@ -1,0 +1,66 @@
+name: 'cifar10_resnetv1_32'
+
+
+model:
+  name: waterboy.models.classification.cifar_resnet_v1
+  img_channels: 3
+  num_classes: 10
+
+  mode: basic # Basic or bottleneck
+  blocks: [5, 5, 5] # ResNet32
+
+source:
+  name: waterboy.sources.classic.cifar10
+  batch_size: 128
+#  batch_size: 32
+  num_workers: 4
+  normalize: True
+
+  augmentations:
+  - name: waterboy.augmentations.pure_image_augmentation
+    random_crop: {width: 32, height: 32, padding: 4, padding_mode: reflect}
+    horizontal_flip: true
+
+
+commands:
+  train:
+    name: waterboy.commands.train
+    epochs: 200
+    log_frequency: 100
+
+
+    optimizer:
+      name: waterboy.optimizers.sgd
+      lr: 0.1
+      weight_decay: 0.0001
+      momentum: 0.9
+
+#    optimizer:
+#      name: waterboy.optimizers.adam
+#      lr: 0.001
+#      weight_decay: 0.001
+
+#    scheduler:
+#      name: waterboy.scheduler.multi_step
+#      milestones: [20, 50, 100, 150]
+#      gamma: 0.33
+
+    scheduler:
+      name: waterboy.scheduler.ladder
+      ladder:
+      - [80, 1.0]
+      - [40, 0.1]
+      - [80, 0.01]
+
+#    scheduler:
+#      name: waterboy.scheduler.reduce_lr_on_plateau
+#      metric_name: val:accuracy
+#      factor: 0.33
+#      patience: 15
+#      cooldown: 20
+#      min_lr: 0.5e-6
+
+  augvis:
+    name: waterboy.commands.augvis
+    seed: 1
+    samples: 5

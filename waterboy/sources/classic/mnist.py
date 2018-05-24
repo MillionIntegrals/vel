@@ -7,11 +7,11 @@ from torchvision import datasets, transforms
 from waterboy.internals.source import Source
 
 
-def create(batch_size, model_config, normalize=True):
+def create(batch_size, model_config, normalize=True, num_workers=0):
     """ Create a MNIST dataset, denormalized """
     kwargs = {}
 
-    path = model_config.data_dir('cifar10')
+    path = model_config.data_dir('mnist')
 
     train_dataset = datasets.MNIST(path, train=True, download=True)
     test_dataset = datasets.MNIST(path, train=False, download=True)
@@ -31,7 +31,15 @@ def create(batch_size, model_config, normalize=True):
     train_dataset.transform = transform
     test_dataset.transform = transform
 
-    train_loader = torch.utils.data.DataLoader(train_dataset, batch_size=batch_size, shuffle=True, **kwargs)
-    test_loader = torch.utils.data.DataLoader(test_dataset, batch_size=batch_size, shuffle=True, **kwargs)
+    train_loader = torch.utils.data.DataLoader(
+        train_dataset, batch_size=batch_size, shuffle=True,
+        num_workers=num_workers,
+        **kwargs
+    )
+    test_loader = torch.utils.data.DataLoader(
+        test_dataset, batch_size=batch_size, shuffle=True,
+        num_workers=num_workers,
+        **kwargs
+    )
 
     return Source(train_loader, test_loader)

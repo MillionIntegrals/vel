@@ -18,3 +18,7 @@ class Model(nn.Module):
         """ Set of metrics for this model """
         return [Loss()]
 
+    def summary(self):
+        """ Print a model summary """
+        print(self)
+

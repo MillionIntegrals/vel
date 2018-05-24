@@ -9,14 +9,16 @@ My goal is to establish a Rails-like convention-over-configuration opionated set
 - [x] Training progress pretty print
 - [x] Integrate loss/metrics with a model
 - [x] CIFAR 10 dataset and models
-- [ ] Refine source API
-- [ ] CIFAR 10 Resnet models
-- [ ] CIFAR 10 state of the art
+- [x] CIFAR 10 Resnet models
+- [x] Refine source API
+- [x] Augmentation visualization
+- [x] Learning rate scheduling
+- [x] Augmentations and input transformation pipeline
+- [x] CIFAR 10 state of the art
+- [ ] SGD with warm restarts
 - [ ] Cats vs dogs transfer learning
-- [ ] Learning rate scheduling
 - [ ] Database storage of experiment results
 - [ ] Model checkpointing
-- [ ] Augmentations and input transformation pipeline
 
 
 ## Important links:

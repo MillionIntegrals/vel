@@ -28,7 +28,8 @@ class Net(Model):
 
     @staticmethod
     def _weight_initializer(tensor):
-        init.xavier_uniform_(tensor.weight, gain=init.calculate_gain('relu'))
+        # init.xavier_uniform_(tensor.weight, gain=init.calculate_gain('relu'))
+        init.kaiming_normal_(tensor.weight, nonlinearity='relu')
         init.constant_(tensor.bias, 0.0)
 
     def __init__(self, img_rows, img_cols, img_channels, num_classes):
