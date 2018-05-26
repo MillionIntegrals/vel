@@ -15,10 +15,14 @@ My goal is to establish a Rails-like convention-over-configuration opionated set
 - [x] Learning rate scheduling
 - [x] Augmentations and input transformation pipeline
 - [x] CIFAR 10 state of the art
+- [x] Database storage of experiment results
+- [x] Model checkpointing
+- [x] Visdom integration
+- [ ] Learning rate finder
 - [ ] SGD with warm restarts
+- [ ] "Phase" training
+- [ ] Super-convergence experiments
 - [ ] Cats vs dogs transfer learning
-- [ ] Database storage of experiment results
-- [ ] Model checkpointing
 
 
 ## Important links:
