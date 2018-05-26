@@ -2,3 +2,4 @@ storage:
   name: waterboy.storage.mongodb
   uri: 'mongodb://localhost:27017/'
   database: deep_learning
+  update_visdom: true

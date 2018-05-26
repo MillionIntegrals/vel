@@ -10,7 +10,7 @@ class Callback:
     def on_phase_end(self): pass
 
     def on_epoch_begin(self, epoch_idx): pass
-    def on_epoch_end(self, epoch_idx, metrics, model, optimizer): pass
+    def on_epoch_end(self, epoch_idx, epoch_time, metrics, model, optimizer): pass
 
     def on_batch_begin(self, progress_idx): pass
     def on_batch_end(self, progress_idx,  metrics): pass

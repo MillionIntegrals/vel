@@ -42,10 +42,10 @@ class ModelConfig:
             'run_number': self.run_number
         }
 
-    def run_command(self, command_name):
+    def run_command(self, command_name, varargs):
         """ Instantiate model class """
         command_descriptor = self.provider.instantiate_from_data(self.command_descriptor[command_name])
-        return self.provider.resolve_and_call(command_descriptor.run)
+        return command_descriptor.run(*varargs)
 
     def checkpoint_dir(self) -> str:
         """ Return checkpoint directory for this model """
@@ -54,6 +54,10 @@ class ModelConfig:
     def data_dir(self, *args) -> str:
         """ Return data directory for given dataset """
         return self.project_config.project_data_dir(*args)
+
+    def output_dir(self, *args) -> str:
+        """ Return data directory for given dataset """
+        return self.project_config.project_output_dir(*args)
 
     def checkpoint_filename(self, epoch) -> str:
         """ Return checkpoint filename for this model """

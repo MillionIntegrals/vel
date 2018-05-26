@@ -23,6 +23,7 @@ class Checkpoint(cb.Callback):
     def last_epoch(self):
         """ Return number of last epoch already calculated """
         epoch_number = 0
+        self._make_sure_dir_exists()
 
         for x in os.listdir(self.model_config.checkpoint_dir()):
             match = re.match('checkpoint_(\\d+)\\.npy', x)
@@ -48,9 +49,14 @@ class Checkpoint(cb.Callback):
         else:
             return False
 
-    def on_epoch_end(self, epoch_idx, metrics, model, optimizer):
-        filename = self.model_config.checkpoint_filename(epoch_idx)
-        pathlib.Path(os.path.dirname(filename)).mkdir(parents=True, exist_ok=True)
+    def _make_sure_dir_exists(self):
+        """ Make sure directory exists """
+        filename = self.model_config.checkpoint_dir()
+        pathlib.Path(filename).mkdir(parents=True, exist_ok=True)
+
+    def on_epoch_end(self, epoch_idx, epoch_time, metrics, model, optimizer):
+        """ On epoch end store data in the database """
+        self._make_sure_dir_exists()
 
         # Checkpoint latest
         torch.save(model.state_dict(), self.model_config.checkpoint_filename(epoch_idx))

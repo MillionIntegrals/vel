@@ -1,4 +1,5 @@
 import torch
+import time
 
 from waterboy.api.metrics.epoch_result import EpochResultAccumulator
 from waterboy.api.progress_idx import ProgressIdx
@@ -8,16 +9,24 @@ from waterboy.callbacks.checkpoint import Checkpoint
 class SimpleTrainCommand:
     """ Very simple training command - just run the supplied generators """
 
-    def __init__(self, epochs, optimizer_fn, scheduler_fn, callbacks, log_frequency, checkpoint):
+    def __init__(self, epochs, optimizer_fn, scheduler_fn, callbacks, log_frequency, checkpoint, model, source,
+                 model_config):
         self.epochs = epochs
         self.callbacks = callbacks
         self.log_frequency = log_frequency
         self.optimizer_fn = optimizer_fn
         self.scheduler_fn = scheduler_fn
         self.checkpoint = checkpoint
+        self.model = model
+        self.source = source
+        self.model_config = model_config
 
-    def run(self, model, source, model_config):
+    def run(self):
         """ Run the command with supplied configuration """
+        model = self.model
+        model_config = self.model_config
+        source = self.source
+
         device = torch.device(model_config.device)
         model = model.to(device)
 
@@ -63,6 +72,8 @@ class SimpleTrainCommand:
         print("Number of model parameters: {:,}".format(sum(p.numel() for p in model.parameters())))
         print("-" * 120)
 
+        start_time = time.time()
+
         for callback in callbacks:
             callback.on_train_begin()
 
@@ -74,8 +85,10 @@ class SimpleTrainCommand:
             print("|-------- Epoch {:06} Lr={:.6f} ----------|".format(epoch_idx, lr))
             epoch_result = self.run_epoch(epoch_idx, model, source, optimizer_instance, metrics, device, callbacks)
 
+            epoch_time = time.time() - start_time
+
             for callback in callbacks:
-                callback.on_epoch_end(epoch_idx, epoch_result, model, optimizer_instance)
+                callback.on_epoch_end(epoch_idx, epoch_time, epoch_result, model, optimizer_instance)
 
         for callback in callbacks:
             callback.on_train_end()
@@ -139,15 +152,13 @@ class SimpleTrainCommand:
         return result_accumulator.result()
 
 
-def create(epochs, optimizer, scheduler=None, callbacks=None, log_frequency=100, checkpoint=None):
+def create(epochs, optimizer, model, source, model_config, scheduler=None, callbacks=None, log_frequency=100, checkpoint=None):
     """ Simply train the model """
-    import warnings
-    warnings.filterwarnings("error")
-
     callbacks = callbacks or []
     checkpoint = checkpoint or {}
 
     return SimpleTrainCommand(
         epochs=epochs, optimizer_fn=optimizer, scheduler_fn=scheduler,
-        callbacks=callbacks, log_frequency=log_frequency, checkpoint=checkpoint
+        callbacks=callbacks, log_frequency=log_frequency, checkpoint=checkpoint,
+        model=model, source=source, model_config=model_config
     )

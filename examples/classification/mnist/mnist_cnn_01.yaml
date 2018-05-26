@@ -27,3 +27,6 @@ commands:
 
     checkpoint:
       metric: 'val:loss'
+
+  visdom:
+    name: waterboy.commands.vis_store

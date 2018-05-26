@@ -12,6 +12,7 @@ torchvision = "*"
 matplotlib = "*"
 torchsummary = "*"
 pymongo = "*"
+visdom = "*"
 
 [requires]
 python_version = "3.6"
