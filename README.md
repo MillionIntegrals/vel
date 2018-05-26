@@ -1,7 +1,25 @@
 # waterboy
-Deep learning utility repository - pytorch version
+My goal is to establish a Rails-like convention-over-configuration opinionated set of
+tools streamlining research and development of deep learning models.
 
-My goal is to establish a Rails-like convention-over-configuration opionated set of tools streamlining research and development of deep learning models.
+I wanted to minimize time to market of new projects, ease experimentation
+and combine that with experiment management to bring some order to an already 
+noisy data science workflow.
+
+# Features
+
+- (Done) Models should be runnable from the configuration files
+  that are easy to store in version control, generate automatically and diff.
+  Codebase should be generic and not contain any of the model hyperparameters.
+  Unless user intervenes, it should be obvious which model was run when with which 
+  hyperparameters gave which outputs.
+- (Ongoing) All state-of-the-art models should be implemented in the framework with accuracy
+  matching published results.
+  Currently I'm focusing on computer vision and reinforcement learning models.
+- (Done) All common deep learning workflows should be fast to implement, while 
+  uncommon ones should be possible. At least as far as PyTorch allows.
+
+
 
 ## TODO:
 
@@ -18,6 +36,7 @@ My goal is to establish a Rails-like convention-over-configuration opionated set
 - [x] Database storage of experiment results
 - [x] Model checkpointing
 - [x] Visdom integration
+- [ ] Notebook integration
 - [ ] Learning rate finder
 - [ ] SGD with warm restarts
 - [ ] "Phase" training
