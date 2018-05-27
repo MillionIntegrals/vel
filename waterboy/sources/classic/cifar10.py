@@ -4,11 +4,14 @@ import torch.utils.data
 from torchvision import datasets, transforms
 
 
-from waterboy.internals.source import Source
+from waterboy.api.source import Source
 
 
 def create(batch_size, model_config, normalize=True, num_workers=0, augmentations=None):
-    """ Create a MNIST dataset, denormalized """
+    """
+    Create a CIFAR10 dataset, normalized.
+    Augmentations are the same as in the literature benchmarking CIFAR performance.
+    """
     kwargs = {}
     augmentations = augmentations or []
 

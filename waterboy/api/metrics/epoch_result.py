@@ -9,6 +9,8 @@ class EpochResultAccumulator:
         self.validation_results = {}
 
         self._reset_metrics()
+        self.metrics_by_name = {m.name: m for m in self.metrics}
+
 
     def calculate(self, x_data, y_true, y_pred, **kwargs):
         """ Calculate metric values """
@@ -27,6 +29,15 @@ class EpochResultAccumulator:
     def value_string(self, precision=6):
         """ Return a string describing current values of all metrics """
         return " ".join([("{}: {:." + str(precision) + "f}").format(m.name, m.value()) for m in self.metrics])
+
+    def intermediate_value(self, metric):
+        """ Return an intermediate (inter-epoch) value of a metric """
+        if ':' in metric:
+            metric_name = metric.split(':')[-1]
+        else:
+            metric_name = metric
+
+        return self.metrics_by_name[metric_name].value()
 
     def freeze_train_results(self):
         self.train_results = self.value()

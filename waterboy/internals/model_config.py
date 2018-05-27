@@ -17,7 +17,7 @@ class ModelConfig:
 
         # Options that should exist for every config
         try:
-            self.name = self.contents['name']
+            self._model_name = self.contents['name']
         except KeyError:
             raise WbInitializationException("Model configuration must have a 'name' key")
 
@@ -42,11 +42,19 @@ class ModelConfig:
             'run_number': self.run_number
         }
 
+    ####################################################################################################################
+    # COMMAND UTILITIES
+    def get_command(self, command_name):
+        """ Return object for given command """
+        return self.provider.instantiate_from_data(self.command_descriptor[command_name])
+
     def run_command(self, command_name, varargs):
         """ Instantiate model class """
-        command_descriptor = self.provider.instantiate_from_data(self.command_descriptor[command_name])
+        command_descriptor = self.get_command(command_name)
         return command_descriptor.run(*varargs)
 
+    ####################################################################################################################
+    # MODEL DIRECTORIES
     def checkpoint_dir(self) -> str:
         """ Return checkpoint directory for this model """
         return self.project_config.project_output_dir('checkpoints', self.run_name)
@@ -59,10 +67,10 @@ class ModelConfig:
         """ Return data directory for given dataset """
         return self.project_config.project_output_dir(*args)
 
-    def checkpoint_filename(self, epoch) -> str:
+    def checkpoint_filename(self, epoch_idx) -> str:
         """ Return checkpoint filename for this model """
         return self.project_config.project_output_dir(
-            'checkpoints', self.run_name, 'checkpoint_{:08}.npy'.format(epoch)
+            'checkpoints', self.run_name, 'checkpoint_{:08}.npy'.format(epoch_idx)
         )
 
     def checkpoint_best_filename(self, epoch) -> str:
@@ -77,15 +85,24 @@ class ModelConfig:
             'checkpoints', self.run_name, 'checkpoint_opt_{:08}.npy'.format(epoch)
         )
 
+    ####################################################################################################################
+    # NAME UTILITIES
     @property
     def run_name(self) -> str:
         """ Return name of the run """
-        return "{}/{}".format(self.name, self.run_number)
+        return "{}/{}".format(self._model_name, self.run_number)
 
+    @property
+    def name(self) -> str:
+        """ Return name of the run """
+        return self._model_name
+
+    ####################################################################################################################
+    # BANNERS - Maybe shouldn't be here, but they are for now
     def banner(self, command_name) -> None:
         """ Print a banner for running the system """
         print("=" * 80)
-        print("Running model {}, run {} -- command {} -- device {}".format(self.name, self.run_number, command_name, self.device))
+        print("Running model {}, run {} -- command {} -- device {}".format(self._model_name, self.run_number, command_name, self.device))
         print(dtm.datetime.now().strftime("%Y/%m/%d - %H:%M:%S"))
         print("=" * 80)
 
@@ -95,3 +112,8 @@ class ModelConfig:
         print("Done.")
         print(dtm.datetime.now().strftime("%Y/%m/%d - %H:%M:%S"))
         print("=" * 80)
+
+    ####################################################################################################################
+    # Small UI utils
+    def __repr__(self):
+        return f"<ModelConfig at {self.filename}"

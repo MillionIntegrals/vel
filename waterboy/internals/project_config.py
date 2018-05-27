@@ -17,12 +17,12 @@ class ProjectConfig:
         else:
             up_path = os.path.realpath(os.path.join(start_path, '..'))
             if os.path.realpath(start_path) == up_path:
-                raise RuntimeError("Couldn't find project file")
+                raise RuntimeError(f"Couldn't find project file starting from {start_path}")
             else:
                 return ProjectConfig.find_project_directory(up_path)
 
     def __init__(self, config_path):
-        self.project_dir = ProjectConfig.find_project_directory(os.path.dirname(config_path))
+        self.project_dir = ProjectConfig.find_project_directory(os.path.dirname(os.path.abspath(config_path)))
 
         with open(os.path.join(self.project_dir, ProjectConfig.PROJECT_FILE_NAME), 'r') as fp:
             self.contents = yaml.safe_load(fp)

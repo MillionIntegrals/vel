@@ -1,7 +1,7 @@
 import torch
 import time
 
-from waterboy.api.metrics.epoch_result import EpochResultAccumulator
+from waterboy.api.metrics import EpochResultAccumulator, TrainingHistory
 from waterboy.api.progress_idx import ProgressIdx
 from waterboy.callbacks.checkpoint import Checkpoint
 
@@ -21,6 +21,41 @@ class SimpleTrainCommand:
         self.source = source
         self.model_config = model_config
 
+    def _try_resume_training(self, model, optimizer_instance, callbacks):
+        checkpoint = Checkpoint(
+            self.model_config,
+            checkpoint_frequency=self.checkpoint.get('frequency', None),
+            metric=self.checkpoint.get('metric', None),
+            metric_mode=self.checkpoint.get('mode', 'min'),
+        )
+
+        callbacks.append(checkpoint)
+
+        last_epoch = checkpoint.last_epoch()
+
+        # Add storage if defined
+        storage = None
+
+        if self.model_config.provider.has_name('storage'):
+            storage = self.model_config.provider.instantiate_by_name('storage')
+            callbacks.append(storage)
+            storage.clean(last_epoch)
+
+        if last_epoch > 0:
+            checkpoint.load_model(last_epoch, model, optimizer_instance)
+            print("Resuming training from epoch: {}".format(last_epoch))
+
+            if checkpoint.metric is not None and storage is not None:
+                best_value, best_epoch = storage.best_metric(last_epoch, checkpoint.metric, checkpoint.metric_mode)
+                checkpoint.best_value = best_value
+                checkpoint.best_epoch = best_epoch
+
+        # This one should also be resumed somehow
+        if self.scheduler_fn:
+            callbacks.append(self.scheduler_fn(optimizer_instance))
+
+        return last_epoch
+
     def run(self):
         """ Run the command with supplied configuration """
         model = self.model
@@ -34,35 +69,7 @@ class SimpleTrainCommand:
 
         callbacks = []
 
-        checkpoint = Checkpoint(
-            model_config,
-            checkpoint_frequency=self.checkpoint.get('frequency', None),
-            metric=self.checkpoint.get('metric', None),
-            metric_mode=self.checkpoint.get('mode', 'min'),
-        )
-
-        last_epoch = checkpoint.last_epoch()
-
-        if last_epoch > 0:
-            checkpoint.load_model(last_epoch, model, optimizer_instance)
-            print("Resuming training from epoch: {}".format(last_epoch+1))
-
-            if checkpoint.metric is not None and model_config.provider.has_name('storage'):
-                storage = model_config.provider.instantiate_by_name('storage')
-                best_value, best_epoch = storage.best_metric(last_epoch, checkpoint.metric, checkpoint.metric_mode)
-                checkpoint.best_value = best_value
-                checkpoint.best_epoch = best_epoch
-
-        callbacks.append(checkpoint)
-
-        # Add storage if defined
-        if model_config.provider.has_name('storage'):
-            storage = model_config.provider.instantiate_by_name('storage')
-            storage.clean(last_epoch)
-            callbacks.append(storage)
-
-        if self.scheduler_fn:
-            callbacks.append(self.scheduler_fn(optimizer_instance))
+        last_epoch = self._try_resume_training(model, optimizer_instance, callbacks)
 
         metrics = model.metrics()
 
@@ -77,6 +84,8 @@ class SimpleTrainCommand:
         for callback in callbacks:
             callback.on_train_begin()
 
+        training_history = TrainingHistory()
+
         for epoch_idx in range(1 + last_epoch, self.epochs+1):
             for callback in callbacks:
                 callback.on_epoch_begin(epoch_idx)
@@ -90,8 +99,12 @@ class SimpleTrainCommand:
             for callback in callbacks:
                 callback.on_epoch_end(epoch_idx, epoch_time, epoch_result, model, optimizer_instance)
 
+            training_history.add(epoch_result)
+
         for callback in callbacks:
             callback.on_train_end()
+
+        return training_history
 
     def run_epoch(self, epoch_idx, model, source, optimizer, metrics, device, callbacks):
         """ Run single epoch of training """
@@ -152,7 +165,8 @@ class SimpleTrainCommand:
         return result_accumulator.result()
 
 
-def create(epochs, optimizer, model, source, model_config, scheduler=None, callbacks=None, log_frequency=100, checkpoint=None):
+def create(epochs, optimizer, model, source, model_config, scheduler=None, callbacks=None, log_frequency=100,
+           checkpoint=None):
     """ Simply train the model """
     callbacks = callbacks or []
     checkpoint = checkpoint or {}

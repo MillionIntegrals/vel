@@ -13,6 +13,10 @@ matplotlib = "*"
 torchsummary = "*"
 pymongo = "*"
 visdom = "*"
+jupyter = "*"
+opencv-python = "*"
+pillow-simd = "*"
+tqdm = "*"
 
 [requires]
 python_version = "3.6"

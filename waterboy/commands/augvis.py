@@ -4,36 +4,38 @@ import numpy as np
 
 class AugmentationVisualizationCommand:
     """ Visualize augmentations """
-    def __init__(self, source, samples):
+    def __init__(self, source, samples, cases, seed=None):
         self.source = source
         self.samples = samples
+        self.cases = cases
+        self.seed = seed
 
     def run(self):
         """ Run the visualization """
-        dataset = self.source.train_source.dataset
-        num_samples = len(self.source.train_source.dataset)
+        if self.seed is not None:
+            np.random.seed(self.seed)
 
-        selected_sample = np.sort(np.random.choice(num_samples, self.samples, replace=False))
+        dataset = self.source.train_dataset()
+        num_samples = len(dataset)
 
-        fig, ax = plt.subplots(self.samples, 2)
-        transform = dataset.transform
+        fig, ax = plt.subplots(self.cases, self.samples+1)
 
-        for i in range(self.samples):
-            # A hack for now, later I'll fork my own dataset API
-            dataset.transform = None
+        selected_sample = np.sort(np.random.choice(num_samples, self.cases, replace=False))
 
-            raw_data = np.array(dataset[selected_sample[i]][0])
+        for i in range(self.cases):
+            raw_image, _ = dataset.get_raw(selected_sample[i])
 
-            dataset.transform = transform
+            ax[i, 0].imshow(raw_image)
+            ax[i, 0].set_title("Original image")
 
-            transformed_data = np.transpose(dataset[selected_sample[i]][0].numpy(), (1, 2, 0))
-
-            ax[i, 0].imshow(raw_data)
-            ax[i, 1].imshow(transformed_data)
+            for j in range(self.samples):
+                augmented_image, _ = dataset[selected_sample[i]]
+                augmented_image = dataset.denormalize(augmented_image)
+                ax[i, j+1].imshow(augmented_image)
 
         plt.show()
 
 
-def create(source, samples):
+def create(source, samples, cases, seed=None):
     """ Visualize augmentations in the source """
-    return AugmentationVisualizationCommand(source, samples)
+    return AugmentationVisualizationCommand(source, samples, cases, seed)

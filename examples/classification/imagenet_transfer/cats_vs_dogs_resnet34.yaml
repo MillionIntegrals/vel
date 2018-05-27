@@ -1,0 +1,67 @@
+name: cats_vs_dogs_resnet34
+
+
+model:
+  name: waterboy.models.imagenet.resnet34
+  fc_layers: [512, 2]
+  dropout: [0.25, 0.5]
+  pretrained: true
+
+
+source:
+  name: waterboy.sources.img_dir_source
+  # Dataset downloaded from http://files.fast.ai/data/dogscats.zip
+  path: data/dogscats
+  num_workers: 4
+  batch_size: 64
+
+  augmentations:
+  - name: waterboy.augmentations.to_array
+    mode: x
+    tags: ["train", "val"]
+  - name: waterboy.augmentations.scale_min_size
+    mode: x
+    tags: ["train", "val"]
+    size: 224
+  - name: waterboy.augmentations.random_crop
+    mode: x
+    tags: ["train"]
+    width: 224
+    height: 224
+  - name: waterboy.augmentations.center_crop
+    mode: x
+    tags: ["val"]
+    size: 224
+  - name: waterboy.augmentations.normalize
+    mode: x
+    tags: ["train", "val"]
+    mean: [0.485, 0.456, 0.406]
+    std:  [0.229, 0.224, 0.225]
+  - name: waterboy.augmentations.to_tensor
+    mode: x
+    tags: ["train", "val"]
+
+
+optimizer:
+  name: waterboy.optimizers.sgd
+  lr: 0.1
+  weight_decay: 0.0
+  momentum: 0.9
+
+
+commands:
+  train:
+    name: waterboy.commands.train
+  lr_find:
+    name: waterboy.commands.lr_find
+    metric: 'val:loss'
+    start_lr: 1.0e-5
+    end_lr: 10.0
+    iterations: 500
+    divergence_threshold: 4.0
+    freeze: true
+  augvis:
+    name: waterboy.commands.augvis
+#    seed: 1
+    cases: 3
+    samples: 4

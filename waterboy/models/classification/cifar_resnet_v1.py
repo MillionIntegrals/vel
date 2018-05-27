@@ -6,7 +6,7 @@ https://github.com/pytorch/vision/blob/master/torchvision/models/resnet.py
 import torch.nn as nn
 import torch.nn.functional as F
 
-from waterboy.internals.model import Model
+from waterboy.api.model import Model
 from waterboy.modules.resnet_v1 import Bottleneck, BasicBlock
 
 
@@ -77,12 +77,6 @@ class ResNetV1(Model):
         from waterboy.metrics.loss_metric import Loss
         from waterboy.metrics.accuracy import Accuracy
         return [Loss(), Accuracy()]
-
-    def summary(self):
-        """ Print model summary """
-        # import torchsummary
-        # torchsummary.summary(self, input_size=(3, 32, 32))
-        print(self)
 
 
 def create(blocks, mode='basic', inplanes=16, divisor=4, num_classes=1000):
