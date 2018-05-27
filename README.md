@@ -11,8 +11,10 @@ noisy data science workflow.
 - (Done) Models should be runnable from the configuration files
   that are easy to store in version control, generate automatically and diff.
   Codebase should be generic and not contain any of the model hyperparameters.
-  Unless user intervenes, it should be obvious which model was run when with which 
-  hyperparameters gave which outputs.
+  Unless user intervenes, it should be obvious which model was run
+  with which hyperparameters and what output it gave.
+- (Ongoing) The amount of "magic" in the framework should be limited and it should be easy to
+  understand what exactly the model is doing for newcomers already comfortable with PyTorch. 
 - (Ongoing) All state-of-the-art models should be implemented in the framework with accuracy
   matching published results.
   Currently I'm focusing on computer vision and reinforcement learning models.
@@ -36,12 +38,12 @@ noisy data science workflow.
 - [x] Database storage of experiment results
 - [x] Model checkpointing
 - [x] Visdom integration
+- [x] Learning rate finder
+- [ ] Cats vs dogs transfer learning
 - [ ] Notebook integration
-- [ ] Learning rate finder
 - [ ] SGD with warm restarts
 - [ ] "Phase" training
 - [ ] Super-convergence experiments
-- [ ] Cats vs dogs transfer learning
 
 
 ## Important links:
