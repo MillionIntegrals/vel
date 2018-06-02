@@ -1,7 +1,7 @@
 {
     "_meta": {
         "hash": {
-            "sha256": "85c12511a9d6ff0fbafd6908f7242d8692e3dc7feebf2a2682147153e070f41e"
+            "sha256": "6ae968d098d099e136e9eae2649f2c0b2baefe79b4fdd0df6798d20b93c5fc00"
         },
         "pipfile-spec": 6,
         "requires": {
@@ -92,7 +92,6 @@
                 "sha256:a0c96853549b246991046f32d19db7140f5b1a644cc31f0dc1edc86713b7676f",
                 "sha256:eca537aa61592aca2fef4adea12af8e42f5c335004dfa80c78caf80e8b525e5c"
             ],
-            "markers": "python_version >= '3.3'",
             "version": "==6.4.0"
         },
         "ipython-genutils": {
@@ -339,11 +338,11 @@
         },
         "pexpect": {
             "hashes": [
-                "sha256:9783f4644a3ef8528a6f20374eeb434431a650c797ca6d8df0d81e30fffdfa24",
-                "sha256:9f8eb3277716a01faafaba553d629d3d60a1a624c7cf45daa600d2148c30020c"
+                "sha256:2a8e88259839571d1251d278476f3eec5db26deb73a70be5ed5dc5435e418aba",
+                "sha256:3fbd41d4caf27fa4a377bfd16fef87271099463e6fa73e92a52f92dfee5d425b"
             ],
             "markers": "sys_platform != 'win32'",
-            "version": "==4.5.0"
+            "version": "==4.6.0"
         },
         "pickleshare": {
             "hashes": [
@@ -678,14 +677,6 @@
                 "sha256:a53dfe134b737845a9f2cb24fe0585317874f965932cebdb0439d13c8da4136e"
             ],
             "version": "==0.1.0"
-        },
-        "torchsummary": {
-            "hashes": [
-                "sha256:6dcad6366634c1f8f9842e3084ff6edf7f748c9ef7407f6e055929dcf328b653",
-                "sha256:f7c852995a1bef0b22f18e46365ce6864e4b71aa4e73222cdc4ffc8c2b6e2b8d"
-            ],
-            "index": "pypi",
-            "version": "==1.3"
         },
         "torchvision": {
             "hashes": [
