@@ -40,10 +40,16 @@ noisy data science workflow.
 - [x] Visdom integration
 - [x] Learning rate finder
 - [ ] Cats vs dogs transfer learning
+- [ ] "Phase" training
 - [ ] Notebook integration
 - [ ] SGD with warm restarts
-- [ ] "Phase" training
 - [ ] Super-convergence experiments
+
+
+## Smaller TODO items:
+
+- [ ] Write output of LrFinder to storage rather than to matplotlib
+- [ ] Fork torch summary and incorporate into the framework
 
 
 ## Important links:
@@ -52,3 +58,4 @@ noisy data science workflow.
 - https://pytorch.org/docs/stable/index.html
 - https://github.com/pytorch/vision
 - https://github.com/pytorch/tnt
+- https://github.com/fastai/fastai
