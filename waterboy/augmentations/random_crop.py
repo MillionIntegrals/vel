@@ -48,7 +48,7 @@ class RandomCrop(data.Augmentation):
         Returns:
             tuple: params (i, j, h, w) to be passed to ``crop`` for random crop.
         """
-        w, h, _ = img.shape
+        w, h = img.size
         th, tw = output_size
         if w == tw and h == th:
             return 0, 0, h, w

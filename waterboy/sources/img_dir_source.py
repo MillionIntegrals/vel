@@ -3,7 +3,7 @@ import os.path
 import torchvision.datasets as ds
 import torch.utils.data as data
 
-from waterboy.api.source import Source
+from waterboy.api.base import Source
 from waterboy.api.data import DataFlow
 
 
@@ -30,5 +30,5 @@ def create(path, num_workers, batch_size, augmentations=None):
         val_df, batch_size=batch_size, shuffle=False, num_workers=num_workers
     )
 
-    return Source(train_loader, test_loader)
+    return Source(train_loader, test_loader, batch_size=batch_size)
 

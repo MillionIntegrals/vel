@@ -8,7 +8,7 @@ import torch.nn as nn
 import torch.nn.init as init
 import torch.nn.functional as F
 
-from waterboy.api.model import Model
+from waterboy.api.base import Model
 from waterboy.metrics.loss_metric import Loss
 from waterboy.metrics.accuracy import Accuracy
 

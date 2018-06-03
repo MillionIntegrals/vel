@@ -6,7 +6,7 @@ https://github.com/pytorch/vision/blob/master/torchvision/models/resnet.py
 import torch.nn as nn
 import torch.nn.functional as F
 
-from waterboy.api.model import Model
+from waterboy.api.base import Model
 from waterboy.modules.resnet_v1 import Bottleneck, BasicBlock
 
 

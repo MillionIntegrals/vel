@@ -2,7 +2,7 @@
 Code based on:
 https://github.com/fastai/fastai/blob/master/fastai/transforms.py
 """
-import cv2
+import PIL.Image as Image
 
 import waterboy.api.data as data
 
@@ -14,7 +14,7 @@ class ScaleMinSize(data.Augmentation):
         self.size = size
 
     def __call__(self, x_data):
-        return data.scale_min(x_data, self.size, cv2.INTER_AREA)
+        return data.scale_min(x_data, self.size, Image.BILINEAR)
 
 
 def create(size, mode='x', tags=None):

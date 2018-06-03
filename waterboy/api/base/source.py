@@ -1,8 +1,9 @@
 class Source:
     """ Very simple wrapper for a training and validation datasource """
-    def __init__(self, train_source, val_source):
+    def __init__(self, train_source, val_source, batch_size):
         self.train_source = train_source
         self.val_source = val_source
+        self.batch_size = batch_size
 
     def train_dataset(self):
         """ Return the training dataset """

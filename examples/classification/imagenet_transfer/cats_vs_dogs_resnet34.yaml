@@ -16,9 +16,6 @@ source:
   batch_size: 64
 
   augmentations:
-  - name: waterboy.augmentations.to_array
-    mode: x
-    tags: ["train", "val"]
   - name: waterboy.augmentations.scale_min_size
     mode: x
     tags: ["train", "val"]
@@ -32,6 +29,9 @@ source:
     mode: x
     tags: ["val"]
     size: 224
+  - name: waterboy.augmentations.to_array
+    mode: x
+    tags: ["train", "val"]
   - name: waterboy.augmentations.normalize
     mode: x
     tags: ["train", "val"]
@@ -51,7 +51,13 @@ optimizer:
 
 commands:
   train:
-    name: waterboy.commands.train
+    name: waterboy.commands.phase_train
+    phases:
+    - name: waterboy.phase.generic
+      lr: 0.01
+      epochs: 2
+      freeze: true
+
   lr_find:
     name: waterboy.commands.lr_find
     metric: 'val:loss'
@@ -60,6 +66,7 @@ commands:
     iterations: 500
     divergence_threshold: 4.0
     freeze: true
+
   augvis:
     name: waterboy.commands.augvis
 #    seed: 1

@@ -1,5 +1,13 @@
 storage:
-  name: waterboy.storage.mongodb
-  uri: 'mongodb://localhost:27017/'
-  database: deep_learning
-  update_visdom: true
+  name: waterboy.storage.classic
+
+  backend:
+    name: waterboy.storage.backend.mongodb
+    uri: 'mongodb://localhost:27017/'
+    database: deep_learning
+
+  streaming:
+    - name: waterboy.storage.streaming.visdom
+    - name: waterboy.storage.streaming.stdout
+      log_frequency: 100
+

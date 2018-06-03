@@ -1,12 +1,15 @@
 import yaml
 import datetime as dtm
 
-from .provider import Provider
+from waterboy.internals.provider import Provider
 from ..exceptions import WbInitializationException
 
 
 class ModelConfig:
-    """ Read from YAML configuration of a model, specifying all details of the run """
+    """
+    Read from YAML configuration of a model, specifying all details of the run.
+    Is a frontend for the provider, resolving all dependency-injection requests.
+    """
 
     def __init__(self, filename, run_number, project_config, **kwargs):
         self.filename = filename
@@ -55,9 +58,9 @@ class ModelConfig:
 
     ####################################################################################################################
     # MODEL DIRECTORIES
-    def checkpoint_dir(self) -> str:
+    def checkpoint_dir(self, *args) -> str:
         """ Return checkpoint directory for this model """
-        return self.project_config.project_output_dir('checkpoints', self.run_name)
+        return self.project_config.project_output_dir('checkpoints', self.run_name, *args)
 
     def data_dir(self, *args) -> str:
         """ Return data directory for given dataset """
@@ -66,24 +69,6 @@ class ModelConfig:
     def output_dir(self, *args) -> str:
         """ Return data directory for given dataset """
         return self.project_config.project_output_dir(*args)
-
-    def checkpoint_filename(self, epoch_idx) -> str:
-        """ Return checkpoint filename for this model """
-        return self.project_config.project_output_dir(
-            'checkpoints', self.run_name, 'checkpoint_{:08}.npy'.format(epoch_idx)
-        )
-
-    def checkpoint_best_filename(self, epoch) -> str:
-        """ Return checkpoint filename for this model """
-        return self.project_config.project_output_dir(
-            'checkpoints', self.run_name, 'checkpoint_best_{:08}.npy'.format(epoch)
-        )
-
-    def checkpoint_opt_filename(self, epoch) -> str:
-        """ Return checkpoint filename for this model """
-        return self.project_config.project_output_dir(
-            'checkpoints', self.run_name, 'checkpoint_opt_{:08}.npy'.format(epoch)
-        )
 
     ####################################################################################################################
     # NAME UTILITIES

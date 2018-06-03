@@ -16,6 +16,8 @@ source:
   num_workers: 4
 
 
+
+
 commands:
   train:
     name: waterboy.commands.train
@@ -27,6 +29,7 @@ commands:
 
     checkpoint:
       metric: 'val:loss'
+
 
   visdom:
     name: waterboy.commands.vis_store

@@ -3,7 +3,7 @@ import torch.nn as nn
 import torch.nn.functional as F
 
 import waterboy.modules.layers as l
-from waterboy.api.model import Model
+from waterboy.api.base import Model
 
 
 # Because of concat pooling it's 2x 512

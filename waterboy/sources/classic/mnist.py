@@ -4,7 +4,7 @@ import torch.utils.data
 from torchvision import datasets, transforms
 
 
-from waterboy.api.source import Source
+from waterboy.api.base import Source
 
 
 def create(batch_size, model_config, normalize=True, num_workers=0):
@@ -42,4 +42,4 @@ def create(batch_size, model_config, normalize=True, num_workers=0):
         **kwargs
     )
 
-    return Source(train_loader, test_loader)
+    return Source(train_loader, test_loader, batch_size=batch_size)

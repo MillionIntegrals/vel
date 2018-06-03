@@ -7,8 +7,9 @@ import numpy as np
 import torch
 import tqdm
 
-import waterboy.api.intepolate as interp
+import waterboy.util.intepolate as interp
 
+from waterboy.api import Learner
 from waterboy.api.metrics import EpochResultAccumulator, TrainingHistory
 
 
@@ -63,62 +64,45 @@ class LrFindCommand:
         self.metric = metric
 
     def run(self):
-        model = self.model
-        model_config = self.model_config
-        source = self.source
-
-        device = torch.device(model_config.device)
-        model = model.to(device)
-
-        optimizer_instance = self.optimizer(model.parameters())
+        device = torch.device(self.model_config.device)
+        learner = Learner(device, self.model)
 
         lr_schedule = interp.interpolate_series(self.start_lr, self.end_lr, self.num_it, self.interpolation)
 
-        iterator = iter(source.train_source)
+        iterator = iter(self.source.train_source)
 
-        metrics = model.metrics()
+        metrics = learner.metrics()
         history = TrainingHistory()
 
         if self.freeze:
-            model.freeze()
+            learner.model.freeze()
 
-        model.train()
+        # Optimizer shoudl be created after freeze
+        optimizer_instance = self.optimizer(filter(lambda p: p.requires_grad, learner.model.parameters()))
+
+        learner.train()
 
         best_value = None
 
         result_accumulator = EpochResultAccumulator(1, metrics)
 
         for iteration_idx, lr in enumerate(tqdm.tqdm(lr_schedule)):
-            # First, set the learning rate
+            # First, set the learning rate, the same for each parameter group
             for param_group in optimizer_instance.param_groups:
                 param_group['lr'] = lr
 
             try:
                 data, target = next(iterator)
             except StopIteration:
-                iterator = iter(source.train_source)
+                iterator = iter(self.source.train_source)
                 data, target = next(iterator)
 
-            data, target = data.to(device), target.to(device)
-
-            optimizer_instance.zero_grad()
-
-            output, loss = model.loss(data, target)
-
-            loss.backward()
-            optimizer_instance.step()
-
-            with torch.no_grad():
-                result_accumulator.calculate(data, target, output, loss=loss)
+            learner.train_batch(data, target, optimizer_instance, result_accumulator=result_accumulator)
 
             # METRIC RECORDING PART
             current_value = result_accumulator.intermediate_value(self.metric)
 
-            final_metrics = {
-                'epoch_idx': iteration_idx,
-                self.metric: current_value,
-                'lr': lr
-            }
+            final_metrics = {'epoch_idx': iteration_idx, self.metric: current_value, 'lr': lr}
 
             if best_value is None or current_value < best_value:
                 best_value = current_value

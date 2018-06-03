@@ -1,7 +1,7 @@
 import argparse
 
 from waterboy.internals.project_config import ProjectConfig
-from waterboy.internals.model_config import ModelConfig
+from waterboy.api import ModelConfig
 
 
 def main():

@@ -50,6 +50,7 @@ noisy data science workflow.
 
 - [ ] Write output of LrFinder to storage rather than to matplotlib
 - [ ] Fork torch summary and incorporate into the framework
+- [ ] Parametrize visdom connection better
 
 
 ## Important links:

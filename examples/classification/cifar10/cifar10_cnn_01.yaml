@@ -15,6 +15,19 @@ source:
   num_workers: 4
   normalize: True
 
+  augmentations:
+  - name: waterboy.augmentations.random_crop
+    mode: x
+    tags: ["train"]
+    width: 32
+    height: 32
+    padding: 4
+    padding_mode: 'reflect'
+
+  - name: waterboy.augmentations.random_horizontal_flip
+    mode: x
+    tags: ["train"]
+
 commands:
   train:
     name: waterboy.commands.train

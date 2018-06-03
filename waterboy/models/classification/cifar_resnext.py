@@ -6,7 +6,7 @@ https://github.com/fastai/fastai/blob/master/fastai/models/cifar10/resnext.py
 import torch.nn as nn
 import torch.nn.functional as F
 
-from waterboy.internals.model import Model
+from waterboy.api.base import Model
 from waterboy.modules.resnext import ResNeXtBottleneck
 
 

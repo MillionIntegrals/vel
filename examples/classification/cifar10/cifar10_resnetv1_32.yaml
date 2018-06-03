@@ -17,9 +17,18 @@ source:
   normalize: True
 
   augmentations:
-  - name: waterboy.augmentations.pure_image_augmentation
-    random_crop: {width: 32, height: 32, padding: 4, padding_mode: reflect}
-    horizontal_flip: true
+  - name: waterboy.augmentations.random_crop
+    mode: x
+    tags: ["train"]
+    width: 32
+    height: 32
+    padding: 4
+    padding_mode: 'reflect'
+
+  - name: waterboy.augmentations.random_horizontal_flip
+    mode: x
+    tags: ["train"]
+
 
 
 commands:
@@ -64,3 +73,4 @@ commands:
     name: waterboy.commands.augvis
     seed: 1
     samples: 5
+    cases: 3
