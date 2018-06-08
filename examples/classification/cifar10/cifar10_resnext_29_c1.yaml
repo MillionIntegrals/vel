@@ -2,7 +2,7 @@ name: 'cifar10_resnetv1_32'
 
 
 model:
-  name: waterboy.models.classification.cifar_resnext
+  name: waterboy.models.classic.cifar_resnext
   img_channels: 3
   num_classes: 10
 

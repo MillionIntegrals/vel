@@ -2,7 +2,7 @@ name: 'mnist_cnn_01'
 
 
 model:
-  name: waterboy.models.classification.mnist_cnn_01
+  name: waterboy.models.classic.mnist_cnn_01
   img_rows: 28
   img_cols: 28
   img_channels: 1

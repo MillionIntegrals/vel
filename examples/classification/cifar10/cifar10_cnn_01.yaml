@@ -2,7 +2,7 @@ name: 'cifar10_cnn_01'
 
 
 model:
-  name: waterboy.models.classification.cifar10_cnn_01
+  name: waterboy.models.classic.cifar10_cnn_01
   img_rows: 32
   img_cols: 32
   img_channels: 3
