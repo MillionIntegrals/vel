@@ -1,3 +1,4 @@
+import torch
 import yaml
 import datetime as dtm
 
@@ -83,11 +84,21 @@ class ModelConfig:
         return self._model_name
 
     ####################################################################################################################
+    # PROVIDER API
+    def provide(self, name):
+        """ Return a dependency-injected instance """
+        return self.provider.instantiate_by_name(name)
+
+    ####################################################################################################################
     # BANNERS - Maybe shouldn't be here, but they are for now
     def banner(self, command_name) -> None:
         """ Print a banner for running the system """
+        device = torch.device(self.device)
         print("=" * 80)
+        print(f"Pytorch version: {torch.__version__} cuda version {torch.version.cuda} cudnn version {torch.backends.cudnn.version()}")
         print("Running model {}, run {} -- command {} -- device {}".format(self._model_name, self.run_number, command_name, self.device))
+        if device.type == 'cuda':
+            print(f"CUDA Device name {torch.cuda.get_device_name(device.index)}")
         print(dtm.datetime.now().strftime("%Y/%m/%d - %H:%M:%S"))
         print("=" * 80)
 
@@ -101,4 +112,4 @@ class ModelConfig:
     ####################################################################################################################
     # Small UI utils
     def __repr__(self):
-        return f"<ModelConfig at {self.filename}"
+        return f"<ModelConfig at {self.filename}>"
