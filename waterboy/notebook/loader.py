@@ -1,5 +1,5 @@
 from waterboy.internals.project_config import ProjectConfig
-from waterboy.internals.model_config import ModelConfig
+from waterboy.api import ModelConfig
 
 
 def load(config_path, run_number=0, device='cuda:0'):
