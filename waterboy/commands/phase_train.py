@@ -9,7 +9,7 @@ from waterboy.api.metrics import TrainingHistory
 class PhaseTrainCommand:
     """ Training  command - learn according to a set of phases """
 
-    def __init__(self, model_config, model, source, storage, phases, callbacks=None):
+    def __init__(self, model_config, model, source, storage, phases, callbacks=None, restart=True):
         self.model_config = model_config
         self.model = model
         self.source = source
@@ -18,6 +18,7 @@ class PhaseTrainCommand:
         self.ladder = self._build_phase_ladder(phases)
         self.full_number_of_epochs = sum(p.number_of_epochs for p in phases)
         self.callbacks = callbacks
+        self.restart = restart
 
     @staticmethod
     def _build_phase_ladder(phases):
@@ -36,13 +37,10 @@ class PhaseTrainCommand:
 
         metrics = learner.metrics()
 
-        print("-" * 120)
-        learner.summary()
-        print("-" * 120)
-        print("Number of model parameters: {:,}".format(learner.number_of_parameters()))
-        print("-" * 120)
-
-        last_epoch, hidden_state = self.storage.resume_learning(learner.model)
+        if self.restart:
+            last_epoch, hidden_state = self.storage.resume_learning(learner.model)
+        else:
+            last_epoch, hidden_state = 0, {}
 
         current_idx = bisect.bisect_right(self.ladder, last_epoch) - 1
         current_phase = self.phases[current_idx]
@@ -60,7 +58,7 @@ class PhaseTrainCommand:
 
         for epoch_idx in range(1 + last_epoch, self.full_number_of_epochs+1):
             phase_idx = bisect.bisect_right(self.ladder, last_epoch) - 1
-            local_idx = last_epoch - self.ladder[current_idx]
+            local_idx = epoch_idx - self.ladder[phase_idx]
 
             # Phase preparations
             if current_idx != phase_idx:
@@ -86,7 +84,7 @@ class PhaseTrainCommand:
             current_phase.tear_down_phase(learner)
 
 
-def create(model_config, model, source, storage, phases, callbacks=None):
+def create(model_config, model, source, storage, phases, callbacks=None, restart=True):
     """ Waterboy creation function """
     callbacks = callbacks or []
     return PhaseTrainCommand(
@@ -95,6 +93,7 @@ def create(model_config, model, source, storage, phases, callbacks=None):
         source=source,
         storage=storage,
         phases=phases,
-        callbacks=callbacks
+        callbacks=callbacks,
+        restart=restart
     )
 
