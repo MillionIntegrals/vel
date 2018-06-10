@@ -3,6 +3,7 @@ import yaml
 import datetime as dtm
 
 from waterboy.internals.provider import Provider
+from waterboy.internals.project_config import ProjectConfig
 from ..exceptions import WbInitializationException
 
 
@@ -12,7 +13,7 @@ class ModelConfig:
     Is a frontend for the provider, resolving all dependency-injection requests.
     """
 
-    def __init__(self, filename, run_number, project_config, **kwargs):
+    def __init__(self, filename: str, run_number: int, project_config: ProjectConfig, **kwargs):
         self.filename = filename
         self.device = kwargs.get('device', 'cuda')
 
@@ -38,7 +39,7 @@ class ModelConfig:
             'project_config': self.project_config
         })
 
-    def _prepare_environment(self):
+    def _prepare_environment(self) -> dict:
         """ Return full environment for dependency injection """
         return {
             **self.project_config.contents,
@@ -70,6 +71,10 @@ class ModelConfig:
     def output_dir(self, *args) -> str:
         """ Return data directory for given dataset """
         return self.project_config.project_output_dir(*args)
+
+    def project_dir(self, *args) -> str:
+        """ Return data directory for given dataset """
+        return self.project_config.project_toplevel_dir(*args)
 
     ####################################################################################################################
     # NAME UTILITIES
