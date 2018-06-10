@@ -9,10 +9,13 @@ class StdoutStreaming(base.Callback):
 
     def on_batch_end(self, progress_idx,  metrics):
         if progress_idx.batch_number % self.log_frequency == 0:
-            print('Train Epoch: {:04} [{:06}/{:06} ({:02.0f}%)]\t{}'.format(
+            print('Train Epoch: {:04} [{:06}/{:06} ({:04}/{:04}) ({:02.0f}%)]\t{}'.format(
                 progress_idx.epoch_number,
                 progress_idx.batch_number * self.source.batch_size,
-                len(self.source.train_source.dataset), 100. * progress_idx.batch_number / len(self.source.train_source),
+                len(self.source.train_source.dataset),
+                progress_idx.batch_number,
+                len(self.source.train_source),
+                100. * progress_idx.batch_number / len(self.source.train_source),
                 self.metrics_string(metrics))
             )
 

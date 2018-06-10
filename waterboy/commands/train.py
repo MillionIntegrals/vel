@@ -51,12 +51,6 @@ class SimpleTrainCommand:
         if last_epoch > 0:
             self.restore(hidden_state, optimizer_instance, callbacks)
 
-        print("-" * 120)
-        learner.summary()
-        print("-" * 120)
-        print("Number of model parameters: {:,}".format(learner.number_of_parameters()))
-        print("-" * 120)
-
         for callback in callbacks:
             callback.on_train_begin()
 

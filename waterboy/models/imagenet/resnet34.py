@@ -3,6 +3,8 @@ import torch.nn as nn
 import torch.nn.functional as F
 
 import waterboy.modules.layers as l
+import waterboy.util.module_util as mu
+
 from waterboy.api.base import Model
 
 
@@ -64,8 +66,7 @@ class Resnet34(Model):
 
         for idx, child in enumerate(self.model.children()):
             if idx < number:
-                for parameter in child.parameters():
-                    parameter.requires_grad = False
+                mu.freeze_layer(child)
 
     def forward(self, x):
         return self.model(x)

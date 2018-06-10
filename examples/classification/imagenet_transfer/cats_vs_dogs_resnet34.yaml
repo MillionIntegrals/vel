@@ -44,7 +44,7 @@ source:
 
 optimizer:
   name: waterboy.optimizers.sgd
-  lr: 0.1
+  lr: 0.01
   weight_decay: 0.0
   momentum: 0.9
 
@@ -57,6 +57,9 @@ commands:
       lr: 0.01
       epochs: 2
       freeze: true
+
+  summary:
+    name: waterboy.commands.summary
 
   lr_find:
     name: waterboy.commands.lr_find

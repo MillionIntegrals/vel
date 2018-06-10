@@ -27,17 +27,17 @@ class ProjectConfig:
         with open(os.path.join(self.project_dir, ProjectConfig.PROJECT_FILE_NAME), 'r') as fp:
             self.contents = yaml.safe_load(fp)
 
-    def project_data_dir(self, *args):
+    def project_data_dir(self, *args) -> str:
         """ Directories where to store project files """
         return os.path.join(self.project_dir, 'data', *args)
 
-    def project_output_dir(self, *args):
+    def project_output_dir(self, *args) -> str:
         """ Directories where to store project files """
         return os.path.join(self.project_dir, 'output', *args)
 
-    def tensorboard_dir(self, run_name) -> str:
-        """ Directory where to store tensorboard files """
-        return self.project_output_dir('tensorboard', run_name)
+    def project_toplevel_dir(self, *args) -> str:
+        """ Top-level directory """
+        return os.path.join(self.project_dir, *args)
 
     def openai_dir(self, run_name) -> str:
         """ Directory where to store openai files """
