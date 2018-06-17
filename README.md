@@ -39,10 +39,11 @@ noisy data science workflow.
 - [x] Model checkpointing
 - [x] Visdom integration
 - [x] Learning rate finder
+- [x] "Phase" training
+- [x] Notebook integration
+- [x] SGD with warm restarts
 - [ ] Cats vs dogs transfer learning
-- [ ] "Phase" training
-- [ ] Notebook integration
-- [ ] SGD with warm restarts
+- [ ] Per-command learning output
 - [ ] Super-convergence experiments
 
 

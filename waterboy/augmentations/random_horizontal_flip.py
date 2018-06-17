@@ -1,5 +1,5 @@
-import torchvision.transforms.functional as F
 import random
+import numpy as np
 
 import waterboy.api.data as data
 
@@ -20,7 +20,7 @@ class RandomHorizontalFlip(data.Augmentation):
             PIL Image: Randomly flipped image.
         """
         if random.random() < self.p:
-            return F.hflip(img)
+            return np.fliplr(img).copy()
         return img
 
     def __repr__(self):

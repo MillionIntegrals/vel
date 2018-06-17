@@ -69,7 +69,7 @@ class LrFindCommand:
 
         lr_schedule = interp.interpolate_series(self.start_lr, self.end_lr, self.num_it, self.interpolation)
 
-        iterator = iter(self.source.train_source)
+        iterator = iter(self.source.train_loader)
 
         metrics = learner.metrics()
         history = TrainingHistory()
@@ -94,7 +94,7 @@ class LrFindCommand:
             try:
                 data, target = next(iterator)
             except StopIteration:
-                iterator = iter(self.source.train_source)
+                iterator = iter(self.source.train_loader)
                 data, target = next(iterator)
 
             learner.train_batch(data, target, optimizer_instance, result_accumulator=result_accumulator)

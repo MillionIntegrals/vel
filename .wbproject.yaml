@@ -8,6 +8,6 @@ storage:
 
   streaming:
     - name: waterboy.storage.streaming.visdom
+      stream_lr: true
     - name: waterboy.storage.streaming.stdout
-      log_frequency: 100
 

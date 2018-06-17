@@ -12,31 +12,56 @@ source:
   name: waterboy.sources.img_dir_source
   # Dataset downloaded from http://files.fast.ai/data/dogscats.zip
   path: data/dogscats
-  num_workers: 4
+  num_workers: 8
   batch_size: 64
 
+  tta:
+    name: waterboy.augmentations.tta.train_tta
+    n_augmentations: 4
+
   augmentations:
-  - name: waterboy.augmentations.scale_min_size
+  - name: waterboy.augmentations.to_array
     mode: x
     tags: ["train", "val"]
+
+  - name: waterboy.augmentations.random_scale
+    mode: x
+    tags: ["train"]
     size: 224
+    max_zoom: 1.1
+  - name: waterboy.augmentations.random_rotate
+    mode: x
+    tags: ["train"]
+    deg: 10.0
   - name: waterboy.augmentations.random_crop
     mode: x
     tags: ["train"]
     width: 224
     height: 224
+  - name: waterboy.augmentations.random_lighting
+    mode: x
+    tags: ["train"]
+    b: 0.05
+    c: 0.05
+  - name: waterboy.augmentations.random_horizontal_flip
+    mode: x
+    tags: ["train"]
+
+  - name: waterboy.augmentations.scale_min_size
+    mode: x
+    tags: ["val"]
+    size: 224
   - name: waterboy.augmentations.center_crop
     mode: x
     tags: ["val"]
     size: 224
-  - name: waterboy.augmentations.to_array
-    mode: x
-    tags: ["train", "val"]
+
   - name: waterboy.augmentations.normalize
     mode: x
     tags: ["train", "val"]
     mean: [0.485, 0.456, 0.406]
     std:  [0.229, 0.224, 0.225]
+
   - name: waterboy.augmentations.to_tensor
     mode: x
     tags: ["train", "val"]
@@ -52,11 +77,33 @@ optimizer:
 commands:
   train:
     name: waterboy.commands.phase_train
+    restart: false
     phases:
-    - name: waterboy.phase.generic
-      lr: 0.01
-      epochs: 2
-      freeze: true
+    - name: waterboy.phase.freeze
+    - name: waterboy.phase.cycle
+      init_lr: 0.001
+      init_iter: 20
+      max_lr: 0.01
+      min_lr: 0.00
+      interpolate: 'cosine'
+      cycles: 3
+      cycle_len: 1
+    - name: waterboy.phase.unfreeze
+    - name: waterboy.phase.cycle
+      init_lr: 0.001
+      init_iter: 20
+
+      max_lr: [1.0e-4, 1.0e-3, 1.0e-2]
+      min_lr: [0.0, 0.0, 0.0]
+      interpolate: 'cosine'
+      cycles: 3
+      cycle_len: 1
+      cycle_mult: 2
+
+  simple_train:
+    name: waterboy.commands.train
+    restart: false
+    epochs: 3
 
   summary:
     name: waterboy.commands.summary

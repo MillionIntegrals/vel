@@ -9,7 +9,7 @@ class SimpleTrainCommand:
     """ Very simple training command - just run the supplied generators """
 
     def __init__(self, model_config: ModelConfig, epochs, optimizer_fn, scheduler_fn, callbacks, checkpoint, model,
-                 source, storage):
+                 source, storage, restart=True):
         self.epochs = epochs
         self.callbacks = callbacks
         self.optimizer_fn = optimizer_fn
@@ -19,6 +19,7 @@ class SimpleTrainCommand:
         self.source = source
         self.model_config = model_config
         self.storage = storage
+        self.restart = restart
 
         self.storage.set_checkpoint_strategy(ClassicCheckpointStrategy(**self.checkpoint))
 
@@ -46,7 +47,10 @@ class SimpleTrainCommand:
         # Just default set of model metrics
         metrics = learner.metrics()
 
-        last_epoch, hidden_state = self.storage.resume_learning(learner.model)
+        if self.restart:
+            last_epoch, hidden_state = self.storage.resume_learning(learner.model)
+        else:
+            last_epoch, hidden_state = 0, {}
 
         if last_epoch > 0:
             self.restore(hidden_state, optimizer_instance, callbacks)
@@ -57,8 +61,6 @@ class SimpleTrainCommand:
         training_history = TrainingHistory()
 
         for epoch_idx in range(1 + last_epoch, self.epochs+1):
-            lr = optimizer_instance.param_groups[0]['lr']
-            print("|-------- Epoch {:06} Lr={:.6f} ----------|".format(epoch_idx, lr))
 
             epoch_result = learner.run_epoch(epoch_idx, metrics, self.source, optimizer_instance, callbacks)
 
@@ -72,7 +74,8 @@ class SimpleTrainCommand:
         return training_history
 
 
-def create(model_config, epochs, optimizer, model, source,  storage, scheduler=None, callbacks=None, checkpoint=None):
+def create(model_config, epochs, optimizer, model, source,  storage, scheduler=None, callbacks=None, checkpoint=None,
+           restart=True):
     """ Simply train the model """
     callbacks = callbacks or []
     checkpoint = checkpoint or {}
@@ -86,5 +89,6 @@ def create(model_config, epochs, optimizer, model, source,  storage, scheduler=N
         checkpoint=checkpoint,
         model=model,
         source=source,
-        storage=storage
+        storage=storage,
+        restart=restart
     )

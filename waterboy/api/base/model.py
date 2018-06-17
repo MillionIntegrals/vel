@@ -66,3 +66,7 @@ class Model(nn.Module):
             result.extend(hashlib.sha256(x.detach().cpu().numpy().tobytes()).hexdigest() for x in child.parameters())
 
         return result
+
+    def get_layer_groups(self):
+        """ Return layers grouped """
+        return [self]

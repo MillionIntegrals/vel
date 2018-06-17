@@ -1,6 +1,3 @@
-import torch
-import torch.utils.data
-
 from torchvision import datasets, transforms
 
 
@@ -9,8 +6,6 @@ from waterboy.api.base import Source
 
 def create(batch_size, model_config, normalize=True, num_workers=0):
     """ Create a MNIST dataset, normalized """
-    kwargs = {}
-
     path = model_config.data_dir('mnist')
 
     train_dataset = datasets.MNIST(path, train=True, download=True)
@@ -31,15 +26,9 @@ def create(batch_size, model_config, normalize=True, num_workers=0):
     train_dataset.transform = transform
     test_dataset.transform = transform
 
-    train_loader = torch.utils.data.DataLoader(
-        train_dataset, batch_size=batch_size, shuffle=True,
+    return Source(
+        train_dataset,
+        test_dataset,
         num_workers=num_workers,
-        **kwargs
+        batch_size=batch_size
     )
-    test_loader = torch.utils.data.DataLoader(
-        test_dataset, batch_size=batch_size, shuffle=False,
-        num_workers=num_workers,
-        **kwargs
-    )
-
-    return Source(train_loader, test_loader, batch_size=batch_size)

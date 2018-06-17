@@ -12,6 +12,10 @@ class Provider:
             'pp_provider': self
         }
 
+    def inject(self, name, value):
+        """ Inject an object into the provider """
+        self.instances[name] = value
+
     def resolve_and_call(self, func, extra_env=None):
         """ Resolve function arguments and call them, possibily filling from the environment """
         parameter_list = [(k, v.default == inspect.Parameter.empty) for k, v in inspect.signature(func).parameters.items()]

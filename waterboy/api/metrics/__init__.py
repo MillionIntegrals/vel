@@ -1,2 +1,2 @@
-from .epoch_result import EpochResultAccumulator, EpochResult
+from .epoch_result import EpochResultAccumulator
 from .history import TrainingHistory

@@ -6,7 +6,6 @@ https://github.com/pytorch/vision/blob/master/torchvision/transforms/transforms.
 import numbers
 import random
 
-import torchvision.transforms.functional as F
 import waterboy.api.data as data
 
 
@@ -35,6 +34,7 @@ class RandomCrop(data.Augmentation):
 
         self.padding = padding
         self.padding_mode = padding_mode
+        self.padding_mode_cv = data.mode_to_cv2(self.padding_mode)
         self.pad_if_needed = pad_if_needed
 
     @staticmethod
@@ -48,7 +48,8 @@ class RandomCrop(data.Augmentation):
         Returns:
             tuple: params (i, j, h, w) to be passed to ``crop`` for random crop.
         """
-        w, h = img.size
+        w, h, *_ = img.shape
+
         th, tw = output_size
         if w == tw and h == th:
             return 0, 0, h, w
@@ -66,22 +67,19 @@ class RandomCrop(data.Augmentation):
             PIL Image: Cropped image.
         """
         if self.padding > 0:
-            img = F.pad(img, self.padding, padding_mode=self.padding_mode)
+            img = data.pad(img, self.padding, mode=self.padding_mode_cv)
 
         # pad the width if needed
         if self.pad_if_needed and img.size[0] < self.size[1]:
-            img = F.pad(img, (int((1 + self.size[1] - img.size[0]) / 2), 0), padding_mode=self.padding_mode)
+            img = data.pad(img, (int((1 + self.size[1] - img.size[0]) / 2), 0), mode=self.padding_mode_cv)
+
         # pad the height if needed
         if self.pad_if_needed and img.size[1] < self.size[0]:
-            img = F.pad(img, (0, int((1 + self.size[0] - img.size[1]) / 2)), padding_mode=self.padding_mode)
+            img = data.pad(img, (0, int((1 + self.size[0] - img.size[1]) / 2)), mode=self.padding_mode_cv)
 
         i, j, h, w = self.get_params(img, self.size)
 
-        # return F.crop(img, i, j, h, w)
-        if F._is_pil_image(img):
-            return F.crop(img, i, j, h, w)
-        else:
-            return data.crop(img, j, i, w, h)
+        return data.crop(img, j, i, w, h)
 
     def __repr__(self):
         return self.__class__.__name__ + '(size={0}, padding={1})'.format(self.size, self.padding)

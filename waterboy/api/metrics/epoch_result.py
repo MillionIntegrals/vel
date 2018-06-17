@@ -11,10 +11,12 @@ class EpochResultAccumulator:
         self._reset_metrics()
         self.metrics_by_name = {m.name: m for m in self.metrics}
 
-    def calculate(self, x_data, y_true, y_pred, **kwargs):
+    def calculate(self, x_data, y_true, y_pred, context=None):
         """ Calculate metric values """
+        context = {} if context is None else context
+
         for m in self.metrics:
-            m.calculate(x_data, y_true, y_pred, **kwargs)
+            m.calculate(x_data, y_true, y_pred, **context)
 
     def _reset_metrics(self):
         """ Internal API : reset state of metrics """
@@ -24,10 +26,6 @@ class EpochResultAccumulator:
     def value(self):
         """ Return current value of the metrics """
         return {m.name: m.value() for m in self.metrics}
-
-    # def value_string(self, precision=6):
-    #     """ Return a string describing current values of all metrics """
-    #     return " ".join([("{}: {:." + str(precision) + "f}").format(m.name, m.value()) for m in self.metrics])
 
     def intermediate_value(self, metric):
         """ Return an intermediate (inter-epoch) value of a metric """
@@ -48,7 +46,7 @@ class EpochResultAccumulator:
 
     def result(self):
         """ Return the epoch result """
-        final_result = {'epoch_idx': self.epoch_idx}
+        final_result = {'epoch_idx': self.epoch_idx.global_epoch_idx}
 
         for key, value in self.train_results.items():
             final_result["train:{}".format(key)] = value
@@ -58,8 +56,3 @@ class EpochResultAccumulator:
 
         return final_result
 
-
-class EpochResult:
-    """ Result of a single epoch of training """
-    def __init__(self, data):
-        self.data = data

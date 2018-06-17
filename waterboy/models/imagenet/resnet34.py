@@ -13,6 +13,8 @@ NET_OUTPUT = 1024
 
 
 class Resnet34(Model):
+    """ Resnet34 network model """
+
     def __init__(self, fc_layers=None, dropout=None, pretrained=True):
         super().__init__()
 
@@ -20,7 +22,9 @@ class Resnet34(Model):
         self.fc_layers = fc_layers
         self.dropout = dropout
         self.pretrained = pretrained
+
         self.head_layers = 8
+        self.group_cut_layers = (6, 10)
 
         # Load backbbone
         backbone = m.resnet34(pretrained=pretrained)
@@ -68,7 +72,20 @@ class Resnet34(Model):
             if idx < number:
                 mu.freeze_layer(child)
 
+    def unfreeze(self):
+        """ Unfreeze model layers """
+        for idx, child in enumerate(self.model.children()):
+            mu.unfreeze_layer(child)
+
+    def get_layer_groups(self):
+        """ Return layers grouped """
+        g1 = list(self.model[:self.group_cut_layers[0]])
+        g2 = list(self.model[self.group_cut_layers[0]:self.group_cut_layers[1]])
+        g3 = list(self.model[self.group_cut_layers[1]:])
+        return [g1, g2, g3]
+
     def forward(self, x):
+        """ Calculate model value """
         return self.model(x)
 
     def loss_value(self, x_data, y_true, y_pred):

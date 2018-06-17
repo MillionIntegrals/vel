@@ -11,7 +11,7 @@ class ModelSummary:
         if self.source is None:
             self.model.summary()
         else:
-            x_data, y_data = next(iter(self.source.train_source))
+            x_data, y_data = next(iter(self.source.train_loader))
             self.model.summary(input_size=x_data.shape[1:])
 
 
