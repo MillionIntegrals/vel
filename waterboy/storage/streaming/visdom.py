@@ -18,16 +18,22 @@ class VisdomStreaming(base.Callback):
         metrics_df = pd.DataFrame([metrics]).set_index('epoch_idx')
         visdom_append_metrics(self.vis, metrics_df, first_epoch=epoch_idx.global_epoch_idx == 1)
 
-    def on_batch_end_optimizer(self, progress_idx,  metrics, optimizer):
+    def on_batch_end(self, progress_idx,  _, optimizer):
         """ Stream LR to visdom """
         if self.stream_lr:
             iteration_idx = (
-                (progress_idx.epoch_number - 1) * progress_idx.batches_per_epoch + progress_idx.batch_number + 1
+                    float(progress_idx.epoch_number) +
+                    float(progress_idx.batch_number) / progress_idx.batches_per_epoch
             )
+            
             lr = optimizer.param_groups[-1]['lr']
 
             metrics_df = pd.DataFrame([lr], index=[iteration_idx], columns=['lr'])
-            visdom_append_metrics(self.vis, metrics_df, first_epoch=iteration_idx == 1)
+
+            visdom_append_metrics(
+                self.vis, metrics_df,
+                first_epoch=(progress_idx.epoch_number == 1) and (progress_idx.batch_number == 0)
+            )
 
 
 def create(model_config, stream_lr=False):

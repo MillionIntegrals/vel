@@ -69,10 +69,7 @@ class Learner:
             iterator.set_postfix(loss=result_accumulator.intermediate_value('loss'))
 
             for callback in callbacks:
-                callback.on_batch_end(progress_idx, result_accumulator.value())
-
-            for callback in callbacks:
-                callback.on_batch_end_optimizer(progress_idx, result_accumulator.value(), optimizer)
+                callback.on_batch_end(progress_idx, result_accumulator.value(), optimizer)
 
     def eval_epoch(self, epoch_idx, source, callbacks=None, result_accumulator=None):
         """ Run a single evaluation epoch """
