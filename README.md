@@ -42,15 +42,16 @@ noisy data science workflow.
 - [x] "Phase" training
 - [x] Notebook integration
 - [x] SGD with warm restarts
-- [ ] Cats vs dogs transfer learning
-- [ ] Per-command learning output
+- [x] Cats vs dogs transfer learning
+- [ ] Planet earth transfer learning
+- [ ] A2C and PPO policy gradient reinforcement learning algorithms.
 - [ ] Super-convergence experiments
 
 
 ## Smaller TODO items:
 
+- [x] Fork torch summary and incorporate into the framework
 - [ ] Write output of LrFinder to storage rather than to matplotlib
-- [ ] Fork torch summary and incorporate into the framework
 - [ ] Parametrize visdom connection better
 
 
