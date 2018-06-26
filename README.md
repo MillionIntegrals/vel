@@ -1,10 +1,12 @@
 # waterboy
+
 My goal is to establish a Rails-like convention-over-configuration opinionated set of
 tools streamlining research and development of deep learning models.
 
 I wanted to minimize time to market of new projects, ease experimentation
 and combine that with experiment management to bring some order to an already 
 noisy data science workflow.
+
 
 # Features
 
@@ -20,7 +22,6 @@ noisy data science workflow.
   Currently I'm focusing on computer vision and reinforcement learning models.
 - (Done) All common deep learning workflows should be fast to implement, while 
   uncommon ones should be possible. At least as far as PyTorch allows.
-
 
 
 ## TODO:
@@ -51,6 +52,8 @@ noisy data science workflow.
 ## Smaller TODO items:
 
 - [x] Fork torch summary and incorporate into the framework
+- [ ] Confusion matrix/error analysis
+- [ ] Epoch time measurements
 - [ ] Write output of LrFinder to storage rather than to matplotlib
 - [ ] Parametrize visdom connection better
 
@@ -62,3 +65,4 @@ noisy data science workflow.
 - https://github.com/pytorch/vision
 - https://github.com/pytorch/tnt
 - https://github.com/fastai/fastai
+- https://github.com/openai/baselines
