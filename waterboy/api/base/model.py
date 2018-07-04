@@ -23,7 +23,8 @@ class Model(nn.Module):
         return [Loss()]
 
     def train(self, mode=True):
-        r"""Sets the module in training mode.
+        r"""
+        Sets the module in training mode.
 
         This has any effect only on certain modules. See documentations of
         particular modules for details of their behaviors in training/evaluation
@@ -57,7 +58,7 @@ class Model(nn.Module):
                 print(f"{idx}: {hashvalue}")
 
     def hashsummary(self):
-        """ Print a model summary """
+        """ Print a model summary - checksums of each layer parameters """
         children = list(self.children())
 
         result = []
@@ -70,3 +71,7 @@ class Model(nn.Module):
     def get_layer_groups(self):
         """ Return layers grouped """
         return [self]
+
+    def reset_weights(self):
+        """ Call proper initializers for the weights """
+        pass
