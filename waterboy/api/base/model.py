@@ -8,7 +8,8 @@ from waterboy.util.summary import summary
 
 
 class Model(nn.Module):
-    """ A fully fledged model """
+    """ Class representing full neural network model """
+
     def loss(self, x_data, y_true):
         """ Forward propagate network and return a value of loss function """
         y_pred = self(x_data)
