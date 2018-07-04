@@ -76,6 +76,10 @@ class ModelConfig:
         """ Return data directory for given dataset """
         return self.project_config.project_toplevel_dir(*args)
 
+    def openai_dir(self) -> str:
+        """ Return directory for openai output files for this model """
+        return self.project_config.project_output_dir('openai', self.run_name)
+
     ####################################################################################################################
     # NAME UTILITIES
     @property
