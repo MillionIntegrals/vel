@@ -8,6 +8,9 @@ class EpochIdx:
         else:
             self.local_epoch_idx = local_epoch_idx
 
+    def __repr__(self):
+        return f"EpochIdx(global_epoch_idx={self.global_epoch_idx}, local_epoch_idx={self.local_epoch_idx})"
+
 
 class BatchIdx:
     """ Class representing how far are we in the training of the model """

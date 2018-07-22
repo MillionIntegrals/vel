@@ -1,6 +1,6 @@
 import torch
 
-from waterboy.api import Learner, ModelConfig
+from waterboy.api import Learner, ModelConfig, EpochIdx
 from waterboy.api.metrics import TrainingHistory
 from waterboy.storage.impl.checkpoint_strategy import ClassicCheckpointStrategy
 
@@ -60,8 +60,8 @@ class SimpleTrainCommand:
 
         training_history = TrainingHistory()
 
-        for epoch_idx in range(1 + last_epoch, self.epochs+1):
-
+        for global_epoch_idx in range(1 + last_epoch, self.epochs+1):
+            epoch_idx = EpochIdx(global_epoch_idx, global_epoch_idx)
             epoch_result = learner.run_epoch(epoch_idx, metrics, self.source, optimizer_instance, callbacks)
 
             self.storage.checkpoint(epoch_idx, epoch_result, learner.model, optimizer_instance, callbacks)

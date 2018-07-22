@@ -52,25 +52,27 @@ class ClassicStorage(base.Storage):
         """ Get a frame of metrics from backend """
         return self.backend.get_frame()
 
-    def clean(self, epoch_idx):
+    def clean(self, global_epoch_idx):
         """ Clean old checkpoints """
         if self.cleaned:
             return
 
         self.cleaned = True
-        self.backend.clean(epoch_idx)
+        self.backend.clean(global_epoch_idx)
 
     def checkpoint(self, epoch_idx, metrics, model, optimizer=None, callbacks=None, state_dict=None):
         """ When epoch is done, we persist the training state """
         callbacks = callbacks if callbacks is not None else []
         state_dict = state_dict if state_dict is not None else {}
 
-        self.clean(epoch_idx)
+        global_epoch_idx = epoch_idx.global_epoch_idx
+
+        self.clean(global_epoch_idx)
 
         self._make_sure_dir_exists()
 
         # Checkpoint latest
-        torch.save(model.state_dict(), self.checkpoint_filename(epoch_idx))
+        torch.save(model.state_dict(), self.checkpoint_filename(global_epoch_idx))
 
         hidden_state = state_dict.copy()
 
@@ -82,23 +84,23 @@ class ClassicStorage(base.Storage):
 
         self.checkpoint_strategy.write_state_dict(hidden_state)
 
-        torch.save(hidden_state, self.checkpoint_hidden_filename(epoch_idx))
+        torch.save(hidden_state, self.checkpoint_hidden_filename(global_epoch_idx))
 
-        if epoch_idx > 1 and self.checkpoint_strategy.should_delete_previous_checkpoint(epoch_idx):
-            prev_epoch_idx = epoch_idx - 1
+        if global_epoch_idx > 1 and self.checkpoint_strategy.should_delete_previous_checkpoint(global_epoch_idx):
+            prev_epoch_idx = global_epoch_idx - 1
 
             os.remove(self.checkpoint_filename(prev_epoch_idx))
             os.remove(self.checkpoint_hidden_filename(prev_epoch_idx))
 
-        if self.checkpoint_strategy.should_store_best_checkpoint(epoch_idx, metrics):
+        if self.checkpoint_strategy.should_store_best_checkpoint(global_epoch_idx, metrics):
             best_checkpoint_idx = self.checkpoint_strategy.current_best_checkpoint_idx
 
             if best_checkpoint_idx is not None:
                 os.remove(self.checkpoint_best_filename(best_checkpoint_idx))
 
-            torch.save(model.state_dict(), self.checkpoint_best_filename(epoch_idx))
+            torch.save(model.state_dict(), self.checkpoint_best_filename(global_epoch_idx))
 
-            self.checkpoint_strategy.store_best_checkpoint_idx(epoch_idx)
+            self.checkpoint_strategy.store_best_checkpoint_idx(global_epoch_idx)
 
         self.backend.store(metrics)
 

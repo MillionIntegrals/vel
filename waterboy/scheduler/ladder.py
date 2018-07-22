@@ -15,7 +15,7 @@ class LadderScheduler(base.Callback):
         return self.schedule_numbers[idx]
 
     def on_epoch_begin(self, epoch_idx):
-        self.scheduler.step(epoch=epoch_idx)
+        self.scheduler.step(epoch=epoch_idx.global_epoch_idx)
 
 
 def create(ladder):
