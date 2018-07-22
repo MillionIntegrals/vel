@@ -5,6 +5,7 @@ import waterboy.api.base as base
 
 
 class LadderScheduler(base.Callback):
+    """ Scheduler defined by a set of learning rates after reaching given number of iterations """
     def __init__(self, optimizer, ladder, last_epoch):
         self.schedule_limits = np.cumsum([x[0] for x in ladder])
         self.schedule_numbers = np.array([float(x[1]) for x in ladder])
