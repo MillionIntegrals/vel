@@ -36,7 +36,10 @@ class Provider:
                 continue
 
             if is_required:
-                raise RuntimeError("Required argument {} cannot be resolved for function {}".format(parameter_name, func))
+                funcname = f"{inspect.getmodule(func).__name__}.{func.__name__}"
+                raise RuntimeError("Required argument '{}' cannot be resolved for function '{}'".format(
+                    parameter_name, funcname
+                ))
 
         return func(**kwargs)
 
