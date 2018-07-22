@@ -1,6 +1,11 @@
 class EpochIdx:
-    """ Class representing epoch number """
-    def __init__(self, global_epoch_idx: int, local_epoch_idx : int = None):
+    """
+    Class representing epoch number.
+    Global epoch index - number of epoch from start of training until now
+    Local epoch index - number of epoch from start of current "phase" until now
+    """
+
+    def __init__(self, global_epoch_idx: int, local_epoch_idx: int = None):
         self.global_epoch_idx = global_epoch_idx
         
         if local_epoch_idx is None:
