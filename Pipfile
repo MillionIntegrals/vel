@@ -17,7 +17,7 @@ tqdm = "*"
 python_version = "3.6"
 
 [dev-packages]
-gym = {extras = ["atari", "mujoco", "retro"]}
+gym = {extras = ["all"]}
 jupyter = "*"
 matplotlib = "*"
 pymongo = "*"

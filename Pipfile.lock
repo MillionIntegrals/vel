@@ -1,7 +1,7 @@
 {
     "_meta": {
         "hash": {
-            "sha256": "38eb2ee6eb7ecfbdc3414575f55e6b6368ed4815d3bd207b2ef1008f0c4a1734"
+            "sha256": "af24b2c7c3476f4de77f272aef4fec259e545aa75c84114bf60e3f4cf818b54b"
         },
         "pipfile-spec": 6,
         "requires": {
@@ -273,6 +273,13 @@
                 "sha256:eb7386f632349d10d9ce9d4a838b134d4731571851149f9cc2c05a9a837a9a44"
             ],
             "version": "==2.1.3"
+        },
+        "box2d-kengz": {
+            "hashes": [
+                "sha256:6bc2587ed0ae61fe119bdf7d26b82ad58c15c358834a35b87480524060943832",
+                "sha256:7fdb1b8d0dd995620d5be3c4282b9c13764a19658e48c7c4e589bfd5dcf1340b"
+            ],
+            "version": "==2.3.3"
         },
         "certifi": {
             "hashes": [
