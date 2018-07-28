@@ -21,4 +21,4 @@ class AdadeltaFactory(OptimizerFactory):
 
 def create():
     """ Return an ADADELTA optimizer """
-    return torch.optim.Adadelta
+    return AdadeltaFactory()

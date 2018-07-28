@@ -8,12 +8,12 @@ from waterboy.storage.impl.checkpoint_strategy import ClassicCheckpointStrategy
 class SimpleTrainCommand:
     """ Very simple training command - just run the supplied generators """
 
-    def __init__(self, model_config: ModelConfig, epochs, optimizer_fn, scheduler_fn, callbacks, checkpoint, model,
+    def __init__(self, model_config: ModelConfig, epochs, optimizer_factory, scheduler_factory, callbacks, checkpoint, model,
                  source, storage, restart=True):
         self.epochs = epochs
         self.callbacks = callbacks
-        self.optimizer_fn = optimizer_fn
-        self.scheduler_fn = scheduler_fn
+        self.optimizer_factory = optimizer_factory
+        self.scheduler_factory = scheduler_factory
         self.checkpoint = checkpoint
         self.model = model
         self.source = source
@@ -34,12 +34,12 @@ class SimpleTrainCommand:
         device = torch.device(self.model_config.device)
         learner = Learner(device, self.model)
 
-        optimizer_instance = self.optimizer_fn(learner.model.parameters())
+        optimizer_instance = self.optimizer_factory.instantiate(learner.model.parameters())
 
         callbacks = []
 
-        if self.scheduler_fn is not None:
-            callbacks.append(self.scheduler_fn(optimizer_instance))
+        if self.scheduler_factory is not None:
+            callbacks.append(self.scheduler_factory.instantiate(optimizer_instance))
 
         callbacks.extend(self.callbacks)
         callbacks.extend(self.storage.streaming_callbacks())
@@ -83,8 +83,8 @@ def create(model_config, epochs, optimizer, model, source,  storage, scheduler=N
     return SimpleTrainCommand(
         model_config=model_config,
         epochs=epochs,
-        optimizer_fn=optimizer,
-        scheduler_fn=scheduler,
+        optimizer_factory=optimizer,
+        scheduler_factory=scheduler,
         callbacks=callbacks,
         checkpoint=checkpoint,
         model=model,

@@ -19,9 +19,15 @@ class LadderScheduler(base.Callback):
         self.scheduler.step(epoch=epoch_idx.global_epoch_idx)
 
 
+class LadderSchedulerFactory(base.SchedulerFactory):
+    """ Factory class for ladder scheduler """
+    def __init__(self, ladder):
+        self.ladder = ladder
+
+    def instantiate(self, optimizer, last_epoch=-1) -> LadderScheduler:
+        return LadderScheduler(optimizer, self.ladder, last_epoch)
+
+
 def create(ladder):
     """ Create a hand-scheduled ladder scheduler """
-    def scheduler_fn(optimizer, last_epoch=-1):
-        return LadderScheduler(optimizer, ladder, last_epoch)
-
-    return scheduler_fn
+    return LadderSchedulerFactory(ladder)
