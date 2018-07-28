@@ -5,3 +5,4 @@ from .storage import Storage
 from .train_phase import TrainPhase, EmptyTrainPhase
 from .reinforcer import ReinforcerBase
 from .optimizer import OptimizerFactory
+from .scheduler import SchedulerFactory
