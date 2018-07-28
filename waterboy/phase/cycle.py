@@ -84,7 +84,7 @@ class CycleCallback(base.Callback):
 class CyclePhase(base.TrainPhase):
     """ Most generic phase of training """
 
-    def __init__(self, optimizer_fn, max_lr, min_lr, cycles, cycle_len=1, cycle_mult=1, interpolate='linear', init_lr=0, init_iter=0, freeze=False):
+    def __init__(self, optimizer_factory, max_lr, min_lr, cycles, cycle_len=1, cycle_mult=1, interpolate='linear', init_lr=0, init_iter=0, freeze=False):
         self.max_lr = max_lr
         self.min_lr = min_lr
 
@@ -102,7 +102,7 @@ class CyclePhase(base.TrainPhase):
         self.init_iter = init_iter
         self.init_lr = init_lr
 
-        self.optimizer_fn = optimizer_fn
+        self.optimizer_factory = optimizer_factory
         self.freeze = freeze
 
         self._optimizer_instance = None
@@ -118,8 +118,9 @@ class CyclePhase(base.TrainPhase):
 
     def set_up_phase(self, learner, source, metrics=None, callbacks=None):
         """ Prepare the phase for learning """
+        # To parameter groups handles properly filtering parameters that don't require gradient
         parameter_groups = mu.to_parameter_groups(learner.model.get_layer_groups())
-        self._optimizer_instance = self.optimizer_fn(parameter_groups)
+        self._optimizer_instance = self.optimizer_factory.instantiate(parameter_groups)
         self._source = source
 
         if metrics is not None:
@@ -159,7 +160,7 @@ def create(optimizer, max_lr, min_lr, cycles, cycle_len=1, cycle_mult=1, interpo
         cycle_len=cycle_len,
         cycle_mult=cycle_mult,
         interpolate=interpolate,
-        optimizer_fn=optimizer,
+        optimizer_factory=optimizer,
         init_lr=init_lr,
         init_iter=init_iter,
     )

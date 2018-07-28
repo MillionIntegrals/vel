@@ -19,7 +19,7 @@ class Model(nn.Module):
         """ Calculate a value of loss function """
         raise NotImplementedError
 
-    def metrics(self):
+    def metrics(self) -> list:
         """ Set of metrics for this model """
         return [Loss()]
 

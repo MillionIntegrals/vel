@@ -4,10 +4,10 @@ import waterboy.api.base as base
 class GenericPhase(base.TrainPhase):
     """ Most generic phase of training """
 
-    def __init__(self, lr, epochs, optimizer_fn, freeze=False):
+    def __init__(self, lr, epochs, optimizer_factory, freeze=False):
         self.lr = lr
         self.epochs = epochs
-        self.optimizer_fn = optimizer_fn
+        self.optimizer_factory = optimizer_factory
         self.freeze = freeze
 
         self._optimizer_instance = None
@@ -24,7 +24,7 @@ class GenericPhase(base.TrainPhase):
         if self.freeze:
             learner.model.freeze()
 
-        self._optimizer_instance = self.optimizer_fn(filter(lambda p: p.requires_grad, learner.model.parameters()))
+        self._optimizer_instance = self.optimizer_factory.instantiate(filter(lambda p: p.requires_grad, learner.model.parameters()))
         self._source = source
 
         if metrics is not None:
@@ -54,6 +54,6 @@ def create(lr, epochs, optimizer, freeze=False):
     return GenericPhase(
         lr=lr,
         epochs=epochs,
-        optimizer_fn=optimizer,
+        optimizer_factory=optimizer,
         freeze=freeze
     )

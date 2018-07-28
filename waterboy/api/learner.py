@@ -4,12 +4,13 @@ import sys
 
 from .progress_idx import BatchIdx
 from .metrics import EpochResultAccumulator
+from .base import Model
 
 
 class Learner:
     """ Manages training process of a single model """
 
-    def __init__(self, device, model):
+    def __init__(self, device: torch.device, model: Model):
         self.device = device
         self.model = model.to(device)
 

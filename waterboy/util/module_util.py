@@ -54,7 +54,7 @@ def unfreeze_layer(module):
 
 
 def trainable_params_(m):
-    '''Returns a list of trainable parameters in the model m. (i.e., those that require gradients.)'''
+    """ Returns a list of trainable parameters in the model m. (i.e., those that require gradients.) """
     return [p for p in m.parameters() if p.requires_grad]
 
 

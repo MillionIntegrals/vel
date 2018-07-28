@@ -60,12 +60,10 @@ class ClassicStorage(base.Storage):
         self.cleaned = True
         self.backend.clean(global_epoch_idx)
 
-    def checkpoint(self, epoch_idx, metrics, model, optimizer=None, callbacks=None, state_dict=None):
+    def checkpoint(self, global_epoch_idx, metrics, model, optimizer=None, callbacks=None, state_dict=None):
         """ When epoch is done, we persist the training state """
         callbacks = callbacks if callbacks is not None else []
         state_dict = state_dict if state_dict is not None else {}
-
-        global_epoch_idx = epoch_idx.global_epoch_idx
 
         self.clean(global_epoch_idx)
 
