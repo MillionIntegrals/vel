@@ -7,55 +7,24 @@ I wanted to minimize time to market of new projects, ease experimentation
 and combine that with experiment management to bring some order to an already 
 noisy data science workflow.
 
+This repository is still in an early stage of that journey but it will grow
+as I'll be putting some work into that.
+
 
 # Features
 
-- (Done) Models should be runnable from the configuration files
+- Models should be runnable from the configuration files
   that are easy to store in version control, generate automatically and diff.
   Codebase should be generic and not contain any of the model hyperparameters.
   Unless user intervenes, it should be obvious which model was run
   with which hyperparameters and what output it gave.
-- (Ongoing) The amount of "magic" in the framework should be limited and it should be easy to
+- The amount of "magic" in the framework should be limited and it should be easy to
   understand what exactly the model is doing for newcomers already comfortable with PyTorch. 
-- (Ongoing) All state-of-the-art models should be implemented in the framework with accuracy
+- All state-of-the-art models should be implemented in the framework with accuracy
   matching published results.
   Currently I'm focusing on computer vision and reinforcement learning models.
-- (Done) All common deep learning workflows should be fast to implement, while 
+- All common deep learning workflows should be fast to implement, while 
   uncommon ones should be possible. At least as far as PyTorch allows.
-
-
-## TODO:
-
-- [x] Metric/aggregation API
-- [x] Training progress pretty print
-- [x] Integrate loss/metrics with a model
-- [x] CIFAR 10 dataset and models
-- [x] CIFAR 10 Resnet models
-- [x] Refine source API
-- [x] Augmentation visualization
-- [x] Learning rate scheduling
-- [x] Augmentations and input transformation pipeline
-- [x] CIFAR 10 state of the art
-- [x] Database storage of experiment results
-- [x] Model checkpointing
-- [x] Visdom integration
-- [x] Learning rate finder
-- [x] "Phase" training
-- [x] Notebook integration
-- [x] SGD with warm restarts
-- [x] Cats vs dogs transfer learning
-- [ ] Planet earth transfer learning
-- [ ] A2C and PPO policy gradient reinforcement learning algorithms.
-- [ ] Super-convergence experiments
-
-
-## Smaller TODO items:
-
-- [x] Fork torch summary and incorporate into the framework
-- [ ] Confusion matrix/error analysis
-- [ ] Epoch time measurements
-- [ ] Write output of LrFinder to storage rather than to matplotlib
-- [ ] Parametrize visdom connection better
 
 
 ## Important links:
@@ -63,6 +32,5 @@ noisy data science workflow.
 - https://pytorch.org/tutorials/
 - https://pytorch.org/docs/stable/index.html
 - https://github.com/pytorch/vision
-- https://github.com/pytorch/tnt
 - https://github.com/fastai/fastai
 - https://github.com/openai/baselines
