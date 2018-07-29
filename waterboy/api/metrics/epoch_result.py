@@ -11,12 +11,10 @@ class EpochResultAccumulator:
         self._reset_metrics()
         self.metrics_by_name = {m.name: m for m in self.metrics}
 
-    def calculate(self, x_data, y_true, y_pred, context=None):
+    def calculate(self, data_dict):
         """ Calculate metric values """
-        context = {} if context is None else context
-
         for m in self.metrics:
-            m.calculate(x_data, y_true, y_pred, **context)
+            m.calculate(data_dict)
 
     def _reset_metrics(self):
         """ Internal API : reset state of metrics """
@@ -55,4 +53,3 @@ class EpochResultAccumulator:
             final_result["val:{}".format(key)] = value
 
         return final_result
-

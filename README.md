@@ -25,6 +25,17 @@ as I'll be putting some work into that.
   Currently I'm focusing on computer vision and reinforcement learning models.
 - All common deep learning workflows should be fast to implement, while 
   uncommon ones should be possible. At least as far as PyTorch allows.
+  
+  
+# Examples
+
+Several models are already implemented in the framework and have prepared config files
+that are ready to run and easy to modify for other similar usecases:
+
+- State-of-the art results on Cifar10 dataset using residual networks
+- Cats vs dogs classification using transfer learning from a resnet34 model pretrained on 
+  ImageNet
+- Actor-Critic policy gradient reinforcement algorithm
 
 
 ## Important links:

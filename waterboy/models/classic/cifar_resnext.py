@@ -6,11 +6,11 @@ https://github.com/fastai/fastai/blob/master/fastai/models/cifar10/resnext.py
 import torch.nn as nn
 import torch.nn.functional as F
 
-from waterboy.api.base import Model
+from waterboy.api.base import SupervisedModel
 from waterboy.modules.resnext import ResNeXtBottleneck
 
 
-class ResNeXt(Model):
+class ResNeXt(SupervisedModel):
     """ A ResNext model as defined in the literature """
 
     def __init__(self, block, layers, inplanes, image_features, cardinality=4, divisor=4, img_channels=3, num_classes=1000):

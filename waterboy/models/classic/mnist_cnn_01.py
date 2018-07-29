@@ -8,12 +8,12 @@ import torch.nn as nn
 import torch.nn.init as init
 import torch.nn.functional as F
 
-from waterboy.api.base import Model
+from waterboy.api.base import SupervisedModel
 from waterboy.metrics.loss_metric import Loss
 from waterboy.metrics.accuracy import Accuracy
 
 
-class Net(Model):
+class Net(SupervisedModel):
     """
     A simple MNIST classification model.
 

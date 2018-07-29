@@ -6,6 +6,6 @@ class Loss(AveragingMetric):
     def __init__(self):
         super().__init__("loss")
 
-    def _value_function(self, x_input, y_true, y_pred, **kwargs):
+    def _value_function(self, data_dict):
         """ Just forward a value of the loss"""
-        return kwargs['loss'].item()
+        return data_dict['loss'].item()

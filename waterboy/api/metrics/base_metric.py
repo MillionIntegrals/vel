@@ -6,8 +6,8 @@ class BaseMetric:
     def __init__(self, name):
         self.name = name
 
-    def calculate(self, x_input, y_true, y_pred, **kwargs):
-        """ Calculate value of a metric """
+    def calculate(self, data_dict):
+        """ Calculate value of a metric based on supplied data """
         raise NotImplementedError
 
     def reset(self):

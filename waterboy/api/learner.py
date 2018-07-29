@@ -47,9 +47,13 @@ class Learner:
 
         # No need for gradient calculations
         if result_accumulator is not None:
+            # TODO(jerry): Is this line needed?
             with torch.no_grad():
-                result_accumulator.calculate(data, target, output, context={
-                    'loss': loss, 'model': self.model, 'optimizer': optimizer
+                result_accumulator.calculate(data_dict={
+                    'data': data,
+                    'target': target,
+                    'output': output,
+                    'loss': loss
                 })
 
     def train_epoch(self, epoch_idx, source, optimizer, callbacks=None, result_accumulator=None):
@@ -80,20 +84,30 @@ class Learner:
             callback.on_validation_begin(epoch_idx)
 
         with torch.no_grad():
-            if source.is_tta_enabled():
-                tta_accumulator = source.tta_accumulator(result_accumulator)
+            # if source.is_tta_enabled():
+            #     tta_accumulator = source.tta_accumulator(result_accumulator)
+            #
+            #     for data, target in tqdm.tqdm(source.val_tta_loader, desc="Validation", unit="iter", file=sys.stdout):
+            #         data, target = data.to(self.device), target.to(self.device)
+            #         output, loss = self.model.loss(data, target)
+            #
+            #         tta_accumulator.calculate(data_dict={
+            #             'data': data,
+            #             'target': target,
+            #             'output': output,
+            #             'loss': loss
+            #         })
+            # else:
+            for data, target in tqdm.tqdm(source.val_loader, desc="Validation", unit="iter", file=sys.stdout):
+                data, target = data.to(self.device), target.to(self.device)
+                output, loss = self.model.loss(data, target)
 
-                for data, target in tqdm.tqdm(source.val_tta_loader, desc="Validation", unit="iter", file=sys.stdout):
-                    data, target = data.to(self.device), target.to(self.device)
-                    output, loss = self.model.loss(data, target)
-
-                    tta_accumulator.calculate(data, target, output, context={'loss': loss})
-            else:
-                for data, target in tqdm.tqdm(source.val_loader, desc="Validation", unit="iter", file=sys.stdout):
-                    data, target = data.to(self.device), target.to(self.device)
-                    output, loss = self.model.loss(data, target)
-
-                    result_accumulator.calculate(data, target, output, context={'loss': loss})
+                result_accumulator.calculate(data_dict={
+                    'data': data,
+                    'target': target,
+                    'output': output,
+                    'loss': loss
+                })
 
         for callback in callbacks:
             callback.on_validation_end(epoch_idx, result_accumulator.value())

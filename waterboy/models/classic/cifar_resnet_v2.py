@@ -6,11 +6,11 @@ https://github.com/pytorch/vision/blob/master/torchvision/models/resnet.py
 import torch.nn as nn
 import torch.nn.functional as F
 
-from waterboy.api.base import Model
+from waterboy.api.base import SupervisedModel
 from waterboy.modules.resnet_v2 import Bottleneck, BasicBlock
 
 
-class ResNetV2(Model):
+class ResNetV2(SupervisedModel):
     """ A ResNet V2 (pre-activation resnet) model as defined in the literature """
 
     def __init__(self, block, layers, inplanes, divisor=4, img_channels=3, num_classes=1000):

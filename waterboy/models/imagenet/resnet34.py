@@ -5,14 +5,14 @@ import torch.nn.functional as F
 import waterboy.modules.layers as l
 import waterboy.util.module_util as mu
 
-from waterboy.api.base import Model
+from waterboy.api.base import SupervisedModel
 
 
 # Because of concat pooling it's 2x 512
 NET_OUTPUT = 1024
 
 
-class Resnet34(Model):
+class Resnet34(SupervisedModel):
     """ Resnet34 network model """
 
     def __init__(self, fc_layers=None, dropout=None, pretrained=True):

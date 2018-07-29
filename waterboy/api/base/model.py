@@ -10,15 +10,6 @@ from waterboy.util.summary import summary
 class Model(nn.Module):
     """ Class representing full neural network model """
 
-    def loss(self, x_data, y_true):
-        """ Forward propagate network and return a value of loss function """
-        y_pred = self(x_data)
-        return y_pred, self.loss_value(x_data, y_true, y_pred)
-
-    def loss_value(self, x_data, y_true, y_pred):
-        """ Calculate a value of loss function """
-        raise NotImplementedError
-
     def metrics(self) -> list:
         """ Set of metrics for this model """
         return [Loss()]
@@ -76,3 +67,28 @@ class Model(nn.Module):
     def reset_weights(self):
         """ Call proper initializers for the weights """
         pass
+
+
+class BackboneModel(Model):
+    """ Model that serves as a backbone network to connect your heads to """
+
+
+class LinearBackboneModel(BackboneModel):
+    """ Model that serves as a backbone network to connect your heads to - one that spits a single-dimension output """
+
+    @property
+    def output_dim(self):
+        """ Final dimension of model output """
+        raise NotImplementedError
+
+
+class SupervisedModel(Model):
+    """ Model for a supervised learning probvlem"""
+    def loss(self, x_data, y_true):
+        """ Forward propagate network and return a value of loss function """
+        y_pred = self(x_data)
+        return y_pred, self.loss_value(x_data, y_true, y_pred)
+
+    def loss_value(self, x_data, y_true, y_pred):
+        """ Calculate a value of loss function """
+        raise NotImplementedError

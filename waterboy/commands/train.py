@@ -64,7 +64,7 @@ class SimpleTrainCommand:
             epoch_idx = EpochIdx(global_epoch_idx)
             epoch_result = learner.run_epoch(epoch_idx, metrics, self.source, optimizer_instance, callbacks)
 
-            self.storage.checkpoint(epoch_idx, epoch_result, learner.model, optimizer_instance, callbacks)
+            self.storage.checkpoint(epoch_idx.global_epoch_idx, epoch_result, learner.model, optimizer_instance, callbacks)
 
             training_history.add(epoch_result)
 
@@ -74,7 +74,7 @@ class SimpleTrainCommand:
         return training_history
 
 
-def create(model_config, epochs, optimizer, model, source,  storage, scheduler=None, callbacks=None, checkpoint=None,
+def create(model_config, epochs, optimizer, model, source, storage, scheduler=None, callbacks=None, checkpoint=None,
            restart=True):
     """ Simply train the model """
     callbacks = callbacks or []

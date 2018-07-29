@@ -15,9 +15,9 @@ source:
   num_workers: 8
   batch_size: 64
 
-  tta:
-    name: waterboy.augmentations.tta.train_tta
-    n_augmentations: 4
+#  tta:
+#    name: waterboy.augmentations.tta.train_tta
+#    n_augmentations: 4
 
   augmentations:
   - name: waterboy.augmentations.to_array

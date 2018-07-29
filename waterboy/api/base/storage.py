@@ -21,3 +21,7 @@ class Storage:
     def get_frame(self):
         """ Get a frame of metrics from backend """
         raise NotImplementedError
+
+    def checkpoint(self, global_epoch_idx, metrics, model, optimizer=None, callbacks=None, state_dict=None):
+        """ When epoch is done, we persist the training state """
+        raise NotImplementedError
