@@ -163,7 +163,14 @@ class PolicyGradientReinforcer(ReinforcerBase):
 
     def metrics(self) -> list:
         """ List of metrics to track for this learning process """
-        return [SummingNamedMetric("frames"), FPSMetric(), EpisodeRewardMetric(), EpisodeLengthMetric()] + self.settings.policy_gradient.metrics()
+        my_metrics = [
+            SummingNamedMetric("frames", reset_value=False),
+            FPSMetric(),
+            EpisodeRewardMetric(),
+            EpisodeLengthMetric()
+        ]
+
+        return my_metrics + self.settings.policy_gradient.metrics()
 
     @property
     def model(self) -> Model:
