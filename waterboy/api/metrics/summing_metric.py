@@ -30,8 +30,8 @@ class SummingMetric(BaseMetric):
 
 class SummingNamedMetric(SummingMetric):
     """ Super simple summing metric that just takes a value from dictionary and sums it over samples """
-    def __init__(self, name):
-        super().__init__(name)
+    def __init__(self, name, reset_value=True):
+        super().__init__(name, reset_value=reset_value)
 
     def _value_function(self, data_dict):
         return data_dict[self.name].item()
