@@ -60,45 +60,46 @@ def visdom_append_metrics(vis, metrics, first_epoch=False):
     """ Append metrics to visdom """
     visited = {}
 
-    for name, groups in it.groupby(metrics.columns, key=_column_original_name):
-        groups = list(groups)
+    for metric_basename, metric_list in it.groupby(metrics.columns, key=_column_original_name):
+        metric_list = list(metric_list)
 
-        for group in groups:
-            if vis.win_exists(name) and (not visited.get(group, False)) and first_epoch:
+        for metric in metric_list:
+            if vis.win_exists(metric_basename) and (not visited.get(metric, False)) and first_epoch:
                 update = 'replace'
-            elif not vis.win_exists(name):
+            elif not vis.win_exists(metric_basename):
                 update = None
             else:
                 update = 'append'
 
             vis.line(
-                metrics[group].values,
+                metrics[metric].values,
                 metrics.index.values,
-                win=name,
-                name=group,
+                win=metric_basename,
+                name=metric,
                 opts={
-                    'title': name,
+                    'title': metric_basename,
                     'showlegend': True
                 },
                 update=update
             )
 
-            if name != group:
-                if vis.win_exists(group) and first_epoch:
+            if metric_basename != metric and len(metric_list) > 1:
+                if vis.win_exists(metric) and first_epoch:
                     update = 'replace'
-                elif not vis.win_exists(group):
+                elif not vis.win_exists(metric):
                     update = None
                 else:
                     update = 'append'
 
                 vis.line(
-                    metrics[group].values,
+                    metrics[metric].values,
                     metrics.index.values,
-                    win=group,
-                    name=group,
+                    win=metric,
+                    name=metric,
                     opts={
-                        'title': group,
+                        'title': metric,
                         'showlegend': True
                     },
                     update=update
                 )
+

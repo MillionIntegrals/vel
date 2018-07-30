@@ -7,23 +7,19 @@ import typing
 import waterboy.api.base as base
 
 from waterboy.api import ModelConfig
-from .impl.checkpoint_strategy import ClassicCheckpointStrategy
+from .strategy.checkpoint_strategy import CheckpointStrategy
 
 
 class ClassicStorage(base.Storage):
     """ Model and metric persistence - classic implementation """
 
-    def __init__(self, model_config: ModelConfig, backend, streaming=None):
+    def __init__(self, model_config: ModelConfig, checkpoint_strategy: CheckpointStrategy, backend, streaming=None):
         self.model_config = model_config
         self.backend = backend
         self.streaming = streaming or []
-        self.checkpoint_strategy = ClassicCheckpointStrategy()
+        self.checkpoint_strategy = checkpoint_strategy
 
         self.cleaned = False
-
-    def set_checkpoint_strategy(self, new_checkpoint_strategy):
-        """ Set new checkpoint strategy for this project """
-        self.checkpoint_strategy = new_checkpoint_strategy
 
     def restore(self, hidden_state):
         """ Restore optimizer and callbacks from hidden state """
@@ -143,6 +139,11 @@ class ClassicStorage(base.Storage):
         pathlib.Path(filename).mkdir(parents=True, exist_ok=True)
 
 
-def create(model_config, backend, streaming=None):
+def create(model_config, backend, checkpoint_strategy, streaming=None):
     """ Waterboy creation function """
-    return ClassicStorage(model_config, backend, streaming)
+    return ClassicStorage(
+        model_config=model_config,
+        backend=backend,
+        checkpoint_strategy=checkpoint_strategy,
+        streaming=streaming
+    )

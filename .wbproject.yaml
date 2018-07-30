@@ -8,6 +8,13 @@ storage:
 
   streaming:
     - name: waterboy.storage.streaming.visdom
-      stream_lr: true
     - name: waterboy.storage.streaming.stdout
+
+
+checkpoint_strategy:
+  name: waterboy.storage.strategy.classic_checkpoint_strategy
+
+
+visdom_settings:
+  stream_lr: false
 
