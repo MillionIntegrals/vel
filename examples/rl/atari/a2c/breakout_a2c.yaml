@@ -17,14 +17,6 @@ model:
   input_height: 84
   input_channels: 4  # The same as frame_history
 
-#  frame_history: 4  # Vector stacked frames
-#  entropy_loss_coefficient: 0.01
-#  value_loss_coefficient: 0.5
-#  learning_rate: 7.0e-4
-#  learning_rate_decay: 0.99
-#  learning_rate_schedule: constant
-#  maximum_gradient_norm: 0.5
-
 
 reinforcer:
   name: waterboy.rl.reinforcers.policy_gradient
@@ -43,7 +35,7 @@ reinforcer:
 
 optimizer:
   name: waterboy.optimizers.rmsprop
-  lr: 0.7e-4
+  lr: 7.0e-4
   alpha: 0.99
 
 
