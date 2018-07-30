@@ -67,6 +67,7 @@ class NatureCnn(LinearBackboneModel):
         for m in self.modules():
             if isinstance(m, nn.Conv2d):
                 init.kaiming_normal_(m.weight, mode='fan_out', nonlinearity='relu')
+                init.constant_(m.bias, 0.0)
             elif isinstance(m, nn.Linear):
                 init.kaiming_normal_(m.weight, mode='fan_out', nonlinearity='relu')
                 init.constant_(m.bias, 0.0)

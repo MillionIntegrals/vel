@@ -1,5 +1,6 @@
 import torch
 import torch.nn as nn
+import torch.nn.init as init
 import torch.nn.functional as F
 
 import gym.spaces as spaces
@@ -28,6 +29,15 @@ class ActionHead(nn.Module):
         """ Sample from a probability space of all actions """
         u = torch.rand_like(logits)
         return torch.argmax(logits - torch.log(-torch.log(u)), dim=-1)
+
+    def reset_weights(self):
+        for m in self.modules():
+            if isinstance(m, nn.Conv2d):
+                init.kaiming_normal_(m.weight, mode='fan_out', nonlinearity='relu')
+                init.constant_(m.bias, 0.0)
+            elif isinstance(m, nn.Linear):
+                init.kaiming_normal_(m.weight, mode='fan_out', nonlinearity='relu')
+                init.constant_(m.bias, 0.0)
 
     def entropy(self, logits):
         """ Categorical distribution entropy calculation - sum probs * log(probs) """

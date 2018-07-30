@@ -34,6 +34,7 @@ class RlTrainCommand:
 
         # Reinforcer is the learner for the reinforcement learning model
         reinforcer = self.reinforcer.instantiate(device, self.model)
+        reinforcer.model.reset_weights()
         optimizer_instance = self.optimizer_factory.instantiate(reinforcer.model.parameters())
         metrics = reinforcer.metrics()
 

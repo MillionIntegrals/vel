@@ -115,6 +115,12 @@ class PolicyGradientModel(Model):
         self.action_head = ActionHead(action_space=environment.action_space, input_dim=self.base_model.output_dim)
         self.value_head = ValueHead(self.base_model.output_dim)
 
+    def reset_weights(self):
+        """ Initialize properly model weights """
+        self.base_model.reset_weights()
+        self.action_head.reset_weights()
+        self.value_head.reset_weights()
+
     def forward(self, observations):
         base_output = self.base_model(observations)
 
