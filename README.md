@@ -10,6 +10,9 @@ noisy data science workflow.
 This repository is still in an early stage of that journey but it will grow
 as I'll be putting some work into that.
 
+# Requirements
+
+This project requires Python 3.7 and PyTorch 0.4.1
 
 # Features
 
