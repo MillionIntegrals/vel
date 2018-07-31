@@ -38,6 +38,26 @@ that are ready to run and easy to modify for other similar usecases:
 - Actor-Critic policy gradient reinforcement algorithm
 
 
+# How to run the examples?
+
+Whole framework is built around the idea of running config files from code. For example,
+to run the Actor-Critic algorithm simply invoke:
+
+```
+python -m waterboy.launcher examples/rl/atari/a2c/breakout_a2c.yaml train
+```
+
+General form of the call is as follows 
+
+
+```
+python -m CONFIGFILE COMMANDS --device PYTORCH_DEVICE -r RUN_NUMBER
+```
+
+Where `PYTORCH_DEVICE` is a valid name of pytorch device, most probably `cuda:0`, and run
+number is the sequential number of run you wish to record your results under.
+
+
 ## Important links:
 
 - https://pytorch.org/tutorials/
