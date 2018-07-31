@@ -8,7 +8,7 @@ and combine that with experiment management to bring some order to an already
 noisy data science workflow.
 
 This repository is still in an early stage of that journey but it will grow
-as I'll be putting some work into that.
+as I'll be putting some work into it.
 
 # Requirements
 
