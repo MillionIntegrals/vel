@@ -72,7 +72,6 @@ class EpisodeRewardMetric(BaseMetric):
         """ Reset value of a metric """
         # Because it's a queue no need for reset..
         pass
-        # raise NotImplementedError
 
     def value(self):
         """ Return current value for the metric """
