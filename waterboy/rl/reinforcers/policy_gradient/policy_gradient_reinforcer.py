@@ -229,7 +229,7 @@ class PolicyGradientReinforcer(ReinforcerBase):
             for callback in callbacks:
                 callback.on_batch_end(progress_idx, result_accumulator.value(), optimizer)
 
-        result_accumulator.freeze_train_results()
+        result_accumulator.freeze_results()
 
         epoch_result = result_accumulator.result()
 

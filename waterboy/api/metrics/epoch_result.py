@@ -5,8 +5,7 @@ class EpochResultAccumulator:
         self.epoch_idx = epoch_idx
         self.metrics = metrics
 
-        self.train_results = {}
-        self.validation_results = {}
+        self.frozen_results = {}
 
         self._reset_metrics()
         self.metrics_by_name = {m.name: m for m in self.metrics}
@@ -34,22 +33,23 @@ class EpochResultAccumulator:
 
         return self.metrics_by_name[metric_name].value()
 
-    def freeze_train_results(self):
-        self.train_results = self.value()
-        self._reset_metrics()
+    def freeze_results(self, name=None):
+        new_results = self.value()
 
-    def freeze_validation_results(self):
-        self.validation_results = self.value()
+        if name is None:
+            for key, value in new_results.items():
+                self.frozen_results[key] = value
+        else:
+            for key, value in new_results.items():
+                self.frozen_results[f'{name}:{key}'] = value
+
         self._reset_metrics()
 
     def result(self):
         """ Return the epoch result """
         final_result = {'epoch_idx': self.epoch_idx.global_epoch_idx}
 
-        for key, value in self.train_results.items():
-            final_result["train:{}".format(key)] = value
-
-        for key, value in self.validation_results.items():
-            final_result["val:{}".format(key)] = value
+        for key, value in self.frozen_results:
+            final_result[key] = value
 
         return final_result

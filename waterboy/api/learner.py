@@ -123,10 +123,10 @@ class Learner:
         print("|-------- Epoch {:06} Lr={:.6f} ----------|".format(epoch_idx.global_epoch_idx, lr))
 
         self.train_epoch(epoch_idx, source, optimizer, callbacks, result_accumulator=result_accumulator)
-        result_accumulator.freeze_train_results()
+        result_accumulator.freeze_results('train')
 
         self.eval_epoch(epoch_idx, source, callbacks, result_accumulator=result_accumulator)
-        result_accumulator.freeze_validation_results()
+        result_accumulator.freeze_results('val')
 
         epoch_result = result_accumulator.result()
 
