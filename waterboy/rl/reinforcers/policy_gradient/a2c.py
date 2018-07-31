@@ -25,10 +25,10 @@ class A2CPolicyGradient(PolicyGradientBase):
 
     def calculate_loss(self, device, model, rollout, data_dict=None):
         """ Calculate loss of the supplied rollout """
-        observations = torch.from_numpy(rollout['observations']).to(device)
-        discounted_rewards = torch.from_numpy(rollout['discounted_rewards']).to(device)
-        values = torch.from_numpy(rollout['values']).to(device)
-        actions = torch.from_numpy(rollout['actions']).to(device)
+        observations = rollout['observations']
+        discounted_rewards = rollout['discounted_rewards']
+        values = rollout['values']
+        actions = rollout['actions']
 
         advantages = discounted_rewards - values
 
@@ -56,4 +56,3 @@ class A2CPolicyGradient(PolicyGradientBase):
 
 def create(entropy_coefficient, value_coefficient):
     return A2CPolicyGradient(entropy_coefficient, value_coefficient)
-

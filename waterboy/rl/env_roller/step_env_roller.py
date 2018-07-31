@@ -2,19 +2,11 @@ import torch
 import numpy as np
 
 
-def discount_with_dones(rewards, dones, gamma):
-    discounted = []
-    r = 0
-
-    for reward, done in zip(rewards[::-1], dones[::-1]):
-        r = reward + gamma * r * (1.-done)  # fixed off by one bug
-        discounted.append(r)
-
-    return discounted[::-1]
-
-
 class StepEnvRoller:
-    """ Class calculating env rollouts """
+    """
+    Class calculating env rollouts.
+    Idea behind this class is to store as much as we can as pytorch tensors to minimize tensor copying.
+    """
 
     def __init__(self, environment, device, number_of_steps, discount_factor):
         self.environment = environment
@@ -23,47 +15,47 @@ class StepEnvRoller:
         self.discount_factor = discount_factor
 
         # Initial observation
-        self.observation = self.environment.reset()
-        self.dones = np.array([False for _ in range(self.observation.shape[0])])
+        self.observation = self._to_tensor(self.environment.reset())
+        self.dones = torch.tensor([False for _ in range(self.observation.shape[0])], device=self.device)
 
         self.batch_observation_shape = (
             (self.observation.shape[0]*self.number_of_steps,) + self.environment.observation_space.shape
         )
 
+    def _to_tensor(self, numpy_array):
+        """ Convert numpy array to a tensor """
+        return torch.from_numpy(numpy_array).to(self.device)
+
     @torch.no_grad()
     def rollout(self, model):
         """ Calculate env rollout """
+        self.observation = self.observation.to(self.device)
 
-        observation_accumulator = []
-        action_accumulator = []
-        value_accumulator = []
-        dones_accumulator = []
-        rewards_accumulator = []
-        episode_information = []
-
-        # TODO(jerry): all this can be made numpy arrays to optimize accumulation
-        # TODO(jerry): discounting can be done better/more efficient
+        observation_accumulator = []  # Device tensors
+        action_accumulator = []  # Device tensors
+        value_accumulator = []  # Device tensors
+        dones_accumulator = []  # Device tensors
+        rewards_accumulator = []  # Device tensors
+        episode_information = []  # Python objects
 
         for step_idx in range(self.number_of_steps):
-            model_input = torch.from_numpy(self.observation).to(self.device)
-            actions, values, _ = model.step(model_input)
-
-            actions = actions.detach().cpu().numpy()
-            values = values.detach().cpu().numpy()
+            # model_input = torch.from_numpy(self.observation).to(self.device)
+            actions, values, _ = model.step(self.observation)
 
             observation_accumulator.append(self.observation)
             action_accumulator.append(actions)
             value_accumulator.append(values)
             dones_accumulator.append(self.dones)
 
-            new_obs, new_rewards, new_dones, new_infos = self.environment.step(actions)
+            actions_numpy = actions.detach().cpu().numpy()
+            new_obs, new_rewards, new_dones, new_infos = self.environment.step(actions_numpy)
 
             # Done is flagged true when the episode has ended AND the frame we see is already a first frame from the
             # Next episode
-            self.dones = new_dones
-            self.observation = new_obs
+            self.dones = self._to_tensor(new_dones.astype(np.uint8))
+            self.observation = self._to_tensor(new_obs)
 
-            rewards_accumulator.append(new_rewards)
+            rewards_accumulator.append(self._to_tensor(new_rewards.astype(np.float32)))
 
             for info in new_infos:
                 maybe_episode_info = info.get('episode')
@@ -71,21 +63,18 @@ class StepEnvRoller:
                 if maybe_episode_info:
                     episode_information.append(maybe_episode_info)
 
-        final_model_input = torch.from_numpy(self.observation).to(self.device)
-        last_values = model.value(final_model_input)
-
+        last_values = model.value(self.observation)
         dones_accumulator.append(self.dones)
 
-        # Swapaxes is important to make discounting process easier
-        observation_buffer = np.asarray(observation_accumulator, dtype=np.uint8).swapaxes(0, 1)
-        rewards_buffer = np.asarray(rewards_accumulator, dtype=np.float32).swapaxes(1, 0)
-        # Action has no dtype, cause there may be different actions
-        actions_buffer = np.asarray(action_accumulator).swapaxes(1, 0)
-        values_buffer = np.asarray(value_accumulator, dtype=np.float32).swapaxes(1, 0)
-        dones_buffer = np.asarray(dones_accumulator, dtype=np.bool).swapaxes(1, 0)
+        observation_buffer = torch.stack(observation_accumulator)
+        rewards_buffer = torch.stack(rewards_accumulator)
+        # There may be different types of actions
+        actions_buffer = torch.stack(action_accumulator)
+        values_buffer = torch.stack(value_accumulator)
+        dones_buffer = torch.stack(dones_accumulator)
 
-        masks_buffer = dones_buffer[:, :-1]
-        dones_buffer = dones_buffer[:, 1:]
+        masks_buffer = dones_buffer[:-1, :]
+        dones_buffer = dones_buffer[1:, :]
 
         discounted_rewards = self.discount_bootstrap(rewards_buffer, dones_buffer, last_values)
 
@@ -99,21 +88,15 @@ class StepEnvRoller:
             'episode_information': episode_information
         }
 
-    def discount_bootstrap(self, rewards_buffer, dones_buffer, values_buffer):
-        true_value_buffer = np.zeros_like(rewards_buffer)
+    def discount_bootstrap(self, rewards_buffer, dones_buffer, last_values_buffer):
+        true_value_buffer = torch.zeros_like(rewards_buffer)
+        dones_buffer = dones_buffer.to(dtype=torch.float32)
 
-        # TODO(jerry) this probably can be turned into some numpy-cumsum
         # discount/bootstrap off value fn
-        for n, (rewards, dones, value) in enumerate(zip(rewards_buffer, dones_buffer, values_buffer)):
-            rewards = rewards.tolist()
-            dones = dones.tolist()
+        current_value = last_values_buffer
 
-            if dones[-1] == 0:
-                # If the episode is not finished, add the last value
-                rewards = discount_with_dones(rewards+[value], dones+[0], self.discount_factor)[:-1]
-            else:
-                rewards = discount_with_dones(rewards, dones, self.discount_factor)
-
-            true_value_buffer[n] = rewards
+        for i in reversed(range(self.number_of_steps)):
+            current_value = rewards_buffer[i] + self.discount_factor * current_value * (1.0 - dones_buffer[i])
+            true_value_buffer[i] = current_value
 
         return true_value_buffer
