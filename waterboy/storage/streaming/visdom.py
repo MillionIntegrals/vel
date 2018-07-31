@@ -11,7 +11,11 @@ from waterboy.util.visdom import visdom_append_metrics
 
 @dataclass
 class VisdomSettings:
+    """ Settings for connecting to the visdom server """
     stream_lr: bool = False
+    server: str = 'http://localhost'
+    endpoint: str = 'events'
+    port: int = 8097
 
 
 class VisdomStreaming(base.Callback):
@@ -19,7 +23,12 @@ class VisdomStreaming(base.Callback):
     def __init__(self, model_config: ModelConfig, visdom_settings: VisdomSettings):
         self.model_config = model_config
         self.settings = visdom_settings
-        self.vis = visdom.Visdom(env=self.model_config.run_name.replace('/', '_'))
+        self.vis = visdom.Visdom(
+            server=visdom_settings.server,
+            endpoint=visdom_settings.endpoint,
+            port=visdom_settings.port,
+            env=self.model_config.run_name.replace('/', '_')
+        )
 
     def on_epoch_end(self, epoch_idx, metrics):
         """ Update data in visdom on push """
