@@ -62,7 +62,7 @@ class RlTrainCommand:
 
             # OpenAI logging..., possibly guard it with a flag?
             for key in sorted(epoch_result.keys()):
-                if key == 'train:fps':
+                if key == 'fps':
                     # Not super elegant, but I like nicer display of FPS
                     openai_logger.record_tabular(key, int(epoch_result[key]))
                 else:
@@ -76,7 +76,7 @@ class RlTrainCommand:
 
             training_history.add(epoch_result)
 
-            total_framecount = epoch_result['train:frames']
+            total_framecount = epoch_result['frames']
             global_epoch_idx += 1
 
         for callback in callbacks:
