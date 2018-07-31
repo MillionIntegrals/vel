@@ -49,7 +49,7 @@ class EpochResultAccumulator:
         """ Return the epoch result """
         final_result = {'epoch_idx': self.epoch_idx.global_epoch_idx}
 
-        for key, value in self.frozen_results:
+        for key, value in self.frozen_results.items():
             final_result[key] = value
 
         return final_result
