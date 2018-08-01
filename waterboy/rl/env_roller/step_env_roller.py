@@ -29,8 +29,6 @@ class StepEnvRoller:
     @torch.no_grad()
     def rollout(self, model):
         """ Calculate env rollout """
-        self.observation = self.observation.to(self.device)
-
         observation_accumulator = []  # Device tensors
         action_accumulator = []  # Device tensors
         value_accumulator = []  # Device tensors
