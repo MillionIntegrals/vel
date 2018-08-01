@@ -37,7 +37,6 @@ class StepEnvRoller:
         episode_information = []  # Python objects
 
         for step_idx in range(self.number_of_steps):
-            # model_input = torch.from_numpy(self.observation).to(self.device)
             actions, values, _ = model.step(self.observation)
 
             observation_accumulator.append(self.observation)
@@ -83,6 +82,7 @@ class StepEnvRoller:
             'masks': masks_buffer.flatten(),
             'actions': actions_buffer.flatten(),
             'values': values_buffer.flatten(),
+            'advantages': discounted_rewards.flatten() - values_buffer.flatten(),
             'episode_information': episode_information
         }
 

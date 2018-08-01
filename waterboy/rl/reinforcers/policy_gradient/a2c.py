@@ -27,10 +27,9 @@ class A2CPolicyGradient(PolicyGradientBase):
         """ Calculate loss of the supplied rollout """
         observations = rollout['observations']
         discounted_rewards = rollout['discounted_rewards']
+        advantages = rollout['advantages']
         values = rollout['values']
         actions = rollout['actions']
-
-        advantages = discounted_rewards - values
 
         action_logits, value_outputs = model(observations)
 
@@ -40,7 +39,9 @@ class A2CPolicyGradient(PolicyGradientBase):
         value_loss = F.mse_loss(value_outputs, discounted_rewards)
         policy_entropy = torch.mean(model.entropy(action_logits))
 
-        loss_value = policy_gradient_loss - self.entropy_coefficient * policy_entropy + self.value_coefficient * value_loss
+        loss_value = (
+            policy_gradient_loss - self.entropy_coefficient * policy_entropy + self.value_coefficient * value_loss
+        )
 
         data_dict['value_loss'] = value_loss
         data_dict['policy_entropy'] = policy_entropy
