@@ -10,7 +10,7 @@ from torch.optim import Optimizer
 from waterboy.api.base import LinearBackboneModel, Model
 from waterboy.api.metrics import EpochResultAccumulator, BaseMetric
 from waterboy.api.metrics.summing_metric import SummingNamedMetric
-from waterboy.api.metrics.averaging_metric import AveragingMetric
+from waterboy.api.metrics.averaging_metric import AveragingMetric, AveragingNamedMetric
 from waterboy.api.progress_idx import EpochIdx, BatchIdx
 from waterboy.exceptions import WaterboyException
 from waterboy.openai.baselines.common.vec_env import VecEnv
@@ -171,8 +171,12 @@ class PolicyGradientReinforcer(ReinforcerBase):
             SummingNamedMetric("frames", reset_value=False),
             FPSMetric(),
             EpisodeRewardMetric(),
-            EpisodeLengthMetric()
+            EpisodeLengthMetric(),
+            AveragingNamedMetric("advantage_norm")
         ]
+
+        if self.settings.max_grad_norm is not None:
+            my_metrics.append(AveragingNamedMetric("grad_norm"))
 
         return my_metrics + self.settings.policy_gradient.metrics()
 
@@ -193,7 +197,8 @@ class PolicyGradientReinforcer(ReinforcerBase):
 
         data_dict = {
             'frames': torch.tensor(rollout['observations'].shape[0]).to(self.device),
-            'episode_infos': rollout['episode_information']
+            'episode_infos': rollout['episode_information'],
+            'advantage_norm': torch.norm(rollout['advantages'])
         }
 
         loss = self.settings.policy_gradient.calculate_loss(self.device, self.model, rollout, data_dict)
@@ -201,9 +206,11 @@ class PolicyGradientReinforcer(ReinforcerBase):
 
         # Gradient clipping
         if self.settings.max_grad_norm is not None:
-            torch.nn.utils.clip_grad_norm_(
-                filter(lambda p: p.requires_grad, self.model.parameters()), self.settings.max_grad_norm
+            grad_norm = torch.nn.utils.clip_grad_norm_(
+                filter(lambda p: p.requires_grad, self.model.parameters()), max_norm=self.settings.max_grad_norm
             )
+
+            data_dict['grad_norm'] = torch.tensor(grad_norm).to(self.device)
 
         optimizer.step(closure=None)
 
