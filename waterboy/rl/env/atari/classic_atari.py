@@ -27,14 +27,18 @@ def env_maker(environment_id):
     return env
 
 
-def wrapped_env_maker(environment_id, seed, serial_id, disable_reward_clipping=False, disable_episodic_life=False, monitor=True):
+def wrapped_env_maker(environment_id, seed, serial_id, disable_reward_clipping=False, disable_episodic_life=False,
+                      monitor=True, allow_early_resets=False):
     """ Wrap atari environment so that it's nicer to learn RL algorithms """
     env = env_maker(environment_id)
     env.seed(seed + serial_id)
 
     # Monitoring the env to measure sth (?)
     if monitor:
-        env = Monitor(env, logger.get_dir() and os.path.join(logger.get_dir(), str(serial_id)))
+        env = Monitor(
+            env, logger.get_dir() and os.path.join(logger.get_dir(), str(serial_id)),
+            allow_early_resets=allow_early_resets
+        )
 
     if not disable_episodic_life:
         # Make end-of-life == end-of-episode, but only reset on true game over.
@@ -55,13 +59,13 @@ def wrapped_env_maker(environment_id, seed, serial_id, disable_reward_clipping=F
     return env
 
 
-def raw_env_maker(environment_id, seed, serial_id, disable_reward_clipping=False):
+def raw_env_maker(environment_id, seed, serial_id, disable_reward_clipping=False, allow_early_resets=True):
     """ Wrap atari environment so that it's nicer to learn RL algorithms """
     env = env_maker(environment_id)
     env.seed(seed + serial_id)
 
     # Monitoring the env to measure sth (?)
-    env = Monitor(env, None)
+    env = Monitor(env, None, allow_early_resets=allow_early_resets)
 
     # if not disable_episodic_life:
     #     # Make end-of-life == end-of-episode, but only reset on true game over.
@@ -84,11 +88,11 @@ def raw_env_maker(environment_id, seed, serial_id, disable_reward_clipping=False
 
 class ClassicAtariEnv(EnvFactoryBase):
     """ Atari game environment wrapped in the same way as Deep Mind and OpenAI baselines """
-    def __init__(self, envname, disable_reward_clipping=False, disable_episodic_life=False, monitor=True):
+    def __init__(self, envname, settings=None, raw_settings=None):
         self.envname = envname
-        self.disable_reward_clipping = disable_reward_clipping
-        self.disable_episodic_life = disable_episodic_life
-        self.monitor = monitor
+
+        self.settings = settings or {}
+        self.raw_settings = raw_settings or {}
 
     def specification(self) -> EnvSpec:
         """ Return environment specification """
@@ -97,21 +101,11 @@ class ClassicAtariEnv(EnvFactoryBase):
     def instantiate(self, seed=0, serial_id=0, raw=False) -> gym.Env:
         """ Make a single environment compatible with the experiments """
         if raw:
-            return raw_env_maker(
-                self.envname, seed, serial_id,
-                disable_reward_clipping=self.disable_reward_clipping,
-            )
+            return raw_env_maker(self.envname, seed, serial_id, **self.raw_settings)
         else:
-            return wrapped_env_maker(
-                self.envname, seed, serial_id,
-                disable_reward_clipping=self.disable_reward_clipping,
-                disable_episodic_life=self.disable_episodic_life,
-                monitor=self.monitor
-            )
+            return wrapped_env_maker(self.envname, seed, serial_id, **self.settings)
 
 
-def create(game, model_config, disable_reward_clipping=False, monitor=True):
+def create(game, model_config, settings=None, raw_settings=None):
     logger.configure(dir=model_config.openai_dir())
-    return ClassicAtariEnv(
-        game, disable_reward_clipping=disable_reward_clipping, monitor=monitor
-    )
+    return ClassicAtariEnv(game, settings=settings, raw_settings=raw_settings)

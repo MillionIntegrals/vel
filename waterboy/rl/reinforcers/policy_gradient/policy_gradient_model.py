@@ -10,12 +10,17 @@ from waterboy.rl.modules.value_head import ValueHead
 class PolicyGradientModel(Model):
     """ For a policy gradient algorithm we need set of custom heads for our model """
 
-    def __init__(self, base_model: LinearBackboneModel, environment: VecEnv):
+    def __init__(self, base_model: LinearBackboneModel, environment: VecEnv, argmax_sampling=False):
         super().__init__()
+        self.argmax_sampling = argmax_sampling
 
         self.base_model = base_model
-        self.action_head = ActionHead(action_space=environment.action_space, input_dim=self.base_model.output_dim)
-        self.value_head = ValueHead(self.base_model.output_dim)
+        self.action_head = ActionHead(
+            action_space=environment.action_space,
+            input_dim=self.base_model.output_dim,
+            argmax_sampling=argmax_sampling
+        )
+        self.value_head = ValueHead(input_dim=self.base_model.output_dim)
 
     def reset_weights(self):
         """ Initialize properly model weights """
@@ -57,11 +62,13 @@ class PolicyGradientModel(Model):
 
 class PolicyGradientModelAugmentor(ModelAugmentor):
     """ Factory  class for policy gradient models """
+    def __init__(self, argmax_sampling):
+        self.argmax_sampling = argmax_sampling
 
     def augment(self, base_model: Model, extra_info: dict=None) -> Model:
         """ Create new policy gradient model"""
-        return PolicyGradientModel(base_model, extra_info['env'])
+        return PolicyGradientModel(base_model, extra_info['env'], argmax_sampling=self.argmax_sampling)
 
 
-def create():
-    return PolicyGradientModelAugmentor()
+def create(argmax_sampling=False):
+    return PolicyGradientModelAugmentor(argmax_sampling=argmax_sampling)

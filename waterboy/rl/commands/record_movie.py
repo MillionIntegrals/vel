@@ -16,7 +16,7 @@ class RecordMovieCommand:
     """ Record environment playthrough as a game  """
     def __init__(self, model_config: ModelConfig, vec_env: VecEnvFactoryBase, model: Model,
                  model_augmentors: typing.List[ModelAugmentor], storage: Storage,
-                 videoname: str, takes: int, seed: int):
+                 videoname: str, takes: int, maxframes: int, seed: int):
         self.model_config = model_config
         self.model = model
         self.model_augmentors = model_augmentors
@@ -24,6 +24,7 @@ class RecordMovieCommand:
         self.storage = storage
         self.takes = takes
         self.videoname = videoname
+        self.maxframes = maxframes
         self.seed = seed
 
     def run(self):
@@ -57,7 +58,7 @@ class RecordMovieCommand:
             env_instance.unwrapped.render('rgb_array')
         )
 
-        while True:
+        for i in range(self.maxframes):
             observation_array = np.expand_dims(np.array(observation), axis=0)
             observation_tensor = torch.from_numpy(observation_array).to(device)
             actions, _, _ = model.step(observation_tensor)
@@ -69,6 +70,7 @@ class RecordMovieCommand:
             )
 
             if 'episode' in epinfo:
+                # End of an episode
                 break
 
         takename = self.model_config.output_dir('videos', self.model_config.run_name, self.videoname.format(takenumber))
@@ -84,7 +86,7 @@ class RecordMovieCommand:
         print(f"Written {takename}")
 
 
-def create(model_config, vec_env, model, model_augmentors, storage, takes, videoname, seed):
+def create(model_config, vec_env, model, model_augmentors, storage, takes, videoname, seed, maxframes=10000):
     return RecordMovieCommand(
         model_config=model_config,
         vec_env=vec_env,
@@ -93,5 +95,6 @@ def create(model_config, vec_env, model, model_augmentors, storage, takes, video
         storage=storage,
         videoname=videoname,
         takes=takes,
+        maxframes=maxframes,
         seed=seed
     )
