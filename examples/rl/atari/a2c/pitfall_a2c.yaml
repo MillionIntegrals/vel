@@ -3,7 +3,7 @@ seed: 2019
 
 env:
   name: waterboy.rl.env.atari.classic_atari
-  game: 'PitfallNoFrameskip-v0'
+  game: 'PitfallNoFrameskip-v4'
 
 vec_env:
   name: waterboy.rl.vecenv.subproc
