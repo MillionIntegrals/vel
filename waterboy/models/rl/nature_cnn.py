@@ -4,6 +4,7 @@ https://github.com/openai/baselines/blob/master/baselines/ppo2/policies.py
 
 Under MIT license.
 """
+import numpy as np
 
 import torch
 import torch.nn as nn
@@ -66,10 +67,12 @@ class NatureCnn(LinearBackboneModel):
     def reset_weights(self):
         for m in self.modules():
             if isinstance(m, nn.Conv2d):
-                init.kaiming_normal_(m.weight, mode='fan_out', nonlinearity='relu')
+                # init.kaiming_normal_(m.weight, mode='fan_out', nonlinearity='relu')
+                init.orthogonal_(m.weight, gain=np.sqrt(2))
                 init.constant_(m.bias, 0.0)
             elif isinstance(m, nn.Linear):
-                init.kaiming_normal_(m.weight, mode='fan_out', nonlinearity='relu')
+                # init.kaiming_normal_(m.weight, mode='fan_out', nonlinearity='relu')
+                init.orthogonal_(m.weight, gain=np.sqrt(2))
                 init.constant_(m.bias, 0.0)
 
     def forward(self, image):

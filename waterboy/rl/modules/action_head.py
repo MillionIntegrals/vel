@@ -1,3 +1,5 @@
+import numpy as np
+
 import torch
 import torch.nn as nn
 import torch.nn.init as init
@@ -33,10 +35,12 @@ class ActionHead(nn.Module):
     def reset_weights(self):
         for m in self.modules():
             if isinstance(m, nn.Conv2d):
-                init.kaiming_normal_(m.weight, mode='fan_out', nonlinearity='relu')
+                # init.kaiming_normal_(m.weight, mode='fan_out', nonlinearity='relu')
+                init.orthogonal_(m.weight, gain=np.sqrt(2))
                 init.constant_(m.bias, 0.0)
             elif isinstance(m, nn.Linear):
-                init.kaiming_normal_(m.weight, mode='fan_out', nonlinearity='relu')
+                # init.kaiming_normal_(m.weight, mode='fan_out', nonlinearity='relu')
+                init.orthogonal_(m.weight, gain=0.01)
                 init.constant_(m.bias, 0.0)
 
     def entropy(self, logits):
