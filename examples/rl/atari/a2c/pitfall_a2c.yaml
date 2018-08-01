@@ -5,8 +5,6 @@ env:
   name: waterboy.rl.env.atari.classic_atari
   game: 'PitfallNoFrameskip-v0'
 
-
-
 vec_env:
   name: waterboy.rl.vecenv.subproc
   frame_history: 4  # How many stacked frames go into a single observation
