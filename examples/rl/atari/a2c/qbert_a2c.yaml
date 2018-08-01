@@ -18,7 +18,7 @@ model:
 
 
 model_augmentors:
-- name: waterboy.models.rl.reinforcers.policy_gradient.policy_gradient_augmentor
+- name: waterboy.rl.reinforcers.policy_gradient.policy_gradient_model
 
 
 reinforcer:
