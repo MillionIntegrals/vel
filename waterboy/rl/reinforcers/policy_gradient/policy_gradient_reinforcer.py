@@ -1,23 +1,20 @@
+import collections
+import time
+import typing
 from dataclasses import dataclass
 
 import numpy as np
 import torch
-import time
-import collections
 
 from torch.optim import Optimizer
 
-from waterboy.api.base import LinearBackboneModel, Model
+from waterboy.api.base import LinearBackboneModel, Model, ModelAugmentor
 from waterboy.api.metrics import EpochResultAccumulator, BaseMetric
-from waterboy.api.metrics.summing_metric import SummingNamedMetric
 from waterboy.api.metrics.averaging_metric import AveragingMetric, AveragingNamedMetric
+from waterboy.api.metrics.summing_metric import SummingNamedMetric
 from waterboy.api.progress_idx import EpochIdx, BatchIdx
-from waterboy.exceptions import WaterboyException
-from waterboy.openai.baselines.common.vec_env import VecEnv
 from waterboy.rl.api.base import ReinforcerBase, ReinforcerFactory, VecEnvFactoryBase
 from waterboy.rl.env_roller.step_env_roller import StepEnvRoller
-from waterboy.rl.modules.action_head import ActionHead
-from waterboy.rl.modules.value_head import ValueHead
 
 
 class PolicyGradientBase:
@@ -36,6 +33,7 @@ class PolicyGradientSettings:
     """ Settings for a policy gradient reinforcer"""
     policy_gradient: PolicyGradientBase
     vec_env: VecEnvFactoryBase
+    model_augmentors: typing.List[ModelAugmentor]
     parallel_envs: int
     number_of_steps: int
     discount_factor: float
@@ -103,54 +101,6 @@ class EpisodeLengthMetric(BaseMetric):
             return 0
 
 
-class PolicyGradientModel(Model):
-    """ For a policy gradient algorithm we need set of custom heads for our model """
-
-    def __init__(self, base_model: LinearBackboneModel, environment: VecEnv):
-        super().__init__()
-
-        self.base_model = base_model
-        self.action_head = ActionHead(action_space=environment.action_space, input_dim=self.base_model.output_dim)
-        self.value_head = ValueHead(self.base_model.output_dim)
-
-    def reset_weights(self):
-        """ Initialize properly model weights """
-        self.base_model.reset_weights()
-        self.action_head.reset_weights()
-        self.value_head.reset_weights()
-
-    def forward(self, observations):
-        base_output = self.base_model(observations)
-
-        action_output = self.action_head(base_output)
-        value_output = self.value_head(base_output)
-
-        return action_output, value_output
-
-    def loss_value(self, x_data, y_true, y_pred):
-        raise WaterboyException("Invalid method to call for this model")
-
-    def step(self, observation):
-        """ Select actions based on model's output """
-        action_logits, value_output = self(observation)
-        actions = self.action_head.sample(action_logits)
-
-        local_actions = actions.detach().cpu().numpy()
-
-        # - log probability
-        neglogp = -action_logits[np.vstack([np.arange(actions.size(0)), local_actions])]
-
-        return actions, value_output, neglogp
-
-    def value(self, observation):
-        base_output = self.base_model(observation)
-        value_output = self.value_head(base_output)
-        return value_output
-
-    def entropy(self, action_logits):
-        return self.action_head.entropy(action_logits)
-
-
 class PolicyGradientReinforcer(ReinforcerBase):
     """ Train network using a policy gradient algorithm """
     def __init__(self, device: torch.device, settings: PolicyGradientSettings, model: Model) -> None:
@@ -160,7 +110,16 @@ class PolicyGradientReinforcer(ReinforcerBase):
         self.environment = self.settings.vec_env.instantiate(
             parallel_envs=self.settings.parallel_envs, seed=self.settings.seed
         )
-        self._internal_model = PolicyGradientModel(model, self.environment).to(self.device)
+
+        self._internal_model = model
+
+        augmentor_dict = {'env': self.environment}
+
+        for augmentor in self.settings.model_augmentors:
+            self._internal_model = augmentor.augment(self._internal_model, augmentor_dict)
+
+        self._internal_model = self._internal_model.to(self.device)
+
         self.env_roller = StepEnvRoller(
             self.environment, self.device, self.settings.number_of_steps, self.settings.discount_factor
         )
@@ -245,12 +204,13 @@ class PolicyGradientReinforcer(ReinforcerBase):
 
 
 class PolicyGradientReinforcerFactory(ReinforcerFactory):
-    def __init__(self, vec_env, policy_gradient,
+    def __init__(self, vec_env, policy_gradient, model_augmentors,
                  number_of_steps, parallel_envs, discount_factor,
                  max_grad_norm, seed) -> None:
         self.settings = PolicyGradientSettings(
             policy_gradient=policy_gradient,
             vec_env=vec_env,
+            model_augmentors=model_augmentors,
             parallel_envs=parallel_envs,
             number_of_steps=number_of_steps,
             discount_factor=discount_factor,

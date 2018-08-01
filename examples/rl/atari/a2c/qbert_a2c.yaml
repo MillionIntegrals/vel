@@ -17,6 +17,10 @@ model:
   input_channels: 4  # The same as frame_history
 
 
+model_augmentors:
+- name: waterboy.models.rl.reinforcers.policy_gradient.policy_gradient_augmentor
+
+
 reinforcer:
   name: waterboy.rl.reinforcers.policy_gradient
 
@@ -43,5 +47,7 @@ commands:
     name: waterboy.rl.commands.rl_train
     total_frames: 1.1e7
     batches_per_epoch: 100
-  play:
-    name: waterboy.commands.rl.ai_play
+  record:
+    name: waterboy.rl.commands.record_movie
+    takes: 10
+    videoname: 'qbert_vid_{:04}.avi'

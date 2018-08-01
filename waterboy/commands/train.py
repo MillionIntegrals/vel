@@ -2,26 +2,22 @@ import torch
 
 from waterboy.api import Learner, ModelConfig, EpochIdx
 from waterboy.api.metrics import TrainingHistory
-from waterboy.storage.impl.checkpoint_strategy import ClassicCheckpointStrategy
 
 
 class SimpleTrainCommand:
     """ Very simple training command - just run the supplied generators """
 
-    def __init__(self, model_config: ModelConfig, epochs, optimizer_factory, scheduler_factory, callbacks, checkpoint, model,
+    def __init__(self, model_config: ModelConfig, epochs, optimizer_factory, scheduler_factory, callbacks, model,
                  source, storage, restart=True):
         self.epochs = epochs
         self.callbacks = callbacks
         self.optimizer_factory = optimizer_factory
         self.scheduler_factory = scheduler_factory
-        self.checkpoint = checkpoint
         self.model = model
         self.source = source
         self.model_config = model_config
         self.storage = storage
         self.restart = restart
-
-        self.storage.set_checkpoint_strategy(ClassicCheckpointStrategy(**self.checkpoint))
 
     def restore(self, hidden_state, optimizer, callbacks):
         optimizer.load_state_dict(hidden_state['optimizer'])
@@ -74,11 +70,9 @@ class SimpleTrainCommand:
         return training_history
 
 
-def create(model_config, epochs, optimizer, model, source, storage, scheduler=None, callbacks=None, checkpoint=None,
-           restart=True):
+def create(model_config, epochs, optimizer, model, source, storage, scheduler=None, callbacks=None, restart=True):
     """ Simply train the model """
     callbacks = callbacks or []
-    checkpoint = checkpoint or {}
 
     return SimpleTrainCommand(
         model_config=model_config,
@@ -86,7 +80,6 @@ def create(model_config, epochs, optimizer, model, source, storage, scheduler=No
         optimizer_factory=optimizer,
         scheduler_factory=scheduler,
         callbacks=callbacks,
-        checkpoint=checkpoint,
         model=model,
         source=source,
         storage=storage,

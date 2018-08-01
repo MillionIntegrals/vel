@@ -1,9 +1,9 @@
-name: 'breakout_a2c_simple'
-seed: 2019
+name: 'space_invaders_a2c_simple'
+seed: 2018
 
 env:
   name: waterboy.rl.env.atari.classic_atari
-  game: 'BreakoutNoFrameskip-v4'
+  game: 'SpaceInvadersNoFrameskip-v0'
 
 
 vec_env:
@@ -19,7 +19,7 @@ model:
 
 
 model_augmentors:
-  - name: waterboy.models.rl.reinforcers.policy_gradient.policy_gradient_augmentor
+- name: waterboy.models.rl.reinforcers.policy_gradient.policy_gradient_augmentor
 
 
 reinforcer:
@@ -52,4 +52,4 @@ commands:
   record:
     name: waterboy.rl.commands.record_movie
     takes: 10
-    videoname: 'breakout_vid_{:04}.avi'
+    videoname: 'space_invaders_vid_{:04}.avi'
