@@ -1,9 +1,9 @@
-name: 'breakout_a2c_simple'
+name: 'airraid_a2c_simple'
 seed: 2019
 
 env:
   name: waterboy.rl.env.atari.classic_atari
-  game: 'BreakoutNoFrameskip-v4'
+  game: 'AirRaidNoFrameskip-v4'
   raw_settings:
     allow_early_resets: true
 
@@ -54,4 +54,4 @@ commands:
   record:
     name: waterboy.rl.commands.record_movie
     takes: 10
-    videoname: 'breakout_vid_{:04}.avi'
+    videoname: 'airraid_vid_{:04}.avi'
