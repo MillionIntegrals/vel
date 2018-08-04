@@ -38,7 +38,8 @@ that are ready to run and easy to modify for other similar usecases:
 - State-of-the art results on Cifar10 dataset using residual networks
 - Cats vs dogs classification using transfer learning from a resnet34 model pretrained on 
   ImageNet
-- Actor-Critic policy gradient reinforcement algorithm
+- Actor-Critic and Proximal-Policy-Optimization policy gradient reinforcement
+  learning algorithms.
 
 
 # How to run the examples?
