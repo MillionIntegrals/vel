@@ -77,14 +77,14 @@ class StepEnvRoller:
         masks_buffer = dones_buffer[:-1, :]
         dones_buffer = dones_buffer[1:, :]
 
-        if self.gae_lambda is None:
-            discounted_rewards = self.discount_bootstrap(rewards_buffer, dones_buffer, last_values)
-            advantages = discounted_rewards - values_buffer
-        else:
-            # Generalized Advantage Estimation
-            # https://arxiv.org/abs/1506.02438
-            advantages = self.discount_bootstrap_gae(rewards_buffer, dones_buffer, values_buffer, last_values)
-            discounted_rewards = advantages + values_buffer
+        # Generalized Advantage Estimation
+        # https://arxiv.org/abs/1506.02438
+        advantages = self.discount_bootstrap_gae(
+            rewards_buffer, dones_buffer, values_buffer, last_values,
+            self.discount_factor, self.gae_lambda
+        )
+
+        discounted_rewards = advantages + values_buffer
 
         # Reshape into final batch size
         return {
@@ -98,7 +98,7 @@ class StepEnvRoller:
             'neglogps': neg_log_p_buffer.flatten()
         }
 
-    def discount_bootstrap(self, rewards_buffer, dones_buffer, last_values_buffer):
+    def discount_bootstrap(self, rewards_buffer, dones_buffer, last_values_buffer, discount_factor):
         true_value_buffer = torch.zeros_like(rewards_buffer)
         dones_buffer = dones_buffer.to(dtype=torch.float32)
 
@@ -106,12 +106,13 @@ class StepEnvRoller:
         current_value = last_values_buffer
 
         for i in reversed(range(self.number_of_steps)):
-            current_value = rewards_buffer[i] + self.discount_factor * current_value * (1.0 - dones_buffer[i])
+            current_value = rewards_buffer[i] + discount_factor * current_value * (1.0 - dones_buffer[i])
             true_value_buffer[i] = current_value
 
         return true_value_buffer
 
-    def discount_bootstrap_gae(self, rewards_buffer, dones_buffer, values_buffer, last_values_buffer):
+    def discount_bootstrap_gae(self, rewards_buffer, dones_buffer, values_buffer, last_values_buffer,
+                               discount_factor, gae_lambda):
         advantage_buffer = torch.zeros_like(rewards_buffer)
         dones_buffer = dones_buffer.to(dtype=torch.float32)
 
@@ -125,11 +126,11 @@ class StepEnvRoller:
                 next_value = values_buffer[i+1]
 
             bellman_delta = (
-                    rewards_buffer[i] + self.discount_factor * next_value * (1.0 - dones_buffer[i]) - values_buffer[i]
+                    rewards_buffer[i] + discount_factor * next_value * (1.0 - dones_buffer[i]) - values_buffer[i]
             )
 
             advantage_buffer[i] = sum_accumulator = (
-                    bellman_delta + self.discount_factor * self.gae_lambda * sum_accumulator * (1.0 - dones_buffer[i])
+                    bellman_delta + discount_factor * gae_lambda * sum_accumulator * (1.0 - dones_buffer[i])
             )
 
         return advantage_buffer

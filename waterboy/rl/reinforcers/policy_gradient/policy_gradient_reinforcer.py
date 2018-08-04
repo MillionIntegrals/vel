@@ -39,9 +39,9 @@ class PolicyGradientSettings:
     parallel_envs: int
     number_of_steps: int
     discount_factor: float
-    gae_lambda: float
     seed: int
-    max_grad_norm: float
+    max_grad_norm: float = None
+    gae_lambda: float = 1.0
     batch_size: int = 256
     experience_replay: int = 1
 

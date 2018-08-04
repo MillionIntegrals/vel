@@ -3,7 +3,7 @@ from .policy_gradient_model import PolicyGradientModelAugmentor
 
 
 def create(policy_gradient, vec_env, number_of_steps, parallel_envs, discount_factor, seed, max_grad_norm=None,
-           model_augmentors=None, gae_lambda=None, batch_size=256, experience_replay=1):
+           model_augmentors=None, gae_lambda=1.0, batch_size=256, experience_replay=1):
     """ Create a policy gradient reinforcer - factory """
     if model_augmentors is None:
         model_augmentors = [PolicyGradientModelAugmentor()]
