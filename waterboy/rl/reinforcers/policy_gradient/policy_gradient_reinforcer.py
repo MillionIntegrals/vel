@@ -1,22 +1,22 @@
-import collections
-import time
 import typing
 from dataclasses import dataclass
 
 import numpy as np
 import torch
-
 from torch.optim import Optimizer
 
 import waterboy.util.math as math_util
 
 from waterboy.api.base import LinearBackboneModel, Model, ModelAugmentor
-from waterboy.api.metrics import EpochResultAccumulator, BaseMetric
-from waterboy.api.metrics.averaging_metric import AveragingMetric, AveragingNamedMetric
+from waterboy.api.metrics import EpochResultAccumulator
+from waterboy.api.metrics.averaging_metric import AveragingNamedMetric
 from waterboy.api.metrics.summing_metric import SummingNamedMetric
 from waterboy.api.progress_idx import EpochIdx, BatchIdx
 from waterboy.rl.api.base import ReinforcerBase, ReinforcerFactory, VecEnvFactoryBase
 from waterboy.rl.env_roller.step_env_roller import StepEnvRoller
+from waterboy.rl.reinforcers.policy_gradient.policy_gradient_metrics import (
+  FPSMetric, EpisodeLengthMetric, EpisodeRewardMetric, ExplainedVariance
+)
 
 
 class PolicyGradientBase:
@@ -32,7 +32,7 @@ class PolicyGradientBase:
 
 @dataclass
 class PolicyGradientSettings:
-    """ Settings for a policy gradient reinforcer"""
+    """ Settings dataclass for a policy gradient reinforcer """
     policy_gradient: PolicyGradientBase
     vec_env: VecEnvFactoryBase
     model_augmentors: typing.List[ModelAugmentor]
@@ -44,79 +44,6 @@ class PolicyGradientSettings:
     gae_lambda: float = 1.0
     batch_size: int = 256
     experience_replay: int = 1
-
-
-class FPSMetric(AveragingMetric):
-    """ Metric calculating FPS values """
-    def __init__(self):
-        super().__init__('fps')
-
-        self.start_time = time.time()
-        self.frames = 0
-
-    def _value_function(self, data_dict):
-        self.frames += data_dict['frames'].item()
-
-        nseconds = time.time()-self.start_time
-        fps = int(self.frames/nseconds)
-        return fps
-
-
-class EpisodeRewardMetric(BaseMetric):
-    def __init__(self):
-        super().__init__("episode_reward")
-        self.buffer = collections.deque(maxlen=100)
-
-    def calculate(self, data_dict):
-        """ Calculate value of a metric based on supplied data """
-        self.buffer.extend(data_dict['episode_infos'])
-
-    def reset(self):
-        """ Reset value of a metric """
-        # Because it's a queue no need for reset..
-        pass
-
-    def value(self):
-        """ Return current value for the metric """
-        if self.buffer:
-            return np.mean([ep['r'] for ep in self.buffer])
-        else:
-            return 0.0
-
-
-class EpisodeLengthMetric(BaseMetric):
-    def __init__(self):
-        super().__init__("episode_length")
-        self.buffer = collections.deque(maxlen=100)
-
-    def calculate(self, data_dict):
-        """ Calculate value of a metric based on supplied data """
-        self.buffer.extend(data_dict['episode_infos'])
-
-    def reset(self):
-        """ Reset value of a metric """
-        # Because it's a queue no need for reset..
-        pass
-
-    def value(self):
-        """ Return current value for the metric """
-        if self.buffer:
-            return np.mean([ep['l'] for ep in self.buffer])
-        else:
-            return 0
-
-
-class ExplainedVariance(AveragingMetric):
-    """ How much value do rewards explain """
-    def __init__(self):
-        super().__init__("explained_variance")
-
-    def _value_function(self, data_dict):
-        values = data_dict['values']
-        rewards = data_dict['rewards']
-
-        explained_variance = 1 - torch.var(rewards - values) / torch.var(rewards)
-        return explained_variance.item()
 
 
 class PolicyGradientReinforcer(ReinforcerBase):
@@ -263,6 +190,7 @@ class PolicyGradientReinforcer(ReinforcerBase):
 
 
 class PolicyGradientReinforcerFactory(ReinforcerFactory):
+    """ Waterboy factory class for the PolicyGradientReinforcer """
     def __init__(self, vec_env, policy_gradient, model_augmentors,
                  number_of_steps, parallel_envs, discount_factor, gae_lambda,
                  max_grad_norm, seed, batch_size=256, experience_replay=1) -> None:
