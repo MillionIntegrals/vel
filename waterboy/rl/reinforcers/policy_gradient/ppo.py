@@ -26,6 +26,7 @@ class PpoPolicyGradient(PolicyGradientBase):
 
     def calculate_loss(self, batch_idx, device, model, rollout, data_dict=None):
         """ Calculate loss of the supplied rollout """
+
         observations = rollout['observations']
         discounted_rewards = rollout['discounted_rewards']
         advantages = rollout['advantages']
@@ -59,12 +60,13 @@ class PpoPolicyGradient(PolicyGradientBase):
         pg_loss_part2 = -advantages * torch.clamp(ratio, 1.0 - current_cliprange, 1.0 + current_cliprange)
         policy_gradient_loss = torch.mean(torch.max(pg_loss_part1, pg_loss_part2))
 
-        approx_kl_divergence = 0.5 * torch.mean((eval_neglogps - rollout_neglogps))
-        clip_fraction = torch.mean((torch.abs(ratio - 1.0) > current_cliprange).to(dtype=torch.float))
-
         loss_value = (
                 policy_gradient_loss - self.entropy_coefficient * policy_entropy + self.value_coefficient * value_loss
         )
+
+        with torch.no_grad():
+            approx_kl_divergence = 0.5 * torch.mean((eval_neglogps - rollout_neglogps))
+            clip_fraction = torch.mean((torch.abs(ratio - 1.0) > current_cliprange).to(dtype=torch.float))
 
         data_dict['policy_loss'] = policy_gradient_loss
         data_dict['value_loss'] = value_loss
