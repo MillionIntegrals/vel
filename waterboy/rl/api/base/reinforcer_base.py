@@ -3,7 +3,7 @@ from torch.optim import Optimizer
 
 from waterboy.api.base import Model
 from waterboy.api.metrics import EpochResultAccumulator
-from waterboy.api import EpochIdx
+from waterboy.api import EpochIdx, BatchIdx
 
 
 class ReinforcerBase:
@@ -11,7 +11,8 @@ class ReinforcerBase:
     Manages training process of a single model.
     Learner version for reinforcement-learning problems.
     """
-    def train_step(self, optimizer: Optimizer, result_accumulator: EpochResultAccumulator=None) -> None:
+    def train_step(self, batch_idx: BatchIdx, optimizer: Optimizer,
+                   result_accumulator: EpochResultAccumulator=None) -> None:
         """ Single, most atomic 'step' of learning this reinforcer can perform """
         raise NotImplementedError
 

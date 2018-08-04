@@ -1,4 +1,4 @@
-import numpy as np
+import torch.nn.functional as F
 
 from waterboy.api.base import LinearBackboneModel, Model, ModelAugmentor
 from waterboy.exceptions import WaterboyException
@@ -44,10 +44,8 @@ class PolicyGradientModel(Model):
         action_logits, value_output = self(observation)
         actions = self.action_head.sample(action_logits)
 
-        local_actions = actions.detach().cpu().numpy()
-
         # - log probability
-        neglogp = -action_logits[np.vstack([np.arange(actions.size(0)), local_actions])]
+        neglogp = F.nll_loss(action_logits, actions, reduction='none')
 
         return actions, value_output, neglogp
 
@@ -62,7 +60,7 @@ class PolicyGradientModel(Model):
 
 class PolicyGradientModelAugmentor(ModelAugmentor):
     """ Factory  class for policy gradient models """
-    def __init__(self, argmax_sampling):
+    def __init__(self, argmax_sampling=False):
         self.argmax_sampling = argmax_sampling
 
     def augment(self, base_model: Model, extra_info: dict=None) -> Model:

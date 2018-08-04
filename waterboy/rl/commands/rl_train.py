@@ -13,11 +13,13 @@ class RlTrainCommand:
     def __init__(self, model_config: ModelConfig, reinforcer: ReinforcerFactory,
                  model: Model, optimizer_factory: OptimizerFactory,
                  storage: Storage, callbacks,
-                 total_frames: int, batches_per_epoch: int, seed: int):
+                 total_frames: int, batches_per_epoch: int, seed: int,
+                 scheduler_factory=None):
         self.model_config = model_config
         self.reinforcer = reinforcer
         self.model = model
         self.optimizer_factory = optimizer_factory
+        self.scheduler_factory = scheduler_factory
         self.storage = storage
         self.total_frames = total_frames
         self.batches_per_epoch = batches_per_epoch
@@ -35,10 +37,14 @@ class RlTrainCommand:
         # Reinforcer is the learner for the reinforcement learning model
         reinforcer = self.reinforcer.instantiate(device, self.model)
         reinforcer.model.reset_weights()
+
         optimizer_instance = self.optimizer_factory.instantiate(reinforcer.model.parameters())
         metrics = reinforcer.metrics()
 
         callbacks = []
+
+        if self.scheduler_factory is not None:
+            callbacks.append(self.scheduler_factory.instantiate(optimizer_instance))
 
         callbacks.extend(self.callbacks)
         callbacks.extend(self.storage.streaming_callbacks())
@@ -49,7 +55,7 @@ class RlTrainCommand:
         training_history = TrainingHistory()
 
         while total_framecount < self.total_frames:
-            epoch_idx = EpochIdx(global_epoch_idx)
+            epoch_idx = EpochIdx(global_epoch_idx, extra={'total_frames': self.total_frames})
             result_accumulator = EpochResultAccumulator(epoch_idx, metrics)
 
             epoch_result = reinforcer.train_epoch(
@@ -87,7 +93,7 @@ class RlTrainCommand:
 
 def create(model_config, reinforcer, model, optimizer, storage,
            # Settings:
-           total_frames, batches_per_epoch,  seed, callbacks=None):
+           total_frames, batches_per_epoch,  seed, callbacks=None, scheduler=None):
     """ Create reinforcement learning pipeline """
     callbacks = callbacks or []
 
@@ -96,6 +102,7 @@ def create(model_config, reinforcer, model, optimizer, storage,
         reinforcer=reinforcer,
         model=model,
         optimizer_factory=optimizer,
+        scheduler_factory=scheduler,
         storage=storage,
         callbacks=callbacks,
         total_frames=int(float(total_frames)),
