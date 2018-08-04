@@ -22,6 +22,6 @@ class RMSpropFactory(OptimizerFactory):
         )
 
 
-def create(lr, alpha, momentum=0, weight_decay=0):
+def create(lr, alpha, momentum=0, weight_decay=0, epsilon=1e-8):
     """ Waterboy creation function - RMSprop optimizer"""
-    return RMSpropFactory(lr=lr, alpha=alpha, momentum=momentum, weight_decay=weight_decay)
+    return RMSpropFactory(lr=lr, alpha=alpha, momentum=momentum, weight_decay=weight_decay, eps=float(epsilon))

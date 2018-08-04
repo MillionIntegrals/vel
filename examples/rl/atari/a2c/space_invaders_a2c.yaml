@@ -43,6 +43,7 @@ optimizer:
   name: waterboy.optimizers.rmsprop
   lr: 7.0e-4
   alpha: 0.99
+  epsilon: 1.0e-5
 
 
 commands:

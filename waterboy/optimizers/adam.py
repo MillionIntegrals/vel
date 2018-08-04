@@ -20,6 +20,6 @@ class AdamFactory(OptimizerFactory):
         )
 
 
-def create(lr, weight_decay=0):
+def create(lr, weight_decay=0, epsilon=1e-8):
     """ Return an ADAM optimizer """
-    return AdamFactory(lr=lr, weight_decay=weight_decay)
+    return AdamFactory(lr=lr, weight_decay=weight_decay, eps=epsilon)
