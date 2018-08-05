@@ -9,7 +9,7 @@ class StdoutStreaming(base.Callback):
         if any(':' not in x for x in metrics.keys()):
             self._print_metrics_line(metrics, head=None)
 
-        head_set = {x.split(':')[0] + ':' for x in metrics.keys() if ':' in x}
+        head_set = sorted({x.split(':')[0] + ':' for x in metrics.keys() if ':' in x})
 
         for head in head_set:
             if any(x.startswith(head) for x in metrics.keys()):
