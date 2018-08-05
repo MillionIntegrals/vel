@@ -12,21 +12,21 @@ class SubprocVecEnvWrapper(VecEnvFactoryBase):
         self.env = env
         self.frame_history = frame_history
 
-    def instantiate(self, parallel_envs, seed=0, raw=False) -> VecEnv:
+    def instantiate(self, parallel_envs, seed=0, preset='default') -> VecEnv:
         """ Make parallel environments """
-        envs = SubprocVecEnv([self._creation_function(i, seed, raw) for i in range(parallel_envs)])
+        envs = SubprocVecEnv([self._creation_function(i, seed, preset) for i in range(parallel_envs)])
         envs = VecFrameStack(envs, self.frame_history)
 
         return envs
 
-    def instantiate_single(self, seed=0, raw=False):
+    def instantiate_single(self, seed=0, preset='default'):
         """ Create a new VecEnv instance - single """
-        env = self.env.instantiate(seed=seed, serial_id=0, raw=raw)
+        env = self.env.instantiate(seed=seed, serial_id=0, preset=preset)
         return FrameStack(env, self.frame_history)
 
-    def _creation_function(self, idx, seed, raw):
+    def _creation_function(self, idx, seed, preset):
         """ Helper function to create a proper closure around supplied values """
-        return lambda: self.env.instantiate(seed=seed, serial_id=idx, raw=raw)
+        return lambda: self.env.instantiate(seed=seed, serial_id=idx, preset=preset)
 
 
 def create(env, frame_history):

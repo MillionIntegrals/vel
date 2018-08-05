@@ -17,7 +17,7 @@ class ReinforcerBase:
         raise NotImplementedError
 
     def train_epoch(self, epoch_idx: EpochIdx, batches_per_epoch: int, optimizer: Optimizer,
-                    callbacks: list, result_accumulator: EpochResultAccumulator=None) -> None:
+                    callbacks: list, result_accumulator: EpochResultAccumulator=None) -> dict:
         """ Train model on an epoch of a fixed number of batch updates """
         raise NotImplementedError
 

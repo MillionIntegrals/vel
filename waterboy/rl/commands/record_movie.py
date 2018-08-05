@@ -30,7 +30,7 @@ class RecordMovieCommand:
     def run(self):
         device = torch.device(self.model_config.device)
 
-        env_instance = self.vec_env.instantiate_single(raw=True)
+        env_instance = self.vec_env.instantiate_single(preset='raw')
 
         model = self.model
 

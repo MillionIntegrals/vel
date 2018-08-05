@@ -1,7 +1,10 @@
+import numpy as np
+import tqdm
+import sys
 import typing
+
 from dataclasses import dataclass
 
-import numpy as np
 import torch
 from torch.optim import Optimizer
 
@@ -166,7 +169,7 @@ class PolicyGradientReinforcer(ReinforcerBase):
         for callback in callbacks:
             callback.on_epoch_begin(epoch_idx)
 
-        for batch_idx_number in range(batches_per_epoch):
+        for batch_idx_number in tqdm.trange(batches_per_epoch, file=sys.stdout, desc="Training", unit="batch"):
             progress_idx = BatchIdx(epoch_idx, batch_idx_number, batches_per_epoch=batches_per_epoch, extra={
                 'progress_meter': result_accumulator.intermediate_value('frames') / epoch_idx.extra['total_frames']
             })

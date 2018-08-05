@@ -14,7 +14,7 @@ class RlTrainCommand:
                  model: Model, optimizer_factory: OptimizerFactory,
                  storage: Storage, callbacks,
                  total_frames: int, batches_per_epoch: int, seed: int,
-                 scheduler_factory=None):
+                 scheduler_factory=None, openai_logging=False):
         self.model_config = model_config
         self.reinforcer = reinforcer
         self.model = model
@@ -26,6 +26,18 @@ class RlTrainCommand:
         self.callbacks = callbacks
 
         self.seed = seed
+        self.openai_logging = openai_logging
+
+    def _openai_logging(self, epoch_result):
+        # OpenAI logging..., possibly guard it with a flag?
+        for key in sorted(epoch_result.keys()):
+            if key == 'fps':
+                # Not super elegant, but I like nicer display of FPS
+                openai_logger.record_tabular(key, int(epoch_result[key]))
+            else:
+                openai_logger.record_tabular(key, epoch_result[key])
+
+        openai_logger.dump_tabular()
 
     def run(self):
         """ Run reinforcement learning algorithm """
@@ -66,15 +78,8 @@ class RlTrainCommand:
                 result_accumulator=result_accumulator
             )
 
-            # OpenAI logging..., possibly guard it with a flag?
-            for key in sorted(epoch_result.keys()):
-                if key == 'fps':
-                    # Not super elegant, but I like nicer display of FPS
-                    openai_logger.record_tabular(key, int(epoch_result[key]))
-                else:
-                    openai_logger.record_tabular(key, epoch_result[key])
-
-            openai_logger.dump_tabular()
+            if self.openai_logging:
+                self._openai_logging(epoch_result)
 
             self.storage.checkpoint(
                 epoch_idx.global_epoch_idx, epoch_result, reinforcer.model, optimizer_instance, callbacks
@@ -93,9 +98,12 @@ class RlTrainCommand:
 
 def create(model_config, reinforcer, model, optimizer, storage,
            # Settings:
-           total_frames, batches_per_epoch,  seed, callbacks=None, scheduler=None):
+           total_frames, batches_per_epoch,  seed, callbacks=None, scheduler=None, openai_logging=False):
     """ Create reinforcement learning pipeline """
     callbacks = callbacks or []
+
+    from waterboy.openai.baselines import logger
+    logger.configure(dir=model_config.openai_dir())
 
     return RlTrainCommand(
         model_config=model_config,
@@ -107,5 +115,6 @@ def create(model_config, reinforcer, model, optimizer, storage,
         callbacks=callbacks,
         total_frames=int(float(total_frames)),
         batches_per_epoch=int(batches_per_epoch),
-        seed=seed
+        seed=seed,
+        openai_logging=openai_logging
     )

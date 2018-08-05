@@ -4,8 +4,6 @@ seed: 2018
 env:
   name: waterboy.rl.env.atari.classic_atari
   game: 'SpaceInvadersNoFrameskip-v4'
-  raw_settings:
-    allow_early_resets: true
 
 
 vec_env:

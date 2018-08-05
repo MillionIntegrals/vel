@@ -4,8 +4,6 @@ seed: 2019
 env:
   name: waterboy.rl.env.atari.classic_atari
   game: 'BreakoutNoFrameskip-v4'
-  raw_settings:
-    allow_early_resets: true
 
 
 vec_env:
