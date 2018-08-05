@@ -62,10 +62,7 @@ Where `PYTORCH_DEVICE` is a valid name of pytorch device, most probably `cuda:0`
 number is the sequential number of run you wish to record your results under.
 
 
-## Important links:
+# Bibliography
 
-- https://pytorch.org/tutorials/
-- https://pytorch.org/docs/stable/index.html
-- https://github.com/pytorch/vision
-- https://github.com/fastai/fastai
-- https://github.com/openai/baselines
+For a more or less exhaustive bibliography please refer to [Bibliography](Bibliography.md)
+
