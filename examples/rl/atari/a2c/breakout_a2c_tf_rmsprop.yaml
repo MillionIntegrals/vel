@@ -1,4 +1,4 @@
-name: 'breakout_a2c_simple'
+name: 'breakout_a2c_tf_rmsprop'
 seed: 2019
 
 env:
@@ -38,11 +38,10 @@ reinforcer:
 
 
 optimizer:
-  name: waterboy.optimizers.rmsprop
+  name: waterboy.optimizers.rmsprop_tf
   lr: 7.0e-4
   alpha: 0.99
-#  epsilon: 1.0e-5
-  epsilon: 0.5e-3
+  epsilon: 1.0e-5
 
 
 commands:
