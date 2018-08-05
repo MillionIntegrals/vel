@@ -3,8 +3,12 @@
 My goal is to establish a Rails-like convention-over-configuration opinionated set of
 tools streamlining research and development of deep learning models.
 
+This library is a collection of entirely modular components, which should
+**just work** together as long as it makes sense. Unless the framework is mature it 
+may require writing extra bits of code in some cases.
+
 I wanted to minimize time to market of new projects, ease experimentation
-and combine that with experiment management to bring some order to an already 
+and provide bits of experiment management to bring some order to an already 
 noisy data science workflow.
 
 This repository is still in an early stage of that journey but it will grow
@@ -32,7 +36,7 @@ This project requires Python 3.7 and PyTorch 0.4.1
   
 # Examples
 
-Several models are already implemented in the framework and have prepared config files
+Several models are already implemented in the framework and have example config files
 that are ready to run and easy to modify for other similar usecases:
 
 - State-of-the art results on Cifar10 dataset using residual networks
@@ -55,7 +59,7 @@ General form of the call is as follows
 
 
 ```
-python -m CONFIGFILE COMMANDS --device PYTORCH_DEVICE -r RUN_NUMBER
+python -m waterboy.launcher CONFIGFILE COMMAND --device PYTORCH_DEVICE -r RUN_NUMBER
 ```
 
 Where `PYTORCH_DEVICE` is a valid name of pytorch device, most probably `cuda:0`, and run
