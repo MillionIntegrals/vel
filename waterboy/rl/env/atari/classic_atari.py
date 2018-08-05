@@ -57,10 +57,10 @@ def wrapped_env_maker(environment_id, seed, serial_id, disable_reward_clipping=F
     else:
         logdir = None
 
-    env = Monitor(env, logdir, allow_early_resets=allow_early_resets)
-
     if max_episode_frames is not None:
         env = ClipEpisodeEnv(env, max_episode_length=max_episode_frames)
+
+    env = Monitor(env, logdir, allow_early_resets=allow_early_resets)
 
     if not disable_episodic_life:
         # Make end-of-life == end-of-episode, but only reset on true game over.
