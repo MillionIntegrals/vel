@@ -7,15 +7,31 @@ class StdoutStreaming(base.Callback):
         print(f"=>>>>>>>>>> EPOCH {epoch_idx.global_epoch_idx}")
 
         if any(':' not in x for x in metrics.keys()):
-            print("Metrics     ", " ".join(["{} {:.06f}".format(k, metrics[k]) for k in sorted([k for k in metrics.keys() if ':' not in k])]))
+            self._print_metrics_line(metrics, head=None)
 
-        if any(x.startswith('train:') for x in metrics.keys()):
-            print("Train     ", " ".join(["{} {:.06f}".format(k.split(':')[1], metrics[k]) for k in sorted([k for k in metrics.keys() if k.startswith('train:')])]))
+        head_set = {x.split(':')[0] + ':' for x in metrics.keys() if ':' in x}
 
-        if any(x.startswith('val:') for x in metrics.keys()):
-            print("Validation", " ".join(["{} {:.06f}".format(k.split(':')[1], metrics[k]) for k in sorted([k for k in metrics.keys() if k.startswith('val:')])]))
+        for head in head_set:
+            if any(x.startswith(head) for x in metrics.keys()):
+                self._print_metrics_line(metrics, head)
 
         print(f"=>>>>>>>>>> DONE")
+
+    def _print_metrics_line(self, metrics, head=None):
+        if head is None:
+            head = 'Metrics:'
+
+            metrics_list = [
+                "{} {:.06f}".format(k, metrics[k])
+                for k in sorted([k for k in metrics.keys() if ':' not in k])
+            ]
+        else:
+            metrics_list = [
+                "{} {:.06f}".format(k.split(':')[1], metrics[k])
+                for k in sorted([k for k in metrics.keys() if k.startswith(head)])
+            ]
+
+        print('{0: <10}'.format(head.capitalize()), " ".join(metrics_list))
 
 
 def create():

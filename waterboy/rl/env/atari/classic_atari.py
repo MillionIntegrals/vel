@@ -10,6 +10,7 @@ from waterboy.openai.baselines.bench import Monitor
 from waterboy.openai.baselines.common.atari_wrappers import (
     NoopResetEnv, MaxAndSkipEnv, FireResetEnv, EpisodicLifeEnv, WarpFrame, ClipRewardEnv
 )
+from waterboy.rl.env.wrappers.clip_episode_length import ClipEpisodeEnv
 
 
 DEFAULT_SETTINGS = {
@@ -17,14 +18,16 @@ DEFAULT_SETTINGS = {
         'disable_reward_clipping': False,
         'disable_episodic_life': False,
         'monitor': False,
-        'allow_early_resets': False
+        'allow_early_resets': False,
+        'max_episode_frames': 10000
     },
     'raw': {
         'disable_reward_clipping': False,
         'disable_episodic_life': True,
         'monitor': False,
-        'allow_early_resets': True
-    }
+        'allow_early_resets': True,
+        'max_episode_frames': 10000
+    },
 }
 
 
@@ -43,7 +46,7 @@ def env_maker(environment_id):
 
 
 def wrapped_env_maker(environment_id, seed, serial_id, disable_reward_clipping=False, disable_episodic_life=False,
-                      monitor=False, allow_early_resets=False):
+                      monitor=False, allow_early_resets=False, max_episode_frames=10000):
     """ Wrap atari environment so that it's nicer to learn RL algorithms """
     env = env_maker(environment_id)
     env.seed(seed + serial_id)
@@ -55,6 +58,9 @@ def wrapped_env_maker(environment_id, seed, serial_id, disable_reward_clipping=F
         logdir = None
 
     env = Monitor(env, logdir, allow_early_resets=allow_early_resets)
+
+    if max_episode_frames is not None:
+        env = ClipEpisodeEnv(env, max_episode_length=max_episode_frames)
 
     if not disable_episodic_life:
         # Make end-of-life == end-of-episode, but only reset on true game over.
@@ -73,33 +79,6 @@ def wrapped_env_maker(environment_id, seed, serial_id, disable_reward_clipping=F
         env = ClipRewardEnv(env)
 
     return env
-
-
-# def raw_env_maker(environment_id, seed, serial_id, disable_reward_clipping=False, allow_early_resets=True):
-#     """ Wrap atari environment so that it's nicer to learn RL algorithms """
-#     env = env_maker(environment_id)
-#     env.seed(seed + serial_id)
-#
-#     # Monitoring the env to measure sth (?)
-#     env = Monitor(env, None, allow_early_resets=allow_early_resets)
-#
-#     # if not disable_episodic_life:
-#     #     # Make end-of-life == end-of-episode, but only reset on true game over.
-#     #     # Done by DeepMind for the DQN and co. since it helps value estimation.
-#     #     env = EpisodicLifeEnv(env)
-#
-#     if 'FIRE' in env.unwrapped.get_action_meanings():
-#         # Take action on reset for environments that are fixed until firing.
-#         env = FireResetEnv(env)
-#
-#     # Warp frames to 84x84 as done in the Nature paper and later work.
-#     env = WarpFrame(env)
-#
-#     if not disable_reward_clipping:
-#         # Bin reward to {+1, 0, -1} by its sign.
-#         env = ClipRewardEnv(env)
-#
-#     return env
 
 
 class ClassicAtariEnv(EnvFactoryBase):

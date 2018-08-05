@@ -25,8 +25,8 @@ class FPSMetric(AveragingMetric):
 
 
 class EpisodeRewardMetric(BaseMetric):
-    def __init__(self):
-        super().__init__("episode_reward")
+    def __init__(self, name):
+        super().__init__(name)
         self.buffer = collections.deque(maxlen=100)
 
     def calculate(self, data_dict):
@@ -42,6 +42,29 @@ class EpisodeRewardMetric(BaseMetric):
         """ Return current value for the metric """
         if self.buffer:
             return np.mean([ep['r'] for ep in self.buffer])
+        else:
+            return 0.0
+
+
+class EpisodeRewardMetricQuantile(BaseMetric):
+    def __init__(self, name, quantile, buf_size=100):
+        super().__init__(name)
+        self.buffer = collections.deque(maxlen=buf_size)
+        self.quantile = quantile
+
+    def calculate(self, data_dict):
+        """ Calculate value of a metric based on supplied data """
+        self.buffer.extend(ep['r'] for ep in data_dict['episode_infos'])
+
+    def reset(self):
+        """ Reset value of a metric """
+        # Because it's a queue no need for reset..
+        pass
+
+    def value(self):
+        """ Return current value for the metric """
+        if self.buffer:
+            return np.quantile(self.buffer, self.quantile)
         else:
             return 0.0
 

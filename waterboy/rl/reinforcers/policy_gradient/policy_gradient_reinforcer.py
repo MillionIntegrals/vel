@@ -18,7 +18,8 @@ from waterboy.api.progress_idx import EpochIdx, BatchIdx
 from waterboy.rl.api.base import ReinforcerBase, ReinforcerFactory, VecEnvFactoryBase
 from waterboy.rl.env_roller.step_env_roller import StepEnvRoller
 from waterboy.rl.reinforcers.policy_gradient.policy_gradient_metrics import (
-  FPSMetric, EpisodeLengthMetric, EpisodeRewardMetric, ExplainedVariance
+    FPSMetric, EpisodeLengthMetric, EpisodeRewardMetricQuantile, ExplainedVariance,
+    EpisodeRewardMetric
 )
 
 
@@ -78,7 +79,9 @@ class PolicyGradientReinforcer(ReinforcerBase):
         my_metrics = [
             SummingNamedMetric("frames", reset_value=False),
             FPSMetric(),
-            EpisodeRewardMetric(),
+            EpisodeRewardMetric('PMM:episode_rewards'),
+            EpisodeRewardMetricQuantile('P09:episode_rewards', quantile=0.9),
+            EpisodeRewardMetricQuantile('P01:episode_rewards', quantile=0.1),
             EpisodeLengthMetric(),
             AveragingNamedMetric("advantage_norm"),
             ExplainedVariance()
