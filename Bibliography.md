@@ -6,6 +6,10 @@ on this library:
 
 ### Learning rate and optimization
 
+- (2012) **Lecture 6.5 -- RmsProp: Divide the gradient by a running average of its recent magnitude**
+  Geoff Hinton
+  http://www.cs.toronto.edu/~tijmen/csc321/slides/lecture_slides_lec6.pdf
+
 - (2015) **Cyclical Learning Rates for Training Neural Networks**
   Leslie N. Smith
   https://arxiv.org/abs/1506.01186
