@@ -8,7 +8,8 @@ from waterboy.rl.api.base import EnvFactoryBase
 from waterboy.openai.baselines import logger
 from waterboy.openai.baselines.bench import Monitor
 from waterboy.openai.baselines.common.atari_wrappers import (
-    NoopResetEnv, MaxAndSkipEnv, FireResetEnv, EpisodicLifeEnv, WarpFrame, ClipRewardEnv
+    NoopResetEnv, MaxAndSkipEnv, FireResetEnv, EpisodicLifeEnv, WarpFrame, ClipRewardEnv,
+    ScaledFloatFrame, FrameStack
 )
 from waterboy.rl.env.wrappers.clip_episode_length import ClipEpisodeEnv
 
@@ -19,14 +20,18 @@ DEFAULT_SETTINGS = {
         'disable_episodic_life': False,
         'monitor': False,
         'allow_early_resets': False,
-        'max_episode_frames': 10000
+        'scale_float_frames': False,
+        'max_episode_frames': 10000,
+        'frame_stack': None
     },
     'raw': {
         'disable_reward_clipping': False,
         'disable_episodic_life': True,
         'monitor': False,
         'allow_early_resets': True,
-        'max_episode_frames': 10000
+        'scale_float_frames': False,
+        'max_episode_frames': 10000,
+        'frame_stack': None
     },
 }
 
@@ -46,19 +51,20 @@ def env_maker(environment_id):
 
 
 def wrapped_env_maker(environment_id, seed, serial_id, disable_reward_clipping=False, disable_episodic_life=False,
-                      monitor=False, allow_early_resets=False, max_episode_frames=10000):
+                      monitor=False, allow_early_resets=False, scale_float_frames=False,
+                      max_episode_frames=10000, frame_stack=None):
     """ Wrap atari environment so that it's nicer to learn RL algorithms """
     env = env_maker(environment_id)
     env.seed(seed + serial_id)
+
+    if max_episode_frames is not None:
+        env = ClipEpisodeEnv(env, max_episode_length=max_episode_frames)
 
     # Monitoring the env
     if monitor:
         logdir = logger.get_dir() and os.path.join(logger.get_dir(), str(serial_id)),
     else:
         logdir = None
-
-    if max_episode_frames is not None:
-        env = ClipEpisodeEnv(env, max_episode_length=max_episode_frames)
 
     env = Monitor(env, logdir, allow_early_resets=allow_early_resets)
 
@@ -71,12 +77,18 @@ def wrapped_env_maker(environment_id, seed, serial_id, disable_reward_clipping=F
         # Take action on reset for environments that are fixed until firing.
         env = FireResetEnv(env)
 
+    if scale_float_frames:
+        env = ScaledFloatFrame(env)
+
     # Warp frames to 84x84 as done in the Nature paper and later work.
     env = WarpFrame(env)
 
     if not disable_reward_clipping:
         # Bin reward to {+1, 0, -1} by its sign.
         env = ClipRewardEnv(env)
+
+    if frame_stack is not None:
+        env = FrameStack(env, frame_stack)
 
     return env
 
