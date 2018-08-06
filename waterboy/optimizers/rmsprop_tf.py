@@ -89,11 +89,13 @@ class RMSpropTF(torch.optim.Optimizer):
                 if group['centered']:
                     grad_avg = state['grad_avg']
                     grad_avg.mul_(alpha).add_(1 - alpha, grad)
-                    avg = square_avg.addcmul(-1, grad_avg, grad_avg).sqrt().add_(group['eps'])
+                    # THIS LINE IS EVERYTHING THAT I CHANGED IN THIS OPTIMIZER
+                    # avg = square_avg.addcmul(-1, grad_avg, grad_avg).sqrt().add_(group['eps'])
+                    avg = square_avg.addcmul(-1, grad_avg, grad_avg).add(group['eps']).sqrt()
                 else:
                     # THIS LINE IS EVERYTHING THAT I CHANGED IN THIS OPTIMIZER
                     # avg = square_avg.sqrt().add_(group['eps'])
-                    avg = square_avg.add_(group['eps']).sqrt()
+                    avg = square_avg.add(group['eps']).sqrt()
 
                 if group['momentum'] > 0:
                     buf = state['momentum_buffer']
