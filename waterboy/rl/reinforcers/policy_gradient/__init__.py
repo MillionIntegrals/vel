@@ -1,4 +1,4 @@
-from .policy_gradient_reinforcer import PolicyGradientReinforcerFactory
+from .policy_gradient_reinforcer import PolicyGradientReinforcerFactory, PolicyGradientSettings
 from .policy_gradient_model import PolicyGradientModelAugmentor
 
 
@@ -8,12 +8,12 @@ def create(policy_gradient, vec_env, number_of_steps, parallel_envs, discount_fa
     if model_augmentors is None:
         model_augmentors = [PolicyGradientModelAugmentor()]
 
-    return PolicyGradientReinforcerFactory(
+    settings = PolicyGradientSettings(
         policy_gradient=policy_gradient,
         vec_env=vec_env,
         model_augmentors=model_augmentors,
-        number_of_steps=number_of_steps,
         parallel_envs=parallel_envs,
+        number_of_steps=number_of_steps,
         discount_factor=discount_factor,
         gae_lambda=gae_lambda,
         seed=seed,
@@ -21,3 +21,5 @@ def create(policy_gradient, vec_env, number_of_steps, parallel_envs, discount_fa
         batch_size=batch_size,
         experience_replay=experience_replay
     )
+
+    return PolicyGradientReinforcerFactory(settings)
