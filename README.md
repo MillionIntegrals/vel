@@ -3,11 +3,10 @@
 My goal is to establish a Rails-like convention-over-configuration opinionated set of
 tools streamlining research and development of deep learning models.
 
-This library is a collection of entirely modular components, which should
-**just work** together as long as it makes sense. Unless the framework is mature it 
-may require writing extra bits of code in some cases.
+This library is a collection of modular components, which you can combine together freely.
+In a rare case it's not supported directly, a little bit of glue code should do the trick.
 
-I wanted to minimize time to market of new projects, ease experimentation
+I would like to minimize time to market of new projects, ease experimentation
 and provide bits of experiment management to bring some order to an already 
 noisy data science workflow.
 
