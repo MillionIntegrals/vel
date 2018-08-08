@@ -107,7 +107,8 @@ class ModelConfig:
         print(f"Pytorch version: {torch.__version__} cuda version {torch.version.cuda} cudnn version {torch.backends.cudnn.version()}")
         print("Running model {}, run {} -- command {} -- device {}".format(self._model_name, self.run_number, command_name, self.device))
         if device.type == 'cuda':
-            print(f"CUDA Device name {torch.cuda.get_device_name(device.index)}")
+            device_idx = 0 if device.index is None else device.index
+            print(f"CUDA Device name {torch.cuda.get_device_name(device_idx)}")
         print(dtm.datetime.now().strftime("%Y/%m/%d - %H:%M:%S"))
         print("=" * 80)
 
