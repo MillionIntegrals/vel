@@ -58,10 +58,10 @@ class PhaseTrainCommand:
 
         metrics = learner.metrics()
 
-        if self.restart:
-            last_epoch, hidden_state = self.storage.resume_learning(learner.model)
-        else:
+        if self.model_config.reset:
             last_epoch, hidden_state = 0, {}
+        else:
+            last_epoch, hidden_state = self.storage.resume_learning(learner.model)
 
         current_phase_idx = self._select_phase_left_bound(last_epoch)
         current_phase = self.phases[current_phase_idx]

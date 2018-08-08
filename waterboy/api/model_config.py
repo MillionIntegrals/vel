@@ -13,9 +13,10 @@ class ModelConfig:
     Is a frontend for the provider, resolving all dependency-injection requests.
     """
 
-    def __init__(self, filename: str, run_number: int, project_config: ProjectConfig, **kwargs):
+    def __init__(self, filename: str, run_number: int, project_config: ProjectConfig, reset=False, **kwargs):
         self.filename = filename
         self.device = kwargs.get('device', 'cuda')
+        self.reset = reset
 
         with open(self.filename, 'r') as f:
             self.contents = yaml.safe_load(f)

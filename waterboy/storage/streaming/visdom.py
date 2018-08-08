@@ -1,21 +1,11 @@
 import visdom
 import pandas as pd
 
-from dataclasses import dataclass
 
 import waterboy.api.base as base
 
 from waterboy.api import ModelConfig
-from waterboy.util.visdom import visdom_append_metrics
-
-
-@dataclass
-class VisdomSettings:
-    """ Settings for connecting to the visdom server """
-    stream_lr: bool = False
-    server: str = 'http://localhost'
-    endpoint: str = 'events'
-    port: int = 8097
+from waterboy.util.visdom import visdom_append_metrics, VisdomSettings
 
 
 class VisdomStreaming(base.Callback):

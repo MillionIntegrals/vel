@@ -8,7 +8,7 @@ class SimpleTrainCommand:
     """ Very simple training command - just run the supplied generators """
 
     def __init__(self, model_config: ModelConfig, model_factory, epochs, optimizer_factory, scheduler_factory, callbacks,
-                 source, storage, restart=True):
+                 source, storage):
         self.epochs = epochs
         self.callbacks = callbacks
         self.optimizer_factory = optimizer_factory
@@ -17,7 +17,6 @@ class SimpleTrainCommand:
         self.source = source
         self.model_config = model_config
         self.storage = storage
-        self.restart = restart
 
     def restore(self, hidden_state, optimizer, callbacks):
         optimizer.load_state_dict(hidden_state['optimizer'])
@@ -43,10 +42,10 @@ class SimpleTrainCommand:
         # Just default set of model metrics
         metrics = learner.metrics()
 
-        if self.restart:
-            last_epoch, hidden_state = self.storage.resume_learning(learner.model)
-        else:
+        if self.model_config.reset:
             last_epoch, hidden_state = 0, {}
+        else:
+            last_epoch, hidden_state = self.storage.resume_learning(learner.model)
 
         if last_epoch > 0:
             self.restore(hidden_state, optimizer_instance, callbacks)
@@ -70,7 +69,7 @@ class SimpleTrainCommand:
         return training_history
 
 
-def create(model_config, epochs, optimizer, model, source, storage, scheduler=None, callbacks=None, restart=True):
+def create(model_config, epochs, optimizer, model, source, storage, scheduler=None, callbacks=None):
     """ Simply train the model """
     callbacks = callbacks or []
 
@@ -83,5 +82,4 @@ def create(model_config, epochs, optimizer, model, source, storage, scheduler=No
         callbacks=callbacks,
         source=source,
         storage=storage,
-        restart=restart
     )
