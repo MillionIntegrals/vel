@@ -15,22 +15,22 @@ class PolicyGradientModel(Model):
         super().__init__()
         self.argmax_sampling = argmax_sampling
 
-        self.base_model = backbone
+        self.backbone = backbone
         self.action_head = ActionHead(
             action_space=action_space,
-            input_dim=self.base_model.output_dim,
+            input_dim=self.backbone.output_dim,
             argmax_sampling=argmax_sampling
         )
-        self.value_head = ValueHead(input_dim=self.base_model.output_dim)
+        self.value_head = ValueHead(input_dim=self.backbone.output_dim)
 
     def reset_weights(self):
         """ Initialize properly model weights """
-        self.base_model.reset_weights()
+        self.backbone.reset_weights()
         self.action_head.reset_weights()
         self.value_head.reset_weights()
 
     def forward(self, observations):
-        base_output = self.base_model(observations)
+        base_output = self.backbone(observations)
 
         action_output = self.action_head(base_output)
         value_output = self.value_head(base_output)
@@ -51,7 +51,7 @@ class PolicyGradientModel(Model):
         return actions, value_output, neglogp
 
     def value(self, observation):
-        base_output = self.base_model(observation)
+        base_output = self.backbone(observation)
         value_output = self.value_head(base_output)
         return value_output
 
