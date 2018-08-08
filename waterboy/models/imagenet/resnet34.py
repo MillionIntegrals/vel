@@ -5,7 +5,7 @@ import torch.nn.functional as F
 import waterboy.modules.layers as l
 import waterboy.util.module_util as mu
 
-from waterboy.api.base import SupervisedModel
+from waterboy.api.base import SupervisedModel, ModelFactory
 
 
 # Because of concat pooling it's 2x 512
@@ -101,4 +101,7 @@ class Resnet34(SupervisedModel):
 
 def create(fc_layers=None, dropout=None, pretrained=True):
     """ Create a Resnet-34 model with a custom head """
-    return Resnet34(fc_layers, dropout, pretrained)
+    def instantiate(**_):
+        return Resnet34(fc_layers, dropout, pretrained)
+
+    return ModelFactory.generic(instantiate)

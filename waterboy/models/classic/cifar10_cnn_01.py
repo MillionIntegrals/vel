@@ -8,12 +8,12 @@ import torch.nn as nn
 import torch.nn.init as init
 import torch.nn.functional as F
 
-from waterboy.api.base import Model
+from waterboy.api.base import SupervisedModel, ModelFactory
 from waterboy.metrics.loss_metric import Loss
 from waterboy.metrics.accuracy import Accuracy
 
 
-class Net(Model):
+class Net(SupervisedModel):
     """
     A simple MNIST classification model.
 
@@ -90,4 +90,6 @@ class Net(Model):
 
 def create(img_rows, img_cols, img_channels, num_classes):
     """ Create the model matching specified image dimensions """
-    return Net(img_rows, img_cols, img_channels, num_classes)
+    def instantiate(**_):
+        return Net(img_rows, img_cols, img_channels, num_classes)
+    return ModelFactory.generic(instantiate)

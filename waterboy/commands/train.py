@@ -7,13 +7,13 @@ from waterboy.api.metrics import TrainingHistory
 class SimpleTrainCommand:
     """ Very simple training command - just run the supplied generators """
 
-    def __init__(self, model_config: ModelConfig, epochs, optimizer_factory, scheduler_factory, callbacks, model,
+    def __init__(self, model_config: ModelConfig, model_factory, epochs, optimizer_factory, scheduler_factory, callbacks,
                  source, storage, restart=True):
         self.epochs = epochs
         self.callbacks = callbacks
         self.optimizer_factory = optimizer_factory
         self.scheduler_factory = scheduler_factory
-        self.model = model
+        self.model = model_factory
         self.source = source
         self.model_config = model_config
         self.storage = storage
@@ -28,7 +28,7 @@ class SimpleTrainCommand:
     def run(self):
         """ Run the command with supplied configuration """
         device = torch.device(self.model_config.device)
-        learner = Learner(device, self.model)
+        learner = Learner(device, self.model.instantiate())
 
         optimizer_instance = self.optimizer_factory.instantiate(learner.model.parameters())
 
@@ -76,11 +76,11 @@ def create(model_config, epochs, optimizer, model, source, storage, scheduler=No
 
     return SimpleTrainCommand(
         model_config=model_config,
+        model_factory=model,
         epochs=epochs,
         optimizer_factory=optimizer,
         scheduler_factory=scheduler,
         callbacks=callbacks,
-        model=model,
         source=source,
         storage=storage,
         restart=restart

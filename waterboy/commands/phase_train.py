@@ -9,9 +9,9 @@ from waterboy.api.metrics import TrainingHistory
 class PhaseTrainCommand:
     """ Training  command - learn according to a set of phases """
 
-    def __init__(self, model_config, model, source, storage, phases, callbacks=None, restart=True):
+    def __init__(self, model_config, model_factory, source, storage, phases, callbacks=None, restart=True):
         self.model_config = model_config
-        self.model = model
+        self.model_factory = model_factory
         self.source = source
         self.storage = storage
         self.phases = phases
@@ -49,7 +49,7 @@ class PhaseTrainCommand:
     def run(self):
         """ Run the command with supplied configuration """
         device = torch.device(self.model_config.device)
-        learner = Learner(device, self.model)
+        learner = Learner(device, self.model_factory.instantiate())
 
         callbacks = []
 
@@ -116,7 +116,7 @@ def create(model_config, model, source, storage, phases, callbacks=None, restart
     callbacks = callbacks or []
     return PhaseTrainCommand(
         model_config=model_config,
-        model=model,
+        model_factory=model,
         source=source,
         storage=storage,
         phases=phases,

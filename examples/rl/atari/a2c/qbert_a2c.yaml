@@ -12,14 +12,12 @@ vec_env:
 
 
 model:
-  name: waterboy.models.rl.nature_cnn
-  input_width: 84
-  input_height: 84
-  input_channels: 4  # The same as frame_history
-
-
-model_augmentors:
-- name: waterboy.rl.reinforcers.policy_gradient.policy_gradient_model
+  name: waterboy.rl.reinforcers.policy_gradient.policy_gradient_model
+  backbone:
+    name: waterboy.models.rl.nature_cnn
+    input_width: 84
+    input_height: 84
+    input_channels: 4  # The same as frame_history
 
 
 reinforcer:

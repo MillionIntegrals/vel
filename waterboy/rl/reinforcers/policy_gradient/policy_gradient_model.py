@@ -1,8 +1,9 @@
 import torch.nn.functional as F
 
-from waterboy.api.base import LinearBackboneModel, Model, ModelAugmentor
+import gym
+
+from waterboy.api.base import LinearBackboneModel, Model, ModelFactory
 from waterboy.exceptions import WaterboyException
-from waterboy.openai.baselines.common.vec_env import VecEnv
 from waterboy.rl.modules.action_head import ActionHead
 from waterboy.rl.modules.value_head import ValueHead
 
@@ -10,13 +11,13 @@ from waterboy.rl.modules.value_head import ValueHead
 class PolicyGradientModel(Model):
     """ For a policy gradient algorithm we need set of custom heads for our model """
 
-    def __init__(self, base_model: LinearBackboneModel, environment: VecEnv, argmax_sampling=False):
+    def __init__(self, backbone: LinearBackboneModel, action_space: gym.Space, argmax_sampling=False):
         super().__init__()
         self.argmax_sampling = argmax_sampling
 
-        self.base_model = base_model
+        self.base_model = backbone
         self.action_head = ActionHead(
-            action_space=environment.action_space,
+            action_space=action_space,
             input_dim=self.base_model.output_dim,
             argmax_sampling=argmax_sampling
         )
@@ -58,15 +59,17 @@ class PolicyGradientModel(Model):
         return self.action_head.entropy(action_logits)
 
 
-class PolicyGradientModelAugmentor(ModelAugmentor):
+class PolicyGradientModelFactory(ModelFactory):
     """ Factory  class for policy gradient models """
-    def __init__(self, argmax_sampling=False):
+    def __init__(self, backbone: ModelFactory, argmax_sampling=False):
+        self.backbone = backbone
         self.argmax_sampling = argmax_sampling
 
-    def augment(self, base_model: Model, extra_info: dict=None) -> Model:
-        """ Create new policy gradient model"""
-        return PolicyGradientModel(base_model, extra_info['env'], argmax_sampling=self.argmax_sampling)
+    def instantiate(self, **extra_args):
+        """ Instantiate the model """
+        backbone = self.backbone.instantiate(**extra_args)
+        return PolicyGradientModel(backbone, extra_args['action_space'], self.argmax_sampling)
 
 
-def create(argmax_sampling=False):
-    return PolicyGradientModelAugmentor(argmax_sampling=argmax_sampling)
+def create(backbone: ModelFactory, argmax_sampling=False):
+    return PolicyGradientModelFactory(backbone=backbone, argmax_sampling=argmax_sampling)

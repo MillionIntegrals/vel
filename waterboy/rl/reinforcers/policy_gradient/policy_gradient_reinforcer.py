@@ -10,12 +10,13 @@ from torch.optim import Optimizer
 
 import waterboy.util.math as math_util
 
-from waterboy.api.base import LinearBackboneModel, Model, ModelAugmentor
+from waterboy.api.base import Model, ModelFactory
 from waterboy.api.metrics import EpochResultAccumulator
 from waterboy.api.metrics.averaging_metric import AveragingNamedMetric
 from waterboy.api.metrics.summing_metric import SummingNamedMetric
 from waterboy.api.progress_idx import EpochIdx, BatchIdx
-from waterboy.rl.api.base import ReinforcerBase, ReinforcerFactory, VecEnvFactoryBase
+from waterboy.openai.baselines.common.vec_env import VecEnv
+from waterboy.rl.api.base import ReinforcerBase, ReinforcerFactory, VecEnvFactory
 from waterboy.rl.env_roller.step_env_roller import StepEnvRoller
 from waterboy.rl.reinforcers.policy_gradient.policy_gradient_metrics import (
     FPSMetric, EpisodeLengthMetric, EpisodeRewardMetricQuantile, ExplainedVariance,
@@ -38,9 +39,6 @@ class PolicyGradientBase:
 class PolicyGradientSettings:
     """ Settings dataclass for a policy gradient reinforcer """
     policy_gradient: PolicyGradientBase
-    vec_env: VecEnvFactoryBase
-    model_augmentors: typing.List[ModelAugmentor]
-    parallel_envs: int
     number_of_steps: int
     discount_factor: float
     seed: int
@@ -52,22 +50,12 @@ class PolicyGradientSettings:
 
 class PolicyGradientReinforcer(ReinforcerBase):
     """ Train network using a policy gradient algorithm """
-    def __init__(self, device: torch.device, settings: PolicyGradientSettings, model: Model) -> None:
+    def __init__(self, device: torch.device, settings: PolicyGradientSettings, env: VecEnv, model: Model) -> None:
         self.device = device
         self.settings = settings
 
-        self.environment = self.settings.vec_env.instantiate(
-            parallel_envs=self.settings.parallel_envs, seed=self.settings.seed
-        )
-
-        self._internal_model = model
-
-        augmentor_dict = {'env': self.environment}
-
-        for augmentor in self.settings.model_augmentors:
-            self._internal_model = augmentor.augment(self._internal_model, augmentor_dict)
-
-        self._internal_model = self._internal_model.to(self.device)
+        self.environment = env
+        self._internal_model = model.to(self.device)
 
         self.env_roller = StepEnvRoller(
             self.environment, self.device, self.settings.number_of_steps, self.settings.discount_factor,
@@ -197,8 +185,18 @@ class PolicyGradientReinforcer(ReinforcerBase):
 
 class PolicyGradientReinforcerFactory(ReinforcerFactory):
     """ Waterboy factory class for the PolicyGradientReinforcer """
-    def __init__(self, settings) -> None:
+    def __init__(self, settings, env_factory: VecEnvFactory, model_factory: ModelFactory, parallel_envs: int) -> None:
         self.settings = settings
 
-    def instantiate(self, device: torch.device, model: LinearBackboneModel) -> ReinforcerBase:
-        return PolicyGradientReinforcer(device, self.settings, model)
+        self.model_factory = model_factory
+        self.env_factory = env_factory
+        self.parallel_envs = parallel_envs
+
+    def instantiate(self, device: torch.device) -> ReinforcerBase:
+        env = self.env_factory.instantiate(
+            parallel_envs=self.parallel_envs, seed=self.settings.seed
+        )
+
+        model = self.model_factory.instantiate(action_space=env.action_space)
+
+        return PolicyGradientReinforcer(device, self.settings, env, model)

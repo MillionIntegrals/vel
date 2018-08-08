@@ -26,5 +26,5 @@ def create(model_config, path, num_workers, batch_size, augmentations=None, tta=
         num_workers=num_workers,
         batch_size=batch_size,
         augmentations=augmentations,
-        test_time_augmentation=tta
+        # test_time_augmentation=tta
     )

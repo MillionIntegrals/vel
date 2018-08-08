@@ -6,7 +6,7 @@ https://github.com/fastai/fastai/blob/master/fastai/models/cifar10/resnext.py
 import torch.nn as nn
 import torch.nn.functional as F
 
-from waterboy.api.base import SupervisedModel
+from waterboy.api.base import SupervisedModel, ModelFactory
 from waterboy.modules.resnext import ResNeXtBottleneck
 
 
@@ -95,4 +95,7 @@ def create(blocks, mode='basic', inplanes=64, cardinality=4, image_features=64, 
         'bottleneck': ResNeXtBottleneck
     }
 
-    return ResNeXt(block_dict[mode], blocks, inplanes=inplanes, image_features=image_features, cardinality=cardinality, divisor=divisor, num_classes=num_classes)
+    def instantiate(**_):
+        return ResNeXt(block_dict[mode], blocks, inplanes=inplanes, image_features=image_features, cardinality=cardinality, divisor=divisor, num_classes=num_classes)
+
+    return ModelFactory.generic(instantiate)

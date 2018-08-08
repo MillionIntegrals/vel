@@ -1,7 +1,7 @@
 import torch
 
 from waterboy.api import ModelConfig, EpochIdx
-from waterboy.api.base import Model, OptimizerFactory, Storage
+from waterboy.api.base import OptimizerFactory, Storage
 from waterboy.api.metrics import EpochResultAccumulator, TrainingHistory
 from waterboy.rl.api.base import ReinforcerFactory
 
@@ -11,13 +11,12 @@ import waterboy.openai.baselines.logger as openai_logger
 class RlTrainCommand:
     """ Train a reinforcement learning algorithm by evaluating the environment and """
     def __init__(self, model_config: ModelConfig, reinforcer: ReinforcerFactory,
-                 model: Model, optimizer_factory: OptimizerFactory,
+                 optimizer_factory: OptimizerFactory,
                  storage: Storage, callbacks,
                  total_frames: int, batches_per_epoch: int, seed: int,
                  scheduler_factory=None, openai_logging=False):
         self.model_config = model_config
         self.reinforcer = reinforcer
-        self.model = model
         self.optimizer_factory = optimizer_factory
         self.scheduler_factory = scheduler_factory
         self.storage = storage
@@ -47,7 +46,7 @@ class RlTrainCommand:
         global_epoch_idx = 1
 
         # Reinforcer is the learner for the reinforcement learning model
-        reinforcer = self.reinforcer.instantiate(device, self.model)
+        reinforcer = self.reinforcer.instantiate(device)
         reinforcer.model.reset_weights()
 
         optimizer_instance = self.optimizer_factory.instantiate(reinforcer.model.parameters())
@@ -96,7 +95,7 @@ class RlTrainCommand:
         return training_history
 
 
-def create(model_config, reinforcer, model, optimizer, storage,
+def create(model_config, reinforcer, optimizer, storage,
            # Settings:
            total_frames, batches_per_epoch,  seed, callbacks=None, scheduler=None, openai_logging=False):
     """ Create reinforcement learning pipeline """
@@ -108,7 +107,6 @@ def create(model_config, reinforcer, model, optimizer, storage,
     return RlTrainCommand(
         model_config=model_config,
         reinforcer=reinforcer,
-        model=model,
         optimizer_factory=optimizer,
         scheduler_factory=scheduler,
         storage=storage,

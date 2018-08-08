@@ -4,7 +4,7 @@ import os.path
 from gym.envs.registration import EnvSpec
 
 
-from waterboy.rl.api.base import EnvFactoryBase
+from waterboy.rl.api.base import EnvFactory
 from waterboy.openai.baselines import logger
 from waterboy.openai.baselines.bench import Monitor
 from waterboy.openai.baselines.common.atari_wrappers import (
@@ -93,7 +93,7 @@ def wrapped_env_maker(environment_id, seed, serial_id, disable_reward_clipping=F
     return env
 
 
-class ClassicAtariEnv(EnvFactoryBase):
+class ClassicAtariEnv(EnvFactory):
     """ Atari game environment wrapped in the same way as Deep Mind and OpenAI baselines """
     def __init__(self, envname, env_settings):
         self.envname = envname

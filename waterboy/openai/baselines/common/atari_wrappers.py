@@ -118,6 +118,13 @@ class MaxAndSkipEnv(gym.Wrapper):
     def reset(self, **kwargs):
         return self.env.reset(**kwargs)
 
+    def render(self, mode='human'):
+        if mode == 'rgb_array':
+            return self._obs_buffer.max(axis=0)
+        else:
+            return self.env.render(mode)
+
+
 class ClipRewardEnv(gym.RewardWrapper):
     def __init__(self, env):
         gym.RewardWrapper.__init__(self, env)

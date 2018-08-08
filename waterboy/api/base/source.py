@@ -26,12 +26,11 @@ class Source:
             self.val_ds, batch_size=batch_size, shuffle=False, num_workers=num_workers
         )
         
-        if self.tta is None:
-            self.val_tta_loader = self.val_loader
-        else:
-            self.val_tta_loader = self.tta.loader(
-                self.val_source, self.augmentations, self.batch_size, self.num_workers
-            )
+        # self.val_tta_loader = self.val_loader
+        # else:
+        #     self.val_tta_loader = self.tta.loader(
+        #         self.val_source, self.augmentations, self.batch_size, self.num_workers
+        #     )
             
     # def is_tta_enabled(self):
     #     """ Is test-time augmentation enabled """

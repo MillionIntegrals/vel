@@ -2,10 +2,10 @@ from waterboy.openai.baselines.common.vec_env import VecEnv
 from waterboy.openai.baselines.common.atari_wrappers import FrameStack
 from waterboy.openai.baselines.common.vec_env.subproc_vec_env import SubprocVecEnv
 from waterboy.openai.baselines.common.vec_env.vec_frame_stack import VecFrameStack
-from waterboy.rl.api.base import VecEnvFactoryBase
+from waterboy.rl.api.base import VecEnvFactory
 
 
-class SubprocVecEnvWrapper(VecEnvFactoryBase):
+class SubprocVecEnvWrapper(VecEnvFactory):
     """ Wrapper for an environment to create sub-process vector environment """
 
     def __init__(self, env, frame_history):

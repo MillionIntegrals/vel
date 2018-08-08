@@ -3,7 +3,7 @@ from gym.envs.registration import EnvSpec
 from waterboy.openai.baselines.common.vec_env import VecEnv
 
 
-class EnvFactoryBase:
+class EnvFactory:
     """ Base class for environment factory """
 
     def specification(self) -> EnvSpec:
@@ -15,7 +15,7 @@ class EnvFactoryBase:
         raise NotImplementedError
 
 
-class VecEnvFactoryBase:
+class VecEnvFactory:
     """ Base class for vector environment factory """
 
     def instantiate(self, parallel_envs, seed=0, preset='default') -> VecEnv:

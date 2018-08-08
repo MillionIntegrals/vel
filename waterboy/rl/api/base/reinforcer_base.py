@@ -33,6 +33,6 @@ class ReinforcerBase:
 
 class ReinforcerFactory:
     """ A reinforcer factory """
-    def instantiate(self, device: torch.device, model: Model) -> ReinforcerBase:
+    def instantiate(self, device: torch.device) -> ReinforcerBase:
         """ Create new reinforcer instance """
         raise NotImplementedError

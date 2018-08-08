@@ -5,7 +5,12 @@ class DataFlow(data.Dataset):
     """ A dataset wrapping underlying data source with transformations """
     def __init__(self, dataset, transformations, tag):
         self.dataset = dataset
-        self.transformations = [t for t in transformations if tag in t.tags]
+
+        if transformations is None:
+            self.transformations = []
+        else:
+            self.transformations = [t for t in transformations if tag in t.tags]
+
         self.tag = tag
 
     def get_raw(self, index):

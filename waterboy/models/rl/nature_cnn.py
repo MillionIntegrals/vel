@@ -13,13 +13,15 @@ import torch.nn.functional as F
 
 import waterboy.util.network as net_util
 
-from waterboy.api.base import LinearBackboneModel
+from waterboy.api.base import LinearBackboneModel, ModelFactory
 
 
 class NatureCnn(LinearBackboneModel):
     """ Neural network as defined in the paper 'Human-level control through deep reinforcement learning'"""
-    def __init__(self, input_width, input_height, input_channels):
+    def __init__(self, input_width, input_height, input_channels, output_dim=512):
         super().__init__()
+
+        self._output_dim = output_dim
 
         self.conv1 = nn.Conv2d(
             in_channels=input_channels,
@@ -62,7 +64,7 @@ class NatureCnn(LinearBackboneModel):
     @property
     def output_dim(self):
         """ Final dimension of model output """
-        return 512
+        return self._output_dim
 
     def reset_weights(self):
         for m in self.modules():
@@ -85,6 +87,7 @@ class NatureCnn(LinearBackboneModel):
 
 
 def create(input_width, input_height, input_channels=1):
-    model = NatureCnn(input_width=input_width, input_height=input_height, input_channels=input_channels)
-    model.reset_weights()
-    return model
+    def instantiate(**_):
+        return NatureCnn(input_width=input_width, input_height=input_height, input_channels=input_channels)
+
+    return ModelFactory.generic(instantiate)
