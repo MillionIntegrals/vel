@@ -11,6 +11,10 @@ class ReinforcerBase:
     Manages training process of a single model.
     Learner version for reinforcement-learning problems.
     """
+    def initialize_training(self) -> None:
+        """ Prepare all variables for training from scratch """
+        pass
+
     def train_step(self, batch_idx: BatchIdx, optimizer: Optimizer,
                    result_accumulator: EpochResultAccumulator=None) -> None:
         """ Single, most atomic 'step' of learning this reinforcer can perform """

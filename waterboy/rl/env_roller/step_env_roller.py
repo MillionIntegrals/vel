@@ -53,7 +53,7 @@ class StepEnvRoller:
             # Done is flagged true when the episode has ended AND the frame we see is already a first frame from the
             # Next episode
             self.dones = self._to_tensor(new_dones.astype(np.uint8))
-            self.observation = self._to_tensor(new_obs)
+            self.observation = self._to_tensor(new_obs[:])
 
             rewards_accumulator.append(self._to_tensor(new_rewards.astype(np.float32)))
 

@@ -1,7 +1,6 @@
 import numpy as np
 import tqdm
 import sys
-import typing
 
 from dataclasses import dataclass
 
@@ -18,7 +17,7 @@ from waterboy.api.progress_idx import EpochIdx, BatchIdx
 from waterboy.openai.baselines.common.vec_env import VecEnv
 from waterboy.rl.api.base import ReinforcerBase, ReinforcerFactory, VecEnvFactory
 from waterboy.rl.env_roller.step_env_roller import StepEnvRoller
-from waterboy.rl.reinforcers.policy_gradient.policy_gradient_metrics import (
+from waterboy.rl.metrics import (
     FPSMetric, EpisodeLengthMetric, EpisodeRewardMetricQuantile, ExplainedVariance,
     EpisodeRewardMetric
 )
@@ -84,6 +83,43 @@ class PolicyGradientReinforcer(ReinforcerBase):
     def model(self) -> Model:
         """ Model trained by this reinforcer """
         return self._internal_model
+
+    def initialize_training(self):
+        """ Prepare models for training """
+        self.model.reset_weights()
+
+    def train_epoch(self, epoch_idx: EpochIdx, batches_per_epoch: int, optimizer: Optimizer,
+                    callbacks: list, result_accumulator: EpochResultAccumulator=None) -> None:
+        """ Train model on an epoch of a fixed number of batch updates """
+        for callback in callbacks:
+            callback.on_epoch_begin(epoch_idx)
+
+        for batch_idx_number in tqdm.trange(batches_per_epoch, file=sys.stdout, desc="Training", unit="batch"):
+            extra = {}
+
+            if 'total_frames' in epoch_idx.extra:
+                extra['progress_meter'] = (
+                    result_accumulator.intermediate_value('frames') / epoch_idx.extra['total_frames']
+                )
+
+            progress_idx = BatchIdx(epoch_idx, batch_idx_number, batches_per_epoch=batches_per_epoch, extra=extra)
+
+            for callback in callbacks:
+                callback.on_batch_begin(progress_idx)
+
+            self.train_step(progress_idx, optimizer, result_accumulator)
+
+            for callback in callbacks:
+                callback.on_batch_end(progress_idx, result_accumulator.value(), optimizer)
+
+        result_accumulator.freeze_results()
+
+        epoch_result = result_accumulator.result()
+
+        for callback in callbacks:
+            callback.on_epoch_end(epoch_idx, epoch_result)
+
+        return epoch_result
 
     def train_step(self, batch_idx: BatchIdx, optimizer: Optimizer, result_accumulator: EpochResultAccumulator=None) -> None:
         """ Single, most atomic 'step' of learning this reinforcer can perform """
@@ -153,34 +189,6 @@ class PolicyGradientReinforcer(ReinforcerBase):
         # Even with all the experience replay, we count the single rollout as single metrics entry
         if result_accumulator is not None:
             result_accumulator.calculate(data_dict)
-
-    def train_epoch(self, epoch_idx: EpochIdx, batches_per_epoch: int, optimizer: Optimizer,
-                    callbacks: list, result_accumulator: EpochResultAccumulator=None) -> None:
-        """ Train model on an epoch of a fixed number of batch updates """
-        for callback in callbacks:
-            callback.on_epoch_begin(epoch_idx)
-
-        for batch_idx_number in tqdm.trange(batches_per_epoch, file=sys.stdout, desc="Training", unit="batch"):
-            progress_idx = BatchIdx(epoch_idx, batch_idx_number, batches_per_epoch=batches_per_epoch, extra={
-                'progress_meter': result_accumulator.intermediate_value('frames') / epoch_idx.extra['total_frames']
-            })
-
-            for callback in callbacks:
-                callback.on_batch_begin(progress_idx)
-
-            self.train_step(progress_idx, optimizer, result_accumulator)
-
-            for callback in callbacks:
-                callback.on_batch_end(progress_idx, result_accumulator.value(), optimizer)
-
-        result_accumulator.freeze_results()
-
-        epoch_result = result_accumulator.result()
-
-        for callback in callbacks:
-            callback.on_epoch_end(epoch_idx, epoch_result)
-
-        return epoch_result
 
 
 class PolicyGradientReinforcerFactory(ReinforcerFactory):
