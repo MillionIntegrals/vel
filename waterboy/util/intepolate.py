@@ -51,6 +51,6 @@ def interpolate_series(start, end, steps, how='linear'):
 
 
 def interpolate_single(start, end, coefficient, how='linear'):
-    """ Interpolate series between start and end in given number of steps """
+    """ Interpolate single value between start and end in given number of steps """
     return INTERP_SINGLE_DICT[how](start, end, coefficient)
 
