@@ -32,6 +32,10 @@ class BatchIdx:
         self.extra = extra
 
     @property
+    def aggregate_batch_number(self):
+        return self.batch_number + self.batches_per_epoch * self.epoch_idx.global_epoch_idx
+
+    @property
     def epoch_number(self):
         return self.epoch_idx.global_epoch_idx
 
