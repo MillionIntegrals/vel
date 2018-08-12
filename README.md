@@ -36,7 +36,7 @@ on localhost port 8097. These can be changed in project-wide config file
   uncommon ones should be possible. At least as far as PyTorch allows.
   
   
-# Ready-made implemented models
+# Implemented models
 
 Several models are already implemented in the framework and have example config files
 that are ready to run and easy to modify for other similar usecases:
@@ -44,7 +44,7 @@ that are ready to run and easy to modify for other similar usecases:
 - State-of-the art results on Cifar10 dataset using residual networks
 - Cats vs dogs classification using transfer learning from a resnet34 model pretrained on 
   ImageNet
-- Actor-Critic and Proximal-Policy-Optimization policy gradient reinforcement
+- Actor-Critic (A2C) and Proximal-Policy-Optimization (PPO) policy gradient reinforcement
   learning algorithms.
 - Deep Q-Learning (DQN) as described by DeepMind in their research paper with following 
   improvements: Double DQN
