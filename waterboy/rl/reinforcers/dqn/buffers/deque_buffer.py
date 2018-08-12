@@ -12,9 +12,6 @@ class DequeBuffer(DqnBufferBase):
 
     Because framestack is implemented directly in the buffer, we can use *much* less space to hold samples in
     memory for very little additional cost.
-
-    Potentially could also compress frames and frames on t+1, but that would complicate the code which I tried
-    not to do.
     """
     def __init__(self, buffer_capacity: int, buffer_initial_size: int, frame_stack: int):
         self.buffer_capacity = buffer_capacity
@@ -47,11 +44,11 @@ class DequeBuffer(DqnBufferBase):
 
         self.last_observation = environment.reset()
 
-    def is_ready(self):
+    def is_ready(self) -> bool:
         """ If buffer is ready for training """
         return self.total_size >= self.buffer_initial_size
 
-    def rollout(self, environment: gym.Env, model: Model, epsilon_value: float):
+    def rollout(self, environment: gym.Env, model: Model, epsilon_value: float) -> dict:
         """ Evaluate model and proceed one step forward with the environment. Store result in the replay buffer """
         last_observation_idx = self._store_frame(self.last_observation)
 
@@ -72,7 +69,7 @@ class DequeBuffer(DqnBufferBase):
 
         return info.get('episode')
 
-    def sample(self, batch_size) -> dict:
+    def sample(self, batch_info, batch_size) -> dict:
         """ Calculate random sample from the replay buffer """
         indexes = self._sample_indexes(batch_size)
 
@@ -136,7 +133,7 @@ class DequeBuffer(DqnBufferBase):
                 [self.frame_buffer.shape[-1] * self.frame_stack]
         )
 
-        observations = np.zeros(observation_shape)
+        observations = np.zeros(observation_shape, dtype=np.uint8)
         observations_tplus1 = np.zeros_like(observations)
 
         for idx, frame_idx in enumerate(indexes):

@@ -71,3 +71,4 @@ in the following repositories:
 - https://github.com/openai/baselines
 - https://github.com/pytorch/pytorch
 - https://github.com/tensorflow/tensorflow
+- https://github.com/Kaixhin/Rainbow

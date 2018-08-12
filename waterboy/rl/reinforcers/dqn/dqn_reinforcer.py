@@ -23,17 +23,21 @@ class DqnBufferBase:
         """ Initialze buffer for operation """
         raise NotImplementedError
 
-    def rollout(self, environment: gym.Env, model: Model, epsilon_value: float):
+    def rollout(self, environment: gym.Env, model: Model, epsilon_value: float) -> dict:
         """ Evaluate model and proceed one step forward with the environment. Store result in the replay buffer """
         raise NotImplementedError
 
-    def sample(self, batch_size) -> dict:
+    def sample(self, batch_info, batch_size) -> dict:
         """ Calculate random sample from the replay buffer """
         raise NotImplementedError
 
-    def is_ready(self):
+    def is_ready(self) -> bool:
         """ If buffer is ready for training """
         raise NotImplementedError
+
+    def update(self, sample, errors):
+        """ If buffer is ready for training """
+        pass
 
 
 @dataclass
@@ -166,7 +170,7 @@ class DqnReinforcer(ReinforcerBase):
         self.model.train()
         batch_info.optimizer.zero_grad()
 
-        batch_sample = self.buffer.sample(self.settings.batch_size)
+        batch_sample = self.buffer.sample(batch_info, self.settings.batch_size)
 
         observation_tensor = torch.from_numpy(batch_sample['observations']).to(self.device)
         observation_tensor_tplus1 = torch.from_numpy(batch_sample['observations_tplus1']).to(self.device)
@@ -179,19 +183,28 @@ class DqnReinforcer(ReinforcerBase):
             if self.settings.double_dqn:
                 # DOUBLE DQN
                 target_values = self.target_model(observation_tensor_tplus1)
-                model_values = self.target_model(observation_tensor_tplus1)
+                model_values = self.model(observation_tensor_tplus1)
                 # Select largest 'target' value based on action that 'model' selects
-                expected_q = target_values.gather(1, model_values.argmax(dim=1, keepdim=True)).squeeze(1)
+                values = target_values.gather(1, model_values.argmax(dim=1, keepdim=True)).squeeze(1)
             else:
                 # REGULAR DQN
                 values = self.target_model(observation_tensor_tplus1).max(dim=1)[0]
-                expected_q = rewards_tensor + self.settings.discount_factor * values * (1 - dones_tensor.float())
+
+            expected_q = rewards_tensor + self.settings.discount_factor * values * (1 - dones_tensor.float())
 
         q = self.model(observation_tensor)
         q_selected = q.gather(1, actions_tensor.unsqueeze(1)).squeeze(1)
 
-        loss = F.smooth_l1_loss(q_selected, expected_q.detach())
+        original_losses = F.smooth_l1_loss(q_selected, expected_q.detach(), reduction='none')
+        element_losses = original_losses
+
+        if 'weights' in batch_sample:
+            element_losses = torch.from_numpy(batch_sample['weights']).float().to(self.device) * element_losses
+
+        loss = torch.mean(element_losses)
         loss.backward()
+
+        self.buffer.update(batch_sample, original_losses)
 
         if self.settings.max_grad_norm is not None:
             grad_norm = torch.nn.utils.clip_grad_norm_(
