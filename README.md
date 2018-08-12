@@ -47,7 +47,7 @@ that are ready to run and easy to modify for other similar usecases:
 - Actor-Critic (A2C) and Proximal-Policy-Optimization (PPO) policy gradient reinforcement
   learning algorithms.
 - Deep Q-Learning (DQN) as described by DeepMind in their research paper with following 
-  improvements: Double DQN
+  improvements: Double DQN, Dueling DQN
 
 
 # How to run the examples?
