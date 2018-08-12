@@ -64,6 +64,9 @@ on this library:
   
 ### Open source repositories
 
+This repository contains various parts of functionality derived from open source code
+in the following repositories:
+
 - https://github.com/fastai/fastai
 - https://github.com/openai/baselines
 - https://github.com/pytorch/pytorch
