@@ -199,7 +199,7 @@ class BatchInfo(abc.MutableMapping):
 
     @property
     def aggregate_batch_number(self):
-        return self.batch_number + self.epoch_info.batches_per_epoch * self.epoch_info.global_epoch_idx
+        return self.batch_number + self.epoch_info.batches_per_epoch * (self.epoch_info.global_epoch_idx - 1)
 
     @property
     def epoch_number(self):
