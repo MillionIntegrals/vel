@@ -23,7 +23,6 @@ class DequeBuffer(DqnBufferBase):
 
         # Awaiting initialization
         self.frame_buffer = None
-        self.next_frame_buffer = None
         self.action_buffer = None
         self.reward_buffer = None
         self.dones_buffer = None
@@ -38,7 +37,6 @@ class DequeBuffer(DqnBufferBase):
         self.device = device
 
         self.frame_buffer = np.zeros([self.buffer_capacity] + list(environment.observation_space.shape), dtype=np.uint8)
-        self.next_frame_buffer = np.zeros([self.buffer_capacity] + list(environment.observation_space.shape), dtype=np.uint8)
         self.action_buffer = np.zeros([self.buffer_capacity], dtype=np.int)
         self.reward_buffer = np.zeros([self.buffer_capacity], dtype=float)
         self.dones_buffer = np.zeros([self.buffer_capacity], dtype=bool)
@@ -64,7 +62,7 @@ class DequeBuffer(DqnBufferBase):
         observation, reward, done, info = environment.step(action)
         observation = observation[:]
 
-        self._store_transition(observation, action, reward, done)
+        self._store_transition(action, reward, done)
 
         # Usual, reset on done
         if done:
@@ -125,9 +123,8 @@ class DequeBuffer(DqnBufferBase):
         # We're pushing the elements in reverse order
         return np.concatenate(accumulator[::-1], axis=-1)
 
-    def _store_transition(self, next_observation, action, reward, done):
+    def _store_transition(self, action, reward, done):
         """ Add frame transition to the buffer """
-        self.next_frame_buffer[self.current_idx] = next_observation
         self.action_buffer[self.current_idx] = action
         self.reward_buffer[self.current_idx] = reward
         self.dones_buffer[self.current_idx] = done
@@ -144,17 +141,37 @@ class DequeBuffer(DqnBufferBase):
 
         for idx, frame_idx in enumerate(indexes):
             current_frame = self._get_frame(frame_idx)
-            next_frame = np.concatenate([current_frame[:, :, 1:], self.next_frame_buffer[frame_idx]], axis=-1)
+
+            if self.current_idx == frame_idx:
+                # If last frame is current frame, return last observation
+                next_frame = self.last_observation
+            elif self.dones_buffer[frame_idx]:
+                # If we are done, next frame can be zero
+                next_frame = np.zeros_like(self.last_observation)
+            else:
+                next_idx = (self.current_idx + 1) % self.buffer_capacity
+                next_frame = self.frame_buffer[next_idx]
+
+            next_frame_stack = np.concatenate([current_frame[:, :, 1:], next_frame], axis=-1)
 
             observations[idx] = current_frame
-            observations_tplus1[idx] = next_frame
+            observations_tplus1[idx] = next_frame_stack
 
         return observations, observations_tplus1
 
     def _sample_indexes(self, batch_size):
         """ Return indexes of next sample"""
         # Sample from up to total size
-        return np.random.choice(self.total_size, batch_size, replace=False)
+        if self.total_size < self.buffer_capacity:
+            return np.random.choice(self.total_size, batch_size, replace=False)
+        else:
+            candidate = np.random.choice(self.total_size, batch_size, replace=False)
+
+            # Exclude these three frames for learning as they may have some part of history overwritten
+            while any(x in candidate for x in range(self.current_idx + 1, self.current_idx + self.frame_stack)):
+                candidate = np.random.choice(self.total_size, batch_size, replace=False)
+
+            return candidate
 
 
 def create(buffer_capacity: int, buffer_initial_size: int, frame_stack: int=1):
