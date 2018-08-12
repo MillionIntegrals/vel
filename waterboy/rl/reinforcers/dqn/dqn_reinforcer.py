@@ -8,8 +8,6 @@ import gym
 import torch
 import torch.nn.functional as F
 
-import waterboy.util.tensor_util as tensor_util
-
 from waterboy.api import BatchInfo, EpochInfo
 from waterboy.api.base import Model, ModelFactory, Schedule
 from waterboy.api.metrics import AveragingNamedMetric
@@ -46,6 +44,7 @@ class DqnReinforcerSettings:
 
     train_frequency: int
     batch_size: int
+    double_dqn: bool
 
     target_update_frequency: int
 
@@ -175,14 +174,21 @@ class DqnReinforcer(ReinforcerBase):
         rewards_tensor = torch.from_numpy(batch_sample['rewards'].astype(np.float32)).to(self.device)
 
         actions_tensor = torch.from_numpy(batch_sample['actions']).to(self.device)
-        one_hot_actions = tensor_util.one_hot_encoding(actions_tensor, self.environment.action_space.n)
 
         with torch.no_grad():
-            values = self.target_model(observation_tensor_tplus1).max(dim=1)[0]
-            expected_q = rewards_tensor + self.settings.discount_factor * values * (1 - dones_tensor.float())
+            if self.settings.double_dqn:
+                # DOUBLE DQN
+                target_values = self.target_model(observation_tensor_tplus1)
+                model_values = self.target_model(observation_tensor_tplus1)
+                # Select largest 'target' value based on action that 'model' selects
+                expected_q = target_values.gather(1, model_values.argmax(dim=1, keepdim=True)).squeeze(1)
+            else:
+                # REGULAR DQN
+                values = self.target_model(observation_tensor_tplus1).max(dim=1)[0]
+                expected_q = rewards_tensor + self.settings.discount_factor * values * (1 - dones_tensor.float())
 
         q = self.model(observation_tensor)
-        q_selected = (q * one_hot_actions).sum(dim=1)
+        q_selected = q.gather(1, actions_tensor.unsqueeze(1)).squeeze(1)
 
         loss = F.smooth_l1_loss(q_selected, expected_q.detach())
         loss.backward()
