@@ -30,6 +30,18 @@ on this library:
   Mnih, Volodymyr and Kavukcuoglu, Koray and Silver, David and Rusu, Andrei A. and Veness, Joel and Bellemare, Marc G. and Graves, Alex and Riedmiller, Martin and Fidjeland, Andreas K. and Ostrovski, Georg and Petersen, Stig and Beattie, Charles and Sadik, Amir and Antonoglou, Ioannis and King, Helen and Kumaran, Dharshan and Wierstra, Daan and Legg, Shane and Hassabis, Demis
   https://www.nature.com/articles/nature14236
   
+- (2015) **Deep Reinforcement Learning with Double Q-learning**
+  Hado van Hasselt and Arthur Guez and David Silver
+  http://arxiv.org/abs/1509.06461
+  
+- (2015) **Prioritized Experience Replay**
+  Tom Schaul and John Quan and Ioannis Antonoglou and David Silver
+  http://arxiv.org/abs/1511.05952
+  
+- (2015) **Dueling Network Architectures for Deep Reinforcement Learning**
+  Ziyu Wang and Nando de Freitas and Marc Lanctot
+  http://arxiv.org/abs/1511.06581
+  
   
 ### Policy gradient methods
 
