@@ -97,7 +97,7 @@ class LrFindCommand:
                 iterator = iter(self.source.train_loader)
                 data, target = next(iterator)
 
-            learner.train_batch(data, target, optimizer_instance, result_accumulator=result_accumulator)
+            learner.feed_batch(data, target, optimizer_instance, result_accumulator=result_accumulator)
 
             # METRIC RECORDING PART
             current_value = result_accumulator.intermediate_value(self.metric)

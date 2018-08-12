@@ -40,11 +40,12 @@ class Net(SupervisedModel):
         self.conv2 = nn.Conv2d(in_channels=32, out_channels=64, kernel_size=(3, 3))
 
         self.dropout1 = nn.Dropout2d(p=0.25)
-        self.dropout2 = nn.Dropout(p=0.5)
 
         self.fc1 = nn.Linear(self.flattened_size, 128)
+        self.dropout2 = nn.Dropout(p=0.5)
         self.fc2 = nn.Linear(128, num_classes)
 
+    def reset_weights(self):
         self._weight_initializer(self.conv1)
         self._weight_initializer(self.conv2)
         self._weight_initializer(self.fc1)

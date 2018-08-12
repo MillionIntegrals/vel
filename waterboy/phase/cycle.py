@@ -4,6 +4,8 @@ import waterboy.api.base as base
 import waterboy.util.intepolate as interp
 import waterboy.util.module_util as mu
 
+from waterboy.api import BatchInfo
+
 
 class CycleCallback(base.Callback):
     """ A callback that manages setting the proper learning rate """
@@ -51,13 +53,13 @@ class CycleCallback(base.Callback):
 
         return dict_arr, length_arr, start_arr
 
-    def on_batch_begin(self, progress_idx):
+    def on_batch_begin(self, batch_info: BatchInfo):
         """ Set proper learning rate """
-        cycle_length = self.cycle_lengths[progress_idx.local_epoch_number - 1]
-        cycle_start = self.cycle_starts[progress_idx.local_epoch_number - 1]
+        cycle_length = self.cycle_lengths[batch_info.local_epoch_number - 1]
+        cycle_start = self.cycle_starts[batch_info.local_epoch_number - 1]
 
-        numerator = (progress_idx.local_epoch_number - cycle_start - 1) * progress_idx.batches_per_epoch + progress_idx.batch_number
-        denominator = cycle_length * progress_idx.batches_per_epoch
+        numerator = (batch_info.local_epoch_number - cycle_start - 1) * batch_info.batches_per_epoch + batch_info.batch_number
+        denominator = cycle_length * batch_info.batches_per_epoch
 
         interpolation_number = numerator / denominator
 
@@ -84,7 +86,8 @@ class CycleCallback(base.Callback):
 class CyclePhase(base.TrainPhase):
     """ Most generic phase of training """
 
-    def __init__(self, optimizer_factory, max_lr, min_lr, cycles, cycle_len=1, cycle_mult=1, interpolate='linear', init_lr=0, init_iter=0, freeze=False):
+    def __init__(self, optimizer_factory, max_lr, min_lr, cycles, cycle_len=1, cycle_mult=1, interpolate='linear',
+                 init_lr=0, init_iter=0, freeze=False):
         self.max_lr = max_lr
         self.min_lr = min_lr
 
@@ -107,8 +110,6 @@ class CyclePhase(base.TrainPhase):
 
         self._optimizer_instance = None
         self._source = None
-        self._metrics = []
-        self._callbacks = []
 
         self.special_callback = None
 
@@ -116,15 +117,12 @@ class CyclePhase(base.TrainPhase):
     def number_of_epochs(self) -> int:
         return self.epochs
 
-    def set_up_phase(self, learner, source, metrics=None, callbacks=None):
+    def set_up_phase(self, training_info, model, source):
         """ Prepare the phase for learning """
         # To parameter groups handles properly filtering parameters that don't require gradient
-        parameter_groups = mu.to_parameter_groups(learner.model.get_layer_groups())
+        parameter_groups = mu.to_parameter_groups(model.get_layer_groups())
         self._optimizer_instance = self.optimizer_factory.instantiate(parameter_groups)
         self._source = source
-
-        if metrics is not None:
-            self._metrics = metrics
 
         self.special_callback = CycleCallback(
             self._optimizer_instance,
@@ -133,22 +131,13 @@ class CyclePhase(base.TrainPhase):
             init_iter=self.init_iter, init_lr=self.init_lr
         )
 
-        if callbacks is not None:
-            self._callbacks = [self.special_callback] + callbacks
-        else:
-            self._callbacks = [self.special_callback]
+        return self._optimizer_instance
 
-    def execute_epoch(self, epoch_idx, learner):
+    def execute_epoch(self, epoch_info, learner):
         """ Prepare the phase for learning """
-        epoch_result = learner.run_epoch(
-            epoch_idx, self._metrics, self._source, self._optimizer_instance, self._callbacks
-        )
-
-        return epoch_result
-
-    def tear_down_phase(self, learner):
-        """ Clean up after phase is done """
-        pass
+        # Add special callback for this epoch
+        epoch_info.callbacks = [self.special_callback] + epoch_info.callbacks
+        learner.run_epoch(epoch_info, self._source)
 
 
 def create(optimizer, max_lr, min_lr, cycles, cycle_len=1, cycle_mult=1, interpolate='linear', init_lr=0, init_iter=0):

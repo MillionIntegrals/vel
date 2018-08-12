@@ -15,8 +15,8 @@ class LadderScheduler(base.Callback):
         idx = np.minimum(np.searchsorted(self.schedule_limits, epoch_idx), len(self.schedule_limits) - 1)
         return self.schedule_numbers[idx]
 
-    def on_epoch_begin(self, epoch_idx):
-        self.scheduler.step(epoch=epoch_idx.global_epoch_idx)
+    def on_epoch_begin(self, epoch_info):
+        self.scheduler.step(epoch=epoch_info.global_epoch_idx)
 
 
 class LadderSchedulerFactory(base.SchedulerFactory):

@@ -2,21 +2,21 @@ import tqdm
 import sys
 import numpy as np
 
+from dataclasses import dataclass
+
 import gym
 import torch
 import torch.nn.functional as F
 
-from torch.optim import Optimizer
+import waterboy.util.tensor_util as tensor_util
 
-from dataclasses import dataclass
-
-from waterboy.api import BatchIdx, EpochIdx
+from waterboy.api import BatchInfo, EpochInfo
 from waterboy.api.base import Model, ModelFactory, Schedule
-from waterboy.api.metrics import EpochResultAccumulator
-from waterboy.api.metrics.averaging_metric import AveragingNamedMetric
-from waterboy.api.metrics.summing_metric import SummingNamedMetric
+from waterboy.api.metrics import AveragingNamedMetric
 from waterboy.rl.api.base import ReinforcerBase, ReinforcerFactory, EnvFactory
-from waterboy.rl.metrics import FPSMetric, EpisodeLengthMetric, EpisodeRewardMetricQuantile, EpisodeRewardMetric
+from waterboy.rl.metrics import (
+    FPSMetric, EpisodeLengthMetric, EpisodeRewardMetricQuantile, EpisodeRewardMetric, FramesMetric
+)
 
 
 class DqnBufferBase:
@@ -36,22 +36,6 @@ class DqnBufferBase:
     def is_ready(self):
         """ If buffer is ready for training """
         raise NotImplementedError
-
-    # def store_frame(self, frame):
-    #     """ Add another frame to the buffer """
-    #     raise NotImplementedError
-    #
-    # def store_transition(self, action, reward, done):
-    #     """ Add frame transition to the buffer """
-    #     raise NotImplementedError
-    #
-    # def get_frame(self, idx):
-    #     """ Get frame with given IDX """
-    #     raise NotImplementedError
-    #
-    # def sample(self, batch_size):
-    #     """ Calculate random sample from the replay buffer """
-    #     raise NotImplementedError
 
 
 @dataclass
@@ -75,7 +59,8 @@ class DqnReinforcer(ReinforcerBase):
     Implementation of Deep Q-Learning from DeepMinds Nature paper
     "Human-level control through deep reinforcement learning"
     """
-    def __init__(self, device, settings: DqnReinforcerSettings, environment: gym.Env, train_model: Model, target_model: Model):
+    def __init__(self, device, settings: DqnReinforcerSettings, environment: gym.Env, train_model: Model,
+                 target_model: Model):
         self.device = device
         self.settings = settings
         self.environment = environment
@@ -89,19 +74,14 @@ class DqnReinforcer(ReinforcerBase):
         self.last_observation = self.environment.reset()
 
     def metrics(self) -> list:
-        return [
-            SummingNamedMetric("frames", reset_value=False),
-        ]
-
-    def metrics(self) -> list:
         """ List of metrics to track for this learning process """
         my_metrics = [
-            SummingNamedMetric("frames", reset_value=False),
-            FPSMetric(),
+            FramesMetric("frames"),
+            FPSMetric("fps"),
             EpisodeRewardMetric('PMM:episode_rewards'),
             EpisodeRewardMetricQuantile('P09:episode_rewards', quantile=0.9),
             EpisodeRewardMetricQuantile('P01:episode_rewards', quantile=0.1),
-            EpisodeLengthMetric(),
+            EpisodeLengthMetric("episode_length"),
             AveragingNamedMetric("loss"),
             AveragingNamedMetric("epsilon"),
             AveragingNamedMetric("average_q_selected"),
@@ -122,54 +102,46 @@ class DqnReinforcer(ReinforcerBase):
         self.train_model.reset_weights()
         self.target_model.load_state_dict(self.target_model.state_dict())
 
-    def train_epoch(self, epoch_idx: EpochIdx, batches_per_epoch: int, optimizer: Optimizer, callbacks: list,
-                    result_accumulator: EpochResultAccumulator = None) -> dict:
-        for callback in callbacks:
-            callback.on_epoch_begin(epoch_idx)
+    def train_epoch(self, epoch_info: EpochInfo) -> None:
+        for callback in epoch_info.callbacks:
+            callback.on_epoch_begin(epoch_info)
 
-        for batch_idx_number in tqdm.trange(batches_per_epoch, file=sys.stdout, desc="Training", unit="batch"):
-            extra = {}
+        for batch_idx in tqdm.trange(epoch_info.batches_per_epoch, file=sys.stdout, desc="Training", unit="batch"):
+            batch_info = BatchInfo(epoch_info, batch_idx)
 
-            if 'total_frames' in epoch_idx.extra:
-                extra['progress_meter'] = (
-                        result_accumulator.intermediate_value('frames') / epoch_idx.extra['total_frames']
+            if 'total_frames' in batch_info.training_info:
+                # Track progress during learning
+                batch_info['progress'] = (
+                        batch_info.training_info['frames'] / batch_info.training_info['total_frames']
                 )
 
-            progress_idx = BatchIdx(epoch_idx, batch_idx_number, batches_per_epoch=batches_per_epoch, extra=extra)
+            for callback in batch_info.callbacks:
+                callback.on_batch_begin(batch_info)
 
-            for callback in callbacks:
-                callback.on_batch_begin(progress_idx)
+            self.train_batch(batch_info)
 
-            self.train_step(progress_idx, optimizer, result_accumulator)
+            epoch_info.result_accumulator.calculate(batch_info)
 
-            for callback in callbacks:
-                callback.on_batch_end(progress_idx, result_accumulator.value(), optimizer)
+            for callback in batch_info.callbacks:
+                callback.on_batch_end(batch_info)
 
-        result_accumulator.freeze_results()
+        epoch_info.result_accumulator.freeze_results()
+        epoch_info.freeze_epoch_result()
 
-        epoch_result = result_accumulator.result()
+        for callback in epoch_info.callbacks:
+            callback.on_epoch_end(epoch_info)
 
-        for callback in callbacks:
-            callback.on_epoch_end(epoch_idx, epoch_result)
-
-        return epoch_result
-
-    def buffer_rollout(self, epsilon_value):
-        """ Evaluate environment and store in the buffer """
-        # This probably should be moved to the buffer?
-
-    def train_step(self, batch_idx: BatchIdx, optimizer: Optimizer,
-                   result_accumulator: EpochResultAccumulator = None) -> None:
+    def train_batch(self, batch_info: BatchInfo) -> None:
         # Each DQN batch is
         # 1. Prepare everything
         self.model.eval()
         self.target_model.eval()
-        data_dict = {}
+
         episode_information = []
 
         # 2. Choose and evaluate actions, roll out env
         # For the whole initialization epsilon will stay fixed, because the network is not learning either way
-        epsilon_value = self.settings.epsilon_schedule.value(batch_idx.extra['progress_meter'])
+        epsilon_value = self.settings.epsilon_schedule.value(batch_info['progress'])
 
         frames = 0
 
@@ -193,7 +165,7 @@ class DqnReinforcer(ReinforcerBase):
 
         # 2. Perform experience replay and train the network
         self.model.train()
-        optimizer.zero_grad()
+        batch_info.optimizer.zero_grad()
 
         batch_sample = self.buffer.sample(self.settings.batch_size)
 
@@ -203,7 +175,7 @@ class DqnReinforcer(ReinforcerBase):
         rewards_tensor = torch.from_numpy(batch_sample['rewards'].astype(np.float32)).to(self.device)
 
         actions_tensor = torch.from_numpy(batch_sample['actions']).to(self.device)
-        one_hot_actions = torch.eye(self.environment.action_space.n, device=self.device)[actions_tensor]
+        one_hot_actions = tensor_util.one_hot_encoding(actions_tensor, self.environment.action_space.n)
 
         with torch.no_grad():
             values = self.target_model(observation_tensor_tplus1).max(dim=1)[0]
@@ -221,21 +193,18 @@ class DqnReinforcer(ReinforcerBase):
                 max_norm=self.settings.max_grad_norm
             )
 
-            data_dict['grad_norm'] = torch.tensor(grad_norm).to(self.device)
+            batch_info['grad_norm'] = torch.tensor(grad_norm).to(self.device)
 
-        optimizer.step(closure=None)
+        batch_info.optimizer.step(closure=None)
 
-        data_dict['frames'] = torch.tensor(frames).to(self.device)
-        data_dict['episode_infos'] = episode_information
-        data_dict['loss'] = loss
-        data_dict['epsilon'] = torch.tensor(epsilon_value).to(self.device)
-        data_dict['average_q_selected'] = torch.mean(q_selected)
-        data_dict['average_q_target'] = torch.mean(expected_q)
+        batch_info['frames'] = torch.tensor(frames).to(self.device)
+        batch_info['episode_infos'] = episode_information
+        batch_info['loss'] = loss
+        batch_info['epsilon'] = torch.tensor(epsilon_value).to(self.device)
+        batch_info['average_q_selected'] = torch.mean(q_selected)
+        batch_info['average_q_target'] = torch.mean(expected_q)
 
-        if result_accumulator is not None:
-            result_accumulator.calculate(data_dict)
-
-        if batch_idx.aggregate_batch_number % self.settings.target_update_frequency:
+        if batch_info.aggregate_batch_number % self.settings.target_update_frequency == 0:
             self.target_model.load_state_dict(self.model.state_dict())
 
 

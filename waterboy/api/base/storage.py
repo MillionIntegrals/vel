@@ -1,5 +1,8 @@
 import typing
 
+from waterboy.api import EpochInfo
+from waterboy.api.base import Model
+
 
 class Storage:
     """ Base class for waterboy storage implementations """
@@ -11,7 +14,7 @@ class Storage:
         """ Lift of callbacks for live streaming results """
         return []
 
-    def restore(self, hidden_state):
+    def restore(self, hidden_state: dict):
         """ Restore optimizer and callbacks from hidden state """
         pass
 
@@ -19,6 +22,6 @@ class Storage:
         """ Get a frame of metrics from backend """
         raise NotImplementedError
 
-    def checkpoint(self, global_epoch_idx, metrics, model, optimizer=None, callbacks=None, state_dict=None):
+    def checkpoint(self, epoch_info: EpochInfo, model: Model, state_dict: dict=None):
         """ When epoch is done, we persist the training state """
         raise NotImplementedError

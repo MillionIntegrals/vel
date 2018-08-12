@@ -15,7 +15,10 @@ as I'll be putting some work into it.
 
 # Requirements
 
-This project requires Python 3.7 and PyTorch 0.4.1
+This project requires Python 3.7 and PyTorch 0.4.1. Default project configuration writes
+down metrics to mongodb instance open on localhost port 27017 and visdom instance 
+on localhost port 8097. These can be changed in project-wide config file
+`.wbproject.yaml`.
 
 # Features
 
@@ -64,8 +67,12 @@ python -m waterboy.launcher CONFIGFILE COMMAND --device PYTORCH_DEVICE -r RUN_NU
 Where `PYTORCH_DEVICE` is a valid name of pytorch device, most probably `cuda:0`, and run
 number is the sequential number of run you wish to record your results under.
 
+# Glossary
+
+For a glossary of terms used in the library please refer to [Glossary](docs/Glossary.md).
+If there is anything you'd like to see there, feel free to open an issue or make a pull request.
 
 # Bibliography
 
-For a more or less exhaustive bibliography please refer to [Bibliography](Bibliography.md)
+For a more or less exhaustive bibliography please refer to [Bibliography](docs/Bibliography.md).
 

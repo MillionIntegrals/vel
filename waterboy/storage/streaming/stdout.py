@@ -3,21 +3,22 @@ import waterboy.api.base as base
 
 class StdoutStreaming(base.Callback):
     """ Stream results to stdout """
-    def on_epoch_end(self, epoch_idx, metrics):
-        print(f"=>>>>>>>>>> EPOCH {epoch_idx.global_epoch_idx}")
+    def on_epoch_end(self, epoch_info):
+        print(f"=>>>>>>>>>> EPOCH {epoch_info.global_epoch_idx}")
 
-        if any(':' not in x for x in metrics.keys()):
-            self._print_metrics_line(metrics, head=None)
+        if any(':' not in x for x in epoch_info.result.keys()):
+            self._print_metrics_line(epoch_info.result, head=None)
 
-        head_set = sorted({x.split(':')[0] + ':' for x in metrics.keys() if ':' in x})
+        head_set = sorted({x.split(':')[0] + ':' for x in epoch_info.result.keys() if ':' in x})
 
         for head in head_set:
-            if any(x.startswith(head) for x in metrics.keys()):
-                self._print_metrics_line(metrics, head)
+            if any(x.startswith(head) for x in epoch_info.result.keys()):
+                self._print_metrics_line(epoch_info.result, head)
 
         print(f"=>>>>>>>>>> DONE")
 
-    def _print_metrics_line(self, metrics, head=None):
+    @staticmethod
+    def _print_metrics_line(metrics, head=None):
         if head is None:
             head = 'Metrics:'
 

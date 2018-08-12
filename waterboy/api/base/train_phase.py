@@ -1,3 +1,9 @@
+from torch.optim import Optimizer
+
+from waterboy.api import TrainingInfo, EpochInfo, Learner
+from waterboy.api.base import Model, Source
+
+
 class TrainPhase:
     """ A single phase of training """
 
@@ -6,22 +12,24 @@ class TrainPhase:
         """ How many epochs does this phase take """
         raise NotImplementedError
 
-    def set_up_phase(self, learner, source, metrics=None, callbacks=None):
-        """ Prepare the phase for learning """
+    def set_up_phase(self, training_info: TrainingInfo, model: Model, source: Source) -> Optimizer:
+        """ Prepare the phase for learning, returns phase optimizer """
         pass
 
-    def execute_epoch(self, epoch_idx, learner):
-        """ Execute epoch training """
-        raise NotImplementedError
-
-    def tear_down_phase(self, learner):
-        """ Clean up after phase is done """
-        pass
-
-    def restore(self, epoch_idx, learner, hidden_state):
+    def restore(self, epoch_info: EpochInfo, model: Model, hidden_state: dict):
         """
         Restore learning from intermediate state.
         """
+        pass
+
+    def execute_epoch(self, epoch_info: EpochInfo, learner: Learner):
+        """
+        Execute epoch training.
+        """
+        raise NotImplementedError
+
+    def tear_down_phase(self, training_info: TrainingInfo, model: Model):
+        """ Clean up after phase is done """
         pass
 
     def state_dict(self):

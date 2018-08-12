@@ -2,8 +2,7 @@ import torch
 import numpy as np
 import bisect
 
-from waterboy.api import Learner, EpochIdx
-from waterboy.api.metrics import TrainingHistory
+from waterboy.api import Learner, EpochInfo, TrainingInfo
 
 
 class PhaseTrainCommand:
@@ -51,64 +50,99 @@ class PhaseTrainCommand:
         device = torch.device(self.model_config.device)
         learner = Learner(device, self.model_factory.instantiate())
 
+        # All callbacks useful for learning
+        callbacks = self.gather_callbacks()
+
+        metrics = learner.metrics()
+
+        # Check if training was already started and potentially continue where we left off
+        training_info, hidden_state = self.resume_training(learner, callbacks, metrics)
+
+        # Prepare current training phase
+        current_phase_idx = self._select_phase_left_bound(training_info.start_epoch_idx)
+        current_phase = self.phases[current_phase_idx]
+        local_idx = training_info.start_epoch_idx - self.ladder[current_phase_idx]
+
+        optimizer = current_phase.set_up_phase(training_info, learner.model, self.source)
+        print(current_phase.banner())
+
+        if training_info.start_epoch_idx > 0:
+            epoch_info = EpochInfo(
+                training_info,
+                batches_per_epoch=self.source.train_iterations_per_epoch(),
+                global_epoch_idx=training_info.start_epoch_idx,
+                local_epoch_idx=local_idx,
+                optimizer=optimizer,
+            )
+
+            current_phase.restore(epoch_info, learner.model, hidden_state)
+
+        for callback in callbacks:
+            callback.on_train_begin(training_info)
+
+        for global_epoch_idx in range(training_info.start_epoch_idx + 1, self.full_number_of_epochs + 1):
+            iteration_phase_idx = self._select_phase_right_bound(global_epoch_idx-1)
+            local_idx = global_epoch_idx - self.ladder[iteration_phase_idx]
+
+            # Phase preparations
+            while current_phase_idx != iteration_phase_idx:
+                current_phase.tear_down_phase(training_info, learner.model)
+
+                current_phase_idx += 1
+                current_phase = self.phases[current_phase_idx]
+
+                optimizer = current_phase.set_up_phase(training_info, learner.model, self.source)
+                print(current_phase.banner())
+
+            epoch_info = EpochInfo(
+                training_info,
+                optimizer=optimizer,
+                batches_per_epoch=self.source.train_iterations_per_epoch(),
+                global_epoch_idx=global_epoch_idx,
+                local_epoch_idx=local_idx
+            )
+
+            # Execute learning
+            current_phase.execute_epoch(epoch_info, learner)
+
+            self.storage.checkpoint(epoch_info, learner.model)
+
+            training_info.history.add(epoch_info.result)
+
+        for callback in callbacks:
+            callback.on_train_end(training_info)
+
+        # Tear down the last phase
+        if current_phase is not None:
+            current_phase.tear_down_phase(training_info, learner.model)
+
+        return training_info
+
+    def gather_callbacks(self) -> list:
+        """ Gather all the callbacks to be used in this training run """
         callbacks = []
 
         callbacks.extend(self.callbacks)
         callbacks.extend(self.storage.streaming_callbacks())
 
-        metrics = learner.metrics()
+        return callbacks
 
+    def resume_training(self, learner, callbacks, metrics) -> (TrainingInfo, dict):
+        """ Possibly resume training from a saved state from the storage """
         if self.model_config.reset:
-            last_epoch, hidden_state = 0, {}
+            start_epoch, hidden_state = 0, {}
         else:
-            last_epoch, hidden_state = self.storage.resume_learning(learner.model)
+            start_epoch, hidden_state = self.storage.resume_learning(learner.model)
 
-        current_phase_idx = self._select_phase_left_bound(last_epoch)
-        current_phase = self.phases[current_phase_idx]
-        local_idx = last_epoch - self.ladder[current_phase_idx]
+        training_info = TrainingInfo(start_epoch_idx=start_epoch, metrics=metrics, callbacks=callbacks)
 
-        current_phase.set_up_phase(learner, self.source, metrics, callbacks)
-        print(current_phase.banner())
+        if start_epoch > 0:
+            for callback in callbacks:
+                callback.load_state_dict(hidden_state)
 
-        if last_epoch > 0:
-            current_phase.restore(EpochIdx(last_epoch, local_idx), learner, hidden_state)
+            training_info.restore(hidden_state)
 
-        for callback in callbacks:
-            callback.on_train_begin()
-
-        training_history = TrainingHistory()
-
-        for global_epoch_idx in range(last_epoch + 1, self.full_number_of_epochs+1):
-            iteration_phase_idx = self._select_phase_right_bound(global_epoch_idx-1)
-            local_idx = global_epoch_idx - self.ladder[iteration_phase_idx]
-
-            epoch_idx = EpochIdx(global_epoch_idx, local_idx)
-
-            # Phase preparations
-            while current_phase_idx != iteration_phase_idx:
-                current_phase.tear_down_phase(learner)
-
-                current_phase_idx += 1
-                current_phase = self.phases[current_phase_idx]
-
-                current_phase.set_up_phase(learner, self.source, metrics, callbacks)
-                print(current_phase.banner())
-
-            # Main training piece
-            epoch_result = current_phase.execute_epoch(epoch_idx, learner)
-
-            self.storage.checkpoint(
-                global_epoch_idx, epoch_result, learner.model, state_dict=current_phase.state_dict()
-            )
-
-            training_history.add(epoch_result)
-
-        for callback in callbacks:
-            callback.on_train_end()
-
-        # Tear down the last phase
-        if current_phase is not None:
-            current_phase.tear_down_phase(learner)
+        return training_info, hidden_state
 
 
 def create(model_config, model, source, storage, phases, callbacks=None, restart=True):

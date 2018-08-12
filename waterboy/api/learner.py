@@ -2,15 +2,12 @@ import torch
 import tqdm
 import sys
 
-from .progress_idx import BatchIdx
-from .metrics import EpochResultAccumulator
-from .base import Model
+from .info import BatchInfo, EpochInfo
 
 
 class Learner:
     """ Manages training process of a single model """
-
-    def __init__(self, device: torch.device, model: Model):
+    def __init__(self, device: torch.device, model: 'Model'):
         self.device = device
         self.model = model.to(device)
 
@@ -34,103 +31,87 @@ class Learner:
         """ Count model parameters """
         return sum(p.numel() for p in self.model.parameters())
 
-    def train_batch(self, data, target, optimizer, result_accumulator=None):
-        """ Run single batch of data """
-        data, target = data.to(self.device), target.to(self.device)
+    def initialize_training(self):
+        """ Prepare for training """
+        self.model.reset_weights()
 
-        optimizer.zero_grad()
+    def run_epoch(self, epoch_info: EpochInfo, source):
+        """ Run full epoch of learning """
+        for callback in epoch_info.training_info.callbacks:
+            callback.on_epoch_begin(epoch_info)
 
-        output, loss = self.model.loss(data, target)
+        lr = epoch_info.optimizer.param_groups[-1]['lr']
+        print("|-------- Epoch {:06} Lr={:.6f} ----------|".format(epoch_info.global_epoch_idx, lr))
 
-        loss.backward()
-        optimizer.step()
+        self.train_epoch(epoch_info, source)
+        epoch_info.result_accumulator.freeze_results('train')
 
-        # No need for gradient calculations
-        if result_accumulator is not None:
-            # TODO(jerry): Is this line needed?
-            with torch.no_grad():
-                result_accumulator.calculate(data_dict={
-                    'data': data,
-                    'target': target,
-                    'output': output,
-                    'loss': loss
-                })
+        self.validation_epoch(epoch_info, source)
+        epoch_info.result_accumulator.freeze_results('val')
 
-    def train_epoch(self, epoch_idx, source, optimizer, callbacks=None, result_accumulator=None):
+        epoch_info.freeze_epoch_result()
+
+        for callback in epoch_info.callbacks:
+            callback.on_epoch_end(epoch_info)
+
+    def train_epoch(self, epoch_info, source):
         """ Run a single training epoch """
-        callbacks = callbacks or []
         self.train()
 
         iterator = tqdm.tqdm(source.train_loader, desc="Training", unit="iter", file=sys.stdout)
 
         for batch_idx, (data, target) in enumerate(iterator):
-            progress_idx = BatchIdx(epoch_idx, batch_idx, source.train_iterations_per_epoch())
+            batch_info = BatchInfo(epoch_info, batch_idx)
 
-            for callback in callbacks:
-                callback.on_batch_begin(progress_idx)
+            for callback in epoch_info.callbacks:
+                callback.on_batch_begin(batch_info)
 
-            self.train_batch(data, target, optimizer, result_accumulator)
+            self.train_batch(batch_info, data, target)
 
-            iterator.set_postfix(loss=result_accumulator.intermediate_value('loss'))
+            epoch_info.result_accumulator.calculate(batch_info)
 
-            for callback in callbacks:
-                callback.on_batch_end(progress_idx, result_accumulator.value(), optimizer)
+            for callback in epoch_info.callbacks:
+                callback.on_batch_end(batch_info)
 
-    def eval_epoch(self, epoch_idx, source, callbacks=None, result_accumulator=None):
+            iterator.set_postfix(loss=epoch_info.result_accumulator.intermediate_value('loss'))
+
+    def validation_epoch(self, epoch_info, source: 'Source'):
         """ Run a single evaluation epoch """
         self.eval()
 
-        for callback in callbacks:
-            callback.on_validation_begin(epoch_idx)
+        iterator = tqdm.tqdm(source.val_loader, desc="Validation", unit="iter", file=sys.stdout)
 
         with torch.no_grad():
-            # if source.is_tta_enabled():
-            #     tta_accumulator = source.tta_accumulator(result_accumulator)
-            #
-            #     for data, target in tqdm.tqdm(source.val_tta_loader, desc="Validation", unit="iter", file=sys.stdout):
-            #         data, target = data.to(self.device), target.to(self.device)
-            #         output, loss = self.model.loss(data, target)
-            #
-            #         tta_accumulator.calculate(data_dict={
-            #             'data': data,
-            #             'target': target,
-            #             'output': output,
-            #             'loss': loss
-            #         })
-            # else:
-            for data, target in tqdm.tqdm(source.val_loader, desc="Validation", unit="iter", file=sys.stdout):
-                data, target = data.to(self.device), target.to(self.device)
-                output, loss = self.model.loss(data, target)
+            for batch_idx, (data, target) in enumerate(iterator):
+                batch_info = BatchInfo(epoch_info, batch_idx)
 
-                result_accumulator.calculate(data_dict={
-                    'data': data,
-                    'target': target,
-                    'output': output,
-                    'loss': loss
-                })
+                for callback in epoch_info.callbacks:
+                    callback.on_validation_batch_begin(batch_info)
 
-        for callback in callbacks:
-            callback.on_validation_end(epoch_idx, result_accumulator.value())
+                self.feed_batch(batch_info, data, target)
 
-    def run_epoch(self, epoch_idx, metrics, source, optimizer, callbacks):
-        """ Run full epoch of learning """
-        result_accumulator = EpochResultAccumulator(epoch_idx, metrics)
+                epoch_info.result_accumulator.calculate(batch_info)
 
-        for callback in callbacks:
-            callback.on_epoch_begin(epoch_idx)
+                for callback in epoch_info.callbacks:
+                    callback.on_validation_batch_end(batch_info)
 
-        lr = optimizer.param_groups[-1]['lr']
-        print("|-------- Epoch {:06} Lr={:.6f} ----------|".format(epoch_idx.global_epoch_idx, lr))
+    def feed_batch(self, batch_info, data, target):
+        """ Run single batch of data """
+        data, target = data.to(self.device), target.to(self.device)
+        output, loss = self.model.loss(data, target)
 
-        self.train_epoch(epoch_idx, source, optimizer, callbacks, result_accumulator=result_accumulator)
-        result_accumulator.freeze_results('train')
+        # Store extra batch information for calculation of the statistics
+        batch_info['data'] = data
+        batch_info['target'] = target
+        batch_info['output'] = output
+        batch_info['loss'] = loss
 
-        self.eval_epoch(epoch_idx, source, callbacks, result_accumulator=result_accumulator)
-        result_accumulator.freeze_results('val')
+        return loss
 
-        epoch_result = result_accumulator.result()
+    def train_batch(self, batch_info, data, target):
+        """ Train single batch of data """
+        batch_info.optimizer.zero_grad()
+        loss = self.feed_batch(batch_info, data, target)
+        loss.backward()
+        batch_info.optimizer.step()
 
-        for callback in callbacks:
-            callback.on_epoch_end(epoch_idx, epoch_result)
-
-        return epoch_result

@@ -4,23 +4,32 @@ import time
 import numpy as np
 import torch
 
-from waterboy.api.metrics import BaseMetric
-from waterboy.api.metrics.averaging_metric import AveragingMetric
+from waterboy.api import BatchInfo
+from waterboy.api.metrics import BaseMetric, AveragingMetric, ValueMetric
 
 
-class FPSMetric(AveragingMetric):
+class FramesMetric(ValueMetric):
+    """ Count the frames """
+    def __init__(self, name="frames"):
+        super().__init__(name)
+
+    def _value_function(self, batch_info: BatchInfo):
+        return batch_info['frames'].item() + batch_info.training_info['frames']
+
+
+class FPSMetric(ValueMetric):
     """ Metric calculating FPS values """
-    def __init__(self):
-        super().__init__('fps')
+    def __init__(self, name='fps'):
+        super().__init__(name)
 
         self.start_time = time.time()
-        self.frames = 0
 
-    def _value_function(self, data_dict):
-        self.frames += data_dict['frames'].item()
+    def _value_function(self, batch_info):
+        frames = batch_info['frames'].item() + batch_info.training_info['frames']
 
         nseconds = time.time()-self.start_time
-        fps = int(self.frames/nseconds)
+        fps = int(frames/nseconds)
+
         return fps
 
 
@@ -70,8 +79,8 @@ class EpisodeRewardMetricQuantile(BaseMetric):
 
 
 class EpisodeLengthMetric(BaseMetric):
-    def __init__(self):
-        super().__init__("episode_length")
+    def __init__(self, name):
+        super().__init__(name)
         self.buffer = collections.deque(maxlen=100)
 
     def calculate(self, data_dict):

@@ -5,27 +5,24 @@ import sys
 from dataclasses import dataclass
 
 import torch
-from torch.optim import Optimizer
 
 import waterboy.util.math as math_util
 
 from waterboy.api.base import Model, ModelFactory
-from waterboy.api.metrics import EpochResultAccumulator
-from waterboy.api.metrics.averaging_metric import AveragingNamedMetric
-from waterboy.api.metrics.summing_metric import SummingNamedMetric
-from waterboy.api.progress_idx import EpochIdx, BatchIdx
+from waterboy.api.metrics import AveragingNamedMetric
+from waterboy.api.info import EpochInfo, BatchInfo
 from waterboy.openai.baselines.common.vec_env import VecEnv
 from waterboy.rl.api.base import ReinforcerBase, ReinforcerFactory, VecEnvFactory
 from waterboy.rl.env_roller.step_env_roller import StepEnvRoller
 from waterboy.rl.metrics import (
     FPSMetric, EpisodeLengthMetric, EpisodeRewardMetricQuantile, ExplainedVariance,
-    EpisodeRewardMetric
+    EpisodeRewardMetric, FramesMetric
 )
 
 
 class PolicyGradientBase:
     """ Base class for policy gradient calculations """
-    def calculate_loss(self, batch_idx, device, model, rollout, data_dict=None):
+    def calculate_loss(self, batch_info, device, model, rollout, data_dict=None):
         """ Calculate loss of the supplied rollout """
         raise NotImplementedError
 
@@ -64,12 +61,12 @@ class PolicyGradientReinforcer(ReinforcerBase):
     def metrics(self) -> list:
         """ List of metrics to track for this learning process """
         my_metrics = [
-            SummingNamedMetric("frames", reset_value=False),
-            FPSMetric(),
+            FramesMetric("frames"),
+            FPSMetric("fps"),
             EpisodeRewardMetric('PMM:episode_rewards'),
             EpisodeRewardMetricQuantile('P09:episode_rewards', quantile=0.9),
             EpisodeRewardMetricQuantile('P01:episode_rewards', quantile=0.1),
-            EpisodeLengthMetric(),
+            EpisodeLengthMetric("episode_length"),
             AveragingNamedMetric("advantage_norm"),
             ExplainedVariance()
         ]
@@ -88,40 +85,38 @@ class PolicyGradientReinforcer(ReinforcerBase):
         """ Prepare models for training """
         self.model.reset_weights()
 
-    def train_epoch(self, epoch_idx: EpochIdx, batches_per_epoch: int, optimizer: Optimizer,
-                    callbacks: list, result_accumulator: EpochResultAccumulator=None) -> None:
+    def train_epoch(self, epoch_info: EpochInfo) -> None:
         """ Train model on an epoch of a fixed number of batch updates """
-        for callback in callbacks:
-            callback.on_epoch_begin(epoch_idx)
+        for callback in epoch_info.callbacks:
+            callback.on_epoch_begin(epoch_info)
 
-        for batch_idx_number in tqdm.trange(batches_per_epoch, file=sys.stdout, desc="Training", unit="batch"):
-            extra = {}
+        for batch_idx in tqdm.trange(epoch_info.batches_per_epoch, file=sys.stdout, desc="Training", unit="batch"):
+            batch_info = BatchInfo(epoch_info, batch_idx)
 
-            if 'total_frames' in epoch_idx.extra:
-                extra['progress_meter'] = (
-                    result_accumulator.intermediate_value('frames') / epoch_idx.extra['total_frames']
+            if 'total_frames' in batch_info.training_info:
+                # Track progress during learning
+                batch_info['progress'] = (
+                    batch_info.training_info['frames'] / batch_info.training_info['total_frames']
                 )
 
-            progress_idx = BatchIdx(epoch_idx, batch_idx_number, batches_per_epoch=batches_per_epoch, extra=extra)
+            for callback in batch_info.callbacks:
+                callback.on_batch_begin(batch_info)
 
-            for callback in callbacks:
-                callback.on_batch_begin(progress_idx)
+            self.train_batch(batch_info)
 
-            self.train_step(progress_idx, optimizer, result_accumulator)
+            # Even with all the experience replay, we count the single rollout as a single batch
+            epoch_info.result_accumulator.calculate(batch_info)
 
-            for callback in callbacks:
-                callback.on_batch_end(progress_idx, result_accumulator.value(), optimizer)
+            for callback in batch_info.callbacks:
+                callback.on_batch_end(batch_info)
 
-        result_accumulator.freeze_results()
+        epoch_info.result_accumulator.freeze_results()
+        epoch_info.freeze_epoch_result()
 
-        epoch_result = result_accumulator.result()
+        for callback in epoch_info.callbacks:
+            callback.on_epoch_end(epoch_info)
 
-        for callback in callbacks:
-            callback.on_epoch_end(epoch_idx, epoch_result)
-
-        return epoch_result
-
-    def train_step(self, batch_idx: BatchIdx, optimizer: Optimizer, result_accumulator: EpochResultAccumulator=None) -> None:
+    def train_batch(self, batch_info: BatchInfo) -> None:
         """ Single, most atomic 'step' of learning this reinforcer can perform """
         # Calculate environment rollout on the evaluation version of the model
         self.model.eval()
@@ -146,10 +141,10 @@ class PolicyGradientReinforcer(ReinforcerBase):
                 batch_rollout = {k: v[sub_indices] for k, v in rollout_tensors.items()}
                 output_data_dict = {}
 
-                optimizer.zero_grad()
+                batch_info.optimizer.zero_grad()
 
                 loss = self.settings.policy_gradient.calculate_loss(
-                    batch_idx=batch_idx,
+                    batch_info=batch_info,
                     device=self.device,
                     model=self.model,
                     rollout=batch_rollout,
@@ -167,28 +162,22 @@ class PolicyGradientReinforcer(ReinforcerBase):
 
                     output_data_dict['grad_norm'] = torch.tensor(grad_norm).to(self.device)
 
-                optimizer.step(closure=None)
+                batch_info.optimizer.step(closure=None)
 
                 data_dict_accumulator.append(output_data_dict)
 
-        data_dict = {
-            'frames': torch.tensor(rollout_size).to(self.device),
-            'episode_infos': rollout['episode_information'],
-            'advantage_norm': torch.norm(rollout['advantages']),
-            'values': rollout['values'],
-            'rewards': rollout['discounted_rewards']
-        }
+        batch_info['frames'] = torch.tensor(rollout_size).to(self.device)
+        batch_info['episode_infos'] = rollout['episode_information']
+        batch_info['advantage_norm'] = torch.norm(rollout['advantages'])
+        batch_info['values'] = rollout['values']
+        batch_info['rewards'] = rollout['discounted_rewards']
 
         # Put in aggregated
         data_dict_keys = {y for x in data_dict_accumulator for y in x.keys()}
 
         for key in data_dict_keys:
             # Just average all the statistics from the loss function
-            data_dict[key] = torch.mean(torch.stack([d[key] for d in data_dict_accumulator]))
-
-        # Even with all the experience replay, we count the single rollout as single metrics entry
-        if result_accumulator is not None:
-            result_accumulator.calculate(data_dict)
+            batch_info[key] = torch.mean(torch.stack([d[key] for d in data_dict_accumulator]))
 
 
 class PolicyGradientReinforcerFactory(ReinforcerFactory):

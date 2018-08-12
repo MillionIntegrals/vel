@@ -14,17 +14,17 @@ class PpoPolicyGradient(PolicyGradientBase):
         self.cliprange = cliprange  # This needs to be verified
         self.cliprange_scaling = cliprange_scaling
 
-    def cliprange_scaling_function(self, batch_idx):
+    def cliprange_scaling_function(self, batch_info):
         """ Select current cliprange"""
 
         if self.cliprange_scaling == 'constant':
             return self.cliprange
         elif self.cliprange_scaling == 'linear':
-            return (1.0 - batch_idx.extra['progress_meter']) * self.cliprange
+            return (1.0 - batch_info['progress']) * self.cliprange
         else:
             raise NotImplementedError
 
-    def calculate_loss(self, batch_idx, device, model, rollout, data_dict=None):
+    def calculate_loss(self, batch_info, device, model, rollout, data_dict=None):
         """ Calculate loss of the supplied rollout """
 
         observations = rollout['observations']
@@ -35,7 +35,7 @@ class PpoPolicyGradient(PolicyGradientBase):
         rollout_neglogps = rollout['neglogps']
 
         # Select the cliprange
-        current_cliprange = self.cliprange_scaling_function(batch_idx)
+        current_cliprange = self.cliprange_scaling_function(batch_info)
 
         # Normalize the advantages?
         advantages = (advantages - advantages.mean()) / (advantages.std() + 1e-8)

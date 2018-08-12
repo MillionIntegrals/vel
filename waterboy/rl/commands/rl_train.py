@@ -1,11 +1,17 @@
 import torch
 
-from waterboy.api import ModelConfig, EpochIdx
-from waterboy.api.base import OptimizerFactory, Storage
-from waterboy.api.metrics import EpochResultAccumulator, TrainingHistory
+from waterboy.api import ModelConfig, EpochInfo, TrainingInfo, BatchInfo
+from waterboy.api.base import OptimizerFactory, Storage, Callback
 from waterboy.rl.api.base import ReinforcerFactory
 
 import waterboy.openai.baselines.logger as openai_logger
+
+
+class FrameTracker(Callback):
+    """ Aggregate frame count from each batch to a global number """
+
+    def on_batch_end(self, batch_info: BatchInfo):
+        batch_info.training_info['frames'] += batch_info['frames'].item()
 
 
 class RlTrainCommand:
@@ -27,8 +33,78 @@ class RlTrainCommand:
         self.seed = seed
         self.openai_logging = openai_logging
 
+    def run(self):
+        """ Run reinforcement learning algorithm """
+        device = torch.device(self.model_config.device)
+        # Reinforcer is the learner for the reinforcement learning model
+        reinforcer = self.reinforcer.instantiate(device)
+        optimizer = self.optimizer_factory.instantiate(reinforcer.model.parameters())
+
+        # All callbacks used for learning
+        callbacks = self.gather_callbacks(optimizer)
+
+        # Metrics to track through this training
+        metrics = reinforcer.metrics()
+
+        training_info = self.resume_training(reinforcer, optimizer, callbacks, metrics)
+
+        reinforcer.initialize_training()
+
+        for callback in callbacks:
+            callback.on_train_begin(training_info)
+
+        global_epoch_idx = training_info.start_epoch_idx
+        training_info['total_frames'] = self.total_frames
+
+        while training_info['frames'] < self.total_frames:
+            epoch_info = EpochInfo(
+                training_info,
+                global_epoch_idx=global_epoch_idx,
+                batches_per_epoch=self.batches_per_epoch,
+                optimizer=optimizer,
+            )
+
+            reinforcer.train_epoch(epoch_info)
+
+            if self.openai_logging:
+                self._openai_logging(epoch_info.result)
+
+            self.storage.checkpoint(epoch_info, reinforcer.model)
+
+            training_info.history.add(epoch_info.result)
+
+            # Accumulate frames
+            # training_info['frames'] += epoch_info.result['frames']
+            global_epoch_idx += 1
+
+        for callback in callbacks:
+            callback.on_train_end(training_info)
+
+        return training_info
+
+    def gather_callbacks(self, optimizer) -> list:
+        """ Gather all the callbacks to be used in this training run """
+        callbacks = [FrameTracker()]
+
+        if self.scheduler_factory is not None:
+            callbacks.append(self.scheduler_factory.instantiate(optimizer))
+
+        callbacks.extend(self.callbacks)
+        callbacks.extend(self.storage.streaming_callbacks())
+
+        return callbacks
+
+    def resume_training(self, reinforcer, optimizer, callbacks, metrics) -> TrainingInfo:
+        """ Possibly resume training from a saved state from the storage """
+        global_epoch_idx = 1
+
+        # TODO(jerry): Implement training resume
+        training_info = TrainingInfo(start_epoch_idx=global_epoch_idx, metrics=metrics, callbacks=callbacks)
+
+        training_info['frames'] = 0
+        return training_info
+
     def _openai_logging(self, epoch_result):
-        # OpenAI logging..., possibly guard it with a flag?
         for key in sorted(epoch_result.keys()):
             if key == 'fps':
                 # Not super elegant, but I like nicer display of FPS
@@ -37,62 +113,6 @@ class RlTrainCommand:
                 openai_logger.record_tabular(key, epoch_result[key])
 
         openai_logger.dump_tabular()
-
-    def run(self):
-        """ Run reinforcement learning algorithm """
-        device = torch.device(self.model_config.device)
-
-        total_framecount = 0
-        global_epoch_idx = 1
-
-        # Reinforcer is the learner for the reinforcement learning model
-        reinforcer = self.reinforcer.instantiate(device)
-
-        optimizer_instance = self.optimizer_factory.instantiate(reinforcer.model.parameters())
-
-        metrics = reinforcer.metrics()
-
-        callbacks = []
-
-        if self.scheduler_factory is not None:
-            callbacks.append(self.scheduler_factory.instantiate(optimizer_instance))
-
-        callbacks.extend(self.callbacks)
-        callbacks.extend(self.storage.streaming_callbacks())
-
-        for callback in callbacks:
-            callback.on_train_begin()
-
-        training_history = TrainingHistory()
-
-        while total_framecount < self.total_frames:
-            epoch_idx = EpochIdx(global_epoch_idx, extra={'total_frames': self.total_frames})
-            result_accumulator = EpochResultAccumulator(epoch_idx, metrics)
-
-            epoch_result = reinforcer.train_epoch(
-                epoch_idx,
-                batches_per_epoch=self.batches_per_epoch,
-                optimizer=optimizer_instance,
-                callbacks=callbacks,
-                result_accumulator=result_accumulator
-            )
-
-            if self.openai_logging:
-                self._openai_logging(epoch_result)
-
-            self.storage.checkpoint(
-                epoch_idx.global_epoch_idx, epoch_result, reinforcer.model, optimizer_instance, callbacks
-            )
-
-            training_history.add(epoch_result)
-
-            total_framecount = epoch_result['frames']
-            global_epoch_idx += 1
-
-        for callback in callbacks:
-            callback.on_train_end()
-
-        return training_history
 
 
 def create(model_config, reinforcer, optimizer, storage,

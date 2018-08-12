@@ -6,7 +6,8 @@ import typing
 
 import waterboy.api.base as base
 
-from waterboy.api import ModelConfig
+from waterboy.api import ModelConfig, EpochInfo
+from waterboy.api.base import Model
 from .strategy.checkpoint_strategy import CheckpointStrategy
 
 
@@ -56,47 +57,46 @@ class ClassicStorage(base.Storage):
         self.cleaned = True
         self.backend.clean(global_epoch_idx)
 
-    def checkpoint(self, global_epoch_idx, metrics, model, optimizer=None, callbacks=None, state_dict=None):
+    def checkpoint(self, epoch_info: EpochInfo, model: Model, state_dict: dict=None):
         """ When epoch is done, we persist the training state """
-        callbacks = callbacks if callbacks is not None else []
         state_dict = state_dict if state_dict is not None else {}
 
-        self.clean(global_epoch_idx)
+        self.clean(epoch_info.global_epoch_idx)
 
         self._make_sure_dir_exists()
 
         # Checkpoint latest
-        torch.save(model.state_dict(), self.checkpoint_filename(global_epoch_idx))
+        torch.save(model.state_dict(), self.checkpoint_filename(epoch_info.global_epoch_idx))
 
         hidden_state = state_dict.copy()
 
-        if optimizer is not None:
-            hidden_state['optimizer'] = optimizer.state_dict()
+        if epoch_info.optimizer is not None:
+            hidden_state['optimizer'] = epoch_info.optimizer.state_dict()
 
-        for callback in callbacks:
+        for callback in epoch_info.callbacks:
             callback.write_state_dict(hidden_state)
 
         self.checkpoint_strategy.write_state_dict(hidden_state)
 
-        torch.save(hidden_state, self.checkpoint_hidden_filename(global_epoch_idx))
+        torch.save(hidden_state, self.checkpoint_hidden_filename(epoch_info.global_epoch_idx))
 
-        if global_epoch_idx > 1 and self.checkpoint_strategy.should_delete_previous_checkpoint(global_epoch_idx):
-            prev_epoch_idx = global_epoch_idx - 1
+        if epoch_info.global_epoch_idx > 1 and self.checkpoint_strategy.should_delete_previous_checkpoint(epoch_info.global_epoch_idx):
+            prev_epoch_idx = epoch_info.global_epoch_idx - 1
 
             os.remove(self.checkpoint_filename(prev_epoch_idx))
             os.remove(self.checkpoint_hidden_filename(prev_epoch_idx))
 
-        if self.checkpoint_strategy.should_store_best_checkpoint(global_epoch_idx, metrics):
+        if self.checkpoint_strategy.should_store_best_checkpoint(epoch_info.global_epoch_idx, epoch_info.result):
             best_checkpoint_idx = self.checkpoint_strategy.current_best_checkpoint_idx
 
             if best_checkpoint_idx is not None:
                 os.remove(self.checkpoint_best_filename(best_checkpoint_idx))
 
-            torch.save(model.state_dict(), self.checkpoint_best_filename(global_epoch_idx))
+            torch.save(model.state_dict(), self.checkpoint_best_filename(epoch_info.global_epoch_idx))
 
-            self.checkpoint_strategy.store_best_checkpoint_idx(global_epoch_idx)
+            self.checkpoint_strategy.store_best_checkpoint_idx(epoch_info.global_epoch_idx)
 
-        self.backend.store(metrics)
+        self.backend.store(epoch_info.result)
 
     def streaming_callbacks(self) -> list:
         """ Lift of callbacks for live streaming results """
