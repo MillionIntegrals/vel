@@ -196,12 +196,10 @@ class DqnReinforcer(ReinforcerBase):
         q_selected = q.gather(1, actions_tensor.unsqueeze(1)).squeeze(1)
 
         original_losses = F.smooth_l1_loss(q_selected, expected_q.detach(), reduction='none')
-        element_losses = original_losses
 
-        if 'weights' in batch_sample:
-            element_losses = torch.from_numpy(batch_sample['weights']).float().to(self.device) * element_losses
+        weights_tensor = torch.from_numpy(batch_sample['weights']).float().to(self.device)
+        loss = torch.mean(weights_tensor * original_losses)
 
-        loss = torch.mean(element_losses)
         loss.backward()
 
         self.buffer.update(batch_sample, original_losses)
