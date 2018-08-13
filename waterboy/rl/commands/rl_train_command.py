@@ -83,8 +83,6 @@ class RlTrainCommand:
 
             training_info.history.add(epoch_info.result)
 
-            # Accumulate frames
-            # training_info['frames'] += epoch_info.result['frames']
             global_epoch_idx += 1
 
         for callback in callbacks:
