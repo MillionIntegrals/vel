@@ -1,14 +1,17 @@
 import torch
 import numpy as np
 import bisect
+import typing
 
 from waterboy.api import Learner, EpochInfo, TrainingInfo
+from waterboy.api.base import TrainPhase
 
 
 class PhaseTrainCommand:
     """ Training  command - learn according to a set of phases """
 
-    def __init__(self, model_config, model_factory, source, storage, phases, callbacks=None, restart=True):
+    def __init__(self, model_config, model_factory, source, storage, phases: typing.List[TrainPhase],
+                 callbacks=None, restart=True):
         self.model_config = model_config
         self.model_factory = model_factory
         self.source = source
@@ -53,6 +56,7 @@ class PhaseTrainCommand:
         # All callbacks useful for learning
         callbacks = self.gather_callbacks()
 
+        # Metrics to track through this training
         metrics = learner.metrics()
 
         # Check if training was already started and potentially continue where we left off
@@ -63,19 +67,11 @@ class PhaseTrainCommand:
         current_phase = self.phases[current_phase_idx]
         local_idx = training_info.start_epoch_idx - self.ladder[current_phase_idx]
 
-        optimizer = current_phase.set_up_phase(training_info, learner.model, self.source)
+        current_phase.set_up_phase(training_info, learner.model, self.source)
         print(current_phase.banner())
 
         if training_info.start_epoch_idx > 0:
-            epoch_info = EpochInfo(
-                training_info,
-                batches_per_epoch=self.source.train_iterations_per_epoch(),
-                global_epoch_idx=training_info.start_epoch_idx,
-                local_epoch_idx=local_idx,
-                optimizer=optimizer,
-            )
-
-            current_phase.restore(epoch_info, learner.model, hidden_state)
+            current_phase.restore(training_info, local_idx, learner.model, hidden_state)
 
         for callback in callbacks:
             callback.on_train_begin(training_info)
@@ -91,22 +87,19 @@ class PhaseTrainCommand:
                 current_phase_idx += 1
                 current_phase = self.phases[current_phase_idx]
 
-                optimizer = current_phase.set_up_phase(training_info, learner.model, self.source)
+                current_phase.set_up_phase(training_info, learner.model, self.source)
                 print(current_phase.banner())
 
-            epoch_info = EpochInfo(
-                training_info,
-                optimizer=optimizer,
-                batches_per_epoch=self.source.train_iterations_per_epoch(),
-                global_epoch_idx=global_epoch_idx,
-                local_epoch_idx=local_idx
-            )
+            # Create epoch info
+            epoch_info = current_phase.epoch_info(training_info, global_epoch_idx, local_idx)
 
             # Execute learning
             current_phase.execute_epoch(epoch_info, learner)
 
+            # Epoch checkpoint
             self.storage.checkpoint(epoch_info, learner.model)
 
+            # Gather results
             training_info.history.add(epoch_info.result)
 
         for callback in callbacks:

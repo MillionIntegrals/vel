@@ -130,12 +130,13 @@ class EpochInfo(abc.MutableMapping):
     """
 
     def __init__(self, training_info: TrainingInfo, global_epoch_idx: int, batches_per_epoch: int,
-                 optimizer: torch.optim.Optimizer=None, local_epoch_idx: int = None):
+                 optimizer: torch.optim.Optimizer=None, local_epoch_idx: int = None, callbacks: list=None):
         self.training_info = training_info
         self.optimizer = optimizer
         self.batches_per_epoch = batches_per_epoch
 
         self.global_epoch_idx = global_epoch_idx
+
         if local_epoch_idx is None:
             self.local_epoch_idx = self.global_epoch_idx
         else:
@@ -145,7 +146,10 @@ class EpochInfo(abc.MutableMapping):
         self._result = {}
         self.data_dict = {}
 
-        self.callbacks = self.training_info.callbacks
+        if callbacks is None:
+            self.callbacks = self.training_info.callbacks
+        else:
+            self.callbacks = callbacks
 
     @property
     def metrics(self):

@@ -4,7 +4,7 @@ import waterboy.api.base as base
 import waterboy.util.intepolate as interp
 import waterboy.util.module_util as mu
 
-from waterboy.api import BatchInfo
+from waterboy.api import BatchInfo, EpochInfo, TrainingInfo
 
 
 class CycleCallback(base.Callback):
@@ -133,10 +133,20 @@ class CyclePhase(base.TrainPhase):
 
         return self._optimizer_instance
 
+    def epoch_info(self, training_info: TrainingInfo, global_idx: int, local_idx: int) -> EpochInfo:
+        """ Create Epoch info """
+        return EpochInfo(
+            training_info=training_info,
+            global_epoch_idx=global_idx,
+            local_epoch_idx=local_idx,
+            batches_per_epoch=self._source.train_iterations_per_epoch(),
+            optimizer=self._optimizer_instance,
+            # Add special callback for this epoch
+            callbacks=[self.special_callback] + training_info.callbacks
+        )
+
     def execute_epoch(self, epoch_info, learner):
         """ Prepare the phase for learning """
-        # Add special callback for this epoch
-        epoch_info.callbacks = [self.special_callback] + epoch_info.callbacks
         learner.run_epoch(epoch_info, self._source)
 
 

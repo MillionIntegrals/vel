@@ -16,11 +16,15 @@ class TrainPhase:
         """ Prepare the phase for learning, returns phase optimizer """
         pass
 
-    def restore(self, epoch_info: EpochInfo, model: Model, hidden_state: dict):
+    def restore(self, training_info: TrainingInfo, local_batch_idx: int, model: Model, hidden_state: dict):
         """
         Restore learning from intermediate state.
         """
         pass
+
+    def epoch_info(self, training_info: TrainingInfo, global_idx: int, local_idx: int) -> EpochInfo:
+        """ Create Epoch info """
+        raise NotImplementedError
 
     def execute_epoch(self, epoch_info: EpochInfo, learner: Learner):
         """
@@ -54,3 +58,7 @@ class EmptyTrainPhase(TrainPhase):
     def execute_epoch(self, epoch_idx, learner):
         """ Prepare the phase for learning """
         pass
+
+    def epoch_info(self, training_info: TrainingInfo, global_idx: int, local_idx: int) -> EpochInfo:
+        """ Create Epoch info """
+        return EpochInfo(training_info, global_epoch_idx=global_idx, local_epoch_idx=local_idx, batches_per_epoch=0)

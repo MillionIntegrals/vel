@@ -1,5 +1,8 @@
 import waterboy.api.base as base
 
+from waterboy.api import TrainingInfo, EpochInfo
+from waterboy.api.base import Source
+
 
 class GenericPhase(base.TrainPhase):
     """ Most generic phase of training """
@@ -16,11 +19,21 @@ class GenericPhase(base.TrainPhase):
     def number_of_epochs(self) -> int:
         return self.epochs
 
-    def set_up_phase(self, training_info, model, source):
+    def set_up_phase(self, training_info, model, source: Source):
         """ Prepare the phase for learning """
-        self._optimizer_instance = self.optimizer_factory.instantiate(filter(lambda p: p.requires_grad, model.parameters()))
+        parameters = filter(lambda p: p.requires_grad, model.parameters())
+        self._optimizer_instance = self.optimizer_factory.instantiate(parameters)
         self._source = source
-        return self._optimizer_instance
+
+    def epoch_info(self, training_info: TrainingInfo, global_idx: int, local_idx: int) -> EpochInfo:
+        """ Create Epoch info """
+        return EpochInfo(
+            training_info=training_info,
+            global_epoch_idx=global_idx,
+            local_epoch_idx=local_idx,
+            batches_per_epoch=self._source.train_iterations_per_epoch(),
+            optimizer=self._optimizer_instance
+        )
 
     def execute_epoch(self, epoch_info, learner):
         """ Prepare the phase for learning """
