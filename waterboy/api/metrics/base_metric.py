@@ -6,7 +6,7 @@ class BaseMetric:
     def __init__(self, name):
         self.name = name
 
-    def calculate(self, data_dict):
+    def calculate(self, batch_info):
         """ Calculate value of a metric based on supplied data """
         raise NotImplementedError
 

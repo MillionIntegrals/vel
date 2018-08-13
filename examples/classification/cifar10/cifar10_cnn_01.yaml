@@ -30,7 +30,7 @@ source:
 
 commands:
   train:
-    name: waterboy.commands.train
+    name: waterboy.commands.train_command
     epochs: 12
     log_frequency: 20
     optimizer:

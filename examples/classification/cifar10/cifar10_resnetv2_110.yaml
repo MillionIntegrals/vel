@@ -31,7 +31,7 @@ source:
 
 commands:
   train:
-    name: waterboy.commands.train
+    name: waterboy.commands.train_command
     epochs: 200
     log_frequency: 100
 
@@ -68,6 +68,6 @@ commands:
 #      min_lr: 0.5e-6
 
   augvis:
-    name: waterboy.commands.augvis
+    name: waterboy.commands.augvis_command
     seed: 1
     samples: 5

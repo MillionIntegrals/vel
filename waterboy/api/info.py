@@ -74,10 +74,10 @@ class EpochResultAccumulator:
         self.metrics_by_name = {m.name: m for m in self.metrics}
 
     @torch.no_grad()
-    def calculate(self, data_dict):
+    def calculate(self, batch_info):
         """ Calculate metric values """
         for m in self.metrics:
-            m.calculate(data_dict)
+            m.calculate(batch_info)
 
     def _reset_metrics(self):
         """ Internal API : reset state of metrics """

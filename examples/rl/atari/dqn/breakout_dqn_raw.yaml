@@ -51,6 +51,6 @@ env:
 
 commands:
   train:
-    name: waterboy.rl.commands.rl_train
+    name: waterboy.rl.commands.rl_train_command
     total_frames: 1.1e7  # 11M
     batches_per_epoch: 2500

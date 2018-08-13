@@ -9,8 +9,8 @@ import tqdm
 
 import waterboy.util.intepolate as interp
 
-from waterboy.api import Learner
-from waterboy.api.metrics import EpochResultAccumulator, TrainingHistory
+from waterboy.api import Learner, TrainingInfo, EpochInfo, BatchInfo
+from waterboy.api.metrics.averaging_metric import AveragingNamedMetric
 
 
 class LrFindCommand:
@@ -46,12 +46,12 @@ class LrFindCommand:
         http://arxiv.org/abs/1506.01186
 
     """
-    def __init__(self, model_config, model, source, optimizer, start_lr=1e-5, end_lr=10, num_it=100,
-                 interpolation='logscale', freeze=False, stop_dv=True, divergence_threshold=4.0, metric='train:loss'):
+    def __init__(self, model_config, model, source, optimizer_factory, start_lr=1e-5, end_lr=10, num_it=100,
+                 interpolation='logscale', freeze=False, stop_dv=True, divergence_threshold=4.0, metric='loss'):
         # Mandatory pieces
         self.model = model
         self.source = source
-        self.optimizer = optimizer
+        self.optimizer_factory = optimizer_factory
         self.model_config = model_config
         # Settings
         self.start_lr = start_lr
@@ -64,31 +64,39 @@ class LrFindCommand:
         self.metric = metric
 
     def run(self):
+        """ Run the command with supplied configuration """
         device = torch.device(self.model_config.device)
-        learner = Learner(device, self.model)
+        learner = Learner(device, self.model.instantiate())
 
         lr_schedule = interp.interpolate_series(self.start_lr, self.end_lr, self.num_it, self.interpolation)
-
-        iterator = iter(self.source.train_loader)
-
-        metrics = learner.metrics()
-        history = TrainingHistory()
 
         if self.freeze:
             learner.model.freeze()
 
         # Optimizer shoudl be created after freeze
-        optimizer_instance = self.optimizer(filter(lambda p: p.requires_grad, learner.model.parameters()))
+        optimizer = self.optimizer_factory.instantiate(filter(lambda p: p.requires_grad, learner.model.parameters()))
+
+        iterator = iter(self.source.train_loader)
+
+        # Metrics to track through this training
+        metrics = learner.metrics() + [AveragingNamedMetric("lr")]
 
         learner.train()
 
         best_value = None
 
-        result_accumulator = EpochResultAccumulator(1, metrics)
+        training_info = TrainingInfo(start_epoch_idx=0, metrics=metrics)
+
+        # Treat it all as one epoch
+        epoch_info = EpochInfo(
+            training_info, global_epoch_idx=1, batches_per_epoch=1, optimizer=optimizer
+        )
 
         for iteration_idx, lr in enumerate(tqdm.tqdm(lr_schedule)):
+            batch_info = BatchInfo(epoch_info, iteration_idx)
+
             # First, set the learning rate, the same for each parameter group
-            for param_group in optimizer_instance.param_groups:
+            for param_group in optimizer.param_groups:
                 param_group['lr'] = lr
 
             try:
@@ -97,10 +105,14 @@ class LrFindCommand:
                 iterator = iter(self.source.train_loader)
                 data, target = next(iterator)
 
-            learner.feed_batch(data, target, optimizer_instance, result_accumulator=result_accumulator)
+            learner.train_batch(batch_info, data, target)
+
+            batch_info['lr'] = lr
 
             # METRIC RECORDING PART
-            current_value = result_accumulator.intermediate_value(self.metric)
+            epoch_info.result_accumulator.calculate(batch_info)
+
+            current_value = epoch_info.result_accumulator.intermediate_value(self.metric)
 
             final_metrics = {'epoch_idx': iteration_idx, self.metric: current_value, 'lr': lr}
 
@@ -111,13 +123,12 @@ class LrFindCommand:
             if self.stop_dv and (np.isnan(current_value) or current_value > best_value * self.divergence_threshold):
                 break
 
-            history.add(final_metrics)
+            training_info.history.add(final_metrics)
 
-        frame = history.frame()
+        frame = training_info.history.frame()
 
         fig, ax = plt.subplots(1, 2)
 
-        # ax[0].set_title('Learning rate')
         ax[0].plot(frame.index, frame.lr)
         ax[0].set_title("LR Schedule")
         ax[0].set_xlabel("Num iterations")
@@ -140,13 +151,13 @@ class LrFindCommand:
 
 
 def create(model_config, model, source, optimizer, start_lr=1e-5, end_lr=10, iterations=100, freeze=False,
-           interpolation='logscale', stop_dv=True, divergence_threshold=4.0, metric='train:loss'):
+           interpolation='logscale', stop_dv=True, divergence_threshold=4.0, metric='loss'):
     """ Create a learning rate finder """
     return LrFindCommand(
         model_config=model_config,
         model=model,
         source=source,
-        optimizer=optimizer,
+        optimizer_factory=optimizer,
         start_lr=start_lr,
         end_lr=end_lr,
         num_it=iterations,

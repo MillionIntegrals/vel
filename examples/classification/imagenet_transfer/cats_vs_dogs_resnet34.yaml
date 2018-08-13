@@ -76,7 +76,7 @@ optimizer:
 
 commands:
   train:
-    name: waterboy.commands.phase_train
+    name: waterboy.commands.phase_train_command
     restart: false
     phases:
     - name: waterboy.phase.freeze
@@ -101,16 +101,16 @@ commands:
       cycle_mult: 2
 
   simple_train:
-    name: waterboy.commands.train
+    name: waterboy.commands.train_command
     restart: false
     epochs: 3
 
   summary:
-    name: waterboy.commands.summary
+    name: waterboy.commands.summary_command
 
   lr_find:
-    name: waterboy.commands.lr_find
-    metric: 'val:loss'
+    name: waterboy.commands.lr_find_command
+    metric: 'loss'
     start_lr: 1.0e-5
     end_lr: 10.0
     iterations: 500
@@ -118,7 +118,7 @@ commands:
     freeze: true
 
   augvis:
-    name: waterboy.commands.augvis
+    name: waterboy.commands.augvis_command
 #    seed: 1
     cases: 3
     samples: 4
