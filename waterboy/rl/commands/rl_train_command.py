@@ -3,12 +3,22 @@ import torch
 from waterboy.api import ModelConfig, EpochInfo, TrainingInfo, BatchInfo
 from waterboy.api.base import OptimizerFactory, Storage, Callback
 from waterboy.rl.api.base import ReinforcerFactory
+from waterboy.callbacks.time_tracker import TimeTracker
 
 import waterboy.openai.baselines.logger as openai_logger
 
 
 class FrameTracker(Callback):
     """ Aggregate frame count from each batch to a global number """
+    def on_train_begin(self, training_info: TrainingInfo):
+        training_info['frames'] = 0
+
+    def on_batch_begin(self, batch_info: BatchInfo):
+        if 'total_frames' in batch_info.training_info:
+            # Track progress during learning
+            batch_info['progress'] = (
+                    batch_info.training_info['frames'] / batch_info.training_info['total_frames']
+            )
 
     def on_batch_end(self, batch_info: BatchInfo):
         batch_info.training_info['frames'] += batch_info['frames'].item()
@@ -84,7 +94,7 @@ class RlTrainCommand:
 
     def gather_callbacks(self, optimizer) -> list:
         """ Gather all the callbacks to be used in this training run """
-        callbacks = [FrameTracker()]
+        callbacks = [FrameTracker(), TimeTracker()]
 
         if self.scheduler_factory is not None:
             callbacks.append(self.scheduler_factory.instantiate(optimizer))
@@ -101,7 +111,6 @@ class RlTrainCommand:
         # TODO(jerry): Implement training resume
         training_info = TrainingInfo(start_epoch_idx=global_epoch_idx, metrics=metrics, callbacks=callbacks)
 
-        training_info['frames'] = 0
         return training_info
 
     def _openai_logging(self, epoch_result):

@@ -1,5 +1,4 @@
 import collections
-import time
 
 import numpy as np
 import torch
@@ -22,13 +21,11 @@ class FPSMetric(ValueMetric):
     def __init__(self, name='fps'):
         super().__init__(name)
 
-        self.start_time = time.time()
-
     def _value_function(self, batch_info):
-        frames = batch_info['frames'].item() + batch_info.training_info['frames']
+        frames = batch_info.training_info['frames']
+        seconds = batch_info.training_info['time']
 
-        nseconds = time.time()-self.start_time
-        fps = int(frames/nseconds)
+        fps = int(frames/seconds)
 
         return fps
 

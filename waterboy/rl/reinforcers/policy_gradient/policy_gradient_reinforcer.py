@@ -93,22 +93,16 @@ class PolicyGradientReinforcer(ReinforcerBase):
         for batch_idx in tqdm.trange(epoch_info.batches_per_epoch, file=sys.stdout, desc="Training", unit="batch"):
             batch_info = BatchInfo(epoch_info, batch_idx)
 
-            if 'total_frames' in batch_info.training_info:
-                # Track progress during learning
-                batch_info['progress'] = (
-                    batch_info.training_info['frames'] / batch_info.training_info['total_frames']
-                )
-
             for callback in batch_info.callbacks:
                 callback.on_batch_begin(batch_info)
 
             self.train_batch(batch_info)
 
-            # Even with all the experience replay, we count the single rollout as a single batch
-            epoch_info.result_accumulator.calculate(batch_info)
-
             for callback in batch_info.callbacks:
                 callback.on_batch_end(batch_info)
+
+            # Even with all the experience replay, we count the single rollout as a single batch
+            epoch_info.result_accumulator.calculate(batch_info)
 
         epoch_info.result_accumulator.freeze_results()
         epoch_info.freeze_epoch_result()

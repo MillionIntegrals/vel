@@ -7,7 +7,7 @@ from .info import BatchInfo, EpochInfo
 
 class Learner:
     """ Manages training process of a single model """
-    def __init__(self, device: torch.device, model: 'Model'):
+    def __init__(self, device: torch.device, model):
         self.device = device
         self.model = model.to(device)
 
@@ -68,14 +68,14 @@ class Learner:
 
             self.train_batch(batch_info, data, target)
 
-            epoch_info.result_accumulator.calculate(batch_info)
-
             for callback in epoch_info.callbacks:
                 callback.on_batch_end(batch_info)
 
+            epoch_info.result_accumulator.calculate(batch_info)
+
             iterator.set_postfix(loss=epoch_info.result_accumulator.intermediate_value('loss'))
 
-    def validation_epoch(self, epoch_info, source: 'Source'):
+    def validation_epoch(self, epoch_info, source):
         """ Run a single evaluation epoch """
         self.eval()
 
@@ -90,10 +90,10 @@ class Learner:
 
                 self.feed_batch(batch_info, data, target)
 
-                epoch_info.result_accumulator.calculate(batch_info)
-
                 for callback in epoch_info.callbacks:
                     callback.on_validation_batch_end(batch_info)
+
+                epoch_info.result_accumulator.calculate(batch_info)
 
     def feed_batch(self, batch_info, data, target):
         """ Run single batch of data """
