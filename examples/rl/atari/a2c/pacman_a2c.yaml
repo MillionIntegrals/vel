@@ -2,29 +2,29 @@ name: 'pacman_a2c_simple'
 seed: 2018
 
 env:
-  name: waterboy.rl.env.atari.classic_atari
+  name: vel.rl.env.atari.classic_atari
   game: 'MsPacmanNoFrameskip-v4'
 
 
 vec_env:
-  name: waterboy.rl.vecenv.subproc
+  name: vel.rl.vecenv.subproc
   frame_history: 4  # How many stacked frames go into a single observation
 
 
 model:
-  name: waterboy.rl.reinforcers.policy_gradient.policy_gradient_model
+  name: vel.rl.reinforcers.policy_gradient.policy_gradient_model
   backbone:
-    name: waterboy.models.rl.nature_cnn
+    name: vel.models.rl.nature_cnn
     input_width: 84
     input_height: 84
     input_channels: 4  # The same as frame_history
 
 
 reinforcer:
-  name: waterboy.rl.reinforcers.policy_gradient
+  name: vel.rl.reinforcers.policy_gradient
 
   policy_gradient:
-    name: waterboy.rl.reinforcers.policy_gradient.a2c
+    name: vel.rl.reinforcers.policy_gradient.a2c
     entropy_coefficient: 0.01
     value_coefficient: 0.5
 
@@ -36,7 +36,7 @@ reinforcer:
 
 
 optimizer:
-  name: waterboy.optimizers.rmsprop
+  name: vel.optimizers.rmsprop
   lr: 7.0e-4
   alpha: 0.99
   epsilon: 1.0e-5
@@ -44,11 +44,11 @@ optimizer:
 
 commands:
   train:
-    name: waterboy.rl.commands.rl_train_command
+    name: vel.rl.commands.rl_train_command
     total_frames: 1.1e7
     batches_per_epoch: 100
 
   record:
-    name: waterboy.rl.commands.record_movie_command
+    name: vel.rl.commands.record_movie_command
     takes: 10
     videoname: 'pacman_vid_{:04}.avi'

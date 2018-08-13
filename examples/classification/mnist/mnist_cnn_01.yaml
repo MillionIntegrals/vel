@@ -2,7 +2,7 @@ name: 'mnist_cnn_01'
 
 
 model:
-  name: waterboy.models.classic.mnist_cnn_01
+  name: vel.models.classic.mnist_cnn_01
   img_rows: 28
   img_cols: 28
   img_channels: 1
@@ -10,7 +10,7 @@ model:
 
 
 source:
-  name: waterboy.sources.classic.mnist
+  name: vel.sources.classic.mnist
   batch_size: 128
   normalize: False
   num_workers: 4
@@ -20,16 +20,16 @@ source:
 
 commands:
   train:
-    name: waterboy.commands.train_command
+    name: vel.commands.train_command
     epochs: 12
     log_frequency: 100
 
     optimizer:
-      name: waterboy.optimizers.adadelta
+      name: vel.optimizers.adadelta
 
     checkpoint:
       metric: 'val:loss'
 
 
   visdom:
-    name: waterboy.commands.vis_store_command
+    name: vel.commands.vis_store_command

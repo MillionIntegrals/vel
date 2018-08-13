@@ -2,30 +2,29 @@ name: 'cifar10_resnetv1_32'
 
 
 model:
-  name: waterboy.models.classic.cifar_resnext
+  name: vel.models.classic.cifar_resnext
   img_channels: 3
   num_classes: 10
 
   mode: bottleneck # Basic or bottleneck
   blocks: [3, 3, 3] # ResNext29
-  cardinality: 1
   inplanes: 256
   image_features: 64
   divisor: 4
   cardinality: 8
 
 source:
-  name: waterboy.sources.classic.cifar10
+  name: vel.sources.classic.cifar10
   batch_size: 32
 #  batch_size: 32
   num_workers: 4
   normalize: True
 
   augmentations:
-  - name: waterboy.augmentations.random_horizontal_flip
+  - name: vel.augmentations.random_horizontal_flip
     mode: x
     tags: ["train"]
-  - name: waterboy.augmentations.random_crop
+  - name: vel.augmentations.random_crop
     mode: x
     tags: ["train"]
     width: 32
@@ -37,36 +36,36 @@ source:
 
 commands:
   train:
-    name: waterboy.commands.train_command
+    name: vel.commands.train_command
     epochs: 300
     log_frequency: 100
 
 
     optimizer:
-      name: waterboy.optimizers.sgd
+      name: vel.optimizers.sgd
       lr: 0.1
       weight_decay: 0.0001
       momentum: 0.9
 
 #    optimizer:
-#      name: waterboy.optimizers.adam
+#      name: vel.optimizers.adam
 #      lr: 0.001
 #      weight_decay: 0.001
 
 #    scheduler:
-#      name: waterboy.scheduler.multi_step
+#      name: vel.scheduler.multi_step
 #      milestones: [20, 50, 100, 150]
 #      gamma: 0.33
 
     scheduler:
-      name: waterboy.scheduler.ladder
+      name: vel.scheduler.ladder
       ladder:
       - [150, 1.0]
       - [75, 0.1]
       - [75, 0.01]
 
 #    scheduler:
-#      name: waterboy.scheduler.reduce_lr_on_plateau
+#      name: vel.scheduler.reduce_lr_on_plateau
 #      metric_name: val:accuracy
 #      factor: 0.33
 #      patience: 15
@@ -74,6 +73,6 @@ commands:
 #      min_lr: 0.5e-6
 
   augvis:
-    name: waterboy.commands.augvis_command
+    name: vel.commands.augvis_command
     seed: 1
     samples: 5

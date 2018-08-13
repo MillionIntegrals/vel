@@ -3,25 +3,25 @@ seed: 2019
 
 
 model:
-  name: waterboy.rl.reinforcers.dqn.dqn_model
+  name: vel.rl.reinforcers.dqn.dqn_model
   backbone:
-    name: waterboy.models.rl.nature_cnn
+    name: vel.models.rl.nature_cnn
     input_width: 84
     input_height: 84
     input_channels: 4  # The same as frame_stack
 
 
 reinforcer:
-  name: waterboy.rl.reinforcers.dqn
+  name: vel.rl.reinforcers.dqn
 
   buffer:
-    name: waterboy.rl.reinforcers.dqn.buffers.deque_buffer
+    name: vel.rl.reinforcers.dqn.buffers.deque_buffer
     buffer_capacity: 250_000
     buffer_initial_size: 30_000
     frame_stack: 4
 
   epsilon_schedule:
-    name: waterboy.schedules.linear_and_constant
+    name: vel.schedules.linear_and_constant
     end_of_interpolation: 0.1
     initial_value: 1.0
     final_value: 0.1
@@ -36,8 +36,8 @@ reinforcer:
 
 
 optimizer:
-  name: waterboy.optimizers.rmsprop
-#  name: waterboy.optimizers.rmsprop_tf
+  name: vel.optimizers.rmsprop
+#  name: vel.optimizers.rmsprop_tf
   lr: 2.5e-4
   alpha: 0.95
   momentum: 0.95
@@ -45,12 +45,12 @@ optimizer:
 
 
 env:
-  name: waterboy.rl.env.atari.classic_atari
+  name: vel.rl.env.atari.classic_atari
   game: 'BreakoutNoFrameskip-v4'
 
 
 commands:
   train:
-    name: waterboy.rl.commands.rl_train_command
+    name: vel.rl.commands.rl_train_command
     total_frames: 1.1e7  # 11M
     batches_per_epoch: 2500

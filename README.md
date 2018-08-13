@@ -1,14 +1,16 @@
-# waterboy
+# Vel
 
-My goal is to establish a Rails-like convention-over-configuration opinionated set of
-tools streamlining research and development of deep learning models.
-
-This library is a collection of modular components, which you can combine together freely.
-In a rare case it's not supported directly, a little bit of glue code should do the trick.
+This repository is my project to bring **velocity** to deep-learning research,
+by providing tried and tested large pool of prebuilt components that are 
+known to be working well together.
 
 I would like to minimize time to market of new projects, ease experimentation
-and provide bits of experiment management to bring some order to an already 
-noisy data science workflow.
+and provide bits of experiment management to bring some order to the data science workflow.
+
+Ideally, for most applications it should be enough to write a
+config file wiring existing components together.
+If that's not the case writing bits of custom code
+shouldn't be unnecessarily complex.
 
 This repository is still in an early stage of that journey but it will grow
 as I'll be putting some work into it.
@@ -16,9 +18,9 @@ as I'll be putting some work into it.
 # Requirements
 
 This project requires Python 3.7 and PyTorch 0.4.1. Default project configuration writes
-down metrics to mongodb instance open on localhost port 27017 and visdom instance 
+metrics to mongodb instance open on localhost port 27017 and visdom instance 
 on localhost port 8097. These can be changed in project-wide config file
-`.wbproject.yaml`.
+`.velproject.yaml`.
 
 # Features
 
@@ -56,14 +58,14 @@ Whole framework is built around the idea of running config files from code. For 
 to run the Actor-Critic algorithm simply invoke:
 
 ```
-python -m waterboy.launcher examples/rl/atari/a2c/breakout_a2c.yaml train
+python -m vel.launcher examples/rl/atari/a2c/breakout_a2c.yaml train
 ```
 
 General form of the call is as follows 
 
 
 ```
-python -m waterboy.launcher CONFIGFILE COMMAND --device PYTORCH_DEVICE -r RUN_NUMBER
+python -m vel.launcher CONFIGFILE COMMAND --device PYTORCH_DEVICE -r RUN_NUMBER
 ```
 
 Where `PYTORCH_DEVICE` is a valid name of pytorch device, most probably `cuda:0`, and run

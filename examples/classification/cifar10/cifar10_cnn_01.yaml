@@ -2,21 +2,21 @@ name: 'cifar10_cnn_01'
 
 
 model:
-  name: waterboy.models.classic.cifar10_cnn_01
+  name: vel.models.classic.cifar10_cnn_01
   img_rows: 32
   img_cols: 32
   img_channels: 3
   num_classes: 10
 
 source:
-  name: waterboy.sources.classic.cifar10
+  name: vel.sources.classic.cifar10
 #  batch_size: 128
   batch_size: 32
   num_workers: 4
   normalize: True
 
   augmentations:
-  - name: waterboy.augmentations.random_crop
+  - name: vel.augmentations.random_crop
     mode: x
     tags: ["train"]
     width: 32
@@ -24,14 +24,14 @@ source:
     padding: 4
     padding_mode: 'reflect'
 
-  - name: waterboy.augmentations.random_horizontal_flip
+  - name: vel.augmentations.random_horizontal_flip
     mode: x
     tags: ["train"]
 
 commands:
   train:
-    name: waterboy.commands.train_command
+    name: vel.commands.train_command
     epochs: 12
     log_frequency: 20
     optimizer:
-      name: waterboy.optimizers.adadelta
+      name: vel.optimizers.adadelta
