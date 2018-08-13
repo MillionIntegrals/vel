@@ -1,3 +1,4 @@
+#!/usr/bin/env python
 import argparse
 
 from vel.internals.project_config import ProjectConfig
