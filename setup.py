@@ -39,6 +39,7 @@ setup(
         'visdom': ['visdom'],
         'mongo': ['pymongo'],
         'gym': ['gym[all]'],
+        'dev': ['nose']
     },
     entry_points={
         'console_scripts': [
