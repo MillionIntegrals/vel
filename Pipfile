@@ -18,8 +18,8 @@ python_version = "3.7"
 
 [dev-packages]
 gym = {extras = ["all"]}
-jupyter = "*"
 matplotlib = "*"
 pymongo = "*"
 visdom = "*"
 mpi4py = "*"
+nose = "*"
