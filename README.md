@@ -1,5 +1,10 @@
 # Vel
 
+[![Build Status](https://travis-ci.org/MillionIntegrals/vel.svg?branch=master)](https://travis-ci.org/MillionIntegrals/vel)
+[![PyPI version](https://badge.fury.io/py/vel.svg)](https://badge.fury.io/py/vel)
+![GitHub](https://img.shields.io/github/license/mashape/apistatus.svg)
+
+
 This repository is my project to bring **velocity** to deep-learning research,
 by providing tried and tested large pool of prebuilt components that are 
 known to be working well together.
