@@ -10,12 +10,11 @@ by providing tried and tested large pool of prebuilt components that are
 known to be working well together.
 
 I would like to minimize time to market of new projects, ease experimentation
-and provide bits of experiment management to bring some order to the data science workflow.
+and provide bits of experiment management to the data science workflow.
 
 Ideally, for most applications it should be enough to write a
 config file wiring existing components together.
-If that's not the case writing bits of custom code
-shouldn't be unnecessarily complex.
+If that's not the case few bits of custom glue code should do the job.
 
 This repository is still in an early stage of that journey but it will grow
 as I'll be putting some work into it.
@@ -23,7 +22,7 @@ as I'll be putting some work into it.
 # Requirements
 
 This project requires Python 3.7 and PyTorch 0.4.1. Default project configuration writes
-metrics to mongodb instance open on localhost port 27017 and visdom instance 
+metrics to MongoDB instance open on localhost port 27017 and Visom instance 
 on localhost port 8097. These can be changed in project-wide config file
 `.velproject.yaml`.
 
@@ -53,7 +52,7 @@ that are ready to run and easy to modify for other similar usecases:
   ImageNet
 - Actor-Critic (A2C) and Proximal-Policy-Optimization (PPO) policy gradient reinforcement
   learning algorithms.
-- Deep Q-Learning (DQN) as described by DeepMind in their research paper with following 
+- Deep Q-Learning (DQN) as described by DeepMind in their Nature publication with following 
   improvements: Double DQN, Dueling DQN, Prioritized experience replay.
 
 
