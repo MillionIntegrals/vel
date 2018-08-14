@@ -24,6 +24,7 @@ setup(
     author_email='jerry@millionintegrals.com',
     license='MIT',
     packages=find_packages(exclude=["*.tests", "*.tests.*", "tests.*", "tests"]),
+    python_requires='>=3.7',
     install_requires=[
         'pyyaml',
         'numpy',
