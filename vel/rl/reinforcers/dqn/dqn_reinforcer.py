@@ -196,7 +196,7 @@ class DqnReinforcer(ReinforcerBase):
 
         loss.backward()
 
-        self.buffer.update(batch_sample, original_losses)
+        self.buffer.update(batch_sample, original_losses.detach().cpu().numpy())
 
         if self.settings.max_grad_norm is not None:
             grad_norm = torch.nn.utils.clip_grad_norm_(

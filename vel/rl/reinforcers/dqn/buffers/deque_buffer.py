@@ -10,7 +10,7 @@ from ..dqn_reinforcer import DqnBufferBase
 class DequeBufferBackend:
     """ Simple backend behind DequeBuffer """
 
-    def __init__(self, buffer_capacity: int, frame_shape):
+    def __init__(self, buffer_capacity: int, frame_shape: tuple):
         # Maximum number of items in the buffer
         self.buffer_capacity = buffer_capacity
 
@@ -104,7 +104,7 @@ class DequeBufferBackend:
 
         return past_frame_buffer, actions, rewards, future_frame_buffer, dones
 
-    def uniform_batch_sample(self, batch_size, history):
+    def sample_batch_uniform(self, batch_size, history):
         """ Return indexes of next sample"""
         # Sample from up to total size
         if self.current_size < self.buffer_capacity:
@@ -158,10 +158,6 @@ class DequeBuffer(DqnBufferBase):
 
     def rollout(self, environment: gym.Env, model: Model, epsilon_value: float) -> dict:
         """ Evaluate model and proceed one step forward with the environment. Store result in the replay buffer """
-        # last_observation_idx = self._store_frame(self.last_observation)
-
-        # last_observation = self._get_frame(last_observation_idx)
-
         last_observation = np.concatenate([
             self.backend.get_frame(self.backend.current_idx, self.frame_stack - 1),
             self.last_observation
@@ -184,7 +180,7 @@ class DequeBuffer(DqnBufferBase):
 
     def sample(self, batch_info, batch_size) -> dict:
         """ Calculate random sample from the replay buffer """
-        indexes = self.backend.uniform_batch_sample(batch_size, self.frame_stack)
+        indexes = self.backend.sample_batch_uniform(batch_size, self.frame_stack)
         observations, actions, rewards, observations_tplus1, dones = self.backend.get_batch(indexes, self.frame_stack)
 
         return {

@@ -3,10 +3,11 @@ import numpy as np
 import numpy.testing as nt
 
 from vel.exceptions import VelException
-from ..deque_buffer import DequeBufferBackend
+from vel.rl.reinforcers.dqn.buffers.deque_buffer import DequeBufferBackend
 
 
 def get_filled_buffer():
+    """ Return simple preinitialized buffer """
     buffer = DequeBufferBackend(20, (2, 2, 1))
 
     v1 = np.ones(4).reshape((2, 2, 1))
@@ -18,6 +19,7 @@ def get_filled_buffer():
 
 
 def get_filled_buffer_with_dones():
+    """ Return simple preinitialized buffer with some done's in there """
     buffer = DequeBufferBackend(20, (2, 2, 1))
 
     v1 = np.ones(4).reshape((2, 2, 1))
@@ -34,6 +36,7 @@ def get_filled_buffer_with_dones():
 
 
 def test_simple_get_frame():
+    """ Check if get_frame returns frames from a buffer partially full """
     buffer = DequeBufferBackend(20, (2, 2, 1))
 
     v1 = np.ones(4).reshape((2, 2, 1))
@@ -56,6 +59,7 @@ def test_simple_get_frame():
 
 
 def test_full_buffer_get_frame():
+    """ Check if get_frame returns frames for full buffer """
     buffer = get_filled_buffer()
 
     nt.assert_array_equal(buffer.get_frame(0, 4).max(0).max(0), np.array([18, 19, 20, 21]))
@@ -76,6 +80,7 @@ def test_full_buffer_get_frame():
 
 
 def test_full_buffer_get_future_frame():
+    """ Check if get_frame_with_future works with full buffer """
     buffer = get_filled_buffer()
 
     nt.assert_array_equal(buffer.get_frame_with_future(0, 4)[1].max(0).max(0), np.array([19, 20, 21, 22]))
@@ -98,6 +103,7 @@ def test_full_buffer_get_future_frame():
 
 
 def test_buffer_filling_size():
+    """ Check if buffer size is properly updated when we add items """
     buffer = DequeBufferBackend(20, (2, 2, 1))
 
     v1 = np.ones(4).reshape((2, 2, 1))
@@ -116,6 +122,7 @@ def test_buffer_filling_size():
 
 
 def test_get_frame_with_dones():
+    """ Check if get_frame works properly in case there are multiple sequences in buffer """
     buffer = get_filled_buffer_with_dones()
 
     nt.assert_array_equal(buffer.get_frame(0, 4).max(0).max(0), np.array([0, 0, 20, 21]))
@@ -135,6 +142,7 @@ def test_get_frame_with_dones():
 
 
 def test_get_frame_future_with_dones():
+    """ Check if get_frame_with_future works properly in case there are multiple sequences in buffer """
     buffer = get_filled_buffer_with_dones()
 
     nt.assert_array_equal(buffer.get_frame_with_future(0, 4)[1].max(0).max(0), np.array([0, 20, 21, 22]))
@@ -156,6 +164,7 @@ def test_get_frame_future_with_dones():
 
 
 def test_get_batch():
+    """ Check if get_batch works properly for buffers """
     buffer = get_filled_buffer_with_dones()
 
     batch = buffer.get_batch(np.array([0, 1, 2, 3, 4, 5, 6, 7, 8]), history=4)
@@ -195,10 +204,11 @@ def test_get_batch():
 
 
 def test_sample_and_get_batch():
+    """ Check if batch sampling works properly """
     buffer = get_filled_buffer_with_dones()
 
-    for i in range(10):
-        indexes = buffer.uniform_batch_sample(batch_size=5, history=4)
+    for i in range(100):
+        indexes = buffer.sample_batch_uniform(batch_size=5, history=4)
         obs, act, rew, obs_tp1, dones = buffer.get_batch(indexes, history=4)
 
         t.eq_(obs.shape[0], 5)
