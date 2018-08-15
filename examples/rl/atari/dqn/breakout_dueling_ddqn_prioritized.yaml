@@ -70,3 +70,10 @@ commands:
     frame_history: 4
     sample_args:
       epsilon: 0.0
+
+  evaluate:
+    name: vel.rl.commands.evaluate_env_command
+    takes: 100
+    frame_history: 4
+    sample_args:
+      epsilon: 0.0

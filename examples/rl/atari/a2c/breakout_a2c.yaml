@@ -56,3 +56,10 @@ commands:
     frame_history: 4
     sample_args:
       argmax_sampling: true
+
+  evaluate:
+    name: vel.rl.commands.evaluate_env_command
+    takes: 100
+    frame_history: 4
+    sample_args:
+      argmax_sampling: true
