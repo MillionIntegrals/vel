@@ -95,9 +95,10 @@ def wrapped_env_maker(environment_id, seed, serial_id, disable_reward_clipping=F
 
 class ClassicAtariEnv(EnvFactory):
     """ Atari game environment wrapped in the same way as Deep Mind and OpenAI baselines """
-    def __init__(self, envname, env_settings):
+    def __init__(self, envname, env_settings=None):
         self.envname = envname
 
+        env_settings = env_settings if env_settings is not None else {}
         env_keys = set(DEFAULT_SETTINGS.keys()).union(set(env_settings.keys()))
 
         self.presets = {}
@@ -117,5 +118,4 @@ class ClassicAtariEnv(EnvFactory):
 
 
 def create(game, env_settings=None):
-    env_settings = env_settings or {}
     return ClassicAtariEnv(game, env_settings)

@@ -35,7 +35,7 @@ class TrainingInfo(abc.MutableMapping):
 
         self.start_epoch_idx = start_epoch_idx
         self.metrics = metrics
-        self.callbacks = callbacks or []
+        self.callbacks = callbacks if callbacks is not None else []
         self.history = TrainingHistory()
 
     def restore(self, hidden_state):

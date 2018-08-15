@@ -17,7 +17,7 @@ def create(batch_size, model_config, normalize=True, num_workers=0, augmentation
     train_dataset = datasets.CIFAR10(path, train=True, download=True)
     test_dataset = datasets.CIFAR10(path, train=False, download=True)
 
-    augmentations = [ToArray()] + (augmentations[:] or [])
+    augmentations = [ToArray()] + (augmentations if augmentations is not None else [])
     
     if normalize:
         train_data = train_dataset.train_data

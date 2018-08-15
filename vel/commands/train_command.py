@@ -9,7 +9,7 @@ class SimpleTrainCommand:
     def __init__(self, model_config: ModelConfig, model_factory, epochs, optimizer_factory, scheduler_factory,
                  callbacks, source, storage):
         self.epochs = epochs
-        self.callbacks = callbacks
+        self.callbacks = callbacks if callbacks is not None else []
         self.optimizer_factory = optimizer_factory
         self.scheduler_factory = scheduler_factory
         self.model_factory = model_factory
@@ -92,8 +92,6 @@ class SimpleTrainCommand:
 
 def create(model_config, epochs, optimizer, model, source, storage, scheduler=None, callbacks=None):
     """ Simply train the model """
-    callbacks = callbacks or []
-
     return SimpleTrainCommand(
         model_config=model_config,
         model_factory=model,

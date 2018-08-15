@@ -18,8 +18,7 @@ class PolicyGradientModel(Model):
         self.backbone = backbone
         self.action_head = ActionHead(
             action_space=action_space,
-            input_dim=self.backbone.output_dim,
-            argmax_sampling=argmax_sampling
+            input_dim=self.backbone.output_dim
         )
         self.value_head = ValueHead(input_dim=self.backbone.output_dim)
 
@@ -40,15 +39,19 @@ class PolicyGradientModel(Model):
     def loss_value(self, x_data, y_true, y_pred):
         raise VelException("Invalid method to call for this model")
 
-    def step(self, observation):
+    def step(self, observation, argmax_sampling=False):
         """ Select actions based on model's output """
         action_logits, value_output = self(observation)
-        actions = self.action_head.sample(action_logits)
+        actions = self.action_head.sample(action_logits, argmax_sampling=argmax_sampling)
 
         # - log probability
         neglogp = F.nll_loss(action_logits, actions, reduction='none')
 
-        return actions, value_output, neglogp
+        return {
+            'actions': actions,
+            'values': value_output,
+            'neglogp': neglogp
+        }
 
     def value(self, observation):
         base_output = self.backbone(observation)

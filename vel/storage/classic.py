@@ -17,7 +17,7 @@ class ClassicStorage(base.Storage):
     def __init__(self, model_config: ModelConfig, checkpoint_strategy: CheckpointStrategy, backend, streaming=None):
         self.model_config = model_config
         self.backend = backend
-        self.streaming = streaming or []
+        self.streaming = streaming if streaming is not None else []
         self.checkpoint_strategy = checkpoint_strategy
 
         self.cleaned = False

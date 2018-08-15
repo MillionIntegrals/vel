@@ -8,7 +8,7 @@ class Provider:
         self.environment = environment
 
         self.instances = {
-            **(instances or {}),
+            **(instances if instances is not None else {}),
             'pp_provider': self
         }
 
@@ -19,7 +19,7 @@ class Provider:
     def resolve_and_call(self, func, extra_env=None):
         """ Resolve function arguments and call them, possibily filling from the environment """
         parameter_list = [(k, v.default == inspect.Parameter.empty) for k, v in inspect.signature(func).parameters.items()]
-        extra_env = extra_env or {}
+        extra_env = extra_env if extra_env is not None else {}
         kwargs = {}
 
         for parameter_name, is_required in parameter_list:

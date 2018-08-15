@@ -39,7 +39,8 @@ class StepEnvRoller:
         neg_log_p_accumulator = []
 
         for step_idx in range(self.number_of_steps):
-            actions, values, neg_log_p = model.step(self.observation)
+            step = model.step(self.observation)
+            actions, values, neg_log_p = step['actions'], step['values'], step['neglogp']
 
             observation_accumulator.append(self.observation)
             action_accumulator.append(actions)

@@ -19,7 +19,7 @@ class PhaseTrainCommand:
         self.phases = phases
         self.ladder = self._build_phase_ladder(phases)
         self.full_number_of_epochs = sum(p.number_of_epochs for p in phases)
-        self.callbacks = callbacks
+        self.callbacks = callbacks if callbacks is not None else []
         self.restart = restart
 
     @staticmethod
@@ -140,7 +140,6 @@ class PhaseTrainCommand:
 
 def create(model_config, model, source, storage, phases, callbacks=None, restart=True):
     """ Vel creation function """
-    callbacks = callbacks or []
     return PhaseTrainCommand(
         model_config=model_config,
         model_factory=model,

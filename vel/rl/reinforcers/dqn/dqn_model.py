@@ -27,7 +27,9 @@ class DqnModel(Model):
     def step(self, observations, epsilon):
         """ Sample action from an action space for given state """
         q_values = self(observations)
-        return self.q_head.sample(q_values, epsilon)
+        return {
+            'actions': self.q_head.sample(q_values, epsilon)
+        }
 
 
 class DqnModelFactory(ModelFactory):

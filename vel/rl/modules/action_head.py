@@ -14,7 +14,7 @@ class ActionHead(nn.Module):
     Returns action logits.
     """
 
-    def __init__(self, input_dim, action_space, argmax_sampling=False):
+    def __init__(self, input_dim, action_space):
         super().__init__()
 
         # For now let's fix discrete action space, I'll generalize it later
@@ -23,14 +23,13 @@ class ActionHead(nn.Module):
         self.linear_layer = nn.Linear(input_dim, action_space.n)
 
         self.action_space = action_space
-        self.argmax_sampling = argmax_sampling
 
     def forward(self, input_data):
         return F.log_softmax(self.linear_layer(input_data), dim=1)
 
-    def sample(self, logits):
+    def sample(self, logits, argmax_sampling=False):
         """ Sample from a probability space of all actions """
-        if self.argmax_sampling:
+        if argmax_sampling:
             return torch.argmax(logits, dim=-1)
         else:
             u = torch.rand_like(logits)
