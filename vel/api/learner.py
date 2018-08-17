@@ -114,4 +114,3 @@ class Learner:
         loss = self.feed_batch(batch_info, data, target)
         loss.backward()
         batch_info.optimizer.step()
-
