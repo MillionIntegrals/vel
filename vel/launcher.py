@@ -1,8 +1,10 @@
 #!/usr/bin/env python
 import argparse
+import datetime as dtm
 
 from vel.internals.project_config import ProjectConfig
 from vel.api import ModelConfig
+from vel.util.random import set_seed
 
 
 def main():
@@ -14,15 +16,20 @@ def main():
     parser.add_argument('varargs', nargs='*', metavar='VARARGS', help='Extra options to the command')
     parser.add_argument('-r', '--run_number', default=0, help="A run number")
     parser.add_argument('-d', '--device', default='cuda', help="A device to run the model on")
+    parser.add_argument('-s', '--seed', default=dtm.date.today().year, help="Random seed for the project")
     parser.add_argument('--reset', action='store_true', default=False, help="Overwrite existing model storage")
 
     args = parser.parse_args()
+
+    # Set seed already in the launcher
+    set_seed(args.seed)
 
     project_config = ProjectConfig(args.config)
     model_config = ModelConfig(
         args.config, args.run_number, project_config,
         reset=args.reset,
-        device=args.device
+        device=args.device,
+        seed=args.seed
     )
 
     model_config.banner(args.command)

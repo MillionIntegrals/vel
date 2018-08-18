@@ -15,7 +15,7 @@ from vel.openai.baselines.common.atari_wrappers import FrameStack
 class RecordMovieCommand:
     """ Record environment playthrough as a game  """
     def __init__(self, model_config: ModelConfig, env_factory: EnvFactory, model_factory: ModelFactory,
-                 storage: Storage, videoname: str, takes: int, frame_history: int, seed: int,
+                 storage: Storage, videoname: str, takes: int, frame_history: int,
                  fps: int, sample_args: dict = None):
         self.model_config = model_config
         self.model_factory = model_factory
@@ -26,8 +26,6 @@ class RecordMovieCommand:
         self.frame_history = frame_history
         self.sample_args = sample_args if sample_args is not None else {}
         self.fps = fps
-
-        self.seed = seed
 
     def run(self):
         device = torch.device(self.model_config.device)
@@ -78,7 +76,7 @@ class RecordMovieCommand:
         print(f"Written {takename}")
 
 
-def create(model_config, model, env, storage, takes, videoname, frame_history, seed=0, fps=30, sample_args=None):
+def create(model_config, model, env, storage, takes, videoname, frame_history, fps=30, sample_args=None):
     return RecordMovieCommand(
         model_config=model_config,
         model_factory=model,
@@ -87,7 +85,6 @@ def create(model_config, model, env, storage, takes, videoname, frame_history, s
         videoname=videoname,
         frame_history=frame_history,
         takes=takes,
-        seed=seed,
         fps=fps,
         sample_args=sample_args
     )

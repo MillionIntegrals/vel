@@ -13,7 +13,7 @@ from vel.openai.baselines.common.atari_wrappers import FrameStack
 class EvaluateEnvCommand:
     """ Record environment playthrough as a game  """
     def __init__(self, model_config: ModelConfig, env_factory: EnvFactory, model_factory: ModelFactory,
-                 storage: Storage, takes: int, frame_history: int, seed: int,
+                 storage: Storage, takes: int, frame_history: int,
                  sample_args: dict = None):
         self.model_config = model_config
         self.model_factory = model_factory
@@ -22,8 +22,6 @@ class EvaluateEnvCommand:
         self.takes = takes
         self.frame_history = frame_history
         self.sample_args = sample_args if sample_args is not None else {}
-
-        self.seed = seed
 
     def run(self):
         device = torch.device(self.model_config.device)
@@ -69,7 +67,7 @@ class EvaluateEnvCommand:
                 return epinfo['episode']
 
 
-def create(model_config, model, env, storage, takes, frame_history, seed=0, sample_args=None):
+def create(model_config, model, env, storage, takes, frame_history, sample_args=None):
     return EvaluateEnvCommand(
         model_config=model_config,
         model_factory=model,
@@ -77,6 +75,5 @@ def create(model_config, model, env, storage, takes, frame_history, seed=0, samp
         storage=storage,
         frame_history=frame_history,
         takes=takes,
-        seed=seed,
         sample_args=sample_args
     )

@@ -54,7 +54,6 @@ class DqnReinforcerSettings:
 
     discount_factor: float
     max_grad_norm: float
-    seed: int
 
 
 class DqnReinforcer(ReinforcerBase):
@@ -222,14 +221,15 @@ class DqnReinforcer(ReinforcerBase):
 class DqnReinforcerFactory(ReinforcerFactory):
     """ Factory class for the DQN reinforcer """
 
-    def __init__(self, settings, env_factory: EnvFactory, model_factory: ModelFactory):
+    def __init__(self, settings, env_factory: EnvFactory, model_factory: ModelFactory, seed: int):
         self.settings = settings
 
         self.env_factory = env_factory
         self.model_factory = model_factory
+        self.seed = seed
 
     def instantiate(self, device: torch.device) -> DqnReinforcer:
-        env = self.env_factory.instantiate(seed=self.settings.seed)
+        env = self.env_factory.instantiate(seed=self.seed)
 
         train_model = self.model_factory.instantiate(action_space=env.action_space)
         target_model = self.model_factory.instantiate(action_space=env.action_space)

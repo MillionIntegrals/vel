@@ -4,17 +4,13 @@ import numpy as np
 
 class AugmentationVisualizationCommand:
     """ Visualize augmentations """
-    def __init__(self, source, samples, cases, seed=None):
+    def __init__(self, source, samples, cases):
         self.source = source
         self.samples = samples
         self.cases = cases
-        self.seed = seed
 
     def run(self):
         """ Run the visualization """
-        if self.seed is not None:
-            np.random.seed(self.seed)
-
         dataset = self.source.train_dataset()
         num_samples = len(dataset)
 
@@ -36,6 +32,6 @@ class AugmentationVisualizationCommand:
         plt.show()
 
 
-def create(source, samples, cases, seed=None):
+def create(source, samples, cases):
     """ Visualize augmentations in the source """
-    return AugmentationVisualizationCommand(source, samples, cases, seed)
+    return AugmentationVisualizationCommand(source, samples, cases)

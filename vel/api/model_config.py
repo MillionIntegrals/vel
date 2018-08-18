@@ -1,10 +1,10 @@
+import datetime as dtm
 import torch
 import yaml
-import datetime as dtm
 
 from vel.internals.provider import Provider
 from vel.internals.project_config import ProjectConfig
-from ..exceptions import VelInitializationException
+from vel.exceptions import VelInitializationException
 
 
 class ModelConfig:
@@ -13,10 +13,11 @@ class ModelConfig:
     Is a frontend for the provider, resolving all dependency-injection requests.
     """
 
-    def __init__(self, filename: str, run_number: int, project_config: ProjectConfig, reset=False, **kwargs):
+    def __init__(self, filename: str, run_number: int, project_config: ProjectConfig, reset=False, seed: int=None, **kwargs):
         self.filename = filename
         self.device = kwargs.get('device', 'cuda')
         self.reset = reset
+        self.seed = seed if seed is not None else dtm.date.today().year
 
         with open(self.filename, 'r') as f:
             self.contents = yaml.safe_load(f)

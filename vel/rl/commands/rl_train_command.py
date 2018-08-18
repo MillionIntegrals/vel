@@ -29,7 +29,7 @@ class RlTrainCommand:
     def __init__(self, model_config: ModelConfig, reinforcer: ReinforcerFactory,
                  optimizer_factory: OptimizerFactory,
                  storage: Storage, callbacks,
-                 total_frames: int, batches_per_epoch: int, seed: int,
+                 total_frames: int, batches_per_epoch: int,
                  scheduler_factory=None, openai_logging=False):
         self.model_config = model_config
         self.reinforcer = reinforcer
@@ -40,7 +40,6 @@ class RlTrainCommand:
         self.batches_per_epoch = batches_per_epoch
         self.callbacks = callbacks if callbacks is not None else []
 
-        self.seed = seed
         self.openai_logging = openai_logging
 
     def run(self):
@@ -124,7 +123,7 @@ class RlTrainCommand:
 
 def create(model_config, reinforcer, optimizer, storage,
            # Settings:
-           total_frames, batches_per_epoch,  seed, callbacks=None, scheduler=None, openai_logging=False):
+           total_frames, batches_per_epoch,  callbacks=None, scheduler=None, openai_logging=False):
     """ Create reinforcement learning pipeline """
     from vel.openai.baselines import logger
     logger.configure(dir=model_config.openai_dir())
@@ -138,6 +137,5 @@ def create(model_config, reinforcer, optimizer, storage,
         callbacks=callbacks,
         total_frames=int(float(total_frames)),
         batches_per_epoch=int(batches_per_epoch),
-        seed=seed,
         openai_logging=openai_logging
     )

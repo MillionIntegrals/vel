@@ -37,7 +37,6 @@ class PolicyGradientSettings:
     policy_gradient: PolicyGradientBase
     number_of_steps: int
     discount_factor: float
-    seed: int
     max_grad_norm: float = None
     gae_lambda: float = 1.0
     batch_size: int = 256
@@ -176,18 +175,17 @@ class PolicyGradientReinforcer(ReinforcerBase):
 
 class PolicyGradientReinforcerFactory(ReinforcerFactory):
     """ Vel factory class for the PolicyGradientReinforcer """
-    def __init__(self, settings, env_factory: VecEnvFactory, model_factory: ModelFactory, parallel_envs: int) -> None:
+    def __init__(self, settings, env_factory: VecEnvFactory, model_factory: ModelFactory,
+                 parallel_envs: int, seed: int):
         self.settings = settings
 
         self.model_factory = model_factory
         self.env_factory = env_factory
         self.parallel_envs = parallel_envs
+        self.seed = seed
 
     def instantiate(self, device: torch.device) -> ReinforcerBase:
-        env = self.env_factory.instantiate(
-            parallel_envs=self.parallel_envs, seed=self.settings.seed
-        )
-
+        env = self.env_factory.instantiate(parallel_envs=self.parallel_envs, seed=self.seed)
         model = self.model_factory.instantiate(action_space=env.action_space)
 
         return PolicyGradientReinforcer(device, self.settings, env, model)
