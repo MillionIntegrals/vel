@@ -2,7 +2,7 @@
 
 [![Build Status](https://travis-ci.org/MillionIntegrals/vel.svg?branch=master)](https://travis-ci.org/MillionIntegrals/vel)
 [![PyPI version](https://badge.fury.io/py/vel.svg)](https://badge.fury.io/py/vel)
-![GitHub](https://img.shields.io/github/license/mashape/apistatus.svg)
+[![GitHub](https://img.shields.io/github/license/mashape/apistatus.svg)](https://github.com/MillionIntegrals/vel/blob/master/LICENSE)
 
 
 This repository is my project to bring **velocity** to deep-learning research,
@@ -69,7 +69,7 @@ General form of the call is as follows
 
 
 ```
-python -m vel.launcher CONFIGFILE COMMAND --device PYTORCH_DEVICE -r RUN_NUMBER
+python -m vel.launcher CONFIGFILE COMMAND --device PYTORCH_DEVICE -r RUN_NUMBER -s SEED
 ```
 
 Where `PYTORCH_DEVICE` is a valid name of pytorch device, most probably `cuda:0`, and run
