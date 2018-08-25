@@ -11,9 +11,8 @@ from vel.rl.modules.value_head import ValueHead
 class PolicyGradientModel(Model):
     """ For a policy gradient algorithm we need set of custom heads for our model """
 
-    def __init__(self, backbone: LinearBackboneModel, action_space: gym.Space, argmax_sampling=False):
+    def __init__(self, backbone: LinearBackboneModel, action_space: gym.Space):
         super().__init__()
-        self.argmax_sampling = argmax_sampling
 
         self.backbone = backbone
         self.action_head = ActionHead(
@@ -64,15 +63,14 @@ class PolicyGradientModel(Model):
 
 class PolicyGradientModelFactory(ModelFactory):
     """ Factory  class for policy gradient models """
-    def __init__(self, backbone: ModelFactory, argmax_sampling=False):
+    def __init__(self, backbone: ModelFactory):
         self.backbone = backbone
-        self.argmax_sampling = argmax_sampling
 
     def instantiate(self, **extra_args):
         """ Instantiate the model """
         backbone = self.backbone.instantiate(**extra_args)
-        return PolicyGradientModel(backbone, extra_args['action_space'], self.argmax_sampling)
+        return PolicyGradientModel(backbone, extra_args['action_space'])
 
 
-def create(backbone: ModelFactory, argmax_sampling=False):
-    return PolicyGradientModelFactory(backbone=backbone, argmax_sampling=argmax_sampling)
+def create(backbone: ModelFactory):
+    return PolicyGradientModelFactory(backbone=backbone)

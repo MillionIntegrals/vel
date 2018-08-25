@@ -7,7 +7,7 @@ import gym.spaces as spaces
 
 
 class DoubleQHead(nn.Module):
-    """ Network head calculating Q-function value for each action. """
+    """ Network head calculating Q-function value for each (discrete) action using two separate inputs. """
     def __init__(self, input_dim, action_space):
         super().__init__()
 
