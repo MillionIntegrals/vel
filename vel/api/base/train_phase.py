@@ -55,7 +55,7 @@ class EmptyTrainPhase(TrainPhase):
         """ How many epochs does this phase take """
         return 0
 
-    def execute_epoch(self, epoch_idx, learner):
+    def execute_epoch(self, epoch_info, learner):
         """ Prepare the phase for learning """
         pass
 

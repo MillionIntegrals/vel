@@ -14,7 +14,7 @@ class ReinforcerBase:
         """ Prepare all variables for training from scratch """
         pass
 
-    def train_epoch(self, epoch_idx: EpochInfo):
+    def train_epoch(self, epoch_info: EpochInfo):
         """ Train model on an epoch of a fixed number of batch updates """
         raise NotImplementedError
 
