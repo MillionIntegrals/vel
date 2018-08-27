@@ -35,7 +35,8 @@ class PrioritizedReplayBuffer(DqnBufferBase):
 
         self.backend = PrioritizedReplayBackend(
             buffer_capacity=self.buffer_capacity,
-            frame_shape=environment.observation_space.shape
+            observation_space=environment.observation_space,
+            action_space=environment.action_space
         )
 
     def is_ready(self) -> bool:
