@@ -18,15 +18,19 @@ class DequeBufferBackend:
         self.current_idx = -1
 
         # Data buffers
-        self.frame_buffer = np.zeros([self.buffer_capacity] + list(observation_space.shape), dtype=observation_space.dtype)
+        self.frame_buffer = np.zeros(
+            [self.buffer_capacity] + list(observation_space.shape),
+            dtype=observation_space.dtype
+        )
         self.action_buffer = np.zeros([self.buffer_capacity], dtype=action_space.dtype)
         self.reward_buffer = np.zeros([self.buffer_capacity], dtype=float)
         self.dones_buffer = np.zeros([self.buffer_capacity], dtype=bool)
+        self.prob_buffer = np.zeros([self.buffer_capacity], dtype=float)
 
         # Just a sentinel to simplify further calculations
         self.dones_buffer[self.current_idx] = True
 
-    def store_transition(self, frame, action, reward, done):
+    def store_transition(self, frame, action, reward, done, prob=0.0):
         """ Store given transition in the backend """
         self.current_idx = (self.current_idx + 1) % self.buffer_capacity
 
@@ -34,6 +38,7 @@ class DequeBufferBackend:
         self.action_buffer[self.current_idx] = action
         self.reward_buffer[self.current_idx] = reward
         self.dones_buffer[self.current_idx] = done
+        self.prob_buffer[self.current_idx] = prob
 
         if self.current_size < self.buffer_capacity:
             self.current_size += 1
@@ -93,7 +98,9 @@ class DequeBufferBackend:
         future_frame_buffer = np.zeros(frame_batch_shape, dtype=np.uint8)
 
         for buffer_idx, frame_idx in enumerate(indexes):
-            past_frame_buffer[buffer_idx], future_frame_buffer[buffer_idx] = self.get_frame_with_future(frame_idx, history)
+            past_frame_buffer[buffer_idx], future_frame_buffer[buffer_idx] = self.get_frame_with_future(
+                frame_idx, history
+            )
 
         actions = self.action_buffer[indexes]
         rewards = self.reward_buffer[indexes]
