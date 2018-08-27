@@ -73,5 +73,4 @@ commands:
 
   augvis:
     name: vel.commands.augvis_command
-    seed: 1
     samples: 5

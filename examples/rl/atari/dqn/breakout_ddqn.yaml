@@ -1,5 +1,4 @@
 name: 'breakout_ddqn'
-seed: 2019
 
 
 model:

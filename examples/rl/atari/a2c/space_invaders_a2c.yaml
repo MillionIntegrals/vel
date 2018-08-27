@@ -1,5 +1,4 @@
 name: 'space_invaders_a2c_simple'
-seed: 2018
 
 env:
   name: vel.rl.env.atari.classic_atari

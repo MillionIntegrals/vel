@@ -1,5 +1,4 @@
 name: 'qbert_a2c_simple'
-seed: 2019
 
 env:
   name: vel.rl.env.atari.classic_atari

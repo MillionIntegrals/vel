@@ -1,5 +1,4 @@
 name: 'breakout_dueling_ddqn_prioritized'
-seed: 2019
 
 
 model:
