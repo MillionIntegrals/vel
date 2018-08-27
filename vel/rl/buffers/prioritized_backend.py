@@ -1,3 +1,4 @@
+import gym
 import numpy as np
 import random
 
@@ -63,8 +64,8 @@ class SegmentTree:
 
 class PrioritizedReplayBackend:
     """ Backend behind the prioritized replay buffer """
-    def __init__(self, buffer_capacity: int, frame_shape: tuple):
-        self.deque = DequeBufferBackend(buffer_capacity, frame_shape)
+    def __init__(self, buffer_capacity: int, observation_space: gym.Space, action_space: gym.Space):
+        self.deque = DequeBufferBackend(buffer_capacity, observation_space, action_space)
         self.segment_tree = SegmentTree(buffer_capacity)
 
     def store_transition(self, frame, action, reward, done):

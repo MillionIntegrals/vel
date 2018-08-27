@@ -29,7 +29,8 @@ class DequeBuffer(DqnBufferBase):
         self.device = device
         self.backend = DequeBufferBackend(
             buffer_capacity=self.buffer_capacity,
-            frame_shape=environment.observation_space.shape
+            observation_space=environment.observation_space,
+            action_space=environment.action_space
         )
 
         self.last_observation = environment.reset()

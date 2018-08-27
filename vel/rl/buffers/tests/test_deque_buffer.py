@@ -1,3 +1,4 @@
+import gym
 import nose.tools as t
 import numpy as np
 import numpy.testing as nt
@@ -8,7 +9,10 @@ from vel.rl.reinforcers.dqn.buffers.deque_buffer import DequeBufferBackend
 
 def get_filled_buffer():
     """ Return simple preinitialized buffer """
-    buffer = DequeBufferBackend(20, (2, 2, 1))
+    observation_space = gym.spaces.Box(low=0, high=255, shape=(2, 2, 1), dtype=np.uint8)
+    action_space = gym.spaces.Discrete(4)
+
+    buffer = DequeBufferBackend(20, observation_space, action_space)
 
     v1 = np.ones(4).reshape((2, 2, 1))
 
@@ -20,7 +24,9 @@ def get_filled_buffer():
 
 def get_filled_buffer_with_dones():
     """ Return simple preinitialized buffer with some done's in there """
-    buffer = DequeBufferBackend(20, (2, 2, 1))
+    observation_space = gym.spaces.Box(low=0, high=255, shape=(2, 2, 1), dtype=np.uint8)
+    action_space = gym.spaces.Discrete(4)
+    buffer = DequeBufferBackend(20, observation_space, action_space)
 
     v1 = np.ones(4).reshape((2, 2, 1))
 
@@ -37,7 +43,9 @@ def get_filled_buffer_with_dones():
 
 def test_simple_get_frame():
     """ Check if get_frame returns frames from a buffer partially full """
-    buffer = DequeBufferBackend(20, (2, 2, 1))
+    observation_space = gym.spaces.Box(low=0, high=255, shape=(2, 2, 1), dtype=np.uint8)
+    action_space = gym.spaces.Discrete(4)
+    buffer = DequeBufferBackend(20, observation_space, action_space)
 
     v1 = np.ones(4).reshape((2, 2, 1))
     v2 = v1 * 2
@@ -104,7 +112,9 @@ def test_full_buffer_get_future_frame():
 
 def test_buffer_filling_size():
     """ Check if buffer size is properly updated when we add items """
-    buffer = DequeBufferBackend(20, (2, 2, 1))
+    observation_space = gym.spaces.Box(low=0, high=255, shape=(2, 2, 1), dtype=np.uint8)
+    action_space = gym.spaces.Discrete(4)
+    buffer = DequeBufferBackend(20, observation_space, action_space)
 
     v1 = np.ones(4).reshape((2, 2, 1))
 

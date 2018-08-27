@@ -1,4 +1,3 @@
-import torch
 import gym
 import numpy as np
 
@@ -8,7 +7,7 @@ from vel.exceptions import VelException
 class DequeBufferBackend:
     """ Simple backend behind DequeBuffer """
 
-    def __init__(self, buffer_capacity: int, frame_shape: tuple):
+    def __init__(self, buffer_capacity: int, observation_space: gym.Space, action_space: gym.Space):
         # Maximum number of items in the buffer
         self.buffer_capacity = buffer_capacity
 
@@ -19,8 +18,8 @@ class DequeBufferBackend:
         self.current_idx = -1
 
         # Data buffers
-        self.frame_buffer = np.zeros([self.buffer_capacity] + list(frame_shape), dtype=np.uint8)
-        self.action_buffer = np.zeros([self.buffer_capacity], dtype=np.int)
+        self.frame_buffer = np.zeros([self.buffer_capacity] + list(observation_space.shape), dtype=observation_space.dtype)
+        self.action_buffer = np.zeros([self.buffer_capacity], dtype=action_space.dtype)
         self.reward_buffer = np.zeros([self.buffer_capacity], dtype=float)
         self.dones_buffer = np.zeros([self.buffer_capacity], dtype=bool)
 

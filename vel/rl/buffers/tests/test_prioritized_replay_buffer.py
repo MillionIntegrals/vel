@@ -1,7 +1,8 @@
+import collections
+import gym
 import nose.tools as t
 import numpy as np
 import numpy.testing as nt
-import collections
 
 from vel.exceptions import VelException
 from ..prioritized_backend import PrioritizedReplayBackend
@@ -9,7 +10,9 @@ from ..prioritized_backend import PrioritizedReplayBackend
 
 def get_halfempty_buffer_with_dones():
     """ Return simple preinitialized buffer with some done's in there """
-    buffer = PrioritizedReplayBackend(20, (2, 2, 1))
+    observation_space = gym.spaces.Box(low=0, high=255, shape=(2, 2, 1), dtype=np.uint8)
+    action_space = gym.spaces.Discrete(4)
+    buffer = PrioritizedReplayBackend(20, observation_space, action_space)
 
     v1 = np.ones(4).reshape((2, 2, 1))
 
@@ -26,7 +29,9 @@ def get_halfempty_buffer_with_dones():
 
 def get_filled_buffer_with_dones():
     """ Return simple preinitialized buffer with some done's in there """
-    buffer = PrioritizedReplayBackend(20, (2, 2, 1))
+    observation_space = gym.spaces.Box(low=0, high=255, shape=(2, 2, 1), dtype=np.uint8)
+    action_space = gym.spaces.Discrete(4)
+    buffer = PrioritizedReplayBackend(20, observation_space, action_space)
 
     v1 = np.ones(4).reshape((2, 2, 1))
 
@@ -43,7 +48,9 @@ def get_filled_buffer_with_dones():
 
 def get_large_filled_buffer_with_dones():
     """ Return simple preinitialized buffer with some done's in there """
-    buffer = PrioritizedReplayBackend(2000, (2, 2, 1))
+    observation_space = gym.spaces.Box(low=0, high=255, shape=(2, 2, 1), dtype=np.uint8)
+    action_space = gym.spaces.Discrete(4)
+    buffer = PrioritizedReplayBackend(2000, observation_space, action_space)
 
     v1 = np.ones(4).reshape((2, 2, 1))
 
