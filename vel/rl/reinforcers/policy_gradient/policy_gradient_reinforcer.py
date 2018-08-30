@@ -1,10 +1,9 @@
 import numpy as np
-import tqdm
 import sys
+import torch
+import tqdm
 
 from dataclasses import dataclass
-
-import torch
 
 import vel.util.math as math_util
 
