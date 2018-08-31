@@ -21,7 +21,12 @@ from vel.rl.metrics import (
 
 class PolicyGradientBase:
     """ Base class for policy gradient calculations """
-    def calculate_loss(self, batch_info, device, model, rollout, data_dict=None):
+
+    def initialize(self, settings):
+        """ Initialize policy gradient from reinforcer settings """
+        pass
+
+    def calculate_loss(self, batch_info, device, model, rollout, data_dict):
         """ Calculate loss of the supplied rollout """
         raise NotImplementedError
 
@@ -55,6 +60,8 @@ class PolicyGradientReinforcer(ReinforcerBase):
             self.environment, self.device, self.settings.number_of_steps, self.settings.discount_factor,
             gae_lambda=self.settings.gae_lambda
         )
+
+        self.settings.policy_gradient.initialize(self.settings)
 
     def metrics(self) -> list:
         """ List of metrics to track for this learning process """

@@ -11,7 +11,7 @@ class A2CPolicyGradient(PolicyGradientBase):
         self.entropy_coefficient = entropy_coefficient
         self.value_coefficient = value_coefficient
 
-    def calculate_loss(self, batch_info, device, model, rollout, data_dict=None):
+    def calculate_loss(self, batch_info, device, model, rollout, data_dict):
         """ Calculate loss of the supplied rollout """
         observations = rollout['observations']
         discounted_rewards = rollout['discounted_rewards']
