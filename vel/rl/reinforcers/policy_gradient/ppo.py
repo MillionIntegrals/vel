@@ -24,7 +24,7 @@ class PpoPolicyGradient(PolicyGradientBase):
         else:
             raise NotImplementedError
 
-    def calculate_loss(self, batch_info, device, model, rollout, data_dict=None):
+    def calculate_loss(self, batch_info, device, model, rollout, data_dict):
         """ Calculate loss of the supplied rollout """
 
         observations = rollout['observations']
