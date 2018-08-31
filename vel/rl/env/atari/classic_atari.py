@@ -77,11 +77,11 @@ def wrapped_env_maker(environment_id, seed, serial_id, disable_reward_clipping=F
         # Take action on reset for environments that are fixed until firing.
         env = FireResetEnv(env)
 
-    if scale_float_frames:
-        env = ScaledFloatFrame(env)
-
     # Warp frames to 84x84 as done in the Nature paper and later work.
     env = WarpFrame(env)
+
+    if scale_float_frames:
+        env = ScaledFloatFrame(env)
 
     if not disable_reward_clipping:
         # Bin reward to {+1, 0, -1} by its sign.
