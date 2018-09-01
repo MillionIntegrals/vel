@@ -3,7 +3,6 @@ import torch.nn.functional as F
 import gym
 
 from vel.api.base import LinearBackboneModel, Model, ModelFactory
-from vel.exceptions import VelException
 from vel.rl.modules.action_head import ActionHead
 from vel.rl.modules.value_head import ValueHead
 
@@ -28,15 +27,13 @@ class PolicyGradientModel(Model):
         self.value_head.reset_weights()
 
     def forward(self, observations):
+        """ Calculate model outputs """
         base_output = self.backbone(observations)
 
         action_output = self.action_head(base_output)
         value_output = self.value_head(base_output)
 
         return action_output, value_output
-
-    def loss_value(self, x_data, y_true, y_pred):
-        raise VelException("Invalid method to call for this model")
 
     def step(self, observation, argmax_sampling=False):
         """ Select actions based on model's output """
@@ -53,11 +50,13 @@ class PolicyGradientModel(Model):
         }
 
     def value(self, observation):
+        """ Calculate only value head for given state """
         base_output = self.backbone(observation)
         value_output = self.value_head(base_output)
         return value_output
 
     def entropy(self, action_logits):
+        """ Entropy of a probability distribution """
         return self.action_head.entropy(action_logits)
 
 
