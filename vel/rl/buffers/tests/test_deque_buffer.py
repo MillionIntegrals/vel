@@ -22,6 +22,21 @@ def get_filled_buffer():
     return buffer
 
 
+def get_filled_buffer_extra_info():
+    """ Return simple preinitialized buffer """
+    observation_space = gym.spaces.Box(low=0, high=255, shape=(2, 2, 1), dtype=np.uint8)
+    action_space = gym.spaces.Discrete(4)
+
+    buffer = DequeBufferBackend(20, observation_space, action_space)
+
+    v1 = np.ones(4).reshape((2, 2, 1))
+
+    for i in range(30):
+        buffer.store_transition(v1 * (i+1), 0, float(i)/2, False, extra_info=i*10)
+
+    return buffer
+
+
 def get_filled_buffer_with_dones():
     """ Return simple preinitialized buffer with some done's in there """
     observation_space = gym.spaces.Box(low=0, high=255, shape=(2, 2, 1), dtype=np.uint8)
@@ -179,7 +194,11 @@ def test_get_batch():
 
     batch = buffer.get_batch(np.array([0, 1, 2, 3, 4, 5, 6, 7, 8]), history=4)
 
-    obs, act, rew, obs_tp1, dones = batch
+    obs = batch['states']
+    act = batch['actions']
+    rew = batch['rewards']
+    obs_tp1 = batch['states+1']
+    dones = batch['dones']
 
     nt.assert_array_equal(dones, np.array([False, False, True, False, False, False, False, False, True]))
     nt.assert_array_equal(obs.max(1).max(1), np.array([
@@ -219,7 +238,13 @@ def test_sample_and_get_batch():
 
     for i in range(100):
         indexes = buffer.sample_batch_uniform(batch_size=5, history=4)
-        obs, act, rew, obs_tp1, dones = buffer.get_batch(indexes, history=4)
+        batch = buffer.get_batch(indexes, history=4)
+
+        obs = batch['states']
+        act = batch['actions']
+        rew = batch['rewards']
+        obs_tp1 = batch['states+1']
+        dones = batch['dones']
 
         t.eq_(obs.shape[0], 5)
         t.eq_(act.shape[0], 5)
@@ -227,3 +252,16 @@ def test_sample_and_get_batch():
         t.eq_(obs_tp1.shape[0], 5)
         t.eq_(dones.shape[0], 5)
 
+
+def test_storing_extra_info():
+    """ Make sure additional information are stored and recovered properly """
+    buffer = get_filled_buffer_extra_info()
+
+    batch = buffer.get_batch(np.array([0, 1, 2, 17, 18, 19]), history=4)
+
+    nt.assert_equal(batch['extras'][0], 200)
+    nt.assert_equal(batch['extras'][1], 210)
+    nt.assert_equal(batch['extras'][2], 220)
+    nt.assert_equal(batch['extras'][3], 170)
+    nt.assert_equal(batch['extras'][4], 180)
+    nt.assert_equal(batch['extras'][5], 190)

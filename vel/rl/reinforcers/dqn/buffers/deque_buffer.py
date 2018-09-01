@@ -64,16 +64,10 @@ class DequeBuffer(DqnBufferBase):
     def sample(self, batch_info, batch_size) -> dict:
         """ Calculate random sample from the replay buffer """
         indexes = self.backend.sample_batch_uniform(batch_size, self.frame_stack)
-        observations, actions, rewards, observations_tplus1, dones = self.backend.get_batch(indexes, self.frame_stack)
 
-        return {
-            'observations': observations,
-            'actions': actions,
-            'rewards': rewards,
-            'dones': dones,
-            'observations_tplus1': observations_tplus1,
-            'weights': np.ones_like(rewards)
-        }
+        batch = self.backend.get_batch(indexes, self.frame_stack)
+        batch['weights'] = np.ones_like(batch['rewards'])
+        return batch
 
 
 def create(buffer_capacity: int, buffer_initial_size: int, frame_stack: int=1):

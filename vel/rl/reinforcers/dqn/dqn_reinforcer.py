@@ -165,11 +165,10 @@ class DqnReinforcer(ReinforcerBase):
 
         batch_sample = self.buffer.sample(batch_info, self.settings.batch_size)
 
-        observation_tensor = torch.from_numpy(batch_sample['observations']).to(self.device)
-        observation_tensor_tplus1 = torch.from_numpy(batch_sample['observations_tplus1']).to(self.device)
+        observation_tensor = torch.from_numpy(batch_sample['states']).to(self.device)
+        observation_tensor_tplus1 = torch.from_numpy(batch_sample['states+1']).to(self.device)
         dones_tensor = torch.from_numpy(batch_sample['dones'].astype(np.float32)).to(self.device)
         rewards_tensor = torch.from_numpy(batch_sample['rewards'].astype(np.float32)).to(self.device)
-
         actions_tensor = torch.from_numpy(batch_sample['actions']).to(self.device)
 
         with torch.no_grad():

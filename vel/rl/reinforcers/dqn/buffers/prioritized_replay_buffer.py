@@ -51,7 +51,7 @@ class PrioritizedReplayBuffer(DqnBufferBase):
         ], axis=-1)
 
         observation_tensor = torch.from_numpy(last_observation[None]).to(self.device)
-        action = model.step(observation_tensor, epsilon_value).item()
+        action = model.step(observation_tensor, epsilon_value)['actions'].item()
 
         observation, reward, done, info = environment.step(action)
 
@@ -68,7 +68,7 @@ class PrioritizedReplayBuffer(DqnBufferBase):
     def sample(self, batch_info, batch_size) -> dict:
         """ Calculate random sample from the replay buffer """
         probs, indexes, tree_idxs = self.backend.sample_batch_prioritized(batch_size, self.frame_stack)
-        observations, actions, rewards, observations_tplus1, dones = self.backend.get_batch(indexes, self.frame_stack)
+        batch = self.backend.get_batch(indexes, self.frame_stack)
 
         # Normalize weights properly
         priority_weight = self.priority_weight_schedule.value(batch_info['progress'])
@@ -78,15 +78,10 @@ class PrioritizedReplayBuffer(DqnBufferBase):
         weights = (capacity * probs) ** (-priority_weight)
         weights = weights / weights.max()
 
-        return {
-            'observations': observations,
-            'actions': actions,
-            'rewards': rewards,
-            'dones': dones,
-            'observations_tplus1': observations_tplus1,
-            'weights': weights,
-            'tree_idxs': tree_idxs
-        }
+        batch['weights'] = weights
+        batch['tree_idxs'] = tree_idxs
+
+        return batch
 
     def update(self, sample, errors):
         weights = errors ** self.priority_exponent

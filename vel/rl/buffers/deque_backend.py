@@ -18,30 +18,36 @@ class DequeBufferBackend:
         self.current_idx = -1
 
         # Data buffers
-        self.frame_buffer = np.zeros(
+        self.state_buffer = np.zeros(
             [self.buffer_capacity] + list(observation_space.shape),
             dtype=observation_space.dtype
         )
+
         self.action_buffer = np.zeros([self.buffer_capacity], dtype=action_space.dtype)
         self.reward_buffer = np.zeros([self.buffer_capacity], dtype=float)
+
         self.dones_buffer = np.zeros([self.buffer_capacity], dtype=bool)
-        self.prob_buffer = np.zeros([self.buffer_capacity], dtype=float)
+        self.neg_log_p_buffer = np.zeros([self.buffer_capacity], dtype=float)
+
+        self.extra_buffer = []
 
         # Just a sentinel to simplify further calculations
         self.dones_buffer[self.current_idx] = True
 
-    def store_transition(self, frame, action, reward, done, prob=0.0):
+    def store_transition(self, frame, action, reward, done, extra_info=None):
         """ Store given transition in the backend """
         self.current_idx = (self.current_idx + 1) % self.buffer_capacity
 
-        self.frame_buffer[self.current_idx] = frame
+        self.state_buffer[self.current_idx] = frame
         self.action_buffer[self.current_idx] = action
         self.reward_buffer[self.current_idx] = reward
         self.dones_buffer[self.current_idx] = done
-        self.prob_buffer[self.current_idx] = prob
 
         if self.current_size < self.buffer_capacity:
             self.current_size += 1
+            self.extra_buffer.append(extra_info)
+        else:
+            self.extra_buffer[self.current_idx] = extra_info
 
         return self.current_idx
 
@@ -52,7 +58,7 @@ class DequeBufferBackend:
 
         accumulator = []
 
-        last_frame = self.frame_buffer[idx]
+        last_frame = self.state_buffer[idx]
         accumulator.append(last_frame)
 
         for i in range(history - 1):
@@ -65,7 +71,7 @@ class DequeBufferBackend:
                 accumulator.append(np.zeros_like(last_frame))
             else:
                 idx = prev_idx
-                accumulator.append(self.frame_buffer[idx])
+                accumulator.append(self.state_buffer[idx])
 
         # We're pushing the elements in reverse order
         return np.concatenate(accumulator[::-1], axis=-1)
@@ -83,7 +89,7 @@ class DequeBufferBackend:
 
         if not self.dones_buffer[idx]:
             next_idx = (idx + 1) % self.buffer_capacity
-            next_frame = self.frame_buffer[next_idx]
+            next_frame = self.state_buffer[next_idx]
             future_frame[:, :, -1:] = next_frame
 
         return past_frame, future_frame
@@ -91,7 +97,7 @@ class DequeBufferBackend:
     def get_batch(self, indexes, history):
         """ Return batch with given indexes """
         frame_batch_shape = (
-                [indexes.shape[0]] + list(self.frame_buffer.shape[1:-1]) + [self.frame_buffer.shape[-1] * history]
+                [indexes.shape[0]] + list(self.state_buffer.shape[1:-1]) + [self.state_buffer.shape[-1] * history]
         )
 
         past_frame_buffer = np.zeros(frame_batch_shape, dtype=np.uint8)
@@ -106,7 +112,14 @@ class DequeBufferBackend:
         rewards = self.reward_buffer[indexes]
         dones = self.dones_buffer[indexes]
 
-        return past_frame_buffer, actions, rewards, future_frame_buffer, dones
+        return {
+            'states': past_frame_buffer,
+            'actions': actions,
+            'rewards': rewards,
+            'states+1': future_frame_buffer,
+            'dones': dones,
+            'extras': [self.extra_buffer[i] for i in indexes]
+        }
 
     def sample_batch_uniform(self, batch_size, history):
         """ Return indexes of next sample"""
