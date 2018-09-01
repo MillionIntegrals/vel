@@ -54,3 +54,6 @@ commands:
     name: vel.rl.commands.record_movie_command
     takes: 10
     videoname: 'airraid_vid_{:04}.avi'
+    frame_history: 4
+    sample_args:
+      argmax_sampling: true

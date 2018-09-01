@@ -49,3 +49,6 @@ commands:
     name: vel.rl.commands.rl_train_command
     total_frames: 1.1e7
     batches_per_epoch: 100
+    frame_history: 4
+    sample_args:
+      argmax_sampling: true
