@@ -116,7 +116,7 @@ class PolicyGradientReinforcer(ReinforcerBase):
         """ Single, most atomic 'step' of learning this reinforcer can perform """
         # Calculate environment rollout on the evaluation version of the model
         self.model.eval()
-        rollout = self.env_roller.rollout(self.model)
+        rollout = self.env_roller.rollout(batch_info, self.model)
 
         rollout_tensors = {k: v for k, v in rollout.items() if isinstance(v, torch.Tensor)}
         rollout_size = next(v.size(0) for v in rollout_tensors.values())
