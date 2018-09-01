@@ -27,12 +27,14 @@ def get_filled_buffer_extra_info():
     observation_space = gym.spaces.Box(low=0, high=255, shape=(2, 2, 1), dtype=np.uint8)
     action_space = gym.spaces.Discrete(4)
 
-    buffer = DequeBufferBackend(20, observation_space, action_space)
+    buffer = DequeBufferBackend(20, observation_space, action_space, extra_data={
+        'neglogp': np.zeros(20, dtype=float)
+    })
 
     v1 = np.ones(4).reshape((2, 2, 1))
 
     for i in range(30):
-        buffer.store_transition(v1 * (i+1), 0, float(i)/2, False, extra_info=i*10)
+        buffer.store_transition(v1 * (i+1), 0, float(i)/2, False, extra_info={'neglogp': i / 30.0})
 
     return buffer
 
@@ -192,7 +194,7 @@ def test_get_batch():
     """ Check if get_batch works properly for buffers """
     buffer = get_filled_buffer_with_dones()
 
-    batch = buffer.get_batch(np.array([0, 1, 2, 3, 4, 5, 6, 7, 8]), history=4)
+    batch = buffer.get_batch(np.array([0, 1, 2, 3, 4, 5, 6, 7, 8]), history_length=4)
 
     obs = batch['states']
     act = batch['actions']
@@ -229,7 +231,7 @@ def test_get_batch():
     ]))
 
     with t.assert_raises(VelException):
-        buffer.get_batch(np.array([0, 1, 2, 3, 4, 5, 6, 7, 8, 9]), history=4)
+        buffer.get_batch(np.array([0, 1, 2, 3, 4, 5, 6, 7, 8, 9]), history_length=4)
 
 
 def test_sample_and_get_batch():
@@ -237,8 +239,8 @@ def test_sample_and_get_batch():
     buffer = get_filled_buffer_with_dones()
 
     for i in range(100):
-        indexes = buffer.sample_batch_uniform(batch_size=5, history=4)
-        batch = buffer.get_batch(indexes, history=4)
+        indexes = buffer.sample_batch_uniform(batch_size=5, history_length=4)
+        batch = buffer.get_batch(indexes, history_length=4)
 
         obs = batch['states']
         act = batch['actions']
@@ -257,11 +259,11 @@ def test_storing_extra_info():
     """ Make sure additional information are stored and recovered properly """
     buffer = get_filled_buffer_extra_info()
 
-    batch = buffer.get_batch(np.array([0, 1, 2, 17, 18, 19]), history=4)
+    batch = buffer.get_batch(np.array([0, 1, 2, 17, 18, 19]), history_length=4)
 
-    nt.assert_equal(batch['extras'][0], 200)
-    nt.assert_equal(batch['extras'][1], 210)
-    nt.assert_equal(batch['extras'][2], 220)
-    nt.assert_equal(batch['extras'][3], 170)
-    nt.assert_equal(batch['extras'][4], 180)
-    nt.assert_equal(batch['extras'][5], 190)
+    nt.assert_equal(batch['neglogp'][0], 20.0/30)
+    nt.assert_equal(batch['neglogp'][1], 21.0/30)
+    nt.assert_equal(batch['neglogp'][2], 22.0/30)
+    nt.assert_equal(batch['neglogp'][3], 17.0/30)
+    nt.assert_equal(batch['neglogp'][4], 18.0/30)
+    nt.assert_equal(batch['neglogp'][5], 19.0/30)

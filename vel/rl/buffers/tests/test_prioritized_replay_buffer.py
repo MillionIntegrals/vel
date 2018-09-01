@@ -5,7 +5,7 @@ import numpy as np
 import numpy.testing as nt
 
 from vel.exceptions import VelException
-from ..prioritized_backend import PrioritizedReplayBackend
+from vel.rl.buffers.prioritized_backend import PrioritizedReplayBackend
 
 
 def get_halfempty_buffer_with_dones():

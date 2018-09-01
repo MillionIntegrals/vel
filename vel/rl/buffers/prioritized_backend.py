@@ -64,13 +64,13 @@ class SegmentTree:
 
 class PrioritizedReplayBackend:
     """ Backend behind the prioritized replay buffer """
-    def __init__(self, buffer_capacity: int, observation_space: gym.Space, action_space: gym.Space):
-        self.deque = DequeBufferBackend(buffer_capacity, observation_space, action_space)
+    def __init__(self, buffer_capacity: int, observation_space: gym.Space, action_space: gym.Space, extra_data=None):
+        self.deque = DequeBufferBackend(buffer_capacity, observation_space, action_space, extra_data=extra_data)
         self.segment_tree = SegmentTree(buffer_capacity)
 
-    def store_transition(self, frame, action, reward, done):
+    def store_transition(self, frame, action, reward, done, extra_info=None):
         """ Store given transition in the backend """
-        self.deque.store_transition(frame, action, reward, done)
+        self.deque.store_transition(frame, action, reward, done, extra_info=extra_info)
 
         # We add element with max priority to the tree
         self.segment_tree.append(self.segment_tree.max)

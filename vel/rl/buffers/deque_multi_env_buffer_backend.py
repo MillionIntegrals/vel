@@ -4,12 +4,16 @@ import numpy as np
 from vel.exceptions import VelException
 
 
-class DequeBufferBackend:
+class DequeMultiEnvBufferBackend:
     """ Simple backend behind DequeBuffer """
 
-    def __init__(self, buffer_capacity: int, observation_space: gym.Space, action_space: gym.Space, extra_data=None):
+    def __init__(self, buffer_capacity: int, num_envs: int, observation_space: gym.Space, action_space: gym.Space,
+                 extra_data=None):
         # Maximum number of items in the buffer
         self.buffer_capacity = buffer_capacity
+
+        # Number of parallel envs to record
+        self.num_envs = num_envs
 
         # How many elements have been inserted in the buffer
         self.current_size = 0
@@ -19,15 +23,15 @@ class DequeBufferBackend:
 
         # Data buffers
         self.state_buffer = np.zeros(
-            [self.buffer_capacity] + list(observation_space.shape),
+            [self.buffer_capacity, self.num_envs] + list(observation_space.shape),
             dtype=observation_space.dtype
         )
 
-        self.action_buffer = np.zeros([self.buffer_capacity], dtype=action_space.dtype)
-        self.reward_buffer = np.zeros([self.buffer_capacity], dtype=float)
+        self.action_buffer = np.zeros([self.buffer_capacity, self.num_envs], dtype=action_space.dtype)
+        self.reward_buffer = np.zeros([self.buffer_capacity, self.num_envs], dtype=float)
+        self.dones_buffer = np.zeros([self.buffer_capacity, self.num_envs], dtype=bool)
 
-        self.dones_buffer = np.zeros([self.buffer_capacity], dtype=bool)
-
+        # One list per environment
         self.extra_data = {} if extra_data is None else extra_data
 
         # Just a sentinel to simplify further calculations
@@ -38,6 +42,7 @@ class DequeBufferBackend:
         self.current_idx = (self.current_idx + 1) % self.buffer_capacity
 
         self.state_buffer[self.current_idx] = frame
+
         self.action_buffer[self.current_idx] = action
         self.reward_buffer[self.current_idx] = reward
         self.dones_buffer[self.current_idx] = done
@@ -50,68 +55,73 @@ class DequeBufferBackend:
 
         return self.current_idx
 
-    def get_frame(self, idx, history_length):
-        """ Return frame from the buffer """
-        if idx >= self.current_size:
-            raise VelException("Requested frame beyond the size of the buffer")
-
-        accumulator = []
-
-        last_frame = self.state_buffer[idx]
-        accumulator.append(last_frame)
-
-        for i in range(history_length - 1):
-            prev_idx = (idx - 1) % self.buffer_capacity
-
-            if prev_idx == self.current_idx:
-                raise VelException("Cannot provide enough history for the frame")
-            elif self.dones_buffer[prev_idx]:
-                # If previous frame was done - just append zeroes
-                accumulator.append(np.zeros_like(last_frame))
-            else:
-                idx = prev_idx
-                accumulator.append(self.state_buffer[idx])
-
-        # We're pushing the elements in reverse order
-        return np.concatenate(accumulator[::-1], axis=-1)
-
-    def get_frame_with_future(self, idx, history_length):
+    def get_frame_with_future(self, frame_idx, env_idx, history_length):
         """ Return frame from the buffer together with the next frame """
-        if idx == self.current_idx:
+        if frame_idx == self.current_idx:
             raise VelException("Cannot provide enough future for the frame")
 
-        past_frame = self.get_frame(idx, history_length)
+        past_frame = self.get_frame(frame_idx, env_idx, history_length)
 
         future_frame = np.zeros_like(past_frame)
 
         future_frame[:, :, :-1] = past_frame[:, :, 1:]
 
-        if not self.dones_buffer[idx]:
-            next_idx = (idx + 1) % self.buffer_capacity
-            next_frame = self.state_buffer[next_idx]
+        if not self.dones_buffer[frame_idx, env_idx]:
+            next_idx = (frame_idx + 1) % self.buffer_capacity
+            next_frame = self.state_buffer[next_idx, env_idx]
             future_frame[:, :, -1:] = next_frame
 
         return past_frame, future_frame
 
+    def get_frame(self, frame_idx, env_idx, history_length):
+        """ Return frame from the buffer """
+        if frame_idx >= self.current_size:
+            raise VelException("Requested frame beyond the size of the buffer")
+
+        accumulator = []
+
+        last_frame = self.state_buffer[frame_idx, env_idx]
+
+        accumulator.append(last_frame)
+
+        for i in range(history_length - 1):
+            prev_idx = (frame_idx - 1) % self.buffer_capacity
+
+            if prev_idx == self.current_idx:
+                raise VelException("Cannot provide enough history for the frame")
+            elif self.dones_buffer[prev_idx, env_idx]:
+                # If previous frame was done - just append zeroes
+                accumulator.append(np.zeros_like(last_frame))
+            else:
+                frame_idx = prev_idx
+                accumulator.append(self.state_buffer[frame_idx, env_idx])
+
+        # We're pushing the elements in reverse order
+        return np.concatenate(accumulator[::-1], axis=-1)
+
     def get_batch(self, indexes, history_length):
         """ Return batch with given indexes """
+        assert indexes.shape[1] == self.state_buffer.shape[1], \
+            "Must have the same number of indexes as there are environments"
+
         frame_batch_shape = (
-                [indexes.shape[0]]
-                + list(self.state_buffer.shape[1:-1])
+                [indexes.shape[0], indexes.shape[1]]
+                + list(self.state_buffer.shape[2:-1])
                 + [self.state_buffer.shape[-1] * history_length]
         )
 
         past_frame_buffer = np.zeros(frame_batch_shape, dtype=self.state_buffer.dtype)
         future_frame_buffer = np.zeros(frame_batch_shape, dtype=self.state_buffer.dtype)
 
-        for buffer_idx, frame_idx in enumerate(indexes):
-            past_frame_buffer[buffer_idx], future_frame_buffer[buffer_idx] = self.get_frame_with_future(
-                frame_idx, history_length
-            )
+        for buffer_idx, frame_row in enumerate(indexes):
+            for env_idx, frame_idx in enumerate(frame_row):
+                past_frame_buffer[buffer_idx, env_idx], future_frame_buffer[buffer_idx, env_idx] = (
+                    self.get_frame_with_future(frame_idx, env_idx, history_length)
+                )
 
-        actions = self.action_buffer[indexes]
-        rewards = self.reward_buffer[indexes]
-        dones = self.dones_buffer[indexes]
+        actions = np.take_along_axis(self.action_buffer, indexes, axis=0)
+        rewards = np.take_along_axis(self.reward_buffer, indexes, axis=0)
+        dones = np.take_along_axis(self.dones_buffer, indexes, axis=0)
 
         data_dict = {
             'states': past_frame_buffer,
@@ -122,11 +132,20 @@ class DequeBufferBackend:
         }
 
         for name in self.extra_data:
-            data_dict[name] = self.extra_data[name][indexes]
+            data_dict[name] = np.take_along_axis(self.extra_data[name], indexes, axis=0)
 
         return data_dict
 
     def sample_batch_uniform(self, batch_size, history_length):
+        """ Return indexes of next sample"""
+        results = []
+
+        for i in range(self.num_envs):
+            results.append(self.sample_uniform_single_env(batch_size, history_length))
+
+        return np.stack(results, axis=-1)
+
+    def sample_uniform_single_env(self, batch_size, history_length):
         """ Return indexes of next sample"""
         # Sample from up to total size
         if self.current_size < self.buffer_capacity:
@@ -136,8 +155,7 @@ class DequeBufferBackend:
             candidate = np.random.choice(self.buffer_capacity, batch_size, replace=False)
 
             forbidden_ones = (
-                    np.arange(self.current_idx, self.current_idx + history_length)
-                    % self.buffer_capacity
+                    np.arange(self.current_idx, self.current_idx + history_length) % self.buffer_capacity
             )
 
             # Exclude these frames for learning as they may have some part of history overwritten
