@@ -14,6 +14,10 @@ class ReplayEnvRollerBase(EnvRollerBase):
         """ Sample experience from replay buffer and return a batch """
         raise NotImplementedError
 
+    def is_ready_for_sampling(self) -> bool:
+        """ If buffer is ready for drawing samples from it (usually checks if there is enough data) """
+        raise NotImplementedError
+
 
 class EnvRollerFactory:
     """ Factory for env rollers """
