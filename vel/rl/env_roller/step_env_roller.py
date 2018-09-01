@@ -2,7 +2,10 @@ import torch
 import numpy as np
 
 
-class StepEnvRoller:
+from vel.rl.api.base import EnvRollerBase, EnvRollerFactory
+
+
+class StepEnvRoller(EnvRollerBase):
     """
     Class calculating env rollouts.
     Idea behind this class is to store as much as we can as pytorch tensors to minimize tensor copying.
@@ -100,6 +103,7 @@ class StepEnvRoller:
         }
 
     def discount_bootstrap(self, rewards_buffer, dones_buffer, last_values_buffer, discount_factor):
+        """ Calculate state values bootstrapping off the following state values """
         true_value_buffer = torch.zeros_like(rewards_buffer)
         dones_buffer = dones_buffer.to(dtype=torch.float32)
 
@@ -114,6 +118,7 @@ class StepEnvRoller:
 
     def discount_bootstrap_gae(self, rewards_buffer, dones_buffer, values_buffer, last_values_buffer,
                                discount_factor, gae_lambda):
+        """ Calculate state values bootstrapping off the following state values - Generalized Advantage Estimation """
         advantage_buffer = torch.zeros_like(rewards_buffer)
         dones_buffer = dones_buffer.to(dtype=torch.float32)
 
@@ -127,11 +132,26 @@ class StepEnvRoller:
                 next_value = values_buffer[i+1]
 
             bellman_delta = (
-                    rewards_buffer[i] + discount_factor * next_value * (1.0 - dones_buffer[i]) - values_buffer[i]
+                rewards_buffer[i] + discount_factor * next_value * (1.0 - dones_buffer[i]) - values_buffer[i]
             )
 
             advantage_buffer[i] = sum_accumulator = (
-                    bellman_delta + discount_factor * gae_lambda * sum_accumulator * (1.0 - dones_buffer[i])
+                bellman_delta + discount_factor * gae_lambda * sum_accumulator * (1.0 - dones_buffer[i])
             )
 
         return advantage_buffer
+
+
+class StepEnvRollerFactory(EnvRollerFactory):
+    """ Factory for the StepEnvRoller """
+
+    def instantiate(self, environment, device, settings):
+        return StepEnvRoller(
+            environment, device, settings.number_of_steps, settings.discount_factor,
+            gae_lambda=settings.gae_lambda
+        )
+
+
+def create():
+    return StepEnvRollerFactory()
+

@@ -11,8 +11,7 @@ from vel.api.base import Model, ModelFactory
 from vel.api.metrics import AveragingNamedMetric
 from vel.api.info import EpochInfo, BatchInfo
 from vel.openai.baselines.common.vec_env import VecEnv
-from vel.rl.api.base import ReinforcerBase, ReinforcerFactory, VecEnvFactory
-from vel.rl.env_roller.step_env_roller import StepEnvRoller
+from vel.rl.api.base import ReinforcerBase, ReinforcerFactory, VecEnvFactory, EnvRollerFactory, EnvRollerBase
 from vel.rl.metrics import (
     FPSMetric, EpisodeLengthMetric, EpisodeRewardMetricQuantile, ExplainedVariance,
     EpisodeRewardMetric, FramesMetric
@@ -49,17 +48,15 @@ class PolicyGradientSettings:
 
 class PolicyGradientReinforcer(ReinforcerBase):
     """ Train network using a policy gradient algorithm """
-    def __init__(self, device: torch.device, settings: PolicyGradientSettings, env: VecEnv, model: Model) -> None:
+    def __init__(self, device: torch.device, settings: PolicyGradientSettings, env: VecEnv, model: Model,
+                 env_roller: EnvRollerBase) -> None:
         self.device = device
         self.settings = settings
 
         self.environment = env
         self._internal_model = model.to(self.device)
 
-        self.env_roller = StepEnvRoller(
-            self.environment, self.device, self.settings.number_of_steps, self.settings.discount_factor,
-            gae_lambda=self.settings.gae_lambda
-        )
+        self.env_roller = env_roller
 
         self.settings.policy_gradient.initialize(self.settings)
 
@@ -182,9 +179,10 @@ class PolicyGradientReinforcer(ReinforcerBase):
 class PolicyGradientReinforcerFactory(ReinforcerFactory):
     """ Vel factory class for the PolicyGradientReinforcer """
     def __init__(self, settings, env_factory: VecEnvFactory, model_factory: ModelFactory,
-                 parallel_envs: int, seed: int):
+                 env_roller_factory: EnvRollerFactory, parallel_envs: int, seed: int):
         self.settings = settings
 
+        self.env_roller_factory = env_roller_factory
         self.model_factory = model_factory
         self.env_factory = env_factory
         self.parallel_envs = parallel_envs
@@ -193,5 +191,6 @@ class PolicyGradientReinforcerFactory(ReinforcerFactory):
     def instantiate(self, device: torch.device) -> ReinforcerBase:
         env = self.env_factory.instantiate(parallel_envs=self.parallel_envs, seed=self.seed)
         model = self.model_factory.instantiate(action_space=env.action_space)
+        env_roller = self.env_roller_factory.instantiate(environment=env, device=device, settings=self.settings)
 
-        return PolicyGradientReinforcer(device, self.settings, env, model)
+        return PolicyGradientReinforcer(device, self.settings, env, model, env_roller)
