@@ -7,6 +7,25 @@ from vel.exceptions import VelException
 from vel.rl.buffers.deque_multi_env_buffer_backend import DequeMultiEnvBufferBackend
 
 
+def get_half_filled_buffer():
+    """ Return simple preinitialized buffer """
+    observation_space = gym.spaces.Box(low=0, high=255, shape=(2, 2, 1), dtype=int)
+    action_space = gym.spaces.Discrete(4)
+
+    buffer = DequeMultiEnvBufferBackend(20, num_envs=2, observation_space=observation_space, action_space=action_space)
+
+    v1 = np.ones(8).reshape((2, 2, 2, 1))
+
+    for i in range(10):
+        item = v1.copy()
+        item[0] *= (i+1)
+        item[1] *= 10 * (i+1)
+
+        buffer.store_transition(item, 0, float(i)/2, False)
+
+    return buffer
+
+
 def get_filled_buffer():
     """ Return simple preinitialized buffer """
     observation_space = gym.spaces.Box(low=0, high=255, shape=(2, 2, 1), dtype=int)
@@ -410,3 +429,64 @@ def test_storing_extra_info():
     nt.assert_equal(batch['neglogp'][3, 1], 18.0/30)
     nt.assert_equal(batch['neglogp'][4, 1], 19.0/30)
     nt.assert_equal(batch['neglogp'][5, 1], 20.0/30)
+
+
+def test_sample_rollout_half_filled():
+    """ Test if sampling rollout is correct and returns proper results """
+    buffer = get_half_filled_buffer()
+
+    indexes = []
+
+    for i in range(1000):
+        rollout_idx = buffer.sample_batch_rollout(rollout_length=5, history_length=4)
+        rollout = buffer.get_rollout(indexes=rollout_idx, rollout_length=5, history_length=4)
+
+        t.assert_equal(rollout['states'].shape[0], 5)  # Rollout length
+        t.assert_equal(rollout['states'].shape[-1], 4)  # History length
+
+        indexes.append(rollout_idx)
+
+    t.assert_equal(np.min(indexes), 4)
+    t.assert_equal(np.max(indexes), 8)
+
+    with t.assert_raises(VelException):
+        buffer.sample_batch_rollout(rollout_length=10, history_length=4)
+
+    rollout_idx = buffer.sample_batch_rollout(rollout_length=9, history_length=4)
+    rollout = buffer.get_rollout(indexes=rollout_idx, rollout_length=9, history_length=4)
+
+    nt.assert_array_equal(rollout_idx, np.array([8, 8]))
+
+    nt.assert_array_equal(rollout['rewards'], np.array([
+        [0., 0.5, 1., 1.5, 2., 2.5, 3., 3.5, 4.],
+        [0., 0.5, 1., 1.5, 2., 2.5, 3., 3.5, 4.],
+    ]).T)
+
+
+def test_sample_rollout_filled():
+    """ Test if sampling rollout is correct and returns proper results """
+    buffer = get_filled_buffer()
+
+    indexes = []
+
+    for i in range(1000):
+        rollout_idx = buffer.sample_batch_rollout(rollout_length=5, history_length=4)
+        rollout = buffer.get_rollout(indexes=rollout_idx, rollout_length=5, history_length=4)
+
+        t.assert_equal(rollout['states'].shape[0], 5)  # Rollout length
+        t.assert_equal(rollout['states'].shape[-1], 4)  # History length
+
+        indexes.append(rollout_idx)
+
+    t.assert_equal(np.min(indexes), 0)
+    t.assert_equal(np.max(indexes), 19)
+
+    with t.assert_raises(VelException):
+        buffer.sample_batch_rollout(rollout_length=17, history_length=4)
+
+    max_rollout = buffer.sample_batch_rollout(rollout_length=16, history_length=4)
+
+    rollout = buffer.get_rollout(max_rollout, rollout_length=16, history_length=4)
+
+    nt.assert_array_equal(max_rollout, np.array([8, 8]))
+    t.assert_almost_equal(np.sum(rollout['rewards']), 164.0 * 2)

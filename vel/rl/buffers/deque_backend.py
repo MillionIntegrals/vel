@@ -126,6 +126,11 @@ class DequeBufferBackend:
 
         return data_dict
 
+    def get_rollout(self, index, rollout_length, history_length):
+        """ Return batch consisting of *consecutive* transitions """
+        indexes = np.arange(index - rollout_length + 1, index + 1, dtype=int)
+        return self.get_batch(indexes, history_length)
+
     def sample_batch_uniform(self, batch_size, history_length):
         """ Return indexes of next sample"""
         # Sample from up to total size
@@ -143,5 +148,32 @@ class DequeBufferBackend:
             # Exclude these frames for learning as they may have some part of history overwritten
             while any(x in candidate for x in forbidden_ones):
                 candidate = np.random.choice(self.buffer_capacity, batch_size, replace=False)
+
+            return candidate
+
+    def sample_batch_rollout(self, rollout_length, history_length):
+        """ Return indexes of next sample """
+
+        # Sample from up to total size
+        if self.current_size < self.buffer_capacity:
+            if rollout_length + 1 > self.current_size:
+                raise VelException("Not enough elements in the buffer to sample the rollout")
+
+            # -1 because we cannot take the last one
+            return np.random.choice(self.current_size - rollout_length) + rollout_length - 1
+        else:
+            if rollout_length + history_length > self.current_size:
+                raise VelException("Not enough elements in the buffer to sample the rollout")
+
+            candidate = np.random.choice(self.buffer_capacity)
+
+            # These are the elements we cannot draw, as then we don't have enough history
+            forbidden_ones = (
+                    np.arange(self.current_idx, self.current_idx + history_length + rollout_length - 1) % self.buffer_capacity
+            )
+
+            # Exclude these frames for learning as they may have some part of history overwritten
+            while candidate in forbidden_ones:
+                candidate = np.random.choice(self.buffer_capacity)
 
             return candidate

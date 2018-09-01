@@ -5,12 +5,14 @@ from vel.exceptions import VelException
 
 
 class DequeMultiEnvBufferBackend:
-    """ Simple backend behind DequeBuffer """
+    """ Simple backend behind DequeBuffer - version supporting multiple environments """
 
     def __init__(self, buffer_capacity: int, num_envs: int, observation_space: gym.Space, action_space: gym.Space,
-                 extra_data=None):
+                 extra_data=None, frame_stack_compensation: bool=False):
         # Maximum number of items in the buffer
         self.buffer_capacity = buffer_capacity
+
+        self.frame_stack_compensation = frame_stack_compensation
 
         # Number of parallel envs to record
         self.num_envs = num_envs
@@ -22,10 +24,16 @@ class DequeMultiEnvBufferBackend:
         self.current_idx = -1
 
         # Data buffers
-        self.state_buffer = np.zeros(
-            [self.buffer_capacity, self.num_envs] + list(observation_space.shape),
-            dtype=observation_space.dtype
-        )
+        if self.frame_stack_compensation:
+            self.state_buffer = np.zeros(
+                [self.buffer_capacity, self.num_envs] + list(observation_space.shape)[:-1] + [1],
+                dtype=observation_space.dtype
+            )
+        else:
+            self.state_buffer = np.zeros(
+                [self.buffer_capacity, self.num_envs] + list(observation_space.shape),
+                dtype=observation_space.dtype
+            )
 
         self.action_buffer = np.zeros([self.buffer_capacity, self.num_envs], dtype=action_space.dtype)
         self.reward_buffer = np.zeros([self.buffer_capacity, self.num_envs], dtype=float)
@@ -40,6 +48,10 @@ class DequeMultiEnvBufferBackend:
     def store_transition(self, frame, action, reward, done, extra_info=None):
         """ Store given transition in the backend """
         self.current_idx = (self.current_idx + 1) % self.buffer_capacity
+
+        if self.frame_stack_compensation:
+            # Compensate for frame stack built into the environment
+            frame = np.expand_dims(np.take(frame, -1, axis=-1), axis=-1)
 
         self.state_buffer[self.current_idx] = frame
 
@@ -144,6 +156,50 @@ class DequeMultiEnvBufferBackend:
             results.append(self.sample_uniform_single_env(batch_size, history_length))
 
         return np.stack(results, axis=-1)
+
+    def sample_batch_rollout(self, rollout_length, history_length):
+        """ Return indexes of next random rollout """
+        results = []
+
+        for i in range(self.num_envs):
+            results.append(self.sample_rollout_single_env(rollout_length, history_length))
+
+        return np.stack(results, axis=-1)
+
+    def get_rollout(self, indexes, rollout_length, history_length):
+        """ Return batch consisting of *consecutive* transitions """
+        assert indexes.shape[0] > 1, "There must be multiple indexes supplied"
+        assert rollout_length > 1, "Rollout length must be greater than 1"
+
+        batch_indexes = indexes.reshape(1, indexes.shape[0]) - np.arange(rollout_length - 1, -1, -1).reshape(rollout_length, 1)
+
+        return self.get_batch(batch_indexes, history_length)
+
+    def sample_rollout_single_env(self, rollout_length, history_length):
+        """ Return indexes of next sample"""
+        # Sample from up to total size
+        if self.current_size < self.buffer_capacity:
+            if rollout_length + 1 > self.current_size:
+                raise VelException("Not enough elements in the buffer to sample the rollout")
+
+            # -1 because we cannot take the last one
+            return np.random.choice(self.current_size - rollout_length) + rollout_length - 1
+        else:
+            if rollout_length + history_length > self.current_size:
+                raise VelException("Not enough elements in the buffer to sample the rollout")
+
+            candidate = np.random.choice(self.buffer_capacity)
+
+            # These are the elements we cannot draw, as then we don't have enough history
+            forbidden_ones = (
+                    np.arange(self.current_idx, self.current_idx + history_length + rollout_length - 1) % self.buffer_capacity
+            )
+
+            # Exclude these frames for learning as they may have some part of history overwritten
+            while candidate in forbidden_ones:
+                candidate = np.random.choice(self.buffer_capacity)
+
+            return candidate
 
     def sample_uniform_single_env(self, batch_size, history_length):
         """ Return indexes of next sample"""
