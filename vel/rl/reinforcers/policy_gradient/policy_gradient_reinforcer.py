@@ -25,7 +25,7 @@ class PolicyGradientBase:
         """ Initialize policy gradient from reinforcer settings """
         pass
 
-    def calculate_loss(self, batch_info, device, model, rollout, data_dict):
+    def calculate_loss(self, batch_info, device, model, rollout):
         """ Calculate loss of the supplied rollout """
         raise NotImplementedError
 
@@ -116,10 +116,10 @@ class PolicyGradientReinforcer(ReinforcerBase):
         """ Single, most atomic 'step' of learning this reinforcer can perform """
         # Calculate environment rollout on the evaluation version of the model
         self.model.eval()
+
         rollout = self.env_roller.rollout(batch_info, self.model)
 
-        rollout_tensors = {k: v for k, v in rollout.items() if isinstance(v, torch.Tensor)}
-        rollout_size = next(v.size(0) for v in rollout_tensors.values())
+        rollout_size = rollout['observations'].size(0)
         indices = np.arange(rollout_size)
 
         batch_splits = math_util.divide_ceiling(rollout_size, self.settings.batch_size)
@@ -127,7 +127,11 @@ class PolicyGradientReinforcer(ReinforcerBase):
         # Perform the training step
         self.model.train()
 
-        data_dict_accumulator = []
+        # All policy gradient data will be put here
+        batch_info['policy_gradient_data'] = []
+        gradient_norms = []
+
+        rollout_tensors = {k: v for k, v in rollout.items() if isinstance(v, torch.Tensor)}
 
         for i in range(self.settings.experience_replay):
             # Repeat the experience N times
@@ -135,7 +139,6 @@ class PolicyGradientReinforcer(ReinforcerBase):
 
             for sub_indices in np.array_split(indices, batch_splits):
                 batch_rollout = {k: v[sub_indices] for k, v in rollout_tensors.items()}
-                output_data_dict = {}
 
                 batch_info.optimizer.zero_grad()
 
@@ -144,7 +147,6 @@ class PolicyGradientReinforcer(ReinforcerBase):
                     device=self.device,
                     model=self.model,
                     rollout=batch_rollout,
-                    data_dict=output_data_dict
                 )
 
                 loss.backward()
@@ -156,24 +158,23 @@ class PolicyGradientReinforcer(ReinforcerBase):
                         max_norm=self.settings.max_grad_norm
                     )
 
-                    output_data_dict['grad_norm'] = torch.tensor(grad_norm).to(self.device)
+                    gradient_norms.append(grad_norm)
 
                 batch_info.optimizer.step(closure=None)
-
-                data_dict_accumulator.append(output_data_dict)
 
         batch_info['frames'] = torch.tensor(rollout_size).to(self.device)
         batch_info['episode_infos'] = rollout['episode_information']
         batch_info['advantage_norm'] = torch.norm(rollout['advantages'])
         batch_info['values'] = rollout['values']
         batch_info['rewards'] = rollout['discounted_rewards']
+        batch_info['grad_norm'] = torch.tensor(np.mean(gradient_norms)).to(self.device)
 
         # Put in aggregated
-        data_dict_keys = {y for x in data_dict_accumulator for y in x.keys()}
+        data_dict_keys = {y for x in batch_info['policy_gradient_data'] for y in x.keys()}
 
         for key in data_dict_keys:
             # Just average all the statistics from the loss function
-            batch_info[key] = torch.mean(torch.stack([d[key] for d in data_dict_accumulator]))
+            batch_info[key] = torch.mean(torch.stack([d[key] for d in batch_info['policy_gradient_data']]))
 
 
 class PolicyGradientReinforcerFactory(ReinforcerFactory):

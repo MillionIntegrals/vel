@@ -24,7 +24,7 @@ class PpoPolicyGradient(PolicyGradientBase):
         else:
             raise NotImplementedError
 
-    def calculate_loss(self, batch_info, device, model, rollout, data_dict):
+    def calculate_loss(self, batch_info, device, model, rollout):
         """ Calculate loss of the supplied rollout """
 
         observations = rollout['observations']
@@ -68,11 +68,13 @@ class PpoPolicyGradient(PolicyGradientBase):
             approx_kl_divergence = 0.5 * torch.mean((eval_neglogps - rollout_neglogps))
             clip_fraction = torch.mean((torch.abs(ratio - 1.0) > current_cliprange).to(dtype=torch.float))
 
-        data_dict['policy_loss'] = policy_gradient_loss
-        data_dict['value_loss'] = value_loss
-        data_dict['policy_entropy'] = policy_entropy
-        data_dict['approx_kl_divergence'] = approx_kl_divergence
-        data_dict['clip_fraction'] = clip_fraction
+        batch_info['policy_gradient_data'].append({
+            'policy_loss': policy_gradient_loss,
+            'value_loss': value_loss,
+            'policy_entropy': policy_entropy,
+            'approx_kl_divergence': approx_kl_divergence,
+            'clip_fraction': clip_fraction
+        })
 
         return loss_value
 

@@ -11,7 +11,7 @@ class A2CPolicyGradient(PolicyGradientBase):
         self.entropy_coefficient = entropy_coefficient
         self.value_coefficient = value_coefficient
 
-    def calculate_loss(self, batch_info, device, model, rollout, data_dict):
+    def calculate_loss(self, batch_info, device, model, rollout):
         """ Calculate loss of the supplied rollout """
         observations = rollout['observations']
         discounted_rewards = rollout['discounted_rewards']
@@ -30,9 +30,11 @@ class A2CPolicyGradient(PolicyGradientBase):
             policy_gradient_loss - self.entropy_coefficient * policy_entropy + self.value_coefficient * value_loss
         )
 
-        data_dict['policy_loss'] = policy_gradient_loss
-        data_dict['value_loss'] = value_loss
-        data_dict['policy_entropy'] = policy_entropy
+        batch_info['policy_gradient_data'].append({
+            'policy_loss': policy_gradient_loss,
+            'value_loss': value_loss,
+            'policy_entropy': policy_entropy
+        })
 
         return loss_value
 
