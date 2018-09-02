@@ -4,7 +4,7 @@ import numpy as np
 import numpy.testing as nt
 
 from vel.exceptions import VelException
-from vel.rl.reinforcers.dqn.buffers.deque_buffer import DequeBufferBackend
+from vel.rl.buffers.deque_backend import DequeBufferBackend
 
 
 def get_half_filled_buffer():
