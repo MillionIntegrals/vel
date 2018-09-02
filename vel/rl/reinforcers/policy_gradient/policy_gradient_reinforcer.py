@@ -37,7 +37,6 @@ class PolicyGradientBase:
 @dataclass
 class PolicyGradientSettings:
     """ Settings dataclass for a policy gradient reinforcer """
-    policy_gradient: PolicyGradientBase
     number_of_steps: int
     discount_factor: float
     max_grad_norm: float = None
@@ -49,7 +48,7 @@ class PolicyGradientSettings:
 class PolicyGradientReinforcer(ReinforcerBase):
     """ Train network using a policy gradient algorithm """
     def __init__(self, device: torch.device, settings: PolicyGradientSettings, env: VecEnv, model: Model,
-                 env_roller: EnvRollerBase) -> None:
+                 policy_gradient: PolicyGradientBase, env_roller: EnvRollerBase) -> None:
         self.device = device
         self.settings = settings
 
@@ -58,7 +57,8 @@ class PolicyGradientReinforcer(ReinforcerBase):
 
         self.env_roller = env_roller
 
-        self.settings.policy_gradient.initialize(self.settings)
+        self.policy_gradient = policy_gradient
+        self.policy_gradient.initialize(self.settings)
 
     def metrics(self) -> list:
         """ List of metrics to track for this learning process """
@@ -76,7 +76,7 @@ class PolicyGradientReinforcer(ReinforcerBase):
         if self.settings.max_grad_norm is not None:
             my_metrics.append(AveragingNamedMetric("grad_norm"))
 
-        return my_metrics + self.settings.policy_gradient.metrics()
+        return my_metrics + self.policy_gradient.metrics()
 
     @property
     def model(self) -> Model:
@@ -142,7 +142,7 @@ class PolicyGradientReinforcer(ReinforcerBase):
 
                 batch_info.optimizer.zero_grad()
 
-                loss = self.settings.policy_gradient.calculate_loss(
+                loss = self.policy_gradient.calculate_loss(
                     batch_info=batch_info,
                     device=self.device,
                     model=self.model,
@@ -182,12 +182,15 @@ class PolicyGradientReinforcer(ReinforcerBase):
 class PolicyGradientReinforcerFactory(ReinforcerFactory):
     """ Vel factory class for the PolicyGradientReinforcer """
     def __init__(self, settings, env_factory: VecEnvFactory, model_factory: ModelFactory,
-                 env_roller_factory: EnvRollerFactory, parallel_envs: int, seed: int):
+                 policy_gradient: PolicyGradientBase, env_roller_factory: EnvRollerFactory,
+                 parallel_envs: int, seed: int):
+
         self.settings = settings
 
-        self.env_roller_factory = env_roller_factory
-        self.model_factory = model_factory
         self.env_factory = env_factory
+        self.model_factory = model_factory
+        self.policy_gradient = policy_gradient
+        self.env_roller_factory = env_roller_factory
         self.parallel_envs = parallel_envs
         self.seed = seed
 
@@ -196,4 +199,4 @@ class PolicyGradientReinforcerFactory(ReinforcerFactory):
         model = self.model_factory.instantiate(action_space=env.action_space)
         env_roller = self.env_roller_factory.instantiate(environment=env, device=device, settings=self.settings)
 
-        return PolicyGradientReinforcer(device, self.settings, env, model, env_roller)
+        return PolicyGradientReinforcer(device, self.settings, env, model, self.policy_gradient, env_roller)
