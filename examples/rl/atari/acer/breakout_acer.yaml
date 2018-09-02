@@ -25,8 +25,7 @@ reinforcer:
   env_roller:
     name: vel.rl.env_roller.replay_q_env_roller
     buffer_capacity: 50_000
-#    buffer_initial_size: 10_000
-    buffer_initial_size: 100 # Set it to low value for debugging purposes
+    buffer_initial_size: 10_000
     # Because env has a framestack already built-in, save memory by encoding only last frames in the replay buffer
     frame_stack_compensation: 4
 
