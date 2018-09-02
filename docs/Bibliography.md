@@ -26,19 +26,19 @@ on this library:
   
 ### Deep Q-Learning
 
-- (2015) **Human-level control through deep reinforcement learning**
+- (Feb 2015) **Human-level control through deep reinforcement learning**
   Mnih, Volodymyr and Kavukcuoglu, Koray and Silver, David and Rusu, Andrei A. and Veness, Joel and Bellemare, Marc G. and Graves, Alex and Riedmiller, Martin and Fidjeland, Andreas K. and Ostrovski, Georg and Petersen, Stig and Beattie, Charles and Sadik, Amir and Antonoglou, Ioannis and King, Helen and Kumaran, Dharshan and Wierstra, Daan and Legg, Shane and Hassabis, Demis
   https://www.nature.com/articles/nature14236
   
-- (2015) **Deep Reinforcement Learning with Double Q-learning**
+- (Sep 2015) **Deep Reinforcement Learning with Double Q-learning**
   Hado van Hasselt and Arthur Guez and David Silver
   http://arxiv.org/abs/1509.06461
   
-- (2015) **Prioritized Experience Replay**
+- (Nov 2015) **Prioritized Experience Replay**
   Tom Schaul and John Quan and Ioannis Antonoglou and David Silver
   http://arxiv.org/abs/1511.05952
   
-- (2015) **Dueling Network Architectures for Deep Reinforcement Learning**
+- (Nov 2015) **Dueling Network Architectures for Deep Reinforcement Learning**
   Ziyu Wang and Nando de Freitas and Marc Lanctot
   http://arxiv.org/abs/1511.06581
   
@@ -46,15 +46,28 @@ on this library:
 ### Policy gradient methods
 
 
+- (2012) **Off-Policy Actor-Critic**
+  Thomas Degris and Martha White and Richard S. Sutton
+  http://arxiv.org/abs/1205.4839
+  
+  
 - (2015) **High-Dimensional Continuous Control Using Generalized Advantage Estimation**
   John Schulman and Philipp Moritz and Sergey Levine and Michael I. Jordan and Pieter Abbeel
   http://arxiv.org/abs/1506.02438
 
-- (2016) **Asynchronous Methods for Deep Reinforcement Learning**
+- (Feb 2016) **Asynchronous Methods for Deep Reinforcement Learning**
   Volodymyr Mnih and Adria Puigdomenech Badia and
   Mehdi Mirza and Alex Graves and Timothy P. Lillicrap and Tim Harley and
   David Silver and Koray Kavukcuoglu
   https://arxiv.org/abs/1602.01783
+  
+- (Jun 2016) **Safe and Efficient Off-Policy Reinforcement Learning**
+  Remi Munos and Tom Stepleton and Anna Harutyunyan and Marc G. Bellemare
+  http://arxiv.org/abs/1606.02647
+  
+- (Nov 2016) **Sample Efficient Actor-Critic with Experience Replay**
+  Ziyu Wang and Victor Bapst and Nicolas Heess and Volodymyr Mnih and Remi Munos and Koray Kavukcuoglu and Nando de Freitas
+  http://arxiv.org/abs/1611.01224
   
   
 - (2017) **Proximal Policy Optimization Algorithms**

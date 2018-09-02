@@ -10,7 +10,7 @@ class EnvRollerBase:
 class ReplayEnvRollerBase(EnvRollerBase):
     """ Class generating environment rollouts with experience replay """
 
-    def sample(self, batch_info, batch_size) -> dict:
+    def sample(self, batch_info, batch_size, model) -> dict:
         """ Sample experience from replay buffer and return a batch """
         raise NotImplementedError
 

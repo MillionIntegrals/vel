@@ -167,9 +167,11 @@ class PolicyGradientReinforcer(ReinforcerBase):
         batch_info['advantage_norm'] = torch.norm(rollout['advantages'])
         batch_info['values'] = rollout['values']
         batch_info['rewards'] = rollout['discounted_rewards']
-        batch_info['grad_norm'] = torch.tensor(np.mean(gradient_norms)).to(self.device)
 
-        # Put in aggregated
+        if self.settings.max_grad_norm is not None:
+            batch_info['grad_norm'] = torch.tensor(np.mean(gradient_norms)).to(self.device)
+
+        # Aggregate policy gradient data
         data_dict_keys = {y for x in batch_info['policy_gradient_data'] for y in x.keys()}
 
         for key in data_dict_keys:

@@ -4,6 +4,15 @@ import numpy as np
 from vel.exceptions import VelException
 
 
+def take_along_axis(large_array, indexes):
+    """ Take along axis """
+    # Reshape indexes into the right shape
+    if len(large_array.shape) > len(indexes.shape):
+        indexes = indexes.reshape(indexes.shape + tuple([1] * (len(large_array.shape) - len(indexes.shape))))
+
+    return np.take_along_axis(large_array, indexes, axis=0)
+
+
 class DequeMultiEnvBufferBackend:
     """ Simple backend behind DequeBuffer - version supporting multiple environments """
 
@@ -36,7 +45,7 @@ class DequeMultiEnvBufferBackend:
             )
 
         self.action_buffer = np.zeros([self.buffer_capacity, self.num_envs], dtype=action_space.dtype)
-        self.reward_buffer = np.zeros([self.buffer_capacity, self.num_envs], dtype=float)
+        self.reward_buffer = np.zeros([self.buffer_capacity, self.num_envs], dtype=np.float32)
         self.dones_buffer = np.zeros([self.buffer_capacity, self.num_envs], dtype=bool)
 
         # One list per environment
@@ -131,9 +140,9 @@ class DequeMultiEnvBufferBackend:
                     self.get_frame_with_future(frame_idx, env_idx, history_length)
                 )
 
-        actions = np.take_along_axis(self.action_buffer, indexes, axis=0)
-        rewards = np.take_along_axis(self.reward_buffer, indexes, axis=0)
-        dones = np.take_along_axis(self.dones_buffer, indexes, axis=0)
+        actions = take_along_axis(self.action_buffer, indexes)
+        rewards = take_along_axis(self.reward_buffer, indexes)
+        dones = take_along_axis(self.dones_buffer, indexes)
 
         data_dict = {
             'states': past_frame_buffer,
@@ -144,7 +153,7 @@ class DequeMultiEnvBufferBackend:
         }
 
         for name in self.extra_data:
-            data_dict[name] = np.take_along_axis(self.extra_data[name], indexes, axis=0)
+            data_dict[name] = take_along_axis(self.extra_data[name], indexes)
 
         return data_dict
 
