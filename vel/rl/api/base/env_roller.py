@@ -18,10 +18,22 @@ class ReplayEnvRollerBase(EnvRollerBase):
         """ If buffer is ready for drawing samples from it (usually checks if there is enough data) """
         raise NotImplementedError
 
+    def update(self, sample, errors):
+        """ Perform update of the internal state of the buffer - e.g. for the prioritized replay weights """
+        pass
+
 
 class EnvRollerFactory:
     """ Factory for env rollers """
 
     def instantiate(self, environment, device, settings) -> EnvRollerBase:
+        """ Instantiate env roller """
+        raise NotImplementedError
+
+
+class ReplayEnvRollerFactory(EnvRollerFactory):
+    """ Factory for env rollers """
+
+    def instantiate(self, environment, device, settings) -> ReplayEnvRollerBase:
         """ Instantiate env roller """
         raise NotImplementedError

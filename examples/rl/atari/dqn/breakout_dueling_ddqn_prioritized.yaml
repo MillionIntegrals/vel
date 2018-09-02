@@ -15,8 +15,8 @@ reinforcer:
   name: vel.rl.reinforcers.dqn
   double_dqn: true
 
-  buffer:
-    name: vel.rl.reinforcers.dqn.buffers.prioritized_replay_buffer
+  env_roller:
+    name: vel.rl.env_roller.prioritized_replay_q_roller
     buffer_capacity: 250_000
     buffer_initial_size: 30_000
     frame_stack: 4
@@ -25,7 +25,7 @@ reinforcer:
       name: vel.schedules.linear
       initial_value: 0.4
       final_value: 1.0
-    epsilon: 1.0e-6
+    priority_epsilon: 1.0e-6
 
   epsilon_schedule:
     name: vel.schedules.linear_and_constant

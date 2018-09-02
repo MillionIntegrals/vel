@@ -15,8 +15,8 @@ reinforcer:
   name: vel.rl.reinforcers.dqn
   double_dqn: true
 
-  buffer:
-    name: vel.rl.reinforcers.dqn.buffers.deque_buffer
+  env_roller:
+    name: vel.rl.env_roller.deque_replay_q_roller
     buffer_capacity: 250_000
     buffer_initial_size: 30_000
     frame_stack: 4

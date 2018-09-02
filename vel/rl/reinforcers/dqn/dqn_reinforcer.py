@@ -11,39 +11,16 @@ import torch.nn.functional as F
 from vel.api import BatchInfo, EpochInfo
 from vel.api.base import Model, ModelFactory, Schedule
 from vel.api.metrics import AveragingNamedMetric
-from vel.rl.api.base import ReinforcerBase, ReinforcerFactory, EnvFactory
+from vel.rl.api.base import ReinforcerBase, ReinforcerFactory, EnvFactory, ReplayEnvRollerBase
+from vel.rl.api.base.env_roller import ReplayEnvRollerFactory
 from vel.rl.metrics import (
     FPSMetric, EpisodeLengthMetric, EpisodeRewardMetricQuantile, EpisodeRewardMetric, FramesMetric
 )
 
 
-class DqnBufferBase:
-    """ Base class for DQN buffers """
-    def initialize(self, environment: gym.Env, device: torch.device):
-        """ Initialze buffer for operation """
-        raise NotImplementedError
-
-    def rollout(self, environment: gym.Env, model: Model, epsilon_value: float) -> dict:
-        """ Evaluate model and proceed one step forward with the environment. Store result in the replay buffer """
-        raise NotImplementedError
-
-    def sample(self, batch_info, batch_size) -> dict:
-        """ Calculate random sample from the replay buffer """
-        raise NotImplementedError
-
-    def is_ready(self) -> bool:
-        """ If buffer is ready for training """
-        raise NotImplementedError
-
-    def update(self, sample, errors):
-        """ If buffer is ready for training """
-        pass
-
-
 @dataclass
 class DqnReinforcerSettings:
     """ Settings class for deep Q-Learning """
-    buffer: DqnBufferBase
     epsilon_schedule: Schedule
 
     train_frequency: int
@@ -62,7 +39,7 @@ class DqnReinforcer(ReinforcerBase):
     "Human-level control through deep reinforcement learning"
     """
     def __init__(self, device, settings: DqnReinforcerSettings, environment: gym.Env, train_model: Model,
-                 target_model: Model):
+                 target_model: Model, env_roller: ReplayEnvRollerBase):
         self.device = device
         self.settings = settings
         self.environment = environment
@@ -70,10 +47,8 @@ class DqnReinforcer(ReinforcerBase):
         self.train_model = train_model.to(self.device)
         self.target_model = target_model.to(self.device)
 
-        self.buffer = self.settings.buffer
-
-        self.buffer.initialize(self.environment, self.device)
         self.last_observation = self.environment.reset()
+        self.env_roller = env_roller
 
     def metrics(self) -> list:
         """ List of metrics to track for this learning process """
@@ -137,14 +112,14 @@ class DqnReinforcer(ReinforcerBase):
 
         # 2. Choose and evaluate actions, roll out env
         # For the whole initialization epsilon will stay fixed, because the network is not learning either way
-        epsilon_value = self.settings.epsilon_schedule.value(batch_info['progress'])
+        batch_info['epsilon_value'] = self.settings.epsilon_schedule.value(batch_info['progress'])
 
         frames = 0
 
         with torch.no_grad():
-            if not self.buffer.is_ready():
-                while not self.buffer.is_ready():
-                    maybe_episode_info = self.buffer.rollout(self.environment, self.model, epsilon_value)
+            if not self.env_roller.is_ready_for_sampling():
+                while not self.env_roller.is_ready_for_sampling():
+                    maybe_episode_info = self.env_roller.rollout(batch_info, self.model)
 
                     if maybe_episode_info is not None:
                         episode_information.append(maybe_episode_info)
@@ -152,7 +127,7 @@ class DqnReinforcer(ReinforcerBase):
                     frames += 1
             else:
                 for i in range(self.settings.train_frequency):
-                    maybe_episode_info = self.buffer.rollout(self.environment, self.model, epsilon_value)
+                    maybe_episode_info = self.env_roller.rollout(batch_info, self.model)
 
                     if maybe_episode_info is not None:
                         episode_information.append(maybe_episode_info)
@@ -163,7 +138,7 @@ class DqnReinforcer(ReinforcerBase):
         self.model.train()
         batch_info.optimizer.zero_grad()
 
-        batch_sample = self.buffer.sample(batch_info, self.settings.batch_size)
+        batch_sample = self.env_roller.sample(batch_info, self.settings.batch_size, self.model)
 
         observation_tensor = torch.from_numpy(batch_sample['states']).to(self.device)
         observation_tensor_tplus1 = torch.from_numpy(batch_sample['states+1']).to(self.device)
@@ -194,7 +169,7 @@ class DqnReinforcer(ReinforcerBase):
 
         loss.backward()
 
-        self.buffer.update(batch_sample, original_losses.detach().cpu().numpy())
+        self.env_roller.update(batch_sample, original_losses.detach().cpu().numpy())
 
         if self.settings.max_grad_norm is not None:
             grad_norm = torch.nn.utils.clip_grad_norm_(
@@ -209,7 +184,7 @@ class DqnReinforcer(ReinforcerBase):
         batch_info['frames'] = torch.tensor(frames).to(self.device)
         batch_info['episode_infos'] = episode_information
         batch_info['loss'] = loss
-        batch_info['epsilon'] = torch.tensor(epsilon_value).to(self.device)
+        batch_info['epsilon'] = torch.tensor(batch_info['epsilon_value']).to(self.device)
         batch_info['average_q_selected'] = torch.mean(q_selected)
         batch_info['average_q_target'] = torch.mean(expected_q)
 
@@ -220,16 +195,19 @@ class DqnReinforcer(ReinforcerBase):
 class DqnReinforcerFactory(ReinforcerFactory):
     """ Factory class for the DQN reinforcer """
 
-    def __init__(self, settings, env_factory: EnvFactory, model_factory: ModelFactory, seed: int):
+    def __init__(self, settings, env_factory: EnvFactory, model_factory: ModelFactory,
+                 env_roller_factory: ReplayEnvRollerFactory, seed: int):
         self.settings = settings
 
         self.env_factory = env_factory
         self.model_factory = model_factory
+        self.env_roller_factory = env_roller_factory
         self.seed = seed
 
     def instantiate(self, device: torch.device) -> DqnReinforcer:
         env = self.env_factory.instantiate(seed=self.seed)
+        env_roller = self.env_roller_factory.instantiate(env, device, self.settings)
 
         train_model = self.model_factory.instantiate(action_space=env.action_space)
         target_model = self.model_factory.instantiate(action_space=env.action_space)
-        return DqnReinforcer(device, self.settings, env, train_model, target_model)
+        return DqnReinforcer(device, self.settings, env, train_model, target_model, env_roller=env_roller)

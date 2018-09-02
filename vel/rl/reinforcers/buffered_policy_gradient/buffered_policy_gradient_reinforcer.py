@@ -9,7 +9,8 @@ from vel.api import EpochInfo, BatchInfo
 from vel.api.base import Model, ModelFactory
 from vel.api.metrics import AveragingNamedMetric
 from vel.openai.baselines.common.vec_env import VecEnv
-from vel.rl.api.base import ReinforcerBase, ReinforcerFactory, VecEnvFactory, EnvRollerFactory, ReplayEnvRollerBase
+from vel.rl.api.base import ReinforcerBase, ReinforcerFactory, VecEnvFactory, ReplayEnvRollerBase
+from vel.rl.api.base.env_roller import ReplayEnvRollerFactory
 from vel.rl.metrics import (
     FPSMetric, EpisodeLengthMetric, EpisodeRewardMetricQuantile,
     EpisodeRewardMetric, FramesMetric
@@ -184,7 +185,7 @@ class BufferedPolicyGradientReinforcer(ReinforcerBase):
 class BufferedPolicyGradientReinforcerFactory(ReinforcerFactory):
     """ Factory class for the PolicyGradientReplayBuffer factory """
     def __init__(self, settings, env_factory: VecEnvFactory, model_factory: ModelFactory,
-                 env_roller_factory: EnvRollerFactory, policy_gradient: PolicyGradientBase, parallel_envs: int, seed: int):
+                 env_roller_factory: ReplayEnvRollerFactory, policy_gradient: PolicyGradientBase, parallel_envs: int, seed: int):
         self.settings = settings
 
         self.model_factory = model_factory
@@ -194,7 +195,6 @@ class BufferedPolicyGradientReinforcerFactory(ReinforcerFactory):
         self.policy_gradient = policy_gradient
         self.seed = seed
 
-    # noinspection PyTypeChecker
     def instantiate(self, device: torch.device) -> ReinforcerBase:
         env = self.env_factory.instantiate(parallel_envs=self.parallel_envs, seed=self.seed)
         model = self.model_factory.instantiate(action_space=env.action_space)
