@@ -50,8 +50,11 @@ that are ready to run and easy to modify for other similar usecases:
 - State-of-the art results on Cifar10 dataset using residual networks
 - Cats vs dogs classification using transfer learning from a resnet34 model pretrained on 
   ImageNet
-- Actor-Critic (A2C) and Proximal-Policy-Optimization (PPO) policy gradient reinforcement
-  learning algorithms.
+- Advantage Actor-Critic (A2C),
+  Proximal-Policy-Optimization (PPO), 
+  and 
+  Actor-Critic with Experience Replay (ACER)
+  policy gradient reinforcement learning algorithms.
 - Deep Q-Learning (DQN) as described by DeepMind in their Nature publication with following 
   improvements: Double DQN, Dueling DQN, Prioritized experience replay.
 
