@@ -112,7 +112,7 @@ class BufferedPolicyGradientReinforcer(ReinforcerBase):
             for i in range(experience_replay_count):
                 self.off_policy_train_batch(batch_info)
 
-        if self.settings.max_grad_norm is not None:
+        if batch_info['gradient_norms']:
             batch_info['grad_norm'] = torch.tensor(np.mean(batch_info['gradient_norms'])).to(self.device)
 
         # Aggregate policy gradient data
@@ -129,57 +129,31 @@ class BufferedPolicyGradientReinforcer(ReinforcerBase):
         rollout = self.env_roller.rollout(batch_info, self.model)
 
         self.model.train()
-        batch_info.optimizer.zero_grad()
 
-        loss = self.policy_gradient.calculate_loss(
+        self.policy_gradient.optimizer_step(
             batch_info=batch_info,
             device=self.device,
             model=self.model,
             rollout=rollout
         )
-
-        loss.backward()
-
-        # Gradient clipping
-        if self.settings.max_grad_norm is not None:
-            grad_norm = torch.nn.utils.clip_grad_norm_(
-                filter(lambda p: p.requires_grad, self.model.parameters()),
-                max_norm=self.settings.max_grad_norm
-            )
-
-            batch_info['gradient_norms'].append(grad_norm)
-
-        batch_info.optimizer.step(closure=None)
 
         batch_info['frames'] = torch.tensor(rollout['observations'].size(0)).to(self.device)
         batch_info['episode_infos'] = rollout['episode_information']
 
     def off_policy_train_batch(self, batch_info: BatchInfo):
         """ Perform an 'off-policy' training step of sampling the replay buffer and gradient descent """
+        self.model.eval()
+
         rollout = self.env_roller.sample(batch_info, self.settings.number_of_steps, self.model)
 
         self.model.train()
-        batch_info.optimizer.zero_grad()
 
-        loss = self.policy_gradient.calculate_loss(
+        self.policy_gradient.optimizer_step(
             batch_info=batch_info,
             device=self.device,
             model=self.model,
             rollout=rollout
         )
-
-        loss.backward()
-
-        # Gradient clipping
-        if self.settings.max_grad_norm is not None:
-            grad_norm = torch.nn.utils.clip_grad_norm_(
-                filter(lambda p: p.requires_grad, self.model.parameters()),
-                max_norm=self.settings.max_grad_norm
-            )
-
-            batch_info['gradient_norms'].append(grad_norm)
-
-        batch_info.optimizer.step(closure=None)
 
 
 class BufferedPolicyGradientReinforcerFactory(ReinforcerFactory):

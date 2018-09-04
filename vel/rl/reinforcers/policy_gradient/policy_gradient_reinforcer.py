@@ -11,27 +11,12 @@ from vel.api.base import Model, ModelFactory
 from vel.api.metrics import AveragingNamedMetric
 from vel.api.info import EpochInfo, BatchInfo
 from vel.openai.baselines.common.vec_env import VecEnv
+from vel.rl.reinforcers.policy_gradient.policy_gradient_base import PolicyGradientBase
 from vel.rl.api.base import ReinforcerBase, ReinforcerFactory, VecEnvFactory, EnvRollerFactory, EnvRollerBase
 from vel.rl.metrics import (
     FPSMetric, EpisodeLengthMetric, EpisodeRewardMetricQuantile, ExplainedVariance,
     EpisodeRewardMetric, FramesMetric
 )
-
-
-class PolicyGradientBase:
-    """ Base class for policy gradient calculations """
-
-    def initialize(self, settings):
-        """ Initialize policy gradient from reinforcer settings """
-        pass
-
-    def calculate_loss(self, batch_info, device, model, rollout):
-        """ Calculate loss of the supplied rollout """
-        raise NotImplementedError
-
-    def metrics(self) -> list:
-        """ List of metrics to track for this learning process """
-        return []
 
 
 @dataclass
@@ -40,7 +25,6 @@ class PolicyGradientSettings:
     number_of_steps: int
     discount_factor: float
     max_grad_norm: float = None
-    gae_lambda: float = 1.0
     batch_size: int = 256
     experience_replay: int = 1
 
@@ -129,7 +113,7 @@ class PolicyGradientReinforcer(ReinforcerBase):
 
         # All policy gradient data will be put here
         batch_info['policy_gradient_data'] = []
-        gradient_norms = []
+        batch_info['gradient_norms'] = []
 
         rollout_tensors = {k: v for k, v in rollout.items() if isinstance(v, torch.Tensor)}
 
@@ -140,27 +124,12 @@ class PolicyGradientReinforcer(ReinforcerBase):
             for sub_indices in np.array_split(indices, batch_splits):
                 batch_rollout = {k: v[sub_indices] for k, v in rollout_tensors.items()}
 
-                batch_info.optimizer.zero_grad()
-
-                loss = self.policy_gradient.calculate_loss(
+                self.policy_gradient.optimizer_step(
                     batch_info=batch_info,
                     device=self.device,
                     model=self.model,
-                    rollout=batch_rollout,
+                    rollout=batch_rollout
                 )
-
-                loss.backward()
-
-                # Gradient clipping
-                if self.settings.max_grad_norm is not None:
-                    grad_norm = torch.nn.utils.clip_grad_norm_(
-                        filter(lambda p: p.requires_grad, self.model.parameters()),
-                        max_norm=self.settings.max_grad_norm
-                    )
-
-                    gradient_norms.append(grad_norm)
-
-                batch_info.optimizer.step(closure=None)
 
         batch_info['frames'] = torch.tensor(rollout_size).to(self.device)
         batch_info['episode_infos'] = rollout['episode_information']
@@ -168,8 +137,8 @@ class PolicyGradientReinforcer(ReinforcerBase):
         batch_info['values'] = rollout['values']
         batch_info['rewards'] = rollout['discounted_rewards']
 
-        if self.settings.max_grad_norm is not None:
-            batch_info['grad_norm'] = torch.tensor(np.mean(gradient_norms)).to(self.device)
+        if batch_info['gradient_norms']:
+            batch_info['grad_norm'] = torch.tensor(np.mean(batch_info['gradient_norms'])).to(self.device)
 
         # Aggregate policy gradient data
         data_dict_keys = {y for x in batch_info['policy_gradient_data'] for y in x.keys()}

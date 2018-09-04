@@ -1,13 +1,15 @@
 import torch
 import torch.nn.functional as F
 
-from .policy_gradient_reinforcer import PolicyGradientBase
+from vel.rl.reinforcers.policy_gradient.policy_gradient_base import OptimizerPolicyGradientBase
 from vel.api.metrics.averaging_metric import AveragingNamedMetric
 
 
-class A2CPolicyGradient(PolicyGradientBase):
+class A2CPolicyGradient(OptimizerPolicyGradientBase):
     """ Simplest policy gradient - calculate loss as an advantage of an actor versus value function """
-    def __init__(self, entropy_coefficient, value_coefficient):
+    def __init__(self, entropy_coefficient, value_coefficient, max_grad_norm):
+        super().__init__(max_grad_norm)
+
         self.entropy_coefficient = entropy_coefficient
         self.value_coefficient = value_coefficient
 
@@ -47,5 +49,5 @@ class A2CPolicyGradient(PolicyGradientBase):
         ]
 
 
-def create(entropy_coefficient, value_coefficient):
-    return A2CPolicyGradient(entropy_coefficient, value_coefficient)
+def create(entropy_coefficient, value_coefficient, max_grad_norm):
+    return A2CPolicyGradient(entropy_coefficient, value_coefficient, max_grad_norm)

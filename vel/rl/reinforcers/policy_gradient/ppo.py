@@ -1,13 +1,15 @@
 import torch
 import torch.nn.functional as F
 
-from .policy_gradient_reinforcer import PolicyGradientBase
+from vel.rl.reinforcers.policy_gradient.policy_gradient_base import OptimizerPolicyGradientBase
 from vel.api.metrics.averaging_metric import AveragingNamedMetric
 
 
-class PpoPolicyGradient(PolicyGradientBase):
+class PpoPolicyGradient(OptimizerPolicyGradientBase):
     """ Proximal Policy Optimization - https://arxiv.org/abs/1707.06347 """
-    def __init__(self, entropy_coefficient, value_coefficient, cliprange, cliprange_scaling):
+    def __init__(self, entropy_coefficient, value_coefficient, cliprange, cliprange_scaling, max_grad_norm):
+        super().__init__(max_grad_norm)
+
         self.entropy_coefficient = entropy_coefficient
         self.value_coefficient = value_coefficient
 
@@ -89,5 +91,6 @@ class PpoPolicyGradient(PolicyGradientBase):
         ]
 
 
-def create(entropy_coefficient, value_coefficient, cliprange, cliprange_scaling):
-    return PpoPolicyGradient(entropy_coefficient, value_coefficient, cliprange, cliprange_scaling)
+def create(entropy_coefficient, value_coefficient, cliprange, cliprange_scaling, max_grad_norm):
+    # TODO(jerry): make cliprange use schedule
+    return PpoPolicyGradient(entropy_coefficient, value_coefficient, cliprange, cliprange_scaling, max_grad_norm)

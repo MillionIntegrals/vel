@@ -26,6 +26,7 @@ reinforcer:
     name: vel.rl.reinforcers.policy_gradient.a2c
     entropy_coefficient: 0.01
     value_coefficient: 0.5
+    max_grad_norm: 0.5
 
   env_roller:
     name: vel.rl.env_roller.step_env_roller
@@ -33,8 +34,6 @@ reinforcer:
   number_of_steps: 5 # How many environment steps go into a single batch
   parallel_envs: 16 # How many environments to run in parallel
   discount_factor: 0.99
-
-  max_grad_norm: 0.5
 
 
 optimizer:

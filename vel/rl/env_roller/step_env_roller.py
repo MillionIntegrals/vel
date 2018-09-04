@@ -144,14 +144,16 @@ class StepEnvRoller(EnvRollerBase):
 
 class StepEnvRollerFactory(EnvRollerFactory):
     """ Factory for the StepEnvRoller """
+    def __init__(self, gae_lambda=1.0):
+        self.gae_lambda = gae_lambda
 
     def instantiate(self, environment, device, settings):
         return StepEnvRoller(
             environment, device, settings.number_of_steps, settings.discount_factor,
-            gae_lambda=settings.gae_lambda
+            gae_lambda=self.gae_lambda
         )
 
 
-def create():
-    return StepEnvRollerFactory()
+def create(gae_lambda=1.0):
+    return StepEnvRollerFactory(gae_lambda=gae_lambda)
 

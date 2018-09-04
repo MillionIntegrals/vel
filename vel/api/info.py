@@ -245,3 +245,6 @@ class BatchInfo(abc.MutableMapping):
 
     def __contains__(self, item):
         return item in self.data_dict
+
+    def __repr__(self):
+        return f"[BatchInfo epoch:{self.epoch_info.global_epoch_idx} batch:{self.batch_number}/{self.batches_per_epoch}]"

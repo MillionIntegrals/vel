@@ -145,7 +145,6 @@ class ReplayQEnvRoller(ReplayEnvRollerBase):
 
         action_logits_tensor = self._to_tensor(rollout['action_logits'])
 
-        model.eval()
         final_values = model.value(self._to_tensor(rollout['states+1'][-1]))
 
         return {

@@ -2,7 +2,7 @@ import torch
 import torch.nn.functional as F
 
 from vel.api.metrics.averaging_metric import AveragingNamedMetric
-from vel.rl.reinforcers.policy_gradient.policy_gradient_reinforcer import PolicyGradientBase
+from vel.rl.reinforcers.policy_gradient.policy_gradient_base import OptimizerPolicyGradientBase
 
 
 def select_indices(tensor, indices):
@@ -10,12 +10,12 @@ def select_indices(tensor, indices):
     return tensor.gather(1, indices.unsqueeze(1)).squeeze()
 
 
-class AcerPolicyGradient(PolicyGradientBase):
+class AcerPolicyGradient(OptimizerPolicyGradientBase):
     """ Actor-Critic with Experience Replay - policy gradient calculations """
 
     def __init__(self, entropy_coefficient: float=0.01, q_coefficient: float=0.5,
-                 rho_cap: float=10.0, retrace_rho_cap: float=1.0):
-        super().__init__()
+                 rho_cap: float=10.0, retrace_rho_cap: float=1.0, max_grad_norm: float=None):
+        super().__init__(max_grad_norm)
 
         self.discount_factor = None
         self.number_of_steps = None
@@ -141,10 +141,11 @@ class AcerPolicyGradient(PolicyGradientBase):
         ]
 
 
-def create(entropy_coefficient, q_coefficient, rho_cap=10.0, retrace_rho_cap=1.0):
+def create(entropy_coefficient, q_coefficient, max_grad_norm, rho_cap=10.0, retrace_rho_cap=1.0):
     return AcerPolicyGradient(
         entropy_coefficient=entropy_coefficient,
         q_coefficient=q_coefficient,
         rho_cap=rho_cap,
-        retrace_rho_cap=retrace_rho_cap
+        retrace_rho_cap=retrace_rho_cap,
+        max_grad_norm=max_grad_norm
     )
