@@ -77,7 +77,10 @@ class AcerPolicyGradient(OptimizerPolicyGradientBase):
             bias_correction_coefficient = F.relu(1.0 - self.rho_cap / (rho + local_epsilon))
 
         # This sum is an expectation with respect to action probabilities according to model policy
-        policy_gradient_bias_correction_gain = torch.sum(action_logits * bias_correction_coefficient * advantages_bias_correction * model_probabilities, dim=1)
+        policy_gradient_bias_correction_gain = torch.sum(
+            action_logits * bias_correction_coefficient * advantages_bias_correction * model_probabilities,
+            dim=1
+        )
 
         policy_gradient_bias_correction = - torch.mean(policy_gradient_bias_correction_gain)
 
