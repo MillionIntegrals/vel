@@ -39,8 +39,12 @@ class OptimizerPolicyGradientBase(PolicyGradientBase):
                 filter(lambda p: p.requires_grad, model.parameters()),
                 max_norm=self.max_grad_norm
             )
+        else:
+            grad_norm = 0.0
 
-            batch_info['gradient_norms'].append(grad_norm)
+        # Add gradient norm to the policy gradient data
+        if batch_info['policy_gradient_data']:
+            batch_info['policy_gradient_data'][-1]['grad_norm'] = torch.tensor(grad_norm)
 
         batch_info.optimizer.step(closure=None)
 

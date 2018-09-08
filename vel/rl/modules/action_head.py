@@ -52,3 +52,12 @@ class ActionHead(nn.Module):
         entropy = - torch.sum(probs * logits, dim=-1)
         return entropy
 
+    def kl_divergence(self, logits_q, logits_p):
+        """
+        Categorical distribution KL divergence calculation
+        KL(Q || P) = sum Q_i log (Q_i / P_i)
+        When talking about logits this is:
+        sum exp(Q_i) * (Q_i - P_i)
+        """
+        return (torch.exp(logits_q) * (logits_q - logits_p)).sum(1, keepdim=True)
+

@@ -45,7 +45,8 @@ class A2CPolicyGradient(OptimizerPolicyGradientBase):
         return [
             AveragingNamedMetric("value_loss"),
             AveragingNamedMetric("policy_entropy"),
-            AveragingNamedMetric("policy_loss")
+            AveragingNamedMetric("policy_loss"),
+            AveragingNamedMetric("grad_norm")
         ]
 
 

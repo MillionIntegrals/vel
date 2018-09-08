@@ -23,7 +23,6 @@ class BufferedPolicyGradientSettings:
     """ Settings dataclass for a policy gradient reinforcer """
     number_of_steps: int
     discount_factor: float
-    max_grad_norm: float = None
     gae_lambda: float = 1.0
     batch_size: int = 256
     experience_replay: int = 1
@@ -54,11 +53,8 @@ class BufferedPolicyGradientReinforcer(ReinforcerBase):
             EpisodeRewardMetric('PMM:episode_rewards'),
             EpisodeRewardMetricQuantile('P09:episode_rewards', quantile=0.9),
             EpisodeRewardMetricQuantile('P01:episode_rewards', quantile=0.1),
-            EpisodeLengthMetric("episode_length"),
+            EpisodeLengthMetric("episode_length")
         ]
-
-        if self.settings.max_grad_norm is not None:
-            my_metrics.append(AveragingNamedMetric("grad_norm"))
 
         return my_metrics + self.policy_gradient.metrics()
 
@@ -98,7 +94,6 @@ class BufferedPolicyGradientReinforcer(ReinforcerBase):
 
     def train_batch(self, batch_info: BatchInfo):
         """ Single, most atomic 'step' of learning this reinforcer can perform """
-        batch_info['gradient_norms'] = []
         batch_info['policy_gradient_data'] = []
 
         self.on_policy_train_batch(batch_info)
@@ -111,9 +106,6 @@ class BufferedPolicyGradientReinforcer(ReinforcerBase):
 
             for i in range(experience_replay_count):
                 self.off_policy_train_batch(batch_info)
-
-        if batch_info['gradient_norms']:
-            batch_info['grad_norm'] = torch.tensor(np.mean(batch_info['gradient_norms'])).to(self.device)
 
         # Aggregate policy gradient data
         data_dict_keys = {y for x in batch_info['policy_gradient_data'] for y in x.keys()}

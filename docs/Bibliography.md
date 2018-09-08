@@ -10,16 +10,17 @@ on this library:
   Geoff Hinton
   http://www.cs.toronto.edu/~tijmen/csc321/slides/lecture_slides_lec6.pdf
 
-- (2015) **Cyclical Learning Rates for Training Neural Networks**
+- (Jun 2015) **Cyclical Learning Rates for Training Neural Networks**
   Leslie N. Smith
   https://arxiv.org/abs/1506.01186
 
 ### Residual Networks
 
-- (2015) **Deep Residual Learning for Image Recognition** 
+- (Dec 2015) **Deep Residual Learning for Image Recognition** 
   Kaiming He and Xiangyu Zhang and Shaoqing Ren and Jian Sun
   http://arxiv.org/abs/1512.03385
-- (2016) **Identity Mappings in Deep Residual Networks** 
+  
+- (Mar 2016) **Identity Mappings in Deep Residual Networks** 
   Kaiming He and Xiangyu Zhang and Shaoqing Ren and Jian Sun
   http://arxiv.org/abs/1603.05027
   
@@ -46,12 +47,16 @@ on this library:
 ### Policy gradient methods
 
 
-- (2012) **Off-Policy Actor-Critic**
+- (May 2012) **Off-Policy Actor-Critic**
   Thomas Degris and Martha White and Richard S. Sutton
   http://arxiv.org/abs/1205.4839
   
+- (Feb 2015) **Trust Region Policy Optimization**
+  John Schulman and Sergey Levine and
+  Philipp Moritz and Michael I. Jordan and Pieter Abbeel
+  https://arxiv.org/abs/1502.05477
   
-- (2015) **High-Dimensional Continuous Control Using Generalized Advantage Estimation**
+- (Jun 2015) **High-Dimensional Continuous Control Using Generalized Advantage Estimation**
   John Schulman and Philipp Moritz and Sergey Levine and Michael I. Jordan and Pieter Abbeel
   http://arxiv.org/abs/1506.02438
 
@@ -69,8 +74,7 @@ on this library:
   Ziyu Wang and Victor Bapst and Nicolas Heess and Volodymyr Mnih and Remi Munos and Koray Kavukcuoglu and Nando de Freitas
   http://arxiv.org/abs/1611.01224
   
-  
-- (2017) **Proximal Policy Optimization Algorithms**
+- (Jul 2017) **Proximal Policy Optimization Algorithms**
   John Schulman and Filip Wolski and Prafulla Dhariwal and Alec Radford and Oleg Klimov
   https://arxiv.org/abs/1707.06347
 
@@ -81,7 +85,8 @@ This repository contains various parts of functionality derived from open source
 in the following repositories:
 
 - https://github.com/fastai/fastai
-- https://github.com/openai/baselines
 - https://github.com/pytorch/pytorch
+- https://github.com/openai/baselines
 - https://github.com/tensorflow/tensorflow
 - https://github.com/Kaixhin/Rainbow
+- https://github.com/Khrylx/PyTorch-RL

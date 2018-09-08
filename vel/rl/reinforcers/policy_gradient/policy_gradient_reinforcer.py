@@ -24,7 +24,6 @@ class PolicyGradientSettings:
     """ Settings dataclass for a policy gradient reinforcer """
     number_of_steps: int
     discount_factor: float
-    max_grad_norm: float = None
     batch_size: int = 256
     experience_replay: int = 1
 
@@ -56,9 +55,6 @@ class PolicyGradientReinforcer(ReinforcerBase):
             AveragingNamedMetric("advantage_norm"),
             ExplainedVariance()
         ]
-
-        if self.settings.max_grad_norm is not None:
-            my_metrics.append(AveragingNamedMetric("grad_norm"))
 
         return my_metrics + self.policy_gradient.metrics()
 
@@ -113,7 +109,6 @@ class PolicyGradientReinforcer(ReinforcerBase):
 
         # All policy gradient data will be put here
         batch_info['policy_gradient_data'] = []
-        batch_info['gradient_norms'] = []
 
         rollout_tensors = {k: v for k, v in rollout.items() if isinstance(v, torch.Tensor)}
 
@@ -136,9 +131,6 @@ class PolicyGradientReinforcer(ReinforcerBase):
         batch_info['advantage_norm'] = torch.norm(rollout['advantages'])
         batch_info['values'] = rollout['values']
         batch_info['rewards'] = rollout['discounted_rewards']
-
-        if batch_info['gradient_norms']:
-            batch_info['grad_norm'] = torch.tensor(np.mean(batch_info['gradient_norms'])).to(self.device)
 
         # Aggregate policy gradient data
         data_dict_keys = {y for x in batch_info['policy_gradient_data'] for y in x.keys()}

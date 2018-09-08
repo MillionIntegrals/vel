@@ -138,6 +138,7 @@ class AcerPolicyGradient(OptimizerPolicyGradientBase):
             AveragingNamedMetric("policy_gradient_loss"),
             AveragingNamedMetric("policy_gradient_bias_correction"),
             AveragingNamedMetric("explained_variance"),
+            AveragingNamedMetric("grad_norm")
         ]
 
 

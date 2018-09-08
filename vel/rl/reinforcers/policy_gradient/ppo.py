@@ -87,7 +87,8 @@ class PpoPolicyGradient(OptimizerPolicyGradientBase):
             AveragingNamedMetric("value_loss"),
             AveragingNamedMetric("policy_entropy"),
             AveragingNamedMetric("approx_kl_divergence"),
-            AveragingNamedMetric("clip_fraction")
+            AveragingNamedMetric("clip_fraction"),
+            AveragingNamedMetric("grad_norm")
         ]
 
 
