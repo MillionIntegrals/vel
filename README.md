@@ -80,6 +80,13 @@ For example, to run the A2C algorithm on a Breakout atari environment, simply in
 python -m vel.launcher examples/rl/atari/a2c/breakout_a2c.yaml train
 ```
 
+If you install the library locally, it will create a script wrapping the launcher for 
+you. Then, above becomes:
+
+```
+vel examples/rl/atari/a2c/breakout_a2c.yaml train
+```
+
 General command line interface of the launcher is:
 
 ```
@@ -88,6 +95,11 @@ python -m vel.launcher CONFIGFILE COMMAND --device PYTORCH_DEVICE -r RUN_NUMBER 
 
 Where `PYTORCH_DEVICE` is a valid name of pytorch device, most likely `cuda:0`.
 Run number is a sequential number you wish to record your results with.
+
+# Docker
+
+Dockerized version of this library is available in from the Docker Hub as
+`millionintegrals/vel`. Link: https://hub.docker.com/r/millionintegrals/vel/
 
 # Glossary
 
