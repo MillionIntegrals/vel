@@ -9,8 +9,14 @@ This repository is my project to bring **velocity** to deep-learning research,
 by providing tried and tested large pool of prebuilt components that are 
 known to be working well together.
 
-I would like to minimize time to market of new projects, ease experimentation
-and provide bits of experiment management to the data science workflow.
+Having conducted a few research projects, I've gathered a small collection of repositories 
+lying around with various models implemented suited to a particular usecase. 
+Usually, starting a new project involved copying bits of code code from 
+one or multiple past experiments and tweaking them until 
+the code worked in a new setting. 
+After repeating that pattern multiple times, I've decided it's time to bite the
+bullet and start organising deep learning models into structure that is meant
+to be actually reused rather than copied over.
 
 Ideally, for most applications it should be enough to write a
 config file wiring existing components together.
@@ -62,22 +68,25 @@ that are ready to run and easy to modify for other similar usecases:
 
 # How to run the examples?
 
-Whole framework is built around the idea of running config files from code. For example,
-to run the Actor-Critic algorithm simply invoke:
+While it is possible to specify your models entirely by code,
+framework tries to encourage you to use config files for that purpose.
+In the `examples` directory, there are defined multiple working config files showcasing
+most popular algorithms with sane default hyperparameters.
+ 
+For example, to run the A2C algorithm on a Breakout atari environment, simply invoke:
 
 ```
 python -m vel.launcher examples/rl/atari/a2c/breakout_a2c.yaml train
 ```
 
-General form of the call is as follows 
-
+General command line interface of the launcher is:
 
 ```
 python -m vel.launcher CONFIGFILE COMMAND --device PYTORCH_DEVICE -r RUN_NUMBER -s SEED
 ```
 
-Where `PYTORCH_DEVICE` is a valid name of pytorch device, most probably `cuda:0`, and run
-number is the sequential number of run you wish to record your results under.
+Where `PYTORCH_DEVICE` is a valid name of pytorch device, most likely `cuda:0`.
+Run number is a sequential number you wish to record your results with.
 
 # Glossary
 
