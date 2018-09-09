@@ -51,7 +51,8 @@ that are ready to run and easy to modify for other similar usecases:
 - Cats vs dogs classification using transfer learning from a resnet34 model pretrained on 
   ImageNet
 - Advantage Actor-Critic (A2C),
-  Proximal-Policy-Optimization (PPO), 
+  Proximal Policy Optimization (PPO), 
+  Trust Region Policy Optimization (TRPO),
   and 
   Actor-Critic with Experience Replay (ACER)
   policy gradient reinforcement learning algorithms.
