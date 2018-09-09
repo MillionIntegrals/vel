@@ -101,6 +101,18 @@ Run number is a sequential number you wish to record your results with.
 Dockerized version of this library is available in from the Docker Hub as
 `millionintegrals/vel`. Link: https://hub.docker.com/r/millionintegrals/vel/
 
+# PyPI
+
+```
+pip install vel
+```
+
+or
+
+```
+pip install vel[gym,mongo,visdom]
+```
+
 # Glossary
 
 For a glossary of terms used in the library please refer to [Glossary](docs/Glossary.md).
