@@ -3,7 +3,7 @@ import torch.nn.utils
 
 class PolicyGradientBase:
     """ Base class for policy gradient calculations """
-    def initialize(self, settings):
+    def initialize(self, settings, environment, device):
         """ Initialize policy gradient from reinforcer settings """
         pass
 

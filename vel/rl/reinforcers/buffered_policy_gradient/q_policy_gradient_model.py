@@ -67,6 +67,10 @@ class QPolicyGradientModel(Model):
         """ Entropy of a probability distribution """
         return self.action_head.entropy(action_logits)
 
+    def kl_divergence(self, logits_q, logits_p):
+        """ Calculate KL-divergence between two probability distributions """
+        return self.action_head.kl_divergence(logits_q, logits_p)
+
 
 class QPolicyGradientModelFactory(ModelFactory):
     """ Factory  class for policy gradient models """

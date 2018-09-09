@@ -43,8 +43,6 @@ class BufferedPolicyGradientReinforcer(ReinforcerBase):
         self.env_roller = env_roller
         self.policy_gradient = policy_gradient
 
-        self.policy_gradient.initialize(self.settings)
-
     def metrics(self) -> list:
         """ List of metrics to track for this learning process """
         my_metrics = [
@@ -66,6 +64,7 @@ class BufferedPolicyGradientReinforcer(ReinforcerBase):
     def initialize_training(self):
         """ Prepare models for training """
         self.model.reset_weights()
+        self.policy_gradient.initialize(self.settings, environment=self.environment, device=self.device)
 
     def train_epoch(self, epoch_info: EpochInfo):
         """ Train model on an epoch of a fixed number of batch updates """

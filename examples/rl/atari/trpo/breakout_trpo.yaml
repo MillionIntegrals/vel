@@ -37,7 +37,7 @@ reinforcer:
     improvement_acceptance_ratio: 0.1
     cg_damping: 0.001
     vf_iters: 3
-    entropy_coef: 0.0
+    entropy_coef: 0.1
     max_grad_norm: 0.5
 
   env_roller:
