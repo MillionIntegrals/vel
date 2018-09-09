@@ -26,7 +26,7 @@ setup(
     packages=find_packages(exclude=["*.tests", "*.tests.*", "tests.*", "tests"]),
     python_requires='>=3.6',
     install_requires=[
-        'attr',
+        'attrs',
         'pyyaml',
         'numpy',
         'pandas',

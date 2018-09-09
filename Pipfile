@@ -4,11 +4,11 @@ verify_ssl = true
 url = "https://pypi.org/simple"
 
 [packages]
+attrs = "*"
 gym = {extras = ["all"]}
 matplotlib = "*"
-mpi4py = "*"
 numpy = "*"
-opencv-python = "*"
+opencv-python = "==3.4.2.17"
 pandas = "*"
 pillow-simd = "*"
 pymongo = "*"
@@ -18,7 +18,6 @@ torch = "==0.4.1"
 torchvision = "*"
 tqdm = "*"
 visdom = "*"
-attrs = "*"
 
 [requires]
 python_version = "3.6"

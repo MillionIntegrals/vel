@@ -5,25 +5,26 @@
 [![GitHub](https://img.shields.io/github/license/mashape/apistatus.svg)](https://github.com/MillionIntegrals/vel/blob/master/LICENSE)
 
 
-This repository is my project to bring **velocity** to deep-learning research,
+Bring **velocity** to deep-learning research,
 by providing tried and tested large pool of prebuilt components that are 
 known to be working well together.
 
 Having conducted a few research projects, I've gathered a small collection of repositories 
-lying around with various models implemented suited to a particular usecase. 
-Usually, starting a new project involved copying bits of code code from 
-one or multiple past experiments and tweaking them until 
-the code worked in a new setting. 
-After repeating that pattern multiple times, I've decided it's time to bite the
-bullet and start organising deep learning models into structure that is meant
-to be actually reused rather than copied over.
+lying around with various model implementations suited to a particular usecase. 
+Usually, starting a new project involved copying pieces of code from 
+one or multiple of these past experiments, gluing, tweaking and debugging
+them until the code started working in a new setting. 
 
-Ideally, for most applications it should be enough to write a
-config file wiring existing components together.
+After repeating that pattern multiple times, I've decided that this is the
+time to bite the bullet and start organising deep learning models
+into a structure that is designed to be reused rather than copied over.
+
+As a goal, for most applications it should be enough to write a
+config file that wires existing components together and defines their hyperparameters.
 If that's not the case few bits of custom glue code should do the job.
 
 This repository is still in an early stage of that journey but it will grow
-as I'll be putting some work into it.
+as I'll be putting work into it.
 
 # Requirements
 

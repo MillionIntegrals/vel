@@ -1,0 +1,19 @@
+storage:
+  name: vel.storage.classic
+
+  backend:
+    name: vel.storage.backend.dummy
+
+  streaming:
+    - name: vel.storage.streaming.stdout
+
+
+checkpoint_strategy:
+  name: vel.storage.strategy.classic_checkpoint_strategy
+
+
+visdom_settings:
+  stream_lr: false
+  server: 'http://localhost'
+  port: 8097
+

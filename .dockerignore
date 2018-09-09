@@ -1,0 +1,11 @@
+**/__pycache__*
+/.git
+/.idea
+/.ipynb_checkpoints
+/data
+/dist
+/local-scripts
+/notebooks
+/output
+/scripts
+/vel.egg-info

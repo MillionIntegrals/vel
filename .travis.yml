@@ -2,14 +2,11 @@ language: "python"
 dist: xenial
 sudo: true
 python:
-  - "3.7"
-#sudo: required
+  - "3.6"
 # Command to install dependencies
 install:
   - sudo apt install libopenmpi-dev swig
-  - pip install http://download.pytorch.org/whl/cpu/torch-0.4.1.post2-cp37-cp37m-linux_x86_64.whl
   - pip install -r travis-requirements.txt
-#  - sudo -H pip install -r requirements.txt
 # Command to run tests
 script:
   - nosetests
