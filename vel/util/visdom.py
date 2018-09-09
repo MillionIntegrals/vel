@@ -1,9 +1,8 @@
+import attr
 import itertools as it
 
-from dataclasses import dataclass
 
-
-@dataclass
+@attr.s(auto_attribs=True)
 class VisdomSettings:
     """ Settings for connecting to the visdom server """
     stream_lr: bool = False

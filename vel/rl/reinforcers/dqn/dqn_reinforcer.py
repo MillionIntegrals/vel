@@ -1,8 +1,7 @@
-import tqdm
-import sys
+import attr
 import numpy as np
-
-from dataclasses import dataclass
+import sys
+import tqdm
 
 import gym
 import torch
@@ -18,7 +17,7 @@ from vel.rl.metrics import (
 )
 
 
-@dataclass
+@attr.s(auto_attribs=True)
 class DqnReinforcerSettings:
     """ Settings class for deep Q-Learning """
     epsilon_schedule: Schedule

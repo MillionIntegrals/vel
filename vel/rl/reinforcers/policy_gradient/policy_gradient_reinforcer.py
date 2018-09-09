@@ -1,9 +1,9 @@
+import attr
 import numpy as np
 import sys
 import torch
 import tqdm
 
-from dataclasses import dataclass
 
 import vel.util.math as math_util
 
@@ -19,7 +19,7 @@ from vel.rl.metrics import (
 )
 
 
-@dataclass
+@attr.s(auto_attribs=True)
 class PolicyGradientSettings:
     """ Settings dataclass for a policy gradient reinforcer """
     number_of_steps: int

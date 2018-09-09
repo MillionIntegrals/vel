@@ -1,9 +1,8 @@
+import attr
+import numpy as np
 import sys
 import torch
 import tqdm
-import numpy as np
-
-from dataclasses import dataclass
 
 from vel.api import EpochInfo, BatchInfo
 from vel.api.base import Model, ModelFactory
@@ -18,7 +17,7 @@ from vel.rl.metrics import (
 from vel.rl.reinforcers.policy_gradient.policy_gradient_reinforcer import PolicyGradientBase
 
 
-@dataclass
+@attr.s(auto_attribs=True)
 class BufferedPolicyGradientSettings:
     """ Settings dataclass for a policy gradient reinforcer """
     number_of_steps: int

@@ -4,22 +4,24 @@ verify_ssl = true
 url = "https://pypi.org/simple"
 
 [packages]
-pyyaml = "*"
-numpy = "*"
-pandas = "*"
-scikit-learn = "*"
-torchvision = "*"
-opencv-python = "*"
-pillow-simd = "*"
-tqdm = "*"
-
-[requires]
-python_version = "3.7"
-
-[dev-packages]
 gym = {extras = ["all"]}
 matplotlib = "*"
-pymongo = "*"
-visdom = "*"
 mpi4py = "*"
+numpy = "*"
+opencv-python = "*"
+pandas = "*"
+pillow-simd = "*"
+pymongo = "*"
+pyyaml = "*"
+scikit-learn = "*"
+torch = "==0.4.1"
+torchvision = "*"
+tqdm = "*"
+visdom = "*"
+attrs = "*"
+
+[requires]
+python_version = "3.6"
+
+[dev-packages]
 nose = "*"

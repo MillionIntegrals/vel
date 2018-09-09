@@ -27,7 +27,7 @@ as I'll be putting some work into it.
 
 # Requirements
 
-This project requires Python 3.7 and PyTorch 0.4.1. Default project configuration writes
+This project requires Python 3.6 and PyTorch 0.4.1. Default project configuration writes
 metrics to MongoDB instance open on localhost port 27017 and Visom instance 
 on localhost port 8097. These can be changed in project-wide config file
 `.velproject.yaml`.
