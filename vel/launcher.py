@@ -18,7 +18,8 @@ def main():
     parser.add_argument('-d', '--device', default='cuda', help="A device to run the model on")
     parser.add_argument('-s', '--seed', type=int, default=dtm.date.today().year, help="Random seed for the project")
     parser.add_argument(
-        '-p', '--param', type=str, metavar='NAME=VALUE', action='append', help="Configuration parameters"
+        '-p', '--param', type=str, metavar='NAME=VALUE', action='append', default=[],
+        help="Configuration parameters"
     )
     parser.add_argument('--reset', action='store_true', default=False, help="Overwrite existing model storage")
 

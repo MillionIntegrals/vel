@@ -90,7 +90,7 @@ class Parser:
         """ Parse some simple equality statements """
         cls.register()
         assert '=' in equality_string, "There must be an '=' sign in the equality"
-        [left_side, right_side] = equality_string.split('=')
+        [left_side, right_side] = equality_string.split('=', 1)
 
         left_side_value = yaml.safe_load(left_side.strip())
         right_side_value = yaml.safe_load(right_side.strip())

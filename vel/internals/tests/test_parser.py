@@ -96,3 +96,5 @@ def test_parse_equality():
         v.Parser.parse_equality("  1   =   2  ")
 
     t.assert_equal(v.Parser.parse_equality("  'asd'   =   'www zzz'  "), ('asd', 'www zzz'))
+
+    t.assert_equal(v.Parser.parse_equality("  'asd'   =   'www=zzz'  "), ('asd', 'www=zzz'))
