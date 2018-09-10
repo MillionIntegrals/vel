@@ -5,8 +5,8 @@ python:
   - "3.6"
 # Command to install dependencies
 install:
-  - sudo apt install libopenmpi-dev swig
-  - pip install -r travis-requirements.txt
+  - sudo apt install -q libopenmpi-dev swig
+  - pip install --quiet -r travis-requirements.txt
 # Command to run tests
 script:
   - nosetests
