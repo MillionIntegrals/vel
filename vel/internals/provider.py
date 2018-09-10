@@ -1,15 +1,19 @@
 import importlib
 import inspect
 
+from vel.internals.parser import Variable
+
 
 class Provider:
     """ Dependency injection resolver for the configuration file """
-    def __init__(self, environment, instances):
+    def __init__(self, environment, instances=None, parameters=None):
         self.environment = environment
+
+        self.parameters = parameters if parameters is not None else {}
 
         self.instances = {
             **(instances if instances is not None else {}),
-            'pp_provider': self
+            'vel_provider': self
         }
 
     def inject(self, name, value):
@@ -18,7 +22,9 @@ class Provider:
 
     def resolve_and_call(self, func, extra_env=None):
         """ Resolve function arguments and call them, possibily filling from the environment """
-        parameter_list = [(k, v.default == inspect.Parameter.empty) for k, v in inspect.signature(func).parameters.items()]
+        parameter_list = [
+            (k, v.default == inspect.Parameter.empty) for k, v in inspect.signature(func).parameters.items()
+        ]
         extra_env = extra_env if extra_env is not None else {}
         kwargs = {}
 
@@ -51,6 +57,8 @@ class Provider:
             return self.resolve_and_call(module.create, extra_env=object_data)
         elif isinstance(object_data, list):
             return [self.instantiate_from_data(x) for x in object_data]
+        elif isinstance(object_data, Variable):
+            return object_data.resolve(self.parameters)
         else:
             return object_data
 

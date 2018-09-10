@@ -12,7 +12,7 @@ class ImageDirSource(ds.ImageFolder):
 def create(model_config, path, num_workers, batch_size, augmentations=None, tta=None):
     """ Create an ImageDirSource with supplied arguments """
     if not os.path.isabs(path):
-        path = model_config.project_dir(path)
+        path = model_config.project_top_dir(path)
 
     train_path = os.path.join(path, 'train')
     valid_path = os.path.join(path, 'valid')

@@ -2,7 +2,6 @@
 import argparse
 import datetime as dtm
 
-from vel.internals.project_config import ProjectConfig
 from vel.api import ModelConfig
 from vel.util.random import set_seed
 
@@ -24,12 +23,8 @@ def main():
     # Set seed already in the launcher
     set_seed(args.seed)
 
-    project_config = ProjectConfig(args.config)
-    model_config = ModelConfig(
-        args.config, args.run_number, project_config,
-        reset=args.reset,
-        device=args.device,
-        seed=args.seed
+    model_config = ModelConfig.from_file(
+        args.config, args.run_number, reset=args.reset, device=args.device, seed=args.seed
     )
 
     model_config.banner(args.command)

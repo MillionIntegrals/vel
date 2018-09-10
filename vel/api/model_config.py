@@ -1,10 +1,10 @@
 import datetime as dtm
+import os.path
 import torch
-import yaml
 
-from vel.internals.provider import Provider
-from vel.internals.project_config import ProjectConfig
 from vel.exceptions import VelInitializationException
+from vel.internals.parser import Parser
+from vel.internals.provider import Provider
 
 
 class ModelConfig:
@@ -13,47 +13,101 @@ class ModelConfig:
     Is a frontend for the provider, resolving all dependency-injection requests.
     """
 
-    def __init__(self, filename: str, run_number: int, project_config: ProjectConfig, reset=False, seed: int=None, **kwargs):
-        self.filename = filename
-        self.device = kwargs.get('device', 'cuda')
-        self.reset = reset
-        self.seed = seed if seed is not None else dtm.date.today().year
+    PROJECT_FILE_NAME = '.velproject.yaml'
 
-        with open(self.filename, 'r') as f:
-            self.contents = yaml.safe_load(f)
+    @staticmethod
+    def find_project_directory(start_path) -> str:
+        """ Locate top-level project directory  """
+        start_path = os.path.realpath(start_path)
+        possible_name = os.path.join(start_path, ModelConfig.PROJECT_FILE_NAME)
+
+        if os.path.exists(possible_name):
+            return start_path
+        else:
+            up_path = os.path.realpath(os.path.join(start_path, '..'))
+            if os.path.realpath(start_path) == up_path:
+                raise RuntimeError(f"Couldn't find project file starting from {start_path}")
+            else:
+                return ModelConfig.find_project_directory(up_path)
+
+    @classmethod
+    def from_file(cls, filename: str, run_number: int,
+                  reset=False, seed: int=None, device: str='cuda'):
+        """ Create model config from file """
+        with open(filename, 'r') as fp:
+            model_config_contents = Parser.parse(fp)
+
+        project_config_path = ModelConfig.find_project_directory(os.path.dirname(os.path.abspath(filename)))
+
+        with open(os.path.join(project_config_path, cls.PROJECT_FILE_NAME), 'r') as fp:
+            project_config_contents = Parser.parse(fp)
+
+        aggregate_dictionary = {
+            **project_config_contents,
+            **model_config_contents
+        }
 
         # Options that should exist for every config
         try:
-            self._model_name = self.contents['name']
+            model_name = model_config_contents['name']
         except KeyError:
             raise VelInitializationException("Model configuration must have a 'name' key")
 
-        self.run_number = run_number
-        self.project_config = project_config
+        return ModelConfig(
+            model_name=model_name,
+            filename=filename,
+            configuration=aggregate_dictionary,
+            run_number=run_number,
+            project_dir=project_config_path,
+            reset=reset,
+            seed=seed,
+            device=device
+        )
 
-        self.command_descriptor = self.contents['commands']
+    @classmethod
+    def from_memory(cls, model_name: str, model_data: dict, run_number: int, project_dir: str,
+                    reset=False, seed: int=None, device: str='cuda'):
+        """ Create model config from file """
+        return ModelConfig(
+            model_name=model_name,
+            filename="[memory]",
+            configuration=model_data,
+            run_number=run_number,
+            project_dir=project_dir,
+            reset=reset,
+            seed=seed,
+            device=device
+        )
+
+    def __init__(self, model_name: str, filename: str, configuration: dict, run_number: int, project_dir: str,
+                 reset=False, seed: int=None, device: str='cuda'):
+        self._model_name = model_name
+        self.filename = filename
+        self.device = device
+        self.reset = reset
+        self.seed = seed if seed is not None else dtm.date.today().year
+        self.run_number = run_number
+
+        self.contents = configuration
+        self.project_dir = project_dir
+
+        self.command_descriptors = self.contents.get('commands', [])
 
         # This one is special and needs to get removed
-        del self.contents['commands']
+        if 'commands' in self.contents:
+            del self.contents['commands']
 
-        self.provider = Provider(self._prepare_environment(), {
-            'model_config': self,
-            'project_config': self.project_config
-        })
+        self.provider = Provider(self._prepare_environment(), {'model_config': self})
 
     def _prepare_environment(self) -> dict:
         """ Return full environment for dependency injection """
-        return {
-            **self.project_config.contents,
-            **self.contents,
-            'run_number': self.run_number
-        }
+        return {**self.contents, 'run_number': self.run_number}
 
     ####################################################################################################################
     # COMMAND UTILITIES
     def get_command(self, command_name):
         """ Return object for given command """
-        return self.provider.instantiate_from_data(self.command_descriptor[command_name])
+        return self.provider.instantiate_from_data(self.command_descriptors[command_name])
 
     def run_command(self, command_name, varargs):
         """ Instantiate model class """
@@ -64,23 +118,27 @@ class ModelConfig:
     # MODEL DIRECTORIES
     def checkpoint_dir(self, *args) -> str:
         """ Return checkpoint directory for this model """
-        return self.project_config.project_output_dir('checkpoints', self.run_name, *args)
+        return self.output_dir('checkpoints', self.run_name, *args)
 
     def data_dir(self, *args) -> str:
         """ Return data directory for given dataset """
-        return self.project_config.project_data_dir(*args)
-
-    def output_dir(self, *args) -> str:
-        """ Return data directory for given dataset """
-        return self.project_config.project_output_dir(*args)
-
-    def project_dir(self, *args) -> str:
-        """ Return data directory for given dataset """
-        return self.project_config.project_toplevel_dir(*args)
+        return self.project_data_dir(*args)
 
     def openai_dir(self) -> str:
         """ Return directory for openai output files for this model """
-        return self.project_config.project_output_dir('openai', self.run_name)
+        return self.output_dir('openai', self.run_name)
+
+    def project_data_dir(self, *args) -> str:
+        """ Directories where to store project files """
+        return os.path.join(self.project_dir, 'data', *args)
+
+    def output_dir(self, *args) -> str:
+        """ Directories where to store project files """
+        return os.path.join(self.project_dir, 'output', *args)
+
+    def project_top_dir(self, *args) -> str:
+        """ Top-level directory """
+        return os.path.join(self.project_dir, *args)
 
     ####################################################################################################################
     # NAME UTILITIES
