@@ -86,3 +86,13 @@ x:
     yaml_contents = v.Parser.parse(yaml_text)
 
     t.assert_equal(yaml_contents['x']['y'].default_value, v.DUMMY_VALUE)
+
+
+def test_parse_equality():
+    t.assert_equal(v.Parser.parse_equality("x=5"), ('x', 5))
+    t.assert_equal(v.Parser.parse_equality("  x   =   5  "), ('x', 5))
+
+    with t.assert_raises(AssertionError):
+        v.Parser.parse_equality("  1   =   2  ")
+
+    t.assert_equal(v.Parser.parse_equality("  'asd'   =   'www zzz'  "), ('asd', 'www zzz'))

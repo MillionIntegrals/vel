@@ -21,8 +21,8 @@ class Variable:
 
         if isinstance(value, str):
             if '=' in value:
-                [varname, varvalue] = value.split('=')
-                return cls(varname, yaml.safe_load(varvalue))
+                (varname, varvalue) = Parser.parse_equality(value)
+                return cls(varname, varvalue)
             else:
                 return cls(value)
         else:
@@ -67,6 +67,7 @@ class EnvironmentVariable(Variable):
 
 
 class Parser:
+    """ Parse configuration values """
     IS_LOADED = False
 
     @classmethod
@@ -84,3 +85,16 @@ class Parser:
         cls.register()
         return yaml.safe_load(stream)
 
+    @classmethod
+    def parse_equality(cls, equality_string):
+        """ Parse some simple equality statements """
+        cls.register()
+        assert '=' in equality_string, "There must be an '=' sign in the equality"
+        [left_side, right_side] = equality_string.split('=')
+
+        left_side_value = yaml.safe_load(left_side.strip())
+        right_side_value = yaml.safe_load(right_side.strip())
+
+        assert isinstance(left_side_value, str), "Left side of equality must be a string"
+
+        return left_side_value, right_side_value

@@ -32,7 +32,7 @@ class ModelConfig:
 
     @classmethod
     def from_file(cls, filename: str, run_number: int,
-                  reset=False, seed: int=None, device: str='cuda'):
+                  reset=False, seed: int=None, device: str='cuda', params=None):
         """ Create model config from file """
         with open(filename, 'r') as fp:
             model_config_contents = Parser.parse(fp)
@@ -61,12 +61,13 @@ class ModelConfig:
             project_dir=project_config_path,
             reset=reset,
             seed=seed,
-            device=device
+            device=device,
+            parameters=params
         )
 
     @classmethod
     def from_memory(cls, model_name: str, model_data: dict, run_number: int, project_dir: str,
-                    reset=False, seed: int=None, device: str='cuda'):
+                    reset=False, seed: int=None, device: str='cuda', params=None):
         """ Create model config from file """
         return ModelConfig(
             model_name=model_name,
@@ -76,11 +77,12 @@ class ModelConfig:
             project_dir=project_dir,
             reset=reset,
             seed=seed,
-            device=device
+            device=device,
+            parameters=params
         )
 
     def __init__(self, model_name: str, filename: str, configuration: dict, run_number: int, project_dir: str,
-                 reset=False, seed: int=None, device: str='cuda'):
+                 reset=False, seed: int=None, device: str='cuda', parameters=None):
         self._model_name = model_name
         self.filename = filename
         self.device = device
@@ -97,7 +99,7 @@ class ModelConfig:
         if 'commands' in self.contents:
             del self.contents['commands']
 
-        self.provider = Provider(self._prepare_environment(), {'model_config': self})
+        self.provider = Provider(self._prepare_environment(), {'model_config': self}, parameters=parameters)
 
     def _prepare_environment(self) -> dict:
         """ Return full environment for dependency injection """

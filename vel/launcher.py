@@ -4,6 +4,7 @@ import datetime as dtm
 
 from vel.api import ModelConfig
 from vel.util.random import set_seed
+from vel.internals.parser import Parser
 
 
 def main():
@@ -16,6 +17,9 @@ def main():
     parser.add_argument('-r', '--run_number', default=0, help="A run number")
     parser.add_argument('-d', '--device', default='cuda', help="A device to run the model on")
     parser.add_argument('-s', '--seed', type=int, default=dtm.date.today().year, help="Random seed for the project")
+    parser.add_argument(
+        '-p', '--param', type=str, metavar='NAME=VALUE', action='append', help="Configuration parameters"
+    )
     parser.add_argument('--reset', action='store_true', default=False, help="Overwrite existing model storage")
 
     args = parser.parse_args()
@@ -24,7 +28,8 @@ def main():
     set_seed(args.seed)
 
     model_config = ModelConfig.from_file(
-        args.config, args.run_number, reset=args.reset, device=args.device, seed=args.seed
+        args.config, args.run_number, reset=args.reset, device=args.device, seed=args.seed,
+        params={k: v for (k, v) in (Parser.parse_equality(eq) for eq in args.param)}
     )
 
     model_config.banner(args.command)
