@@ -39,7 +39,7 @@ setup(
     ],
     extras_require={
         'visdom': ['visdom'],
-        'mongo': ['pymongo'],
+        'mongo': ['pymongo', 'dnspython'],
         'gym': ['gym[all]'],
         'dev': ['nose']
     },

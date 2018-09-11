@@ -18,6 +18,7 @@ torch = "==0.4.1"
 torchvision = "*"
 tqdm = "*"
 visdom = "*"
+dnspython = "*"
 
 [requires]
 python_version = "3.6"
