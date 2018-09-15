@@ -13,7 +13,7 @@ class FramesMetric(ValueMetric):
         super().__init__(name)
 
     def _value_function(self, batch_info: BatchInfo):
-        return batch_info['frames'].item() + batch_info.training_info['frames']
+        return batch_info.training_info['frames']
 
 
 class FPSMetric(ValueMetric):
