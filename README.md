@@ -49,7 +49,7 @@ on localhost port 8097. These can be changed in project-wide config file
   uncommon ones should be possible. At least as far as PyTorch allows.
   
   
-# Implemented models
+# Implemented models - Computer Vision
 
 Several models are already implemented in the framework and have example config files
 that are ready to run and easy to modify for other similar usecases:
@@ -57,6 +57,10 @@ that are ready to run and easy to modify for other similar usecases:
 - State-of-the art results on Cifar10 dataset using residual networks
 - Cats vs dogs classification using transfer learning from a resnet34 model pretrained on 
   ImageNet
+  
+# Implemented models - Reinforcement learning
+
+- Continuous and discrete action spaces
 - Advantage Actor-Critic (A2C),
   Proximal Policy Optimization (PPO), 
   Trust Region Policy Optimization (TRPO),
