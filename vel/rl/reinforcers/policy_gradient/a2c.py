@@ -20,13 +20,13 @@ class A2CPolicyGradient(OptimizerPolicyGradientBase):
         advantages = rollout['advantages']
         actions = rollout['actions']
 
-        action_logits, value_outputs = model(observations)
+        action_pd_params, value_outputs = model(observations)
 
-        neglogps = F.nll_loss(action_logits, actions, reduction='none')
+        neglogps = model.neglogp(actions, action_pd_params)
 
         policy_gradient_loss = torch.mean(advantages * neglogps)
         value_loss = 0.5 * F.mse_loss(value_outputs, discounted_rewards)
-        policy_entropy = torch.mean(model.entropy(action_logits))
+        policy_entropy = torch.mean(model.entropy(action_pd_params))
 
         loss_value = (
             policy_gradient_loss - self.entropy_coefficient * policy_entropy + self.value_coefficient * value_loss

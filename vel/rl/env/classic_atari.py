@@ -4,13 +4,14 @@ import os.path
 from gym.envs.registration import EnvSpec
 
 
-from vel.rl.api.base import EnvFactory
 from vel.openai.baselines import logger
 from vel.openai.baselines.bench import Monitor
 from vel.openai.baselines.common.atari_wrappers import (
     NoopResetEnv, MaxAndSkipEnv, FireResetEnv, EpisodicLifeEnv, WarpFrame, ClipRewardEnv,
     ScaledFloatFrame, FrameStack
 )
+
+from vel.rl.api.base import EnvFactory
 from vel.rl.env.wrappers.clip_episode_length import ClipEpisodeEnv
 
 

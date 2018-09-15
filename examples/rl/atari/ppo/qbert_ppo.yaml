@@ -1,7 +1,7 @@
 name: 'qbert_ppo_simple'
 
 env:
-  name: vel.rl.env.atari.classic_atari
+  name: vel.rl.env.classic_atari
   game: 'QbertNoFrameskip-v4'
 
 
@@ -27,8 +27,10 @@ reinforcer:
     entropy_coefficient: 0.01
     value_coefficient: 0.5
 
-    cliprange: 0.1
-    cliprange_scaling: 'linear'
+    cliprange:
+      name: vel.schedules.linear
+      initial_value: 0.1
+      final_value: 0.0
 
     max_grad_norm: 0.5 # Gradient clipping parameter
 

@@ -1,30 +1,25 @@
 import torch
 import torch.nn.functional as F
 
+import numbers
+
 from vel.rl.reinforcers.policy_gradient.policy_gradient_base import OptimizerPolicyGradientBase
 from vel.api.metrics.averaging_metric import AveragingNamedMetric
+from vel.schedules.constant import ConstantSchedule
 
 
 class PpoPolicyGradient(OptimizerPolicyGradientBase):
     """ Proximal Policy Optimization - https://arxiv.org/abs/1707.06347 """
-    def __init__(self, entropy_coefficient, value_coefficient, cliprange, cliprange_scaling, max_grad_norm):
+    def __init__(self, entropy_coefficient, value_coefficient, cliprange, max_grad_norm):
         super().__init__(max_grad_norm)
 
         self.entropy_coefficient = entropy_coefficient
         self.value_coefficient = value_coefficient
 
-        self.cliprange = cliprange  # This needs to be verified
-        self.cliprange_scaling = cliprange_scaling
-
-    def cliprange_scaling_function(self, batch_info):
-        """ Select current cliprange"""
-
-        if self.cliprange_scaling == 'constant':
-            return self.cliprange
-        elif self.cliprange_scaling == 'linear':
-            return (1.0 - batch_info['progress']) * self.cliprange
+        if isinstance(cliprange, numbers.Number):
+            self.cliprange = ConstantSchedule(cliprange)
         else:
-            raise NotImplementedError
+            self.cliprange = cliprange
 
     def calculate_loss(self, batch_info, device, model, rollout):
         """ Calculate loss of the supplied rollout """
@@ -37,16 +32,16 @@ class PpoPolicyGradient(OptimizerPolicyGradientBase):
         rollout_neglogps = rollout['neglogps']
 
         # Select the cliprange
-        current_cliprange = self.cliprange_scaling_function(batch_info)
+        current_cliprange = self.cliprange.value(batch_info['progress'])
 
         # Normalize the advantages?
         advantages = (advantages - advantages.mean()) / (advantages.std() + 1e-8)
 
         # PART 0 - model_evaluation
-        eval_action_logits, eval_value_outputs = model(observations)
+        eval_action_pd_params, eval_value_outputs = model(observations)
 
         # PART 1 - policy entropy
-        policy_entropy = torch.mean(model.entropy(eval_action_logits))
+        policy_entropy = torch.mean(model.entropy(eval_action_pd_params))
 
         # PART 2 - value function
         value_output_clipped = values + torch.clamp(eval_value_outputs - values, -current_cliprange, current_cliprange)
@@ -55,7 +50,7 @@ class PpoPolicyGradient(OptimizerPolicyGradientBase):
         value_loss = 0.5 * torch.mean(torch.max(value_loss_part1, value_loss_part2))
 
         # PART 3 - policy gradient loss
-        eval_neglogps = F.nll_loss(eval_action_logits, rollout_actions, reduction='none')
+        eval_neglogps = model.neglogp(rollout_actions, eval_action_pd_params)
         ratio = torch.exp(rollout_neglogps - eval_neglogps)
 
         pg_loss_part1 = -advantages * ratio
@@ -92,6 +87,5 @@ class PpoPolicyGradient(OptimizerPolicyGradientBase):
         ]
 
 
-def create(entropy_coefficient, value_coefficient, cliprange, cliprange_scaling, max_grad_norm):
-    # TODO(jerry): make cliprange use schedule
-    return PpoPolicyGradient(entropy_coefficient, value_coefficient, cliprange, cliprange_scaling, max_grad_norm)
+def create(entropy_coefficient, value_coefficient, cliprange, max_grad_norm):
+    return PpoPolicyGradient(entropy_coefficient, value_coefficient, cliprange, max_grad_norm)

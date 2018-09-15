@@ -1,14 +1,14 @@
 from vel.openai.baselines.common.vec_env import VecEnv
 from vel.openai.baselines.common.atari_wrappers import FrameStack
-from vel.openai.baselines.common.vec_env.subproc_vec_env import SubprocVecEnv
+from vel.openai.baselines.common.vec_env.dummy_vec_env import DummyVecEnv
 from vel.openai.baselines.common.vec_env.vec_normalize import VecNormalize
 from vel.openai.baselines.common.vec_env.vec_frame_stack import VecFrameStack
 
 from vel.rl.api.base import VecEnvFactory
 
 
-class SubprocVecEnvWrapper(VecEnvFactory):
-    """ Wrapper for an environment to create sub-process vector environment """
+class DummyVecEnvWrapper(VecEnvFactory):
+    """ Wraps a single-threaded environment into a one-element vector environment """
 
     def __init__(self, env, frame_history=None, normalize=False):
         self.env = env
@@ -17,7 +17,7 @@ class SubprocVecEnvWrapper(VecEnvFactory):
 
     def instantiate(self, parallel_envs, seed=0, preset='default') -> VecEnv:
         """ Make parallel environments """
-        envs = SubprocVecEnv([self._creation_function(i, seed, preset) for i in range(parallel_envs)])
+        envs = DummyVecEnv([self._creation_function(i, seed, preset) for i in range(parallel_envs)])
 
         if self.normalize:
             envs = VecNormalize(envs)
@@ -44,5 +44,5 @@ class SubprocVecEnvWrapper(VecEnvFactory):
         return lambda: self.env.instantiate(seed=seed, serial_id=idx, preset=preset)
 
 
-def create(env, frame_history, normalize=False):
-    return SubprocVecEnvWrapper(env, frame_history=frame_history, normalize=normalize)
+def create(env, frame_history=None, normalize=False):
+    return DummyVecEnvWrapper(env, frame_history=frame_history, normalize=normalize)

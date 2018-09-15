@@ -45,11 +45,11 @@ class PolicyGradientModelSeparate(Model):
 
     def step(self, observation, argmax_sampling=False):
         """ Select actions based on model's output """
-        action_logits, value_output = self(observation)
-        actions = self.action_head.sample(action_logits, argmax_sampling=argmax_sampling)
+        action_pd_params, value_output = self(observation)
+        actions = self.action_head.sample(action_pd_params, argmax_sampling=argmax_sampling)
 
         # - log probability
-        neglogp = F.nll_loss(action_logits, actions, reduction='none')
+        neglogp = self.action_head.neglogp(actions, action_pd_params)
 
         return {
             'actions': actions,
@@ -61,6 +61,10 @@ class PolicyGradientModelSeparate(Model):
         """ Parameters of policy """
         return it.chain(self.policy_backbone.parameters(), self.action_head.parameters())
 
+    def neglogp(self, action_sample, action_params):
+        """ Calculate - log(prob) of selected actions """
+        return self.action_head.neglogp(action_sample, action_params)
+
     def value(self, observation):
         """ Calculate only value head for given state """
         base_output = self.value_backbone(observation)
@@ -70,16 +74,16 @@ class PolicyGradientModelSeparate(Model):
     def policy(self, observation):
         """ Calculate only action head for given state """
         policy_base_output = self.policy_backbone(observation)
-        action_logits = self.action_head(policy_base_output)
-        return action_logits
+        action_pd_params = self.action_head(policy_base_output)
+        return action_pd_params
 
-    def entropy(self, action_logits):
+    def entropy(self, action_pd_params):
         """ Entropy of a probability distribution """
-        return self.action_head.entropy(action_logits)
+        return self.action_head.entropy(action_pd_params)
 
-    def kl_divergence(self, logits_q, logits_p):
+    def kl_divergence(self, pd_q, pd_p):
         """ Calculate KL-divergence between two probability distributions """
-        return self.action_head.kl_divergence(logits_q, logits_p)
+        return self.action_head.kl_divergence(pd_q, pd_p)
 
 
 class PolicyGradientModelSeparateFactory(ModelFactory):

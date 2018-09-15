@@ -26,6 +26,10 @@ class StepEnvRoller(EnvRollerBase):
             (self.observation.shape[0]*self.number_of_steps,) + self.environment.observation_space.shape
         )
 
+        self.action_observation_shape = (
+            (self.observation.shape[0]*self.number_of_steps,) + self.environment.action_space.shape
+        )
+
     def _to_tensor(self, numpy_array):
         """ Convert numpy array to a tensor """
         return torch.from_numpy(numpy_array).to(self.device)
@@ -95,7 +99,7 @@ class StepEnvRoller(EnvRollerBase):
             'observations': observation_buffer.reshape(self.batch_observation_shape),
             'discounted_rewards': discounted_rewards.flatten(),
             'masks': masks_buffer.flatten(),
-            'actions': actions_buffer.flatten(),
+            'actions': actions_buffer.reshape(self.action_observation_shape),
             'values': values_buffer.flatten(),
             'advantages': advantages.flatten(),
             'episode_information': episode_information,

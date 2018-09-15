@@ -1,7 +1,7 @@
 name: 'breakout_a2c_tf_rmsprop'
 
 env:
-  name: vel.rl.env.atari.classic_atari
+  name: vel.rl.env.classic_atari
   game: 'BreakoutNoFrameskip-v4'
 
 

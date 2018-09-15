@@ -1,3 +1,17 @@
+import torch.nn as nn
+
+
+ACTIVATION_DICT = {
+    'relu': nn.ReLU,
+    'tanh': nn.Tanh,
+    'elu': nn.ELU,
+    'leaky_relu': nn.LeakyReLU
+}
+
+
+def activation(name):
+    """ Return activation block corresponding given name """
+    return ACTIVATION_DICT[name]
 
 
 def convolution_size_equation(size, filter_size, padding, stride):

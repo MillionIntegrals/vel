@@ -37,11 +37,11 @@ class PolicyGradientModel(Model):
 
     def step(self, observation, argmax_sampling=False):
         """ Select actions based on model's output """
-        action_logits, value_output = self(observation)
-        actions = self.action_head.sample(action_logits, argmax_sampling=argmax_sampling)
+        action_pd_params, value_output = self(observation)
+        actions = self.action_head.sample(action_pd_params, argmax_sampling=argmax_sampling)
 
         # - log probability
-        neglogp = F.nll_loss(action_logits, actions, reduction='none')
+        neglogp = self.action_head.neglogp(actions, action_pd_params)
 
         return {
             'actions': actions,
@@ -49,15 +49,19 @@ class PolicyGradientModel(Model):
             'neglogp': neglogp
         }
 
+    def neglogp(self, action_sample, action_params):
+        """ Calculate - log(prob) of selected actions """
+        return self.action_head.neglogp(action_sample, action_params)
+
     def value(self, observation):
         """ Calculate only value head for given state """
         base_output = self.backbone(observation)
         value_output = self.value_head(base_output)
         return value_output
 
-    def entropy(self, action_logits):
+    def entropy(self, action_pd_params):
         """ Entropy of a probability distribution """
-        return self.action_head.entropy(action_logits)
+        return self.action_head.entropy(action_pd_params)
 
 
 class PolicyGradientModelFactory(ModelFactory):

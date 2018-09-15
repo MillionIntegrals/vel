@@ -1,7 +1,7 @@
 name: 'breakout_acer'
 
 env:
-  name: vel.rl.env.atari.classic_atari
+  name: vel.rl.env.classic_atari
   game: 'BreakoutNoFrameskip-v4'
 
 
@@ -60,6 +60,7 @@ commands:
     name: vel.rl.commands.rl_train_command
     total_frames: 1.1e7
     batches_per_epoch: 30
+    openai_logging: true
 
   record:
     name: vel.rl.commands.record_movie_command

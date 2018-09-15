@@ -1,7 +1,7 @@
 name: 'airraid_a2c_simple'
 
 env:
-  name: vel.rl.env.atari.classic_atari
+  name: vel.rl.env.classic_atari
   game: 'AirRaidNoFrameskip-v4'
 
 
