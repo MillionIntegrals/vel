@@ -109,3 +109,7 @@ ENV/
 
 # Local scripts
 /local-scripts
+
+# Env file
+environment.yaml
+
