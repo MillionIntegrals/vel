@@ -58,16 +58,33 @@ class DiagGaussianActionHead(nn.Module):
         init.constant_(self.linear_layer.bias, 0.0)
 
     def entropy(self, params):
-        """ Categorical distribution entropy calculation - sum probs * log(probs) """
+        """
+        Categorical distribution entropy calculation - sum probs * log(probs).
+        In case of diagonal gaussian distribution - 1/2 log(2 pi e sigma^2)
+        """
         log_std = params[:, :, 1]
         return (log_std + 0.5 * (self.LOG2PI + 1)).sum(dim=-1)
 
-    def kl_divergence(self, params):
+    def kl_divergence(self, params_q, params_p):
         """
         Categorical distribution KL divergence calculation
         KL(Q || P) = sum Q_i log (Q_i / P_i)
+
+        Formula is:
+        log(sigma_q) - log(sigma_p) + (sigma_q^2 + (mu_q - mu_p)^2))/(2 * sigma_p^2)
         """
-        raise NotImplementedError
+        means_q = params_q[:, :, 0]
+        log_std_q = params_q[:, :, 1]
+
+        means_p = params_p[:, :, 0]
+        log_std_p = params_p[:, :, 1]
+
+        std_q = torch.exp(log_std_q)
+        std_p = torch.exp(log_std_p)
+
+        kl_div = log_std_q - log_std_q + (std_q ** 2 + (means_q - means_p) ** 2) / (2.0 * std_p ** 2) - 0.5
+
+        return kl_div.sum(dim=-1)
 
 
 class CategoricalActionHead(nn.Module):
