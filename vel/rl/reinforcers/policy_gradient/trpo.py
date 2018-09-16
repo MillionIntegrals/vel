@@ -14,7 +14,7 @@ def p2v(params):
 
 
 def v2p(vector, params):
-    """ Parameters to vector - shorthand utility version """
+    """ Vector to parameters - shorthand utility version """
     return torch.nn.utils.vector_to_parameters(vector, params)
 
 
@@ -91,7 +91,7 @@ class TrpoPolicyGradient(PolicyGradientBase):
         expected_improvement = (-policy_grad) @ full_step
         original_parameter_vec = p2v(model.policy_parameters()).detach_()
 
-        policy_optimization_success, ratio, policy_loss_improvement, kl_divergence_step = self.line_search(
+        policy_optimization_success, ratio, policy_loss_improvement, new_policy_loss, kl_divergence_step = self.line_search(
             model, rollout, policy_loss, action_pd_params, original_parameter_vec, full_step, expected_improvement
         )
 
@@ -112,8 +112,6 @@ class TrpoPolicyGradient(PolicyGradientBase):
 
                 gradient_norms.append(grad_norm)
 
-                # batch_info['gradient_norms'].append(grad_norm)
-
             batch_info.optimizer.step(closure=None)
 
         if gradient_norms:
@@ -123,6 +121,7 @@ class TrpoPolicyGradient(PolicyGradientBase):
 
         # noinspection PyUnboundLocalVariable
         batch_info['policy_gradient_data'].append({
+            'new_policy_loss': new_policy_loss,
             'policy_entropy': policy_entropy,
             'value_loss': value_loss,
             'policy_optimization_success': torch.tensor(policy_optimization_success).float(),
@@ -166,7 +165,7 @@ class TrpoPolicyGradient(PolicyGradientBase):
                 continue
             else:
                 # Optimization successful
-                return True, ratio, actual_improvement, kl_divergence
+                return True, ratio, actual_improvement, new_loss, kl_divergence
 
         # Optimization failed, revert to initial parameters
         v2p(original_parameter_vec, model.policy_parameters())
@@ -212,6 +211,9 @@ class TrpoPolicyGradient(PolicyGradientBase):
 
         model_neglogps = model.neglogp(actions, action_pd_params)
 
+        # Normalize advantages
+        advantages = (advantages - advantages.mean()) / advantages.std()
+
         # We put - in front because we want to maximize the surrogate objective
         policy_loss = -advantages * torch.exp(fixed_neglogps - model_neglogps)
 
@@ -220,6 +222,7 @@ class TrpoPolicyGradient(PolicyGradientBase):
     def metrics(self) -> list:
         """ List of metrics to track for this learning process """
         return [
+            AveragingNamedMetric("new_policy_loss"),
             AveragingNamedMetric("policy_entropy"),
             AveragingNamedMetric("value_loss"),
             AveragingNamedMetric("policy_optimization_success"),
