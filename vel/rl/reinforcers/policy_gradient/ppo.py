@@ -1,5 +1,4 @@
 import torch
-import torch.nn.functional as F
 
 import numbers
 
@@ -23,11 +22,10 @@ class PpoPolicyGradient(OptimizerPolicyGradientBase):
 
     def calculate_loss(self, batch_info, device, model, rollout):
         """ Calculate loss of the supplied rollout """
-
         observations = rollout['observations']
         discounted_rewards = rollout['discounted_rewards']
         advantages = rollout['advantages']
-        values = rollout['values']
+        rollout_values = rollout['values']
         rollout_actions = rollout['actions']
         rollout_neglogps = rollout['neglogps']
 
@@ -44,7 +42,7 @@ class PpoPolicyGradient(OptimizerPolicyGradientBase):
         policy_entropy = torch.mean(model.entropy(eval_action_pd_params))
 
         # PART 2 - value function
-        value_output_clipped = values + torch.clamp(eval_value_outputs - values, -current_cliprange, current_cliprange)
+        value_output_clipped = rollout_values + torch.clamp(eval_value_outputs - rollout_values, -current_cliprange, current_cliprange)
         value_loss_part1 = (eval_value_outputs - discounted_rewards).pow(2)
         value_loss_part2 = (value_output_clipped - discounted_rewards).pow(2)
         value_loss = 0.5 * torch.mean(torch.max(value_loss_part1, value_loss_part2))
@@ -62,7 +60,7 @@ class PpoPolicyGradient(OptimizerPolicyGradientBase):
         )
 
         with torch.no_grad():
-            approx_kl_divergence = 0.5 * torch.mean((eval_neglogps - rollout_neglogps))
+            approx_kl_divergence = 0.5 * torch.mean((eval_neglogps - rollout_neglogps) ** 2)
             clip_fraction = torch.mean((torch.abs(ratio - 1.0) > current_cliprange).to(dtype=torch.float))
 
         batch_info['policy_gradient_data'].append({
