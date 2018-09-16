@@ -4,10 +4,13 @@ env:
   name: vel.rl.env.mujoco
   game: 'Reacher-v2'
 
+  env_settings:
+    default:
+      monitor: true
 
 vec_env:
   name: vel.rl.vecenv.dummy
-  normalzie: true  # Normalize observations
+  normalize: true  # Normalize observations
 
 
 model:
@@ -31,18 +34,9 @@ model:
 reinforcer:
   name: vel.rl.reinforcers.policy_gradient
 
-#  policy_gradient:
-#    name: vel.rl.reinforcers.policy_gradient.ppo
-#    entropy_coefficient: 0.0
-#    value_coefficient: 0.5
-#
-#    cliprange: 0.2
-#
-#    max_grad_norm: 0.5 # Gradient clipping parameter
-
   policy_gradient:
     name: vel.rl.reinforcers.policy_gradient.trpo
-    max_kl: 0.001
+    max_kl: 0.01
     cg_iters: 10
     line_search_iters: 10
     improvement_acceptance_ratio: 0.1
@@ -77,7 +71,8 @@ commands:
   train:
     name: vel.rl.commands.rl_train_command
     total_frames: 1.0e6
-    batches_per_epoch: 1
+    batches_per_epoch: 2
+    openai_logging: true
 
   record:
     name: vel.rl.commands.record_movie_command

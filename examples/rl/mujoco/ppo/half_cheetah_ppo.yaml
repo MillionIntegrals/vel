@@ -1,8 +1,8 @@
-name: 'reacher_ppo'
+name: 'half_cheetah_ppo'
 
 env:
   name: vel.rl.env.mujoco
-  game: 'Reacher-v2'
+  game: 'HalfCheetah-v2'
 
   env_settings:
     default:
@@ -19,7 +19,7 @@ model:
 
   backbone:
     name: vel.models.rl.mlp
-    input_length: 11
+    input_length: 17
     layers: 2
     hidden_units: 64
     activation: 'tanh'
@@ -70,6 +70,6 @@ commands:
   record:
     name: vel.rl.commands.record_movie_command
     takes: 10
-    videoname: 'reacher_vid_{:04}.avi'
+    videoname: 'half_cheetah_vid_{:04}.avi'
     sample_args:
       argmax_sampling: true

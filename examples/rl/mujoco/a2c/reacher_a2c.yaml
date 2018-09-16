@@ -7,7 +7,7 @@ env:
 
 vec_env:
   name: vel.rl.vecenv.dummy
-  normalzie: true  # Normalize observations
+  normalize: true  # Normalize observations
 
 
 model:

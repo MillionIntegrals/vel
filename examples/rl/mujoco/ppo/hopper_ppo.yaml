@@ -1,8 +1,8 @@
-name: 'reacher_ppo'
+name: 'hopper_ppo'
 
 env:
   name: vel.rl.env.mujoco
-  game: 'Reacher-v2'
+  game: 'Hopper-v2'
 
   env_settings:
     default:
@@ -70,6 +70,6 @@ commands:
   record:
     name: vel.rl.commands.record_movie_command
     takes: 10
-    videoname: 'reacher_vid_{:04}.avi'
+    videoname: 'hopper_vid_{:04}.avi'
     sample_args:
       argmax_sampling: true
