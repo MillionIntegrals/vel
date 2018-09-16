@@ -35,7 +35,7 @@ class VecNormalize(VecEnvWrapper):
         if self.ob_rms:
             self.ob_rms.update(obs)
             obs = np.clip((obs - self.ob_rms.mean) / np.sqrt(self.ob_rms.var + self.epsilon), -self.clipob, self.clipob)
-            return obs
+            return obs.astype(np.float32)
         else:
             return obs
 
