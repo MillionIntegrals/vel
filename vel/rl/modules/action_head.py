@@ -42,14 +42,14 @@ class DiagGaussianActionHead(nn.Module):
         else:
             return torch.randn_like(means) * torch.exp(log_std) + means
 
-    def neglogp(self, sample, params):
+    def neglogp(self, action_sample, pd_params):
         """ Negative logarithm of probability of given sample """
-        means = params[:, :, 0]
-        log_std = params[:, :, 1]
+        means = pd_params[:, :, 0]
+        log_std = pd_params[:, :, 1]
 
         std = torch.exp(log_std)
 
-        z_score = (sample - means) / std
+        z_score = (action_sample - means) / std
 
         return 0.5 * ((z_score**2 + self.LOG2PI).sum(dim=-1)) + log_std.sum(dim=-1)
 
