@@ -27,7 +27,7 @@ def env_maker(environment_id, seed, serial_id, monitor=False, allow_early_resets
 
     # Monitoring the env
     if monitor:
-        logdir = logger.get_dir() and os.path.join(logger.get_dir(), str(serial_id)),
+        logdir = logger.get_dir() and os.path.join(logger.get_dir(), str(serial_id))
     else:
         logdir = None
 
