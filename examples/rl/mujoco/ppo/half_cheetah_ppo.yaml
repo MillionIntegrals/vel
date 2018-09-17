@@ -15,9 +15,16 @@ vec_env:
 
 
 model:
-  name: vel.rl.reinforcers.policy_gradient.policy_gradient_model
+  name: vel.rl.reinforcers.policy_gradient.policy_gradient_model_separate
 
-  backbone:
+  policy_backbone:
+    name: vel.models.rl.mlp
+    input_length: 17
+    layers: 2
+    hidden_units: 64
+    activation: 'tanh'
+
+  value_backbone:
     name: vel.models.rl.mlp
     input_length: 17
     layers: 2
@@ -43,7 +50,7 @@ reinforcer:
 
   number_of_steps: 2048 # How many environment steps go into a single batch
   parallel_envs: 1 # How many environments to run in parallel
-  batch_size: 64 # How many samples can go into the model once
+  batch_size: 64 # How many samples can go into the model in one batch
   experience_replay: 10 # How many times to replay the experience
 
   discount_factor: 0.99 # Discount factor for the rewards

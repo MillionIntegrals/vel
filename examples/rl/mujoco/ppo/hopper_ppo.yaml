@@ -15,9 +15,16 @@ vec_env:
 
 
 model:
-  name: vel.rl.reinforcers.policy_gradient.policy_gradient_model
+  name: vel.rl.reinforcers.policy_gradient.policy_gradient_model_separate
 
-  backbone:
+  policy_backbone:
+    name: vel.models.rl.mlp
+    input_length: 11
+    layers: 2
+    hidden_units: 64
+    activation: 'tanh'
+
+  value_backbone:
     name: vel.models.rl.mlp
     input_length: 11
     layers: 2

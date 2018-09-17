@@ -43,7 +43,7 @@ reinforcer:
     cg_damping: 0.1
     vf_iters: 5
     entropy_coef: 0.0
-    max_grad_norm: 0.5
+#    max_grad_norm: 0.5
 
   env_roller:
     name: vel.rl.env_roller.step_env_roller
@@ -60,11 +60,11 @@ reinforcer:
 optimizer:
   name: vel.optimizers.adam
   lr: 0.001
-  epsilon: 1.0e-5
+  epsilon: 1.0e-8
 
 
-scheduler:
-  name: vel.scheduler.linear_batch_scaler
+#scheduler:
+#  name: vel.scheduler.linear_batch_scaler
 
 
 commands:
