@@ -71,7 +71,7 @@ class DiagGaussianActionHead(nn.Module):
         KL(Q || P) = sum Q_i log (Q_i / P_i)
 
         Formula is:
-        log(sigma_q) - log(sigma_p) + (sigma_q^2 + (mu_q - mu_p)^2))/(2 * sigma_p^2)
+        log(sigma_p) - log(sigma_q) + (sigma_q^2 + (mu_q - mu_p)^2))/(2 * sigma_p^2)
         """
         means_q = params_q[:, :, 0]
         log_std_q = params_q[:, :, 1]
@@ -82,7 +82,7 @@ class DiagGaussianActionHead(nn.Module):
         std_q = torch.exp(log_std_q)
         std_p = torch.exp(log_std_p)
 
-        kl_div = log_std_q - log_std_q + (std_q ** 2 + (means_q - means_p) ** 2) / (2.0 * std_p ** 2) - 0.5
+        kl_div = log_std_p - log_std_q + (std_q ** 2 + (means_q - means_p) ** 2) / (2.0 * std_p ** 2) - 0.5
 
         return kl_div.sum(dim=-1)
 
