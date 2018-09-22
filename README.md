@@ -19,8 +19,9 @@ After repeating that pattern multiple times, I've decided that this is the
 time to bite the bullet and start organising deep learning models
 into a structure that is designed to be reused rather than copied over.
 
-As a goal, for most applications it should be enough to write a
-config file that wires existing components together and defines their hyperparameters.
+As a goal, it should be enough to write a config file that
+wires existing components together and defines their hyperparameters
+for most common applications.
 If that's not the case few bits of custom glue code should do the job.
 
 This repository is still in an early stage of that journey but it will grow
@@ -81,14 +82,14 @@ most popular algorithms with sane default hyperparameters.
 For example, to run the A2C algorithm on a Breakout atari environment, simply invoke:
 
 ```
-python -m vel.launcher examples/rl/atari/a2c/breakout_a2c.yaml train
+python -m vel.launcher examples-configs/rl/atari/a2c/breakout_a2c.yaml train
 ```
 
 If you install the library locally, it will create a script wrapping the launcher for 
 you. Then, above becomes:
 
 ```
-vel examples/rl/atari/a2c/breakout_a2c.yaml train
+vel examples-configs/rl/atari/a2c/breakout_a2c.yaml train
 ```
 
 General command line interface of the launcher is:

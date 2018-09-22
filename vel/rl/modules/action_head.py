@@ -42,8 +42,8 @@ class DiagGaussianActionHead(nn.Module):
         else:
             return torch.randn_like(means) * torch.exp(log_std) + means
 
-    def neglogp(self, action_sample, pd_params):
-        """ Negative logarithm of probability of given sample """
+    def logprob(self, action_sample, pd_params):
+        """ Log-likelihood """
         means = pd_params[:, :, 0]
         log_std = pd_params[:, :, 1]
 
@@ -51,7 +51,7 @@ class DiagGaussianActionHead(nn.Module):
 
         z_score = (action_sample - means) / std
 
-        return 0.5 * ((z_score**2 + self.LOG2PI).sum(dim=-1)) + log_std.sum(dim=-1)
+        return - (0.5 * ((z_score**2 + self.LOG2PI).sum(dim=-1)) + log_std.sum(dim=-1))
 
     def reset_weights(self):
         init.orthogonal_(self.linear_layer.weight, gain=0.01)
@@ -100,10 +100,10 @@ class CategoricalActionHead(nn.Module):
     def forward(self, input_data):
         return F.log_softmax(self.linear_layer(input_data), dim=1)
 
-    def neglogp(self, actions, action_logits):
-        """ Negative logarithm of probability of given sample """
-        neglogp = F.nll_loss(action_logits, actions, reduction='none')
-        return neglogp
+    def logprob(self, actions, action_logits):
+        """ Logarithm of probability of given sample """
+        neg_log_prob = F.nll_loss(action_logits, actions, reduction='none')
+        return -neg_log_prob
 
     def sample(self, logits, argmax_sampling=False):
         """ Sample from a probability space of all actions """
@@ -174,6 +174,6 @@ class ActionHead(nn.Module):
         """ Kullback–Leibler divergence between two sets of parameters """
         return self.head.kl_divergence(params_q, params_p)
 
-    def neglogp(self, action_sample, action_params):
+    def logprob(self, action_sample, action_params):
         """ - log probabilty of selected actions """
-        return self.head.neglogp(action_sample, action_params)
+        return self.head.logprob(action_sample, action_params)

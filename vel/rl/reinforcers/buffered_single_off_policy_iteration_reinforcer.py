@@ -1,0 +1,184 @@
+import attr
+import sys
+import tqdm
+
+import gym
+import torch
+
+from vel.api import BatchInfo, EpochInfo
+from vel.api.base import Model, ModelFactory
+from vel.rl.api.base import ReinforcerBase, ReinforcerFactory, EnvFactory, ReplayEnvRollerBase, AlgoBase
+from vel.rl.api.base.env_roller import ReplayEnvRollerFactory
+from vel.rl.metrics import (
+    FPSMetric, EpisodeLengthMetric, EpisodeRewardMetricQuantile, EpisodeRewardMetric, FramesMetric
+)
+
+
+@attr.s(auto_attribs=True)
+class BufferedSingleOffPolicyIterationReinforcerSettings:
+    """ Settings class for deep Q-Learning """
+    train_frequency: int
+    batch_size: int
+    discount_factor: float
+
+
+class BufferedSingleOffPolicyIterationReinforcer(ReinforcerBase):
+    """
+    An off-policy reinforcer that rolls out **single** environment and stores transitions in a buffer.
+    Afterwards, it samples batches experience from this buffer to train the policy.
+    """
+    def __init__(self, device: torch.device, settings: BufferedSingleOffPolicyIterationReinforcerSettings,
+                 environment: gym.Env, model: Model, algo: AlgoBase, env_roller: ReplayEnvRollerBase):
+        self.device = device
+        self.settings = settings
+        self.environment = environment
+
+        self._trained_model = model.to(self.device)
+        self.algo = algo
+
+        self.last_observation = self.environment.reset()
+        self.env_roller = env_roller
+
+    def metrics(self) -> list:
+        """ List of metrics to track for this learning process """
+        my_metrics = [
+            FramesMetric("frames"),
+            FPSMetric("fps"),
+            EpisodeRewardMetric('PMM:episode_rewards'),
+            EpisodeRewardMetricQuantile('P09:episode_rewards', quantile=0.9),
+            EpisodeRewardMetricQuantile('P01:episode_rewards', quantile=0.1),
+            EpisodeLengthMetric("episode_length")
+        ]
+
+        return my_metrics + self.algo.metrics()
+
+    @property
+    def model(self) -> Model:
+        return self._trained_model
+
+    def initialize_training(self):
+        """ Prepare models for training """
+        self.model.reset_weights()
+        self.algo.initialize(self.settings, model=self.model, environment=self.environment, device=self.device)
+
+    def train_epoch(self, epoch_info: EpochInfo) -> None:
+        """ Train model for a single epoch  """
+        for callback in epoch_info.callbacks:
+            callback.on_epoch_begin(epoch_info)
+
+        for batch_idx in tqdm.trange(epoch_info.batches_per_epoch, file=sys.stdout, desc="Training", unit="batch"):
+            batch_info = BatchInfo(epoch_info, batch_idx)
+
+            for callback in batch_info.callbacks:
+                callback.on_batch_begin(batch_info)
+
+            self.train_batch(batch_info)
+
+            for callback in batch_info.callbacks:
+                callback.on_batch_end(batch_info)
+
+            epoch_info.result_accumulator.calculate(batch_info)
+
+        epoch_info.result_accumulator.freeze_results()
+        epoch_info.freeze_epoch_result()
+
+        for callback in epoch_info.callbacks:
+            callback.on_epoch_end(epoch_info)
+
+    def train_batch(self, batch_info: BatchInfo) -> None:
+        """
+        Batch - the most atomic unit of learning.
+
+        For this reinforforcer, that involves:
+
+        1. Roll out environment and store out experience in the buffer
+        2. Sample the buffer and train the algo on sample batch
+        """
+        # Each DQN batch is
+        # 1. Roll out environment and store out experience in the buffer
+        self.model.eval()
+
+        # Helper variables
+        episode_information = []
+        frames = 0
+
+        with torch.no_grad():
+            if not self.env_roller.is_ready_for_sampling():
+                while not self.env_roller.is_ready_for_sampling():
+                    maybe_episode_info = self.env_roller.rollout(batch_info, self.model)
+
+                    if maybe_episode_info is not None:
+                        episode_information.append(maybe_episode_info)
+
+                    frames += 1
+            else:
+                for i in range(self.settings.train_frequency):
+                    maybe_episode_info = self.env_roller.rollout(batch_info, self.model)
+
+                    if maybe_episode_info is not None:
+                        episode_information.append(maybe_episode_info)
+
+                    frames += 1
+
+        batch_info['frames'] = frames
+        batch_info['episode_infos'] = episode_information
+
+        # 2. Sample the buffer and train the algo on sample batch
+        self.model.train()
+
+        batch_sample = self.env_roller.sample(batch_info, self.settings.batch_size, self.model)
+
+        self.algo.optimizer_step(
+            batch_info,
+            self.device,
+            self.model,
+            batch_sample
+        )
+
+        self.env_roller.update(batch_sample, batch_info)
+
+
+class BufferedSingleOffPolicyIterationReinforcerFactory(ReinforcerFactory):
+    """ Factory class for the DQN reinforcer """
+
+    def __init__(self, settings, env_factory: EnvFactory, model_factory: ModelFactory,
+                 algo: AlgoBase, env_roller_factory: ReplayEnvRollerFactory, seed: int):
+        self.settings = settings
+
+        self.env_factory = env_factory
+        self.model_factory = model_factory
+        self.algo = algo
+        self.env_roller_factory = env_roller_factory
+        self.seed = seed
+
+    def instantiate(self, device: torch.device) -> BufferedSingleOffPolicyIterationReinforcer:
+        env = self.env_factory.instantiate(seed=self.seed)
+        env_roller = self.env_roller_factory.instantiate(env, device, self.settings)
+        model = self.model_factory.instantiate(action_space=env.action_space)
+
+        return BufferedSingleOffPolicyIterationReinforcer(
+            device=device,
+            settings=self.settings,
+            environment=env,
+            model=model,
+            algo=self.algo,
+            env_roller=env_roller
+        )
+
+
+def create(model_config, env, model, algo, env_roller, train_frequency: int, batch_size: int, discount_factor: float):
+    """ Vel creation function for DqnReinforcerFactory """
+    settings = BufferedSingleOffPolicyIterationReinforcerSettings(
+        train_frequency=train_frequency,
+        batch_size=batch_size,
+        discount_factor=discount_factor
+    )
+
+    return BufferedSingleOffPolicyIterationReinforcerFactory(
+        settings=settings,
+        env_factory=env,
+        model_factory=model,
+        algo=algo,
+        env_roller_factory=env_roller,
+        seed=model_config.seed
+    )

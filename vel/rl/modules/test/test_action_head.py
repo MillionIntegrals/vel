@@ -46,9 +46,9 @@ def test_neglogp_diag_gaussian():
     sample = head.sample(pd_params[None])
 
     log_prob1 = distrib.log_prob(sample)
-    neg_log_prob1 = head.neglogp(sample, pd_params[None])
+    log_prob2 = head.logprob(sample, pd_params[None])
 
-    nt.assert_allclose(log_prob1.detach().cpu().numpy(), (-neg_log_prob1).detach().cpu().numpy(), rtol=1e-5)
+    nt.assert_allclose(log_prob1.detach().cpu().numpy(), log_prob2.detach().cpu().numpy(), rtol=1e-5)
 
 
 def test_entropy_diag_gaussian():
@@ -122,10 +122,10 @@ def test_neglogp_categorical():
 
     actions = torch.tensor([0, 1, 2, 3, 4])
 
-    log_p = distrib.log_prob(actions)
-    neg_log_p = head.neglogp(actions, torch.stack([logits, logits, logits, logits, logits], dim=0))
+    log_p_1 = distrib.log_prob(actions)
+    log_p_2 = head.logprob(actions, torch.stack([logits, logits, logits, logits, logits], dim=0))
 
-    nt.assert_allclose(log_p.detach().cpu().numpy(), (-neg_log_p).detach().cpu().numpy(), rtol=1e-5)
+    nt.assert_allclose(log_p_1.detach().cpu().numpy(), log_p_2.detach().cpu().numpy(), rtol=1e-5)
 
 
 def test_entropy_categorical():

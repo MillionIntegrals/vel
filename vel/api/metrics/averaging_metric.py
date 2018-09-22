@@ -33,7 +33,7 @@ class AveragingNamedMetric(AveragingMetric):
         super().__init__(name)
 
     def _value_function(self, data_dict):
-        return data_dict[self.name].item()
+        return data_dict[self.name]
 
 
 class AveragingSupervisedMetric(BaseMetric):

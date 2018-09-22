@@ -18,7 +18,7 @@ class ReplayEnvRollerBase(EnvRollerBase):
         """ If buffer is ready for drawing samples from it (usually checks if there is enough data) """
         raise NotImplementedError
 
-    def update(self, sample, errors):
+    def update(self, sample, batch_info):
         """ Perform update of the internal state of the buffer - e.g. for the prioritized replay weights """
         pass
 

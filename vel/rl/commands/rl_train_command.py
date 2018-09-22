@@ -21,7 +21,7 @@ class FrameTracker(Callback):
             )
 
     def on_batch_end(self, batch_info: BatchInfo):
-        batch_info.training_info['frames'] += batch_info['frames'].item()
+        batch_info.training_info['frames'] += batch_info['frames']
 
 
 class RlTrainCommand:
@@ -51,7 +51,6 @@ class RlTrainCommand:
 
         # All callbacks used for learning
         callbacks = self.gather_callbacks(optimizer)
-
         # Metrics to track through this training
         metrics = reinforcer.metrics()
 
