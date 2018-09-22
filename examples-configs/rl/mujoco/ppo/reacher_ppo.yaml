@@ -15,14 +15,14 @@ model:
 
   policy_backbone:
     name: vel.rl.models.backbone.mlp
-    input_length: 17
+    input_length: 11
     layers: 2
     hidden_units: 64
     activation: 'tanh'
 
   value_backbone:
     name: vel.rl.models.backbone.mlp
-    input_length: 17
+    input_length: 11
     layers: 2
     hidden_units: 64
     activation: 'tanh'
