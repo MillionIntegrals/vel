@@ -65,7 +65,9 @@ class PrioritizedReplayRollerEpsGreedy(ReplayEnvRollerBase):
 
         self.last_observation = observation
 
-        return info.get('episode')
+        return {
+            'episode_information': info.get('episode')
+        }
 
     def sample(self, batch_info, batch_size, model) -> dict:
         """ Sample experience from replay buffer and return a batch """

@@ -2,7 +2,7 @@ import numpy as np
 import torch
 
 from vel.api.base import Schedule
-from vel.rl.api.base import ReplayEnvRollerBase, EnvRollerFactory, EnvRollerBase
+from vel.rl.api.base import ReplayEnvRollerBase, ReplayEnvRollerFactory
 from vel.rl.buffers.deque_backend import DequeBufferBackend
 
 
@@ -58,7 +58,9 @@ class DequeReplayRollerEpsGreedy(ReplayEnvRollerBase):
 
         self.last_observation = observation
 
-        return info.get('episode')
+        return {
+            'episode_information': info.get('episode')
+        }
 
     def sample(self, batch_info, batch_size, model) -> dict:
         """ Sample experience from replay buffer and return a batch """
@@ -83,7 +85,7 @@ class DequeReplayRollerEpsGreedy(ReplayEnvRollerBase):
         }
 
 
-class DequeReplayRollerEpsGreedyFactory(EnvRollerFactory):
+class DequeReplayRollerEpsGreedyFactory(ReplayEnvRollerFactory):
     """ Factory class for DequeReplayQRoller """
     def __init__(self, epsilon_schedule: Schedule, buffer_capacity: int, buffer_initial_size: int,  frame_stack: int=1):
         self.buffer_capacity = buffer_capacity
@@ -91,7 +93,7 @@ class DequeReplayRollerEpsGreedyFactory(EnvRollerFactory):
         self.buffer_initial_size = buffer_initial_size
         self.frame_stack = frame_stack
 
-    def instantiate(self, environment, device, settings) -> EnvRollerBase:
+    def instantiate(self, environment, device, settings) -> ReplayEnvRollerBase:
         return DequeReplayRollerEpsGreedy(
             environment, device, self.epsilon_schedule,
             self.buffer_capacity, self.buffer_initial_size, self.frame_stack
