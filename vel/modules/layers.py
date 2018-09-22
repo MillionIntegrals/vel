@@ -7,6 +7,7 @@ import torch.nn as nn
 
 
 class AdaptiveConcatPool2d(nn.Module):
+    """ Concat pooling - combined average pool and max pool """
     def __init__(self, sz=None):
         super().__init__()
         sz = sz or (1, 1)
@@ -18,6 +19,7 @@ class AdaptiveConcatPool2d(nn.Module):
 
 
 class Lambda(nn.Module):
+    """ Simple torch lambda layer """
     def __init__(self, f):
         super().__init__()
         self.f = f
@@ -27,6 +29,7 @@ class Lambda(nn.Module):
 
 
 class Flatten(nn.Module):
+    """ Flatten input vector """
     def __init__(self):
         super().__init__()
 
