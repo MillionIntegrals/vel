@@ -26,7 +26,7 @@ reinforcer:
     max_grad_norm: 0.5
 
   env_roller:
-    name: vel.rl.env_roller.single.deque_replay_q_roller
+    name: vel.rl.env_roller.single.deque_replay_roller_epsgreedy
 
     buffer_capacity: 250_000
     buffer_initial_size: 30_000

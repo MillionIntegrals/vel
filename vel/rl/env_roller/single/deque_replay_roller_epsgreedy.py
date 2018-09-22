@@ -6,7 +6,7 @@ from vel.rl.api.base import ReplayEnvRollerBase, EnvRollerFactory, EnvRollerBase
 from vel.rl.buffers.deque_backend import DequeBufferBackend
 
 
-class DequeReplayQRoller(ReplayEnvRollerBase):
+class DequeReplayRollerEpsGreedy(ReplayEnvRollerBase):
     """
     Environment roller for action-value models using experience replay.
     Simplest buffer implementation just holding up to given number of samples.
@@ -46,7 +46,7 @@ class DequeReplayQRoller(ReplayEnvRollerBase):
         ], axis=-1)
 
         observation_tensor = torch.from_numpy(last_observation[None]).to(self.device)
-        action = model.step(observation_tensor, epsilon_value)['actions'].item()
+        action = model.step(observation_tensor, epsilon=epsilon_value)['actions'].item()
 
         observation, reward, done, info = self.environment.step(action)
 
@@ -83,7 +83,7 @@ class DequeReplayQRoller(ReplayEnvRollerBase):
         }
 
 
-class DequeReplayQRollerFactory(EnvRollerFactory):
+class DequeReplayRollerEpsGreedyFactory(EnvRollerFactory):
     """ Factory class for DequeReplayQRoller """
     def __init__(self, epsilon_schedule: Schedule, buffer_capacity: int, buffer_initial_size: int,  frame_stack: int=1):
         self.buffer_capacity = buffer_capacity
@@ -92,14 +92,14 @@ class DequeReplayQRollerFactory(EnvRollerFactory):
         self.frame_stack = frame_stack
 
     def instantiate(self, environment, device, settings) -> EnvRollerBase:
-        return DequeReplayQRoller(
+        return DequeReplayRollerEpsGreedy(
             environment, device, self.epsilon_schedule,
             self.buffer_capacity, self.buffer_initial_size, self.frame_stack
         )
 
 
 def create(epsilon_schedule: Schedule, buffer_capacity: int, buffer_initial_size: int, frame_stack: int=1):
-    return DequeReplayQRollerFactory(
+    return DequeReplayRollerEpsGreedyFactory(
         epsilon_schedule=epsilon_schedule,
         buffer_capacity=buffer_capacity,
         buffer_initial_size=buffer_initial_size,

@@ -6,7 +6,7 @@ from vel.rl.api.base import ReplayEnvRollerBase, EnvRollerFactory
 from vel.rl.buffers.prioritized_backend import PrioritizedReplayBackend
 
 
-class PrioritizedReplayQRoller(ReplayEnvRollerBase):
+class PrioritizedReplayRollerEpsGreedy(ReplayEnvRollerBase):
     """
     Environment roller for action-value models using experience replay.
     Experience replay buffer implementation with prioritized sampling based on td-errors
@@ -53,7 +53,7 @@ class PrioritizedReplayQRoller(ReplayEnvRollerBase):
         ], axis=-1)
 
         observation_tensor = torch.from_numpy(last_observation[None]).to(self.device)
-        action = model.step(observation_tensor, epsilon_value)['actions'].item()
+        action = model.step(observation_tensor, epsilon=epsilon_value)['actions'].item()
 
         observation, reward, done, info = self.environment.step(action)
 
@@ -108,7 +108,7 @@ class PrioritizedReplayQRoller(ReplayEnvRollerBase):
             self.backend.update_priority(idx, priority)
 
 
-class PrioritizedReplayQRollerFactory(EnvRollerFactory):
+class PrioritizedReplayRollerEpsGreedyFactory(EnvRollerFactory):
     """ Factory class for PrioritizedReplayQRoller """
 
     def __init__(self, epsilon_schedule: Schedule, buffer_capacity: int, buffer_initial_size: int,
@@ -122,7 +122,7 @@ class PrioritizedReplayQRollerFactory(EnvRollerFactory):
         self.priority_epsilon = priority_epsilon
 
     def instantiate(self, environment, device, settings):
-        return PrioritizedReplayQRoller(
+        return PrioritizedReplayRollerEpsGreedy(
             epsilon_schedule=self.epsilon_schedule,
             environment=environment,
             device=device,
@@ -135,9 +135,9 @@ class PrioritizedReplayQRollerFactory(EnvRollerFactory):
         )
 
 
-def create(epsilon_schedule: Schedule, buffer_capacity: int, buffer_initial_size: int, frame_stack: int, priority_exponent: float,
-           priority_weight: Schedule, priority_epsilon: float):
-    return PrioritizedReplayQRollerFactory(
+def create(epsilon_schedule: Schedule, buffer_capacity: int, buffer_initial_size: int, frame_stack: int,
+           priority_exponent: float, priority_weight: Schedule, priority_epsilon: float):
+    return PrioritizedReplayRollerEpsGreedyFactory(
         epsilon_schedule=epsilon_schedule,
         buffer_capacity=buffer_capacity,
         buffer_initial_size=buffer_initial_size,
