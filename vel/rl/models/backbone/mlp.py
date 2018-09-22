@@ -53,6 +53,7 @@ class MLP(LinearBackboneModel):
                 init.constant_(m.bias, 0.0)
 
     def forward(self, input_data):
+        input_data = input_data.float()
         return self.model(input_data)
 
 

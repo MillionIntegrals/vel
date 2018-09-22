@@ -5,6 +5,7 @@ import pathlib
 import sys
 import torch
 import tqdm
+import typing
 
 from vel.api import ModelConfig
 from vel.api.base import Storage, ModelFactory
@@ -15,8 +16,8 @@ from vel.openai.baselines.common.atari_wrappers import FrameStack
 class RecordMovieCommand:
     """ Record environment playthrough as a game  """
     def __init__(self, model_config: ModelConfig, env_factory: EnvFactory, model_factory: ModelFactory,
-                 storage: Storage, videoname: str, takes: int, frame_history: int,
-                 fps: int, sample_args: dict = None):
+                 storage: Storage, videoname: str, takes: int, frame_history: typing.Optional[int],
+                 fps: int, sample_args: typing.Optional[dict] = None):
         self.model_config = model_config
         self.model_factory = model_factory
         self.env_factory = env_factory
@@ -30,7 +31,11 @@ class RecordMovieCommand:
     def run(self):
         device = torch.device(self.model_config.device)
 
-        env = FrameStack(self.env_factory.instantiate(preset='raw'), self.frame_history)
+        env = self.env_factory.instantiate(preset='raw')
+
+        if self.frame_history:
+            env = FrameStack(env, self.frame_history)
+
         model = self.model_factory.instantiate(action_space=env.action_space).to(device)
 
         self.storage.resume_learning(model)
@@ -54,8 +59,9 @@ class RecordMovieCommand:
             observation_array = np.expand_dims(np.array(observation), axis=0)
             observation_tensor = torch.from_numpy(observation_array).to(device)
             actions = model.step(observation_tensor, **self.sample_args)['actions']
+            actions = actions.detach().cpu().numpy()
 
-            observation, reward, done, epinfo = env_instance.step(actions.item())
+            observation, reward, done, epinfo = env_instance.step(actions[0])
 
             frames.append(env_instance.render('rgb_array'))
 
@@ -76,7 +82,7 @@ class RecordMovieCommand:
         print(f"Written {takename}")
 
 
-def create(model_config, model, env, storage, takes, videoname, frame_history, fps=30, sample_args=None):
+def create(model_config, model, env, storage, takes, videoname, frame_history=None, fps=30, sample_args=None):
     return RecordMovieCommand(
         model_config=model_config,
         model_factory=model,
