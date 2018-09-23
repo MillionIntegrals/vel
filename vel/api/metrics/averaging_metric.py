@@ -24,7 +24,7 @@ class AveragingMetric(BaseMetric):
 
     def value(self):
         """ Return current value for the metric """
-        return np.mean(self.storage)
+        return float(np.mean(self.storage))
 
 
 class AveragingNamedMetric(AveragingMetric):
