@@ -36,6 +36,13 @@ class DequeReplayRollerEpsGreedy(ReplayEnvRollerBase):
         """ If buffer is ready for drawing samples from it (usually checks if there is enough data) """
         return self.backend.current_size >= self.buffer_initial_size
 
+    def epsgreedy_action(self, policy_action, epsilon):
+        """ Sample e-greedy action using curreny policy and epsilon value """
+        policy_samples = policy_action.argmax(dim=1)
+        random_samples = torch.randint_like(policy_samples, self.environment.action_space.n)
+        selector = torch.rand_like(random_samples)
+        return torch.where(selector > epsilon, policy_samples, random_samples)
+
     def rollout(self, batch_info, model) -> dict:
         """ Roll-out the environment and return it """
         epsilon_value = self.epsilon_schedule.value(batch_info['progress'])
@@ -48,10 +55,11 @@ class DequeReplayRollerEpsGreedy(ReplayEnvRollerBase):
 
         observation_tensor = torch.from_numpy(last_observation[None]).to(self.device)
         step = model.step(observation_tensor, epsilon=epsilon_value)
-        action = step['actions'].item()
+
+        epsgreedy_step = self.epsgreedy_action(step['actions'], epsilon_value)
+        action = epsgreedy_step.item()
 
         observation, reward, done, info = self.environment.step(action)
-
         self.backend.store_transition(self.last_observation, action, reward, done)
 
         # Usual, reset on done
@@ -64,7 +72,7 @@ class DequeReplayRollerEpsGreedy(ReplayEnvRollerBase):
 
         return {
             'episode_information': info.get('episode'),
-            'action': step['actions'][0],
+            'action': epsgreedy_step,
             'value': step['values'][0]
         }
 

@@ -30,7 +30,8 @@ class QDuelingModel(Model):
         q_values = self(observations)
 
         return {
-            'actions': self.q_head.sample(q_values, epsilon)
+            'actions': self.q_head.sample(q_values, epsilon),
+            'values': q_values
         }
 
 

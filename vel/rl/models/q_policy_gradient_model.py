@@ -52,7 +52,7 @@ class QPolicyGradientModel(Model):
 
         return {
             'actions': actions,
-            'q': q_output,
+            'values': q_output,
             'action_logits': action_pd_params,
             'logprob': logprob
         }

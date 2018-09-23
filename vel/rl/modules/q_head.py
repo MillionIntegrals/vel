@@ -23,9 +23,7 @@ class QHead(nn.Module):
     def forward(self, input_data):
         return self.linear_layer(input_data)
 
-    def sample(self, q_values, epsilon=0.0):
+    def sample(self, q_values):
         """ Sample from epsilon-greedy strategy with given q-values """
-        policy_samples = q_values.argmax(dim=1)
-        random_samples = torch.randint_like(policy_samples, self.action_space.n)
-        selector = torch.rand(random_samples.shape, device=q_values.device)
-        return torch.where(selector > epsilon, policy_samples, random_samples)
+        return q_values.argmax(dim=1)
+
