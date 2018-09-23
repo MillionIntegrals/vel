@@ -87,8 +87,8 @@ class ModelConfig:
         self.filename = filename
         self.device = device
         self.reset = reset
-        self.seed = seed if seed is not None else dtm.date.today().year
         self.run_number = run_number
+        self.seed = seed if seed is not None else (dtm.date.today().year + self.run_number)
 
         self.contents = configuration
         self.project_dir = project_dir
