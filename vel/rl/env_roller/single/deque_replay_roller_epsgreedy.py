@@ -2,6 +2,7 @@ import numpy as np
 import torch
 
 from vel.api.base import Schedule
+from vel.api.metrics import AveragingNamedMetric
 from vel.rl.api.base import ReplayEnvRollerBase, ReplayEnvRollerFactory
 from vel.rl.buffers.deque_backend import DequeBufferBackend
 
@@ -29,7 +30,7 @@ class DequeReplayRollerEpsGreedy(ReplayEnvRollerBase):
             action_space=environment.action_space
         )
 
-        self.last_observation = environment.reset()
+        self.last_observation = self.environment.reset()
 
     def is_ready_for_sampling(self) -> bool:
         """ If buffer is ready for drawing samples from it (usually checks if there is enough data) """
@@ -58,14 +59,21 @@ class DequeReplayRollerEpsGreedy(ReplayEnvRollerBase):
 
         self.last_observation = observation
 
+        batch_info['epsilon'] = epsilon_value
+
         return {
             'episode_information': info.get('episode')
         }
 
+    def metrics(self):
+        """ List of metrics to track for this learning process """
+        return [
+            AveragingNamedMetric("epsilon"),
+        ]
+
     def sample(self, batch_info, batch_size, model) -> dict:
         """ Sample experience from replay buffer and return a batch """
         indexes = self.backend.sample_batch_uniform(batch_size, self.frame_stack)
-
         batch = self.backend.get_batch(indexes, self.frame_stack)
 
         observations = torch.from_numpy(batch['states']).to(self.device)

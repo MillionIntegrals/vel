@@ -1,6 +1,6 @@
 import torch.optim
 
-from vel.api.base import OptimizerFactory
+from vel.api.base import OptimizerFactory, Model
 
 
 class AdadeltaFactory(OptimizerFactory):
@@ -12,9 +12,9 @@ class AdadeltaFactory(OptimizerFactory):
         self.eps = eps
         self.weight_decay = weight_decay
 
-    def instantiate(self, parameters) -> torch.optim.Adadelta:
+    def instantiate(self, model: Model) -> torch.optim.Adadelta:
         return torch.optim.Adadelta(
-            parameters,
+            filter(lambda p: p.requires_grad, model.parameters()),
             lr=self.lr, rho=self.rho, eps=self.eps, weight_decay=self.weight_decay
         )
 

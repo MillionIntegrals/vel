@@ -105,16 +105,27 @@ class ClassicAtariEnv(EnvFactory):
         self.presets = {}
 
         for key in env_keys:
-            self.presets[key] = DEFAULT_SETTINGS.get(key, {})
-            self.presets[key].update(env_settings.get(key, {}))
+            self.presets[key] = env_settings.get(key, {})
 
     def specification(self) -> EnvSpec:
         """ Return environment specification """
         return gym.spec(self.envname)
 
+    def get_preset(self, preset_key='default') -> dict:
+        """ Get env settings for given preset """
+        current_settings = DEFAULT_SETTINGS.get(preset_key, {}).copy()
+
+        if 'all' in self.presets:
+            current_settings.update(self.presets['all'])
+
+        # Key must be present in presets
+        current_settings.update(self.presets[preset_key])
+
+        return current_settings
+
     def instantiate(self, seed=0, serial_id=0, preset='default') -> gym.Env:
         """ Make a single environment compatible with the experiments """
-        settings = self.presets[preset]
+        settings = self.get_preset(preset)
         return wrapped_env_maker(self.envname, seed, serial_id, **settings)
 
 

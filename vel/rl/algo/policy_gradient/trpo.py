@@ -5,8 +5,8 @@ import torch.nn.functional as F
 import torch.nn.utils
 
 from vel.api.metrics.averaging_metric import AveragingNamedMetric
+from vel.math.functions import explained_variance
 from vel.rl.api.base import AlgoBase
-from vel.rl.math.functions import explained_variance
 
 
 def p2v(params):

@@ -1,0 +1,74 @@
+name: 'half_cheetah_ddpg'
+
+env:
+  name: vel.rl.env.mujoco
+  game: 'HalfCheetah-v2'
+
+
+model:
+  name: vel.rl.models.deterministic_policy_model
+
+  policy_backbone:
+    name: vel.rl.models.backbone.mlp
+    input_length: 17
+    layers: 2
+    hidden_units: 64
+    activation: 'relu'
+    layer_norm: on
+
+  value_backbone:
+    name: vel.rl.models.backbone.mlp
+    input_length: 17
+    layers: 1 # Second layer is part of the critic head
+    hidden_units: 64
+    activation: 'relu'
+    layer_norm: on
+
+
+reinforcer:
+  name: vel.rl.reinforcers.buffered_single_off_policy_iteration_reinforcer
+
+  algo:
+    name: vel.rl.algo.policy_gradient.ddpg
+
+    tau: 0.01
+
+  env_roller:
+    name: vel.rl.env_roller.single.deque_replay_roller_ou_noise
+
+    noise_std_dev: 0.2
+
+    buffer_capacity: 1_000_000
+    buffer_initial_size: 1_000
+
+    normalize_observations: true
+
+  batch_size: 64
+  discount_factor: 0.99
+  batch_rollout_rounds: 100
+  batch_training_rounds: 50
+
+
+optimizer:
+  name: vel.optimizers.adam
+  # OpenAI has two different optimizers optimizing each network separately.
+  # As far as I know it should be equivalent to optimizing two separate networks together with a sum of loss functions
+  lr: [1.0e-4, 1.0e-3]
+  epsilon: 1.0e-8
+  layer_groups: on
+
+
+commands:
+  train:
+    name: vel.rl.commands.rl_train_command
+    total_frames: 1.0e6
+    batches_per_epoch: 20
+
+    openai_logging: true
+
+  record:
+    name: vel.rl.commands.record_movie_command
+    takes: 10
+    videoname: 'half_cheetah_vid_{:04}.avi'
+    sample_args:
+      argmax_sampling: true

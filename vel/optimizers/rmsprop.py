@@ -1,6 +1,6 @@
 import torch.optim
 
-from vel.api.base import OptimizerFactory
+from vel.api.base import OptimizerFactory, Model
 
 
 class RMSpropFactory(OptimizerFactory):
@@ -14,9 +14,9 @@ class RMSpropFactory(OptimizerFactory):
         self.momentum = momentum
         self.centered = centered
 
-    def instantiate(self, parameters) -> torch.optim.RMSprop:
+    def instantiate(self, model: Model) -> torch.optim.RMSprop:
         return torch.optim.RMSprop(
-            parameters,
+            filter(lambda p: p.requires_grad, model.parameters()),
             lr=self.lr, alpha=self.alpha, eps=self.eps,
             weight_decay=self.weight_decay, momentum=self.momentum, centered=self.centered
         )

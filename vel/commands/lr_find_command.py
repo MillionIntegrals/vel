@@ -74,7 +74,7 @@ class LrFindCommand:
             learner.model.freeze()
 
         # Optimizer shoudl be created after freeze
-        optimizer = self.optimizer_factory.instantiate(filter(lambda p: p.requires_grad, learner.model.parameters()))
+        optimizer = self.optimizer_factory.instantiate(learner.model)
 
         iterator = iter(self.source.train_loader)
 

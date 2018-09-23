@@ -4,7 +4,7 @@ import numbers
 
 from vel.api.metrics.averaging_metric import AveragingNamedMetric
 from vel.rl.api.base import OptimizerAlgoBase
-from vel.rl.math.functions import explained_variance
+from vel.math.functions import explained_variance
 from vel.schedules.constant import ConstantSchedule
 
 
@@ -54,10 +54,10 @@ class PpoPolicyGradient(OptimizerAlgoBase):
 
         pg_loss_part1 = -advantages * ratio
         pg_loss_part2 = -advantages * torch.clamp(ratio, 1.0 - current_cliprange, 1.0 + current_cliprange)
-        policy_gradient_loss = torch.mean(torch.max(pg_loss_part1, pg_loss_part2))
+        policy_loss = torch.mean(torch.max(pg_loss_part1, pg_loss_part2))
 
         loss_value = (
-                policy_gradient_loss - self.entropy_coefficient * policy_entropy + self.value_coefficient * value_loss
+                policy_loss - self.entropy_coefficient * policy_entropy + self.value_coefficient * value_loss
         )
 
         with torch.no_grad():
@@ -65,7 +65,7 @@ class PpoPolicyGradient(OptimizerAlgoBase):
             clip_fraction = torch.mean((torch.abs(ratio - 1.0) > current_cliprange).to(dtype=torch.float))
 
         batch_info['sub_batch_data'].append({
-            'policy_loss': policy_gradient_loss.item(),
+            'policy_loss': policy_loss.item(),
             'value_loss': value_loss.item(),
             'policy_entropy': policy_entropy.item(),
             'approx_kl_divergence': approx_kl_divergence.item(),

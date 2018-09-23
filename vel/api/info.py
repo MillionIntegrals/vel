@@ -1,4 +1,5 @@
 import collections.abc as abc
+import numpy as np
 import pandas as pd
 
 import torch
@@ -227,6 +228,18 @@ class BatchInfo(abc.MutableMapping):
     @property
     def callbacks(self):
         return self.epoch_info.callbacks
+
+    def aggregate_key(self, aggregate_key):
+        """ Aggregate values from key and put them into the top-level dictionary """
+        aggregation = self.data_dict[aggregate_key]  # List of dictionaries of numpy arrays/scalars
+
+        # Aggregate sub batch data
+        data_dict_keys = {y for x in aggregation for y in x.keys()}
+
+        for key in data_dict_keys:
+            # Just average all the statistics from the loss function
+            stacked = np.stack([d[key] for d in aggregation], axis=0)
+            self.data_dict[key] = np.mean(stacked, axis=0)
 
     def __getitem__(self, item):
         return self.data_dict[item]

@@ -5,6 +5,10 @@ class EnvRollerBase:
         """ Roll-out the environment and return it """
         raise NotImplementedError
 
+    def metrics(self) -> list:
+        """ List of metrics to track for this learning process """
+        return []
+
 
 # noinspection PyAbstractClass
 class ReplayEnvRollerBase(EnvRollerBase):

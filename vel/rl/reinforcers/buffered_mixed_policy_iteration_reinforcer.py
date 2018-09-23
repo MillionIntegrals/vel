@@ -50,7 +50,7 @@ class BufferedPolicyGradientReinforcer(ReinforcerBase):
             EpisodeLengthMetric("episode_length")
         ]
 
-        return my_metrics + self.algo.metrics()
+        return my_metrics + self.algo.metrics() + self.env_roller.metrics()
 
     @property
     def model(self) -> Model:
@@ -102,12 +102,7 @@ class BufferedPolicyGradientReinforcer(ReinforcerBase):
             for i in range(experience_replay_count):
                 self.off_policy_train_batch(batch_info)
 
-        # Aggregate policy gradient data
-        data_dict_keys = {y for x in batch_info['sub_batch_data'] for y in x.keys()}
-
-        for key in data_dict_keys:
-            # Just average all the statistics from the loss function
-            batch_info[key] = np.mean(np.stack([d[key] for d in batch_info['sub_batch_data']]))
+        batch_info.aggregate_key('sub_batch_data')
 
     def on_policy_train_batch(self, batch_info: BatchInfo):
         """ Perform an 'on-policy' training step of evaluating an env and a single backpropagation step """

@@ -47,7 +47,7 @@ class RlTrainCommand:
         device = torch.device(self.model_config.device)
         # Reinforcer is the learner for the reinforcement learning model
         reinforcer = self.reinforcer.instantiate(device)
-        optimizer = self.optimizer_factory.instantiate(reinforcer.model.parameters())
+        optimizer = self.optimizer_factory.instantiate(reinforcer.model)
 
         # All callbacks used for learning
         callbacks = self.gather_callbacks(optimizer)

@@ -39,7 +39,7 @@ reinforcer:
       initial_value: 1.0
       final_value: 0.1
 
-  train_frequency: 4  # How many environment steps to perform per batch of training
+  batch_rollout_rounds: 4 # How many environment steps to perform per batch of training
   batch_size: 32
 
   discount_factor: 0.99

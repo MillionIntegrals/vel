@@ -2,9 +2,10 @@ import torch.nn.utils
 
 
 class AlgoBase:
-    """ Base class for policy gradient calculations """
+    """ Base class for algo reinforcement calculations """
+
     def initialize(self, settings, model, environment, device):
-        """ Initialize policy gradient from reinforcer settings """
+        """ Initialize algo from reinforcer settings """
         pass
 
     def optimizer_step(self, batch_info, device, model, rollout):
@@ -32,7 +33,8 @@ class AlgoBase:
 
 
 class OptimizerAlgoBase(AlgoBase):
-    """ Policy gradient that does a simple optimizer update """
+    """ RL algo that does a simple optimizer update """
+
     def __init__(self, max_grad_norm):
         self.max_grad_norm = max_grad_norm
 

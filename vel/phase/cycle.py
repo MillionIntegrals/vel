@@ -2,7 +2,6 @@ import numpy as np
 
 import vel.api.base as base
 import vel.util.intepolate as interp
-import vel.util.module_util as mu
 
 from vel.api import BatchInfo, EpochInfo, TrainingInfo
 
@@ -10,7 +9,8 @@ from vel.api import BatchInfo, EpochInfo, TrainingInfo
 class CycleCallback(base.Callback):
     """ A callback that manages setting the proper learning rate """
 
-    def __init__(self, optimizer, max_lr, min_lr, cycles, cycle_len=1, cycle_mult=1, init_iter=0, init_lr=0, interpolate='linear'):
+    def __init__(self, optimizer, max_lr, min_lr, cycles, cycle_len=1, cycle_mult=1, init_iter=0, init_lr=0,
+                 interpolate='linear'):
         self.max_lr = max_lr
         self.min_lr = min_lr
 
@@ -120,8 +120,7 @@ class CyclePhase(base.TrainPhase):
     def set_up_phase(self, training_info, model, source):
         """ Prepare the phase for learning """
         # To parameter groups handles properly filtering parameters that don't require gradient
-        parameter_groups = mu.to_parameter_groups(model.get_layer_groups())
-        self._optimizer_instance = self.optimizer_factory.instantiate(parameter_groups)
+        self._optimizer_instance = self.optimizer_factory.instantiate(model)
         self._source = source
 
         self.special_callback = CycleCallback(

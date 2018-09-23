@@ -21,8 +21,7 @@ class GenericPhase(base.TrainPhase):
 
     def set_up_phase(self, training_info, model, source: Source):
         """ Prepare the phase for learning """
-        parameters = filter(lambda p: p.requires_grad, model.parameters())
-        self._optimizer_instance = self.optimizer_factory.instantiate(parameters)
+        self._optimizer_instance = self.optimizer_factory.instantiate(model)
         self._source = source
 
     def epoch_info(self, training_info: TrainingInfo, global_idx: int, local_idx: int) -> EpochInfo:

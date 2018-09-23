@@ -21,7 +21,7 @@ class SimpleTrainCommand:
         """ Run the command with supplied configuration """
         device = torch.device(self.model_config.device)
         learner = Learner(device, self.model_factory.instantiate())
-        optimizer = self.optimizer_factory.instantiate(learner.model.parameters())
+        optimizer = self.optimizer_factory.instantiate(learner.model)
 
         # All callbacks used for learning
         callbacks = self.gather_callbacks(optimizer)

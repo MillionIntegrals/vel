@@ -2,6 +2,7 @@ import numpy as np
 import torch
 
 from vel.api.base import Schedule
+from vel.api.metrics import AveragingNamedMetric
 from vel.rl.api.base import ReplayEnvRollerBase, EnvRollerFactory
 from vel.rl.buffers.prioritized_backend import PrioritizedReplayBackend
 
@@ -30,13 +31,14 @@ class PrioritizedReplayRollerEpsGreedy(ReplayEnvRollerBase):
 
         self.environment = environment
         self.device = device
-        self.last_observation = environment.reset()
 
         self.backend = PrioritizedReplayBackend(
             buffer_capacity=self.buffer_capacity,
             observation_space=environment.observation_space,
             action_space=environment.action_space
         )
+
+        self.last_observation = self.environment.reset()
 
     def is_ready_for_sampling(self) -> bool:
         """ If buffer is ready for drawing samples from it (usually checks if there is enough data) """
@@ -65,9 +67,17 @@ class PrioritizedReplayRollerEpsGreedy(ReplayEnvRollerBase):
 
         self.last_observation = observation
 
+        batch_info['epsilon'] = epsilon_value
+
         return {
             'episode_information': info.get('episode')
         }
+
+    def metrics(self):
+        """ List of metrics to track for this learning process """
+        return [
+            AveragingNamedMetric("epsilon"),
+        ]
 
     def sample(self, batch_info, batch_size, model) -> dict:
         """ Sample experience from replay buffer and return a batch """

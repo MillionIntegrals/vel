@@ -57,13 +57,17 @@ class DeepQLearning(OptimizerAlgoBase):
         original_losses = F.smooth_l1_loss(q_selected, expected_q.detach(), reduction='none')
 
         weights = rollout['weights']
+
         loss_value = torch.mean(weights * original_losses)
 
+        # This will be overwritten, but we need it to update priorities in the replay buffer
         batch_info['errors'] = original_losses.detach().cpu().numpy()
 
-        batch_info['loss'] = loss_value.item()
-        batch_info['average_q_selected'] = torch.mean(q_selected).item()
-        batch_info['average_q_target'] = torch.mean(expected_q).item()
+        batch_info['sub_batch_data'].append({
+            'loss': loss_value.item(),
+            'average_q_selected': torch.mean(q_selected).item(),
+            'average_q_target': torch.mean(expected_q).item()
+        })
 
         return loss_value
 
@@ -77,7 +81,6 @@ class DeepQLearning(OptimizerAlgoBase):
         """ List of metrics to track for this learning process """
         return [
             AveragingNamedMetric("loss"),
-            AveragingNamedMetric("epsilon"),
             AveragingNamedMetric("average_q_selected"),
             AveragingNamedMetric("average_q_target"),
             AveragingNamedMetric("grad_norm"),

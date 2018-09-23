@@ -17,7 +17,9 @@ from vel.rl.metrics import (
 @attr.s(auto_attribs=True)
 class BufferedSingleOffPolicyIterationReinforcerSettings:
     """ Settings class for deep Q-Learning """
-    train_frequency: int
+    batch_rollout_rounds: int
+    batch_training_rounds: int
+
     batch_size: int
     discount_factor: float
 
@@ -36,7 +38,6 @@ class BufferedSingleOffPolicyIterationReinforcer(ReinforcerBase):
         self._trained_model = model.to(self.device)
         self.algo = algo
 
-        self.last_observation = self.environment.reset()
         self.env_roller = env_roller
 
     def metrics(self) -> list:
@@ -50,7 +51,7 @@ class BufferedSingleOffPolicyIterationReinforcer(ReinforcerBase):
             EpisodeLengthMetric("episode_length")
         ]
 
-        return my_metrics + self.algo.metrics()
+        return my_metrics + self.algo.metrics() + self.env_roller.metrics()
 
     @property
     def model(self) -> Model:
@@ -105,15 +106,17 @@ class BufferedSingleOffPolicyIterationReinforcer(ReinforcerBase):
         with torch.no_grad():
             if not self.env_roller.is_ready_for_sampling():
                 while not self.env_roller.is_ready_for_sampling():
-                    maybe_episode_info = self.env_roller.rollout(batch_info, self.model)
+                    rollout = self.env_roller.rollout(batch_info, self.model)
+                    maybe_episode_info = rollout['episode_information']
 
                     if maybe_episode_info is not None:
                         episode_information.append(maybe_episode_info)
 
                     frames += 1
             else:
-                for i in range(self.settings.train_frequency):
-                    maybe_episode_info = self.env_roller.rollout(batch_info, self.model)
+                for i in range(self.settings.batch_rollout_rounds):
+                    rollout = self.env_roller.rollout(batch_info, self.model)
+                    maybe_episode_info = rollout['episode_information']
 
                     if maybe_episode_info is not None:
                         episode_information.append(maybe_episode_info)
@@ -126,16 +129,22 @@ class BufferedSingleOffPolicyIterationReinforcer(ReinforcerBase):
         # 2. Sample the buffer and train the algo on sample batch
         self.model.train()
 
-        batch_sample = self.env_roller.sample(batch_info, self.settings.batch_size, self.model)
+        # Algo will aggregate data into this list:
+        batch_info['sub_batch_data'] = []
 
-        self.algo.optimizer_step(
-            batch_info,
-            self.device,
-            self.model,
-            batch_sample
-        )
+        for i in range(self.settings.batch_training_rounds):
+            batch_sample = self.env_roller.sample(batch_info, self.settings.batch_size, self.model)
 
-        self.env_roller.update(batch_sample, batch_info)
+            self.algo.optimizer_step(
+                batch_info,
+                self.device,
+                self.model,
+                batch_sample
+            )
+
+            self.env_roller.update(batch_sample, batch_info)
+
+        batch_info.aggregate_key('sub_batch_data')
 
 
 class BufferedSingleOffPolicyIterationReinforcerFactory(ReinforcerFactory):
@@ -166,10 +175,12 @@ class BufferedSingleOffPolicyIterationReinforcerFactory(ReinforcerFactory):
         )
 
 
-def create(model_config, env, model, algo, env_roller, train_frequency: int, batch_size: int, discount_factor: float):
+def create(model_config, env, model, algo, env_roller, batch_size: int, discount_factor: float,
+           batch_rollout_rounds=1, batch_training_rounds=1):
     """ Vel creation function for DqnReinforcerFactory """
     settings = BufferedSingleOffPolicyIterationReinforcerSettings(
-        train_frequency=train_frequency,
+        batch_rollout_rounds=batch_rollout_rounds,
+        batch_training_rounds=batch_training_rounds,
         batch_size=batch_size,
         discount_factor=discount_factor
     )

@@ -3,7 +3,7 @@ import torch.nn.functional as F
 
 from vel.api.metrics.averaging_metric import AveragingNamedMetric
 from vel.rl.api.base import OptimizerAlgoBase
-from vel.rl.math.functions import explained_variance
+from vel.math.functions import explained_variance
 
 
 class A2CPolicyGradient(OptimizerAlgoBase):
@@ -26,16 +26,16 @@ class A2CPolicyGradient(OptimizerAlgoBase):
 
         log_prob = model.logprob(actions, action_pd_params)
 
-        policy_gradient_loss = - torch.mean(advantages * log_prob)
+        policy_loss = - torch.mean(advantages * log_prob)
         value_loss = 0.5 * F.mse_loss(value_outputs, returns)
         policy_entropy = torch.mean(model.entropy(action_pd_params))
 
         loss_value = (
-            policy_gradient_loss - self.entropy_coefficient * policy_entropy + self.value_coefficient * value_loss
+            policy_loss - self.entropy_coefficient * policy_entropy + self.value_coefficient * value_loss
         )
 
         batch_info['sub_batch_data'].append({
-            'policy_loss': policy_gradient_loss.item(),
+            'policy_loss': policy_loss.item(),
             'value_loss': value_loss.item(),
             'policy_entropy': policy_entropy.item(),
             'advantage_norm': torch.norm(advantages).item(),

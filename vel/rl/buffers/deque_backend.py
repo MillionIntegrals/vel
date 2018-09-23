@@ -23,7 +23,7 @@ class DequeBufferBackend:
             dtype=observation_space.dtype
         )
 
-        self.action_buffer = np.zeros([self.buffer_capacity], dtype=action_space.dtype)
+        self.action_buffer = np.zeros([self.buffer_capacity] + list(action_space.shape), dtype=action_space.dtype)
         self.reward_buffer = np.zeros([self.buffer_capacity], dtype=float)
 
         self.dones_buffer = np.zeros([self.buffer_capacity], dtype=bool)
@@ -82,14 +82,21 @@ class DequeBufferBackend:
 
         past_frame = self.get_frame(idx, history_length)
 
-        future_frame = np.zeros_like(past_frame)
+        if history_length > 1 and len(past_frame.shape) > 1:
+            future_frame = np.zeros_like(past_frame)
 
-        future_frame[:, :, :-1] = past_frame[:, :, 1:]
+            future_frame[:, :, :-1] = past_frame[:, :, 1:]
 
-        if not self.dones_buffer[idx]:
-            next_idx = (idx + 1) % self.buffer_capacity
-            next_frame = self.state_buffer[next_idx]
-            future_frame[:, :, -1:] = next_frame
+            if not self.dones_buffer[idx]:
+                next_idx = (idx + 1) % self.buffer_capacity
+                next_frame = self.state_buffer[next_idx]
+                future_frame[:, :, -1:] = next_frame
+        else:
+            if self.dones_buffer[idx]:
+                future_frame = np.zeros_like(past_frame)
+            else:
+                next_idx = (idx + 1) % self.buffer_capacity
+                future_frame = self.get_frame(next_idx, history_length)
 
         return past_frame, future_frame
 

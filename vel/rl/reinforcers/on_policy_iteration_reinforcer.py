@@ -54,7 +54,7 @@ class OnPolicyIterationReinforcer(ReinforcerBase):
             EpisodeLengthMetric("episode_length"),
         ]
 
-        return my_metrics + self.algo.metrics()
+        return my_metrics + self.algo.metrics() + self.env_roller.metrics()
 
     @property
     def model(self) -> Model:
@@ -135,13 +135,7 @@ class OnPolicyIterationReinforcer(ReinforcerBase):
 
         batch_info['frames'] = rollout_size
         batch_info['episode_infos'] = rollout['episode_information']
-
-        # Aggregate policy gradient data
-        data_dict_keys = {y for x in batch_info['sub_batch_data'] for y in x.keys()}
-
-        for key in data_dict_keys:
-            # Just average all the statistics from the loss function
-            batch_info[key] = np.mean(np.stack([d[key] for d in batch_info['sub_batch_data']]))
+        batch_info.aggregate_key('sub_batch_data')
 
 
 class PolicyGradientReinforcerFactory(ReinforcerFactory):
