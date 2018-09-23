@@ -54,8 +54,8 @@ optimizer:
   # OpenAI has two different optimizers optimizing each network separately.
   # As far as I know it should be equivalent to optimizing two separate networks together with a sum of loss functions
   lr: [1.0e-4, 1.0e-3]
-  weight_decay: [0.0, 0.01]
-  epsilon: 1.0e-8
+  weight_decay: [0.0, 0.001]
+  epsilon: 1.0e-4
   layer_groups: on
 
 
