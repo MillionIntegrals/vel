@@ -55,7 +55,9 @@ class PrioritizedReplayRollerEpsGreedy(ReplayEnvRollerBase):
         ], axis=-1)
 
         observation_tensor = torch.from_numpy(last_observation[None]).to(self.device)
-        action = model.step(observation_tensor, epsilon=epsilon_value)['actions'].item()
+
+        step = model.step(observation_tensor, epsilon=epsilon_value)
+        action = step['actions'].item()
 
         observation, reward, done, info = self.environment.step(action)
 
@@ -70,7 +72,9 @@ class PrioritizedReplayRollerEpsGreedy(ReplayEnvRollerBase):
         batch_info['epsilon'] = epsilon_value
 
         return {
-            'episode_information': info.get('episode')
+            'episode_information': info.get('episode'),
+            'action': step['actions'][0],
+            'value': step['values'][0]
         }
 
     def metrics(self):

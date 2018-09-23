@@ -53,7 +53,9 @@ class DequeReplayRollerOuNoise(ReplayEnvRollerBase):
         action = step['actions'].detach().cpu().numpy()[0]
         noise = self.noise_process()
 
-        action_perturbed = np.clip(action + noise, self.environment.action_space.low, self.environment.action_space.high)
+        action_perturbed = np.clip(
+            action + noise, self.environment.action_space.low, self.environment.action_space.high
+        )
 
         observation, reward, done, info = self.environment.step(action_perturbed)
 
@@ -70,7 +72,9 @@ class DequeReplayRollerOuNoise(ReplayEnvRollerBase):
         self.last_observation = observation
 
         return {
-            'episode_information': info.get('episode')
+            'episode_information': info.get('episode'),
+            'action': step['actions'][0],
+            'value': step['values'][0]
         }
 
     def _filter_observation(self, obs):
