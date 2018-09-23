@@ -1,4 +1,5 @@
 import gym
+import itertools as it
 
 from vel.api.base import LinearBackboneModel, Model, ModelFactory
 from vel.rl.modules.deterministic_action_head import DeterministicActionHead
@@ -28,17 +29,25 @@ class DeterministicPolicyModel(Model):
     def forward(self, observations, input_actions=None):
         """ Calculate model outputs """
         observations = observations.float()
-        policy_hidden = self.policy_backbone(observations)
         value_hidden = self.value_backbone(observations)
 
         if input_actions is not None:
             action = input_actions
             value = self.critic_head(value_hidden, input_actions)
         else:
+            policy_hidden = self.policy_backbone(observations)
             action = self.action_head(policy_hidden)
-            value = self.critic_head(value_hidden, action.detach())
+            value = self.critic_head(value_hidden, action)
 
         return action, value
+
+    def policy_parameters(self):
+        """ Parameters of policy """
+        return it.chain(self.policy_backbone.parameters(), self.action_head.parameters())
+
+    def value_parameters(self):
+        """ Parameters of policy """
+        return it.chain(self.value_backbone.parameters(), self.critic_head.parameters())
 
     def get_layer_groups(self):
         """ Return layers grouped """
@@ -60,6 +69,13 @@ class DeterministicPolicyModel(Model):
         """ Calculate value for given state """
         action, value = self(observation, input_actions)
         return value
+
+    def action(self, observations):
+        """ Calculate value for given state """
+        observations = observations.float()
+        policy_hidden = self.policy_backbone(observations)
+        action = self.action_head(policy_hidden)
+        return action
 
 
 class DeterministicPolicyModelFactory(ModelFactory):
