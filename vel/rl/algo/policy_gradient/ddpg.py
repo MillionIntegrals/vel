@@ -33,15 +33,16 @@ class DeepDeterministicPolicyGradient(AlgoBase):
             target_next_value = self.target_model.value(rollout['observations+1'])
             target_value = rollout['rewards'] + (1.0 - rollout['dones']) * self.discount_factor * target_next_value
 
+        # Value estimation error vs the target network
+        rollout_value = model.value(rollout['observations'], rollout['actions'])
+        value_loss = F.mse_loss(rollout_value, target_value)
+
         # It may seem a bit tricky what I'm doing here, but the underlying idea is simple
         # All other implementations I found keep two separate optimizers for actor and critic
         # and update them separately
         # What I'm trying to do is to optimize them both with a single optimizer
         # but I need to make sure gradients flow correctly
         # From critic loss to critic network only and from actor loss to actor network only
-
-        rollout_value = model.value(rollout['observations'], rollout['actions'])
-        value_loss = F.mse_loss(rollout_value, target_value)
 
         # Backpropagate value loss to critic only
         value_loss.backward()
