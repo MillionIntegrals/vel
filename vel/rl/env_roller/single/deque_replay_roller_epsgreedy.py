@@ -36,11 +36,10 @@ class DequeReplayRollerEpsGreedy(ReplayEnvRollerBase):
         """ If buffer is ready for drawing samples from it (usually checks if there is enough data) """
         return self.backend.current_size >= self.buffer_initial_size
 
-    def epsgreedy_action(self, policy_action, epsilon):
+    def epsgreedy_action(self, policy_samples, epsilon):
         """ Sample e-greedy action using curreny policy and epsilon value """
-        policy_samples = policy_action.argmax(dim=1)
         random_samples = torch.randint_like(policy_samples, self.environment.action_space.n)
-        selector = torch.rand_like(random_samples)
+        selector = torch.rand_like(random_samples, dtype=torch.float32)
         return torch.where(selector > epsilon, policy_samples, random_samples)
 
     def rollout(self, batch_info, model) -> dict:
