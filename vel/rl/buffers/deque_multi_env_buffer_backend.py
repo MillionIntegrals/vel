@@ -7,9 +7,6 @@ from vel.exceptions import VelException
 def take_along_axis(large_array, indexes):
     """ Take along axis """
     # Reshape indexes into the right shape
-    if (len(indexes.shape)) > 1 and len(large_array.shape) > len(indexes.shape):
-        raise RuntimeError("JERRY ERROR")
-
     if len(large_array.shape) > len(indexes.shape):
         indexes = indexes.reshape(indexes.shape + tuple([1] * (len(large_array.shape) - len(indexes.shape))))
 
