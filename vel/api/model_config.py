@@ -31,8 +31,7 @@ class ModelConfig:
                 return ModelConfig.find_project_directory(up_path)
 
     @classmethod
-    def from_file(cls, filename: str, run_number: int,
-                  reset=False, seed: int=None, device: str='cuda', params=None):
+    def from_file(cls, filename: str, run_number: int, reset=False, seed: int=None, device: str='cuda', params=None):
         """ Create model config from file """
         with open(filename, 'r') as fp:
             model_config_contents = Parser.parse(fp)
@@ -68,7 +67,7 @@ class ModelConfig:
     @classmethod
     def from_memory(cls, model_name: str, model_data: dict, run_number: int, project_dir: str,
                     reset=False, seed: int=None, device: str='cuda', params=None):
-        """ Create model config from file """
+        """ Create model config from supplied data """
         return ModelConfig(
             model_name=model_name,
             filename="[memory]",
