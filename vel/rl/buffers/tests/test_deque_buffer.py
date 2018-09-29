@@ -37,6 +37,126 @@ def get_filled_buffer():
     return buffer
 
 
+def get_filled_buffer1x1():
+    """ Return simple preinitialized buffer """
+    observation_space = gym.spaces.Box(low=0, high=255, shape=(2,), dtype=int)
+    action_space = gym.spaces.Box(low=-1.0, high=1.0, shape=(2,), dtype=float)
+
+    buffer = DequeBufferBackend(20, observation_space=observation_space, action_space=action_space)
+
+    v1 = np.ones(2).reshape((2,))
+    a1 = np.arange(2).reshape((2,))
+
+    for i in range(30):
+        item = v1.copy()
+        item[0] *= (i+1)
+        item[1] *= 10 * (i+1)
+
+        buffer.store_transition(item, a1 * i, float(i)/2, False)
+
+    return buffer
+
+
+def get_filled_buffer2x2():
+    """ Return simple preinitialized buffer """
+    observation_space = gym.spaces.Box(low=0, high=255, shape=(2, 2), dtype=int)
+    action_space = gym.spaces.Box(low=-1.0, high=1.0, shape=(2, 2), dtype=float)
+
+    buffer = DequeBufferBackend(20, observation_space=observation_space, action_space=action_space)
+
+    v1 = np.ones(4).reshape((2, 2))
+    a1 = np.arange(4).reshape((2, 2))
+
+    for i in range(30):
+        item = v1.copy()
+        item[0] *= (i+1)
+        item[1] *= 10 * (i+1)
+
+        buffer.store_transition(item, a1 * i, float(i)/2, False)
+
+    return buffer
+
+
+def get_filled_buffer3x3():
+    """ Return simple preinitialized buffer """
+    observation_space = gym.spaces.Box(low=0, high=255, shape=(2, 2, 2), dtype=int)
+    action_space = gym.spaces.Box(low=-1.0, high=1.0, shape=(2, 2, 2), dtype=float)
+
+    buffer = DequeBufferBackend(20, observation_space=observation_space, action_space=action_space)
+
+    v1 = np.ones(8).reshape((2, 2, 2))
+    a1 = np.arange(8).reshape((2, 2, 2))
+
+    for i in range(30):
+        item = v1.copy()
+        item[0] *= (i+1)
+        item[1] *= 10 * (i+1)
+
+        buffer.store_transition(item, i * a1, float(i)/2, False)
+
+    return buffer
+
+
+def get_filled_buffer1x1_history():
+    """ Return simple preinitialized buffer """
+    observation_space = gym.spaces.Box(low=0, high=255, shape=(2, 1), dtype=int)
+    action_space = gym.spaces.Box(low=-1.0, high=1.0, shape=(2,), dtype=float)
+
+    buffer = DequeBufferBackend(20, observation_space=observation_space, action_space=action_space)
+
+    v1 = np.ones(2).reshape((2, 1))
+    a1 = np.arange(2).reshape((2,))
+
+    for i in range(30):
+        item = v1.copy()
+        item[0] *= (i+1)
+        item[1] *= 10 * (i+1)
+
+        buffer.store_transition(item, a1 * i, float(i)/2, False)
+
+    return buffer
+
+
+def get_filled_buffer2x2_history():
+    """ Return simple preinitialized buffer """
+    observation_space = gym.spaces.Box(low=0, high=255, shape=(2, 2, 1), dtype=int)
+    action_space = gym.spaces.Box(low=-1.0, high=1.0, shape=(2, 2), dtype=float)
+
+    buffer = DequeBufferBackend(20, observation_space=observation_space, action_space=action_space)
+
+    v1 = np.ones(4).reshape((2, 2, 1))
+    a1 = np.arange(4).reshape((2, 2))
+
+    for i in range(30):
+        item = v1.copy()
+        item[0] *= (i+1)
+        item[1] *= 10 * (i+1)
+
+        buffer.store_transition(item, a1 * i, float(i)/2, False)
+
+    return buffer
+
+
+def get_filled_buffer3x3_history():
+    """ Return simple preinitialized buffer """
+    observation_space = gym.spaces.Box(low=0, high=255, shape=(2, 2, 2, 1), dtype=int)
+    action_space = gym.spaces.Box(low=-1.0, high=1.0, shape=(2, 2, 2), dtype=float)
+
+    buffer = DequeBufferBackend(20, observation_space=observation_space, action_space=action_space)
+
+    v1 = np.ones(8).reshape((2, 2, 2, 1))
+    a1 = np.arange(8).reshape((2, 2, 2))
+
+    for i in range(30):
+        item = v1.copy()
+        item[0] *= (i+1)
+        item[1] *= 10 * (i+1)
+
+        buffer.store_transition(item, i * a1, float(i)/2, False)
+
+    return buffer
+
+
 def get_filled_buffer_extra_info():
     """ Return simple preinitialized buffer """
     observation_space = gym.spaces.Box(low=0, high=255, shape=(2, 2, 1), dtype=np.uint8)
@@ -342,3 +462,61 @@ def test_sample_rollout_filled():
 
     t.assert_equal(max_rollout, 8)
     t.assert_almost_equal(np.sum(rollout['rewards']), 164.0)
+
+
+def test_buffer_flexible_obs_action_sizes():
+    b1x1 = get_filled_buffer1x1()
+    b2x2 = get_filled_buffer2x2()
+    b3x3 = get_filled_buffer3x3()
+
+    nt.assert_array_almost_equal(b1x1.get_frame(0), np.array([21, 210]))
+    nt.assert_array_almost_equal(b2x2.get_frame(0), np.array([[21, 21], [210, 210]]))
+    nt.assert_array_almost_equal(b3x3.get_frame(0), np.array([[[21, 21], [21, 21]], [[210, 210], [210, 210]]]))
+
+    nt.assert_array_almost_equal(b1x1.get_transition(0, 0)['action'], np.array([0, 20]))
+    nt.assert_array_almost_equal(b2x2.get_transition(0, 0)['action'], np.array([[0, 20], [40, 60]]))
+    nt.assert_array_almost_equal(b3x3.get_transition(0, 0)['action'], np.array(
+        [[[0, 20], [40, 60]],
+         [[80, 100], [120, 140]]]
+    ))
+
+    with t.assert_raises(AssertionError):
+        b1x1.get_frame(0, history_length=2)
+
+    with t.assert_raises(AssertionError):
+        b1x1.get_transition(0, history_length=2)
+
+    with t.assert_raises(AssertionError):
+        b2x2.get_frame(0,  history_length=2)
+
+    with t.assert_raises(AssertionError):
+        b2x2.get_transition(0, history_length=2)
+
+    with t.assert_raises(AssertionError):
+        b3x3.get_frame(0, history_length=2)
+
+    with t.assert_raises(AssertionError):
+        b3x3.get_transition(0, history_length=2)
+
+
+def test_buffer_flexible_obs_action_sizes_with_history():
+    b1x1 = get_filled_buffer1x1_history()
+    b2x2 = get_filled_buffer2x2_history()
+    b3x3 = get_filled_buffer3x3_history()
+
+    nt.assert_array_almost_equal(b1x1.get_frame(0, history_length=2), np.array([[20, 21], [200, 210]]))
+    nt.assert_array_almost_equal(b2x2.get_frame(0, history_length=2), np.array(
+        [[[20, 21], [20, 21]], [[200, 210], [200, 210]]]
+    ))
+    nt.assert_array_almost_equal(b3x3.get_frame(0, history_length=2), np.array(
+        [[[[20, 21], [20, 21]], [[20, 21], [20, 21]]], [[[200, 210], [200, 210]], [[200, 210], [200, 210]]]]
+    ))
+
+    nt.assert_array_almost_equal(b1x1.get_transition(0, history_length=2)['state+1'], np.array([[21, 22], [210, 220]]))
+    nt.assert_array_almost_equal(b2x2.get_transition(0, history_length=2)['state+1'], np.array(
+        [[[21, 22], [21, 22]], [[210, 220], [210, 220]]]
+    ))
+    nt.assert_array_almost_equal(b3x3.get_transition(0, history_length=2)['state+1'], np.array(
+        [[[[21, 22], [21, 22]], [[21, 22], [21, 22]]],
+         [[[210, 220], [210, 220]], [[210, 220], [210, 220]]]]
+    ))

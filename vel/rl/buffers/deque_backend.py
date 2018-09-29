@@ -24,8 +24,7 @@ class DequeBufferBackend:
         )
 
         self.action_buffer = np.zeros([self.buffer_capacity] + list(action_space.shape), dtype=action_space.dtype)
-        self.reward_buffer = np.zeros([self.buffer_capacity], dtype=float)
-
+        self.reward_buffer = np.zeros([self.buffer_capacity], dtype=np.float32)
         self.dones_buffer = np.zeros([self.buffer_capacity], dtype=bool)
 
         self.extra_data = {} if extra_data is None else extra_data
@@ -50,10 +49,13 @@ class DequeBufferBackend:
 
         return self.current_idx
 
-    def get_frame(self, idx, history_length):
+    def get_frame(self, idx, history_length=1):
         """ Return frame from the buffer """
         if idx >= self.current_size:
             raise VelException("Requested frame beyond the size of the buffer")
+
+        if history_length > 1:
+            assert self.state_buffer.shape[-1] == 1, "State buffer must have last dimension of 1 if we want frame history"
 
         accumulator = []
 
@@ -75,32 +77,51 @@ class DequeBufferBackend:
         # We're pushing the elements in reverse order
         return np.concatenate(accumulator[::-1], axis=-1)
 
-    def get_frame_with_future(self, idx, history_length):
+    def get_transition(self, frame_idx, history_length=1):
+        """ Single transition with given index """
+        past_frame, future_frame = self.get_frame_with_future(frame_idx, history_length)
+
+        data_dict = {
+            'state': past_frame,
+            'state+1': future_frame,
+            'action': self.action_buffer[frame_idx],
+            'reward': self.reward_buffer[frame_idx],
+            'done': self.dones_buffer[frame_idx],
+        }
+
+        for name in self.extra_data:
+            data_dict[name] = self.extra_data[name][frame_idx]
+
+        return data_dict
+
+    def get_frame_with_future(self, frame_idx, history_length=1):
         """ Return frame from the buffer together with the next frame """
-        if idx == self.current_idx:
+        if frame_idx == self.current_idx:
             raise VelException("Cannot provide enough future for the frame")
 
-        past_frame = self.get_frame(idx, history_length)
+        past_frame = self.get_frame(frame_idx, history_length)
 
-        if history_length > 1 and len(past_frame.shape) > 1:
-            future_frame = np.zeros_like(past_frame)
+        if history_length > 1:
+            assert self.state_buffer.shape[-1] == 1, \
+                "State buffer must have last dimension of 1 if we want frame history"
 
-            future_frame[:, :, :-1] = past_frame[:, :, 1:]
-
-            if not self.dones_buffer[idx]:
-                next_idx = (idx + 1) % self.buffer_capacity
-                next_frame = self.state_buffer[next_idx]
-                future_frame[:, :, -1:] = next_frame
+        if not self.dones_buffer[frame_idx]:
+            next_idx = (frame_idx + 1) % self.buffer_capacity
+            next_frame = self.state_buffer[next_idx]
         else:
-            if self.dones_buffer[idx]:
-                future_frame = np.zeros_like(past_frame)
-            else:
-                next_idx = (idx + 1) % self.buffer_capacity
-                future_frame = self.get_frame(next_idx, history_length)
+            next_idx = (frame_idx + 1) % self.buffer_capacity
+            next_frame = np.zeros_like(self.state_buffer[next_idx])
+
+        if history_length > 1:
+            future_frame = np.concatenate([
+                past_frame.take(indices=np.arange(1, past_frame.shape[-1]), axis=-1), next_frame
+            ], axis=-1)
+        else:
+            future_frame = next_frame
 
         return past_frame, future_frame
 
-    def get_batch(self, indexes, history_length):
+    def get_batch(self, indexes, history_length=1):
         """ Return batch with given indexes """
         frame_batch_shape = (
                 [indexes.shape[0]]

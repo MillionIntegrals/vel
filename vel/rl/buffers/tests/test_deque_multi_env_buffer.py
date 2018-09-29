@@ -57,8 +57,8 @@ def get_filled_buffer1x1():
 
     for i in range(30):
         item = v1.copy()
-        item[0] *= (i+1)
-        item[1] *= 10 * (i+1)
+        item[:, 0] *= (i+1)
+        item[:, 1] *= 10 * (i+1)
 
         buffer.store_transition(item, a1 * i, float(i)/2, False)
 
@@ -77,8 +77,8 @@ def get_filled_buffer2x2():
 
     for i in range(30):
         item = v1.copy()
-        item[0] *= (i+1)
-        item[1] *= 10 * (i+1)
+        item[:, 0] *= (i+1)
+        item[:, 1] *= 10 * (i+1)
 
         buffer.store_transition(item, a1 * i, float(i)/2, False)
 
@@ -97,8 +97,8 @@ def get_filled_buffer3x3():
 
     for i in range(30):
         item = v1.copy()
-        item[0] *= (i+1)
-        item[1] *= 10 * (i+1)
+        item[:, 0] *= (i+1)
+        item[:, 1] *= 10 * (i+1)
 
         buffer.store_transition(item, i * a1, float(i)/2, False)
 
@@ -117,8 +117,8 @@ def get_filled_buffer1x1_history():
 
     for i in range(30):
         item = v1.copy()
-        item[0] *= (i+1)
-        item[1] *= 10 * (i+1)
+        item[:, 0] *= (i+1)
+        item[:, 1] *= 10 * (i+1)
 
         buffer.store_transition(item, a1 * i, float(i)/2, False)
 
@@ -137,8 +137,8 @@ def get_filled_buffer2x2_history():
 
     for i in range(30):
         item = v1.copy()
-        item[0] *= (i+1)
-        item[1] *= 10 * (i+1)
+        item[:, 0] *= (i+1)
+        item[:, 1] *= 10 * (i+1)
 
         buffer.store_transition(item, a1 * i, float(i)/2, False)
 
@@ -157,8 +157,8 @@ def get_filled_buffer3x3_history():
 
     for i in range(30):
         item = v1.copy()
-        item[0] *= (i+1)
-        item[1] *= 10 * (i+1)
+        item[:, 0] *= (i+1)
+        item[:, 1] *= 10 * (i+1)
 
         buffer.store_transition(item, i * a1, float(i)/2, False)
 
@@ -617,9 +617,9 @@ def test_buffer_flexible_obs_action_sizes():
     b2x2 = get_filled_buffer2x2()
     b3x3 = get_filled_buffer3x3()
 
-    nt.assert_array_almost_equal(b1x1.get_frame(0, 0), np.array([21, 21]))
-    nt.assert_array_almost_equal(b2x2.get_frame(0, 0), np.array([[21, 21], [21, 21]]))
-    nt.assert_array_almost_equal(b3x3.get_frame(0, 0), np.array([[[21, 21], [21, 21]], [[21, 21], [21, 21]]]))
+    nt.assert_array_almost_equal(b1x1.get_frame(0, 0), np.array([21, 210]))
+    nt.assert_array_almost_equal(b2x2.get_frame(0, 0), np.array([[21, 21], [210, 210]]))
+    nt.assert_array_almost_equal(b3x3.get_frame(0, 0), np.array([[[21, 21], [21, 21]], [[210, 210], [210, 210]]]))
 
     nt.assert_array_almost_equal(b1x1.get_transition(0, 0)['action'], np.array([0, 20]))
     nt.assert_array_almost_equal(b2x2.get_transition(0, 0)['action'], np.array([[0, 20], [40, 60]]))
@@ -652,15 +652,17 @@ def test_buffer_flexible_obs_action_sizes_with_history():
     b2x2 = get_filled_buffer2x2_history()
     b3x3 = get_filled_buffer3x3_history()
 
-    nt.assert_array_almost_equal(b1x1.get_frame(0, 0, history_length=2), np.array([[20, 21], [20, 21]]))
-    nt.assert_array_almost_equal(b2x2.get_frame(0, 0, history_length=2), np.array([[[20, 21], [20, 21]], [[20, 21], [20, 21]]]))
+    nt.assert_array_almost_equal(b1x1.get_frame(0, 0, history_length=2), np.array([[20, 21], [200, 210]]))
+    nt.assert_array_almost_equal(b2x2.get_frame(0, 0, history_length=2), np.array([[[20, 21], [20, 21]], [[200, 210], [200, 210]]]))
     nt.assert_array_almost_equal(b3x3.get_frame(0, 0, history_length=2), np.array(
-        [[[[20, 21], [20, 21]], [[20, 21], [20, 21]]], [[[20, 21], [20, 21]], [[20, 21], [20, 21]]]]
+        [[[[20, 21], [20, 21]], [[20, 21], [20, 21]]], [[[200, 210], [200, 210]], [[200, 210], [200, 210]]]]
     ))
 
-    nt.assert_array_almost_equal(b1x1.get_transition(0, 0, history_length=2)['state+1'], np.array([[21, 22], [21, 22]]))
-    nt.assert_array_almost_equal(b2x2.get_transition(0, 0, history_length=2)['state+1'], np.array([[[21, 22], [21, 22]], [[21, 22], [21, 22]]]))
+    nt.assert_array_almost_equal(b1x1.get_transition(0, 0, history_length=2)['state+1'], np.array([[21, 22], [210, 220]]))
+    nt.assert_array_almost_equal(b2x2.get_transition(0, 0, history_length=2)['state+1'], np.array(
+        [[[21, 22], [21, 22]], [[210, 220], [210, 220]]]
+    ))
     nt.assert_array_almost_equal(b3x3.get_transition(0, 0, history_length=2)['state+1'], np.array(
         [[[[21, 22], [21, 22]], [[21, 22], [21, 22]]],
-         [[[21, 22], [21, 22]], [[21, 22], [21, 22]]]]
+         [[[210, 220], [210, 220]], [[210, 220], [210, 220]]]]
     ))

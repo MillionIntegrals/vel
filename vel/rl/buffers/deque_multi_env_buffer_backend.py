@@ -51,7 +51,9 @@ class DequeMultiEnvBufferBackend:
                 dtype=observation_space.dtype
             )
 
-        self.action_buffer = np.zeros([self.buffer_capacity, self.num_envs] + list(action_space.shape), dtype=action_space.dtype)
+        self.action_buffer = np.zeros(
+            [self.buffer_capacity, self.num_envs] + list(action_space.shape), dtype=action_space.dtype
+        )
         self.reward_buffer = np.zeros([self.buffer_capacity, self.num_envs], dtype=np.float32)
         self.dones_buffer = np.zeros([self.buffer_capacity, self.num_envs], dtype=bool)
 
