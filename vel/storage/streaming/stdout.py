@@ -1,10 +1,14 @@
 import vel.api.base as base
+from vel.api import EpochInfo
 
 
 class StdoutStreaming(base.Callback):
     """ Stream results to stdout """
-    def on_epoch_end(self, epoch_info):
-        print(f"=>>>>>>>>>> EPOCH {epoch_info.global_epoch_idx}")
+    def on_epoch_end(self, epoch_info: EpochInfo):
+        if 'run_name' in epoch_info.training_info:
+            print(f"=>>>>>>>>>> EPOCH {epoch_info.global_epoch_idx} [{epoch_info.training_info['run_name']}]")
+        else:
+            print(f"=>>>>>>>>>> EPOCH {epoch_info.global_epoch_idx}")
 
         if any(':' not in x for x in epoch_info.result.keys()):
             self._print_metrics_line(epoch_info.result, head=None)

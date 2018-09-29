@@ -107,6 +107,8 @@ class RlTrainCommand:
         # TODO(jerry): Implement training resume
         training_info = TrainingInfo(start_epoch_idx=global_epoch_idx, metrics=metrics, callbacks=callbacks)
 
+        training_info['run_name'] = self.model_config.run_name
+
         return training_info
 
     def _openai_logging(self, epoch_result):
