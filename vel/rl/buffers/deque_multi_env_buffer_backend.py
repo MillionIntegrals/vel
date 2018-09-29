@@ -7,6 +7,9 @@ from vel.exceptions import VelException
 def take_along_axis(large_array, indexes):
     """ Take along axis """
     # Reshape indexes into the right shape
+    if (len(indexes.shape)) > 1 and len(large_array.shape) > len(indexes.shape):
+        raise RuntimeError("JERRY ERROR")
+
     if len(large_array.shape) > len(indexes.shape):
         indexes = indexes.reshape(indexes.shape + tuple([1] * (len(large_array.shape) - len(indexes.shape))))
 
@@ -14,7 +17,11 @@ def take_along_axis(large_array, indexes):
 
 
 class DequeMultiEnvBufferBackend:
-    """ Simple backend behind DequeBuffer - version supporting multiple environments """
+    """
+    Simple backend behind DequeBuffer - version supporting multiple environments.
+
+    Frame stack compensation - if environment has a framestack built in, we will store only the last action
+    """
 
     def __init__(self, buffer_capacity: int, num_envs: int, observation_space: gym.Space, action_space: gym.Space,
                  extra_data=None, frame_stack_compensation: bool=False):
@@ -44,7 +51,7 @@ class DequeMultiEnvBufferBackend:
                 dtype=observation_space.dtype
             )
 
-        self.action_buffer = np.zeros([self.buffer_capacity, self.num_envs], dtype=action_space.dtype)
+        self.action_buffer = np.zeros([self.buffer_capacity, self.num_envs] + list(action_space.shape), dtype=action_space.dtype)
         self.reward_buffer = np.zeros([self.buffer_capacity, self.num_envs], dtype=np.float32)
         self.dones_buffer = np.zeros([self.buffer_capacity, self.num_envs], dtype=bool)
 
@@ -60,7 +67,7 @@ class DequeMultiEnvBufferBackend:
 
         if self.frame_stack_compensation:
             # Compensate for frame stack built into the environment
-            frame = np.expand_dims(np.take(frame, -1, axis=-1), axis=-1)
+            frame = np.expand_dims(np.take(frame, indices=-1, axis=-1), axis=-1)
 
         self.state_buffer[self.current_idx] = frame
 
@@ -76,28 +83,40 @@ class DequeMultiEnvBufferBackend:
 
         return self.current_idx
 
-    def get_frame_with_future(self, frame_idx, env_idx, history_length):
+    def get_frame_with_future(self, frame_idx, env_idx, history_length=1):
         """ Return frame from the buffer together with the next frame """
         if frame_idx == self.current_idx:
             raise VelException("Cannot provide enough future for the frame")
 
         past_frame = self.get_frame(frame_idx, env_idx, history_length)
 
-        future_frame = np.zeros_like(past_frame)
-
-        future_frame[:, :, :-1] = past_frame[:, :, 1:]
+        if history_length > 1:
+            assert self.state_buffer.shape[-1] == 1, \
+                "State buffer must have last dimension of 1 if we want frame history"
 
         if not self.dones_buffer[frame_idx, env_idx]:
             next_idx = (frame_idx + 1) % self.buffer_capacity
             next_frame = self.state_buffer[next_idx, env_idx]
-            future_frame[:, :, -1:] = next_frame
+        else:
+            next_idx = (frame_idx + 1) % self.buffer_capacity
+            next_frame = np.zeros_like(self.state_buffer[next_idx, env_idx])
+
+        if history_length > 1:
+            future_frame = np.concatenate([
+                past_frame.take(indices=np.arange(1, past_frame.shape[-1]), axis=-1), next_frame
+            ], axis=-1)
+        else:
+            future_frame = next_frame
 
         return past_frame, future_frame
 
-    def get_frame(self, frame_idx, env_idx, history_length):
+    def get_frame(self, frame_idx, env_idx, history_length=1):
         """ Return frame from the buffer """
         if frame_idx >= self.current_size:
             raise VelException("Requested frame beyond the size of the buffer")
+
+        if history_length > 1:
+            assert self.state_buffer.shape[-1] == 1, "State buffer must have last dimension of 1 if we want frame history"
 
         accumulator = []
 
@@ -119,6 +138,23 @@ class DequeMultiEnvBufferBackend:
 
         # We're pushing the elements in reverse order
         return np.concatenate(accumulator[::-1], axis=-1)
+
+    def get_transition(self, frame_idx, env_idx, history_length=1):
+        """ Single transition with given index """
+        past_frame, future_frame = self.get_frame_with_future(frame_idx, env_idx, history_length)
+
+        data_dict = {
+            'state': past_frame,
+            'state+1': future_frame,
+            'action': self.action_buffer[frame_idx, env_idx],
+            'reward': self.reward_buffer[frame_idx, env_idx],
+            'done': self.dones_buffer[frame_idx, env_idx],
+        }
+
+        for name in self.extra_data:
+            data_dict[name] = self.extra_data[name][frame_idx, env_idx]
+
+        return data_dict
 
     def get_batch(self, indexes, history_length):
         """ Return batch with given indexes """
