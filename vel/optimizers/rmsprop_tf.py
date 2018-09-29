@@ -70,9 +70,12 @@ class RMSpropTF(torch.optim.Optimizer):
                 # State initialization
                 if len(state) == 0:
                     state['step'] = 0
-                    state['square_avg'] = torch.zeros_like(p.data)
+                    # ANOTHER LINE I'VE CHANGED
+                    state['square_avg'] = torch.ones_like(p.data)
+
                     if group['momentum'] > 0:
                         state['momentum_buffer'] = torch.zeros_like(p.data)
+
                     if group['centered']:
                         state['grad_avg'] = torch.zeros_like(p.data)
 
