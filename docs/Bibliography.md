@@ -51,6 +51,11 @@ on this library:
   Thomas Degris and Martha White and Richard S. Sutton
   http://arxiv.org/abs/1205.4839
   
+- (Jun 2014) **Deterministic Policy Gradient Algorithms**
+  Silver, David and Lever, Guy and Heess, Nicolas and Degris,
+  Thomas and Wierstra, Daan and Riedmiller, Martin
+  http://dl.acm.org/citation.cfm?id=3044805.3044850
+  
 - (Feb 2015) **Trust Region Policy Optimization**
   John Schulman and Sergey Levine and
   Philipp Moritz and Michael I. Jordan and Pieter Abbeel
@@ -59,6 +64,11 @@ on this library:
 - (Jun 2015) **High-Dimensional Continuous Control Using Generalized Advantage Estimation**
   John Schulman and Philipp Moritz and Sergey Levine and Michael I. Jordan and Pieter Abbeel
   http://arxiv.org/abs/1506.02438
+  
+- (Sep 2015) **Continuous control with deep reinforcement learning**
+  Timothy P. Lillicrap and Jonathan J. Hunt and Alexander Pritzel and Nicolas Heess and
+  Tom Erez and Yuval Tassa and David Silver and Daan Wierstra
+  http://arxiv.org/abs/1509.02971
 
 - (Feb 2016) **Asynchronous Methods for Deep Reinforcement Learning**
   Volodymyr Mnih and Adria Puigdomenech Badia and
