@@ -241,6 +241,10 @@ class BatchInfo(abc.MutableMapping):
             stacked = np.stack([d[key] for d in aggregation], axis=0)
             self.data_dict[key] = np.mean(stacked, axis=0)
 
+    def drop_key(self, key):
+        """ Remove key from dictionary """
+        del self.data_dict[key]
+
     def __getitem__(self, item):
         return self.data_dict[item]
 
