@@ -127,3 +127,13 @@ If there is anything you'd like to see there, feel free to open an issue or make
 
 For a more or less exhaustive bibliography please refer to [Bibliography](docs/Bibliography.md).
 
+
+# Alternatives, similar projects
+
+- https://github.com/NervanaSystems/coach
+- https://github.com/google/dopamine
+- https://github.com/openai/baselines
+- https://github.com/rlpy/rlpy
+- https://github.com/rlworkgroup/garage
+- https://github.com/unixpickle/anyrl-py
+- https://github.com/zuoxingdong/lagom
