@@ -172,7 +172,7 @@ class TrpoPolicyGradient(AlgoBase):
 
         # Optimization failed, revert to initial parameters
         v2p(original_parameter_vec, model.policy_parameters())
-        return False, 0.0, 0.0, 0.0, 0.0
+        return False, torch.tensor(0.0), torch.tensor(0.0), torch.tensor(0.0), torch.tensor(0.0)
 
     def fisher_vector_product(self, vector, kl_divergence_gradient, model):
         """ Calculate product Hessian @ vector """
