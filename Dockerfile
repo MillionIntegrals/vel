@@ -14,4 +14,4 @@ WORKDIR /vel
 RUN pip install -e .[gym,mongo]
 RUN mv .velproject.docker.yaml .velproject.yaml
 
-CMD vel examples/rl/atari/a2c/breakout_a2c.yaml train -d cuda:0
+CMD vel examples-configs/rl/atari/a2c/breakout_a2c.yaml train -d cuda:0
