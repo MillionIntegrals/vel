@@ -62,7 +62,7 @@ class PrioritizedReplayRollerEpsGreedy(ReplayEnvRollerBase):
 
         observation_tensor = torch.from_numpy(last_observation[None]).to(self.device)
 
-        step = model.step(observation_tensor, epsilon=epsilon_value)
+        step = model.step(observation_tensor)
         epsgreedy_step = self.epsgreedy_action(step['actions'], epsilon_value)
         action = epsgreedy_step.item()
 
@@ -108,7 +108,7 @@ class PrioritizedReplayRollerEpsGreedy(ReplayEnvRollerBase):
         dones = torch.from_numpy(batch['dones'].astype(np.float32)).to(self.device)
         rewards = torch.from_numpy(batch['rewards'].astype(np.float32)).to(self.device)
         actions = torch.from_numpy(batch['actions']).to(self.device)
-        weights = torch.from_numpy(weights).float().to(self.device)
+        weights = torch.from_numpy(weights.astype(np.float32)).to(self.device)
 
         return {
             'size': batch_size,

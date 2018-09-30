@@ -25,12 +25,12 @@ class QDuelingModel(Model):
         self.backbone.reset_weights()
         self.q_head.reset_weights()
 
-    def step(self, observations, epsilon):
+    def step(self, observations):
         """ Sample action from an action space for given state """
         q_values = self(observations)
 
         return {
-            'actions': self.q_head.sample(q_values, epsilon),
+            'actions': self.q_head.sample(q_values),
             'values': q_values
         }
 

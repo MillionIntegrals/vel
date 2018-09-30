@@ -53,7 +53,7 @@ class DequeReplayRollerEpsGreedy(ReplayEnvRollerBase):
         ], axis=-1)
 
         observation_tensor = torch.from_numpy(last_observation[None]).to(self.device)
-        step = model.step(observation_tensor, epsilon=epsilon_value)
+        step = model.step(observation_tensor)
 
         epsgreedy_step = self.epsgreedy_action(step['actions'], epsilon_value)
         action = epsgreedy_step.item()
