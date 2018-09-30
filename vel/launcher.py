@@ -14,7 +14,7 @@ def main():
     parser.add_argument('config', metavar='FILENAME', help='Configuration file for the run')
     parser.add_argument('command', metavar='COMMAND', help='A command to run')
     parser.add_argument('varargs', nargs='*', metavar='VARARGS', help='Extra options to the command')
-    parser.add_argument('-r', '--run_number', default=0, help="A run number")
+    parser.add_argument('-r', '--run_number', type=int, default=0, help="A run number")
     parser.add_argument('-d', '--device', default='cuda', help="A device to run the model on")
     parser.add_argument('-s', '--seed', type=int, default=dtm.date.today().year, help="Random seed for the project")
     parser.add_argument(
