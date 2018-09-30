@@ -25,13 +25,13 @@ def main():
 
     args = parser.parse_args()
 
-    # Set seed already in the launcher
-    set_seed(args.seed)
-
     model_config = ModelConfig.from_file(
         args.config, args.run_number, reset=args.reset, device=args.device, seed=args.seed,
         params={k: v for (k, v) in (Parser.parse_equality(eq) for eq in args.param)}
     )
+
+    # Set seed already in the launcher
+    set_seed(model_config.seed)
 
     model_config.banner(args.command)
     model_config.run_command(args.command, args.varargs)
