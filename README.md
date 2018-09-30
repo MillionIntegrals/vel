@@ -65,6 +65,7 @@ that are ready to run and easy to modify for other similar usecases:
 - Advantage Actor-Critic (A2C),
   Proximal Policy Optimization (PPO), 
   Trust Region Policy Optimization (TRPO),
+  Deep Deterministic Policy Gradient (DDPG),
   and 
   Actor-Critic with Experience Replay (ACER)
   policy gradient reinforcement learning algorithms.
