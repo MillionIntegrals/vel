@@ -23,11 +23,11 @@ class ReplayQEnvRoller(ReplayEnvRollerBase):
         self.frame_stack_compensation = frame_stack_compensation
 
         # Initial observation
-        self.observation = self._to_tensor(self.environment.reset())
-        self.dones = torch.tensor([False for _ in range(self.observation.shape[0])], device=self.device)
+        self.last_observation = self._to_tensor(self.environment.reset())
+        self.dones = torch.tensor([False for _ in range(self.last_observation.shape[0])], device=self.device)
 
         self.batch_observation_shape = (
-            (self.observation.shape[0]*self.number_of_steps,) + self.environment.observation_space.shape
+                (self.last_observation.shape[0] * self.number_of_steps,) + self.environment.observation_space.shape
         )
 
         # Replay buffer
@@ -59,11 +59,11 @@ class ReplayQEnvRoller(ReplayEnvRollerBase):
         episode_information = []  # Python objects
 
         for step_idx in range(self.number_of_steps):
-            step = model.step(self.observation)
+            step = model.step(self.last_observation)
 
             actions = step['actions']
 
-            observation_accumulator.append(self.observation)
+            observation_accumulator.append(self.last_observation)
             action_accumulator.append(actions)
             dones_accumulator.append(self.dones)
 
@@ -73,16 +73,9 @@ class ReplayQEnvRoller(ReplayEnvRollerBase):
             actions_numpy = actions.detach().cpu().numpy()
             new_obs, new_rewards, new_dones, new_infos = self.environment.step(actions_numpy)
 
-            # Done is flagged true when the episode has ended AND the frame we see is already a first frame from the
-            # Next episode
-            self.dones = self._to_tensor(new_dones.astype(np.uint8))
-            self.observation = self._to_tensor(new_obs[:])
-
-            rewards_accumulator.append(self._to_tensor(new_rewards.astype(np.float32)))
-
             # Store rollout in the experience replay buffer
             self.replay_buffer.store_transition(
-                frame=new_obs,
+                frame=self.last_observation.detach().cpu().numpy(),
                 action=actions_numpy,
                 reward=new_rewards,
                 done=new_dones,
@@ -91,13 +84,20 @@ class ReplayQEnvRoller(ReplayEnvRollerBase):
                 }
             )
 
+            # Done is flagged true when the episode has ended AND the frame we see is already a first frame from the
+            # Next episode
+            self.dones = self._to_tensor(new_dones.astype(np.uint8))
+            self.last_observation = self._to_tensor(new_obs[:])
+
+            rewards_accumulator.append(self._to_tensor(new_rewards.astype(np.float32)))
+
             for info in new_infos:
                 maybe_episode_info = info.get('episode')
 
                 if maybe_episode_info:
                     episode_information.append(maybe_episode_info)
 
-        final_values = model.value(self.observation)
+        final_values = model.value(self.last_observation)
 
         dones_accumulator.append(self.dones)
 
@@ -176,4 +176,3 @@ def create(buffer_capacity, buffer_initial_size, frame_stack_compensation=None):
         buffer_capacity, buffer_initial_size,
         frame_stack_compensation=frame_stack_compensation
     )
-
