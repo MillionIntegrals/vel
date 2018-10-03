@@ -66,6 +66,7 @@ class AcerPolicyGradient(AlgoBase):
         dones = rollout['dones']
         observations = rollout['observations']
         final_values = rollout['final_values']
+        rollout_probabilities = torch.exp(rollout['action_logits'])
 
         # We calculate the trust-region update with respect to the average model
         if self.trust_region:
@@ -78,7 +79,6 @@ class AcerPolicyGradient(AlgoBase):
         with torch.no_grad():
             # Initialize few
             model_probabilities = torch.exp(action_logits)
-            rollout_probabilities = torch.exp(rollout['action_logits'])
 
             # Importance sampling correction - we must find the quotient of probabilities
             rho = model_probabilities / (rollout_probabilities + local_epsilon)
@@ -98,7 +98,7 @@ class AcerPolicyGradient(AlgoBase):
         # Entropy of the policy distribution
         policy_entropy = torch.mean(model.entropy(action_logits))
 
-        neglogps = F.nll_loss(action_logits, actions, reduction='none')
+        neglogps = F.nll_loss(action_logits, actions, reduction='none')  # f_i
         policy_gradient_loss = torch.mean(advantages * importance_sampling_coefficient * neglogps)
 
         # Policy gradient bias correction
@@ -112,9 +112,9 @@ class AcerPolicyGradient(AlgoBase):
             dim=1
         )
 
-        policy_gradient_bias_correction = - torch.mean(policy_gradient_bias_correction_gain)
+        policy_gradient_bias_correction_loss = - torch.mean(policy_gradient_bias_correction_gain)
 
-        policy_loss = policy_gradient_loss + policy_gradient_bias_correction
+        policy_loss = policy_gradient_loss + policy_gradient_bias_correction_loss
 
         q_function_loss = 0.5 * F.mse_loss(q_selected, q_retraced)
 
@@ -148,16 +148,21 @@ class AcerPolicyGradient(AlgoBase):
         else:
             # Just populate gradient from the loss
             loss = policy_loss + self.q_coefficient * q_function_loss - self.entropy_coefficient * policy_entropy
+
             loss.backward()
 
         batch_info['sub_batch_data'].append({
             'policy_loss': policy_loss.item(),
             'policy_gradient_loss': policy_gradient_loss.item(),
-            'policy_gradient_bias_correction': policy_gradient_bias_correction.item(),
+            'policy_gradient_bias_correction': policy_gradient_bias_correction_loss.item(),
+            'avg_q_selected': q_selected.mean().item(),
+            'avg_q_retraced': q_retraced.mean().item(),
             'q_loss': q_function_loss.item(),
             'policy_entropy': policy_entropy.item(),
             'advantage_norm': torch.norm(advantages).item(),
             'explained_variance': explained_variance.item(),
+            'model_prob_std': model_probabilities.std().item(),
+            'rollout_prob_std': rollout_probabilities.std().item()
         })
 
     def retrace(self, rewards, dones, q_values, state_values, rho, final_values):
@@ -212,7 +217,11 @@ class AcerPolicyGradient(AlgoBase):
             AveragingNamedMetric("policy_gradient_bias_correction"),
             AveragingNamedMetric("explained_variance"),
             AveragingNamedMetric("advantage_norm"),
-            AveragingNamedMetric("grad_norm")
+            AveragingNamedMetric("grad_norm"),
+            AveragingNamedMetric("model_prob_std"),
+            AveragingNamedMetric("rollout_prob_std"),
+            AveragingNamedMetric("avg_q_selected"),
+            AveragingNamedMetric("avg_q_retraced")
         ]
 
 
