@@ -121,7 +121,6 @@ from vel.rl.vecenv.subproc import SubprocVecEnvWrapper
 from vel.rl.models.policy_gradient_model import PolicyGradientModelFactory
 from vel.rl.models.backbone.nature_cnn import NatureCnnFactory
 
-
 from vel.rl.reinforcers.on_policy_iteration_reinforcer import (
     OnPolicyIterationReinforcer, OnPolicyIterationReinforcerSettings
 )
