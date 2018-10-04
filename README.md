@@ -73,21 +73,19 @@ that are ready to run and easy to modify for other similar usecases:
   improvements: Double DQN, Dueling DQN, Prioritized experience replay.
 
 
-# How to run the examples?
+# Examples
 
-While it is possible to specify your models entirely by code,
-framework tries to encourage you to use config files for that purpose.
-In the `examples` directory, there are defined multiple working config files showcasing
-most popular algorithms with sane default hyperparameters.
- 
+Most of the examples for this framework are defined using config files in the
+`examples-configs` directory with sane default hyperparameters already selected.
+
 For example, to run the A2C algorithm on a Breakout atari environment, simply invoke:
 
 ```
 python -m vel.launcher examples-configs/rl/atari/a2c/breakout_a2c.yaml train
 ```
 
-If you install the library locally, it will create a script wrapping the launcher for 
-you. Then, above becomes:
+If you install the library locally, you'll have a special wrapper created
+that will invoke the launcher for you. Then, above becomes:
 
 ```
 vel examples-configs/rl/atari/a2c/breakout_a2c.yaml train
@@ -101,6 +99,116 @@ python -m vel.launcher CONFIGFILE COMMAND --device PYTORCH_DEVICE -r RUN_NUMBER 
 
 Where `PYTORCH_DEVICE` is a valid name of pytorch device, most likely `cuda:0`.
 Run number is a sequential number you wish to record your results with.
+
+If you prefer to use the library from inside your scripts, take a look at the 
+`examples-scripts` directory. From time to time I'll be putting some examples in there as
+well. Scripts generally don't require any MongoDB or Visdom setup, so they can be run straight
+away in any setup, but their output will be less rich and less informative.
+
+Here is an example script running the same setup as a config file from above:
+
+```python
+import torch
+import torch.optim as optim
+
+from vel.rl.metrics import EpisodeRewardMetric
+from vel.storage.streaming.stdout import StdoutStreaming
+from vel.util.random import set_seed
+
+from vel.rl.env.classic_atari import ClassicAtariEnv
+from vel.rl.vecenv.subproc import SubprocVecEnvWrapper
+
+from vel.rl.models.policy_gradient_model import PolicyGradientModelFactory
+from vel.rl.models.backbone.nature_cnn import NatureCnnFactory
+
+
+from vel.rl.reinforcers.on_policy_iteration_reinforcer import (
+    OnPolicyIterationReinforcer, OnPolicyIterationReinforcerSettings
+)
+
+from vel.rl.algo.policy_gradient.a2c import A2CPolicyGradient
+from vel.rl.env_roller.vec.step_env_roller import StepEnvRoller
+
+from vel.api.info import TrainingInfo, EpochInfo
+
+
+def breakout_a2c():
+    device = torch.device('cuda:0')
+    seed = 1001
+
+    # Set random seed in python std lib, numpy and pytorch
+    set_seed(seed)
+
+    # Create 16 environments evaluated in parallel in sub processess with all usual DeepMind wrappers
+    # These are just helper functions for that
+    vec_env = SubprocVecEnvWrapper(
+        ClassicAtariEnv('BreakoutNoFrameskip-v4'), frame_history=4
+    ).instantiate(parallel_envs=16, seed=seed)
+
+    # Again, use a helper to create a model
+    # But because model is owned by the reinforcer, model should not be accessed using this variable
+    # but from reinforcer.model property
+    model = PolicyGradientModelFactory(
+        backbone=NatureCnnFactory(input_width=84, input_height=84, input_channels=4)
+    ).instantiate(action_space=vec_env.action_space)
+
+    # Reinforcer - an object managing the learning process
+    reinforcer = OnPolicyIterationReinforcer(
+        device=device,
+        settings=OnPolicyIterationReinforcerSettings(
+            discount_factor=0.99,
+            batch_size=256,
+        ),
+        model=model,
+        algo=A2CPolicyGradient(
+            entropy_coefficient=0.01,
+            value_coefficient=0.5,
+            max_grad_norm=0.5
+        ),
+        env_roller=StepEnvRoller(
+            environment=vec_env,
+            device=device,
+            number_of_steps=5,
+            discount_factor=0.99,
+        )
+    )
+
+    # Model optimizer
+    optimizer = optim.RMSprop(reinforcer.model.parameters(), lr=7.0e-4, eps=1e-3)
+
+    # Overall information store for training information
+    training_info = TrainingInfo(
+        metrics=[
+            EpisodeRewardMetric('episode_rewards'),  # Calculate average reward from episode
+        ],
+        callbacks=[StdoutStreaming()]  # Print live metrics every epoch to standard output
+    )
+
+    # Training initialization
+    reinforcer.initialize_training(training_info)
+    training_info.on_train_begin()
+
+    # Let's make 100 batches per epoch to average metrics nicely
+    num_epochs = int(1.1e7 / (5 * 16) / 100)
+
+    # Normal handrolled training loop
+    for i in range(1, num_epochs+1):
+        epoch_info = EpochInfo(
+            training_info=training_info,
+            global_epoch_idx=i,
+            batches_per_epoch=100,
+            optimizer=optimizer
+        )
+
+        reinforcer.train_epoch(epoch_info)
+
+    training_info.on_train_end()
+    reinforcer.finalize_training(training_info)
+
+
+if __name__ == '__main__':
+    breakout_a2c()
+```
 
 # Docker
 
