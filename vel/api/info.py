@@ -4,7 +4,6 @@ import pandas as pd
 
 import torch
 
-
 from vel.exceptions import VelException
 
 
@@ -18,9 +17,11 @@ class TrainingHistory:
         self.data = []
 
     def add(self, epoch_result):
+        """ Add a datapoint to the history """
         self.data.append(epoch_result)
 
     def frame(self):
+        """ Return history dataframe """
         return pd.DataFrame(self.data).set_index('epoch_idx')
 
 
@@ -31,7 +32,7 @@ class TrainingInfo(abc.MutableMapping):
     Data dict is any extra information processes may want to store
     """
 
-    def __init__(self, start_epoch_idx, metrics=None, callbacks=None):
+    def __init__(self, start_epoch_idx=0, metrics=None, callbacks=None):
         self.data_dict = {}
 
         self.start_epoch_idx = start_epoch_idx
@@ -42,6 +43,16 @@ class TrainingInfo(abc.MutableMapping):
     def restore(self, hidden_state):
         """ Restore any state from checkpoint - currently not implemented but possible to do so in the future """
         pass
+
+    def on_train_begin(self):
+        """ Initialize training process """
+        for callback in self.callbacks:
+            callback.on_train_begin(self)
+
+    def on_train_end(self):
+        """ Finalize training process """
+        for callback in self.callbacks:
+            callback.on_train_end(self)
 
     def __getitem__(self, item):
         return self.data_dict[item]
@@ -151,6 +162,20 @@ class EpochInfo(abc.MutableMapping):
         else:
             self.callbacks = callbacks
 
+    def on_epoch_begin(self) -> None:
+        """ Initialize an epoch """
+        for callback in self:
+            callback.on_epoch_begin(self)
+
+    def on_epoch_end(self):
+        """ Finish epoch processing """
+        self.freeze_epoch_result()
+
+        for callback in self.callbacks:
+            callback.on_epoch_end(self)
+
+        self.training_info.history.add(self.result)
+
     @property
     def metrics(self):
         """ Just forward metrics from training_info """
@@ -200,6 +225,32 @@ class BatchInfo(abc.MutableMapping):
         self.epoch_info = epoch_info
         self.batch_number = batch_number
         self.data_dict = {}
+
+    def on_batch_begin(self):
+        """ Initialize batch processing """
+        for callback in self.callbacks:
+            callback.on_batch_begin(self)
+
+    def on_batch_end(self):
+        """ Finalize batch processing """
+        for callback in self.callbacks:
+            callback.on_batch_end(self)
+
+        # Even with all the experience replay, we count the single rollout as a single batch
+        self.epoch_info.result_accumulator.calculate(self)
+
+    def on_validation_batch_begin(self):
+        """ Initialize batch processing """
+        for callback in self.callbacks:
+            callback.on_validation_batch_begin(self)
+
+    def on_validation_batch_end(self):
+        """ Finalize batch processing """
+        for callback in self.callbacks:
+            callback.on_validation_batch_end(self)
+
+        # Even with all the experience replay, we count the single rollout as a single batch
+        self.epoch_info.result_accumulator.calculate(self)
 
     @property
     def aggregate_batch_number(self):

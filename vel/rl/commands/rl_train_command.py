@@ -56,10 +56,7 @@ class RlTrainCommand:
 
         training_info = self.resume_training(reinforcer, optimizer, callbacks, metrics)
 
-        reinforcer.initialize_training()
-
-        for callback in callbacks:
-            callback.on_train_begin(training_info)
+        reinforcer.initialize_training(training_info)
 
         global_epoch_idx = training_info.start_epoch_idx
         training_info['total_frames'] = self.total_frames
@@ -79,12 +76,9 @@ class RlTrainCommand:
 
             self.storage.checkpoint(epoch_info, reinforcer.model)
 
-            training_info.history.add(epoch_info.result)
-
             global_epoch_idx += 1
 
-        for callback in callbacks:
-            callback.on_train_end(training_info)
+        reinforcer.finalize_training(training_info)
 
         return training_info
 

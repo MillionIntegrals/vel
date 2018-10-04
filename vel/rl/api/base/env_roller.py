@@ -1,5 +1,16 @@
+import typing
+import gym
+
+from vel.openai.baselines.common.vec_env import VecEnv
+
+
 class EnvRollerBase:
     """ Class generating environment rollouts """
+
+    @property
+    def environment(self) -> typing.Union[gym.Env, VecEnv]:
+        """ Reference to environment being evaluated """
+        raise NotImplementedError
 
     def rollout(self, batch_info, model) -> dict:
         """ Roll-out the environment and return it """

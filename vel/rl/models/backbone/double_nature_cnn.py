@@ -103,3 +103,6 @@ def create(input_width, input_height, input_channels=1):
         return DoubleNatureCnn(input_width=input_width, input_height=input_height, input_channels=input_channels)
 
     return ModelFactory.generic(instantiate)
+
+
+DoubleNatureCnnFactory = create

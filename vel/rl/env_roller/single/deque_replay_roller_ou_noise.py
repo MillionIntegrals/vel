@@ -15,14 +15,13 @@ class DequeReplayRollerOuNoise(ReplayEnvRollerBase):
 
     def __init__(self, environment, device, buffer_capacity, buffer_initial_size, noise_std_dev,
                  normalize_observations=False):
-        self.environment = environment
         self.device = device
         self.buffer_capacity = buffer_capacity
         self.buffer_initial_size = buffer_initial_size
         self.normalize_observations = normalize_observations
 
         self.device = device
-        self.environment = environment
+        self._environment = environment
 
         self.backend = DequeBufferBackend(
             buffer_capacity=self.buffer_capacity,
@@ -40,6 +39,11 @@ class DequeReplayRollerOuNoise(ReplayEnvRollerBase):
 
         self.ob_rms = RunningMeanStd(shape=self.environment.observation_space.shape) if normalize_observations else None
         self.clip_obs = 10.0
+
+    @property
+    def environment(self):
+        """ Return environment of this env roller """
+        return self._environment
 
     def is_ready_for_sampling(self) -> bool:
         """ If buffer is ready for drawing samples from it (usually checks if there is enough data) """

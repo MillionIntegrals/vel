@@ -10,8 +10,8 @@ class StepEnvRoller(EnvRollerBase):
     Idea behind this class is to store as much as we can as pytorch tensors to minimize tensor copying.
     """
 
-    def __init__(self, environment, device, number_of_steps, discount_factor, gae_lambda=None):
-        self.environment = environment
+    def __init__(self, environment, device, number_of_steps, discount_factor, gae_lambda=1.0):
+        self._environment = environment
         self.device = device
         self.number_of_steps = number_of_steps
         self.discount_factor = discount_factor
@@ -28,6 +28,11 @@ class StepEnvRoller(EnvRollerBase):
         self.action_observation_shape = (
             (self.observation.shape[0]*self.number_of_steps,) + self.environment.action_space.shape
         )
+
+    @property
+    def environment(self):
+        """ Return environment of this env roller """
+        return self._environment
 
     def _to_tensor(self, numpy_array):
         """ Convert numpy array to a tensor """

@@ -16,7 +16,7 @@ from vel.rl.metrics import (
 
 
 @attr.s(auto_attribs=True)
-class BufferedPolicyGradientSettings:
+class BufferedMixedPolicyIterationReinforcerSettings:
     """ Settings dataclass for a policy gradient reinforcer """
     number_of_steps: int
     discount_factor: float
@@ -25,11 +25,11 @@ class BufferedPolicyGradientSettings:
     stochastic_experience_replay: bool = True
 
 
-class BufferedPolicyGradientReinforcer(ReinforcerBase):
+class BufferedMixedPolicyIterationReinforcer(ReinforcerBase):
     """ Factory class replay buffer reinforcer """
 
-    def __init__(self, device: torch.device, settings: BufferedPolicyGradientSettings, env: VecEnv, model: Model,
-                 env_roller: ReplayEnvRollerBase, algo: AlgoBase) -> None:
+    def __init__(self, device: torch.device, settings: BufferedMixedPolicyIterationReinforcerSettings, env: VecEnv,
+                 model: Model, env_roller: ReplayEnvRollerBase, algo: AlgoBase) -> None:
         self.device = device
         self.settings = settings
 
@@ -57,35 +57,24 @@ class BufferedPolicyGradientReinforcer(ReinforcerBase):
         """ Model trained by this reinforcer """
         return self._trained_model
 
-    def initialize_training(self):
+    def initialize_training(self, training_info):
         """ Prepare models for training """
         self.model.reset_weights()
         self.algo.initialize(self.settings, model=self.model, environment=self.environment, device=self.device)
 
     def train_epoch(self, epoch_info: EpochInfo):
         """ Train model on an epoch of a fixed number of batch updates """
-        for callback in epoch_info.callbacks:
-            callback.on_epoch_begin(epoch_info)
+        epoch_info.on_epoch_begin()
 
         for batch_idx in tqdm.trange(epoch_info.batches_per_epoch, file=sys.stdout, desc="Training", unit="batch"):
             batch_info = BatchInfo(epoch_info, batch_idx)
 
-            for callback in batch_info.callbacks:
-                callback.on_batch_begin(batch_info)
-
+            batch_info.on_batch_begin()
             self.train_batch(batch_info)
-
-            for callback in batch_info.callbacks:
-                callback.on_batch_end(batch_info)
-
-            # Even with all the experience replay, we count the single rollout as a single batch
-            epoch_info.result_accumulator.calculate(batch_info)
+            batch_info.on_batch_end()
 
         epoch_info.result_accumulator.freeze_results()
-        epoch_info.freeze_epoch_result()
-
-        for callback in epoch_info.callbacks:
-            callback.on_epoch_end(epoch_info)
+        epoch_info.on_epoch_end()
 
     def train_batch(self, batch_info: BatchInfo):
         """ Single, most atomic 'step' of learning this reinforcer can perform """
@@ -102,6 +91,7 @@ class BufferedPolicyGradientReinforcer(ReinforcerBase):
             for i in range(experience_replay_count):
                 self.off_policy_train_batch(batch_info)
 
+        # Even with all the experience replay, we count the single rollout as a single batch
         batch_info.aggregate_key('sub_batch_data')
 
     def on_policy_train_batch(self, batch_info: BatchInfo):
@@ -138,7 +128,7 @@ class BufferedPolicyGradientReinforcer(ReinforcerBase):
         )
 
 
-class BufferedPolicyGradientReinforcerFactory(ReinforcerFactory):
+class BufferedMixedPolicyIterationReinforcerFactory(ReinforcerFactory):
     """ Factory class for the PolicyGradientReplayBuffer factory """
     def __init__(self, settings, env_factory: VecEnvFactory, model_factory: ModelFactory,
                  env_roller_factory: ReplayEnvRollerFactory, algo: AlgoBase, parallel_envs: int, seed: int):
@@ -156,14 +146,14 @@ class BufferedPolicyGradientReinforcerFactory(ReinforcerFactory):
         model = self.model_factory.instantiate(action_space=env.action_space)
         env_roller = self.env_roller_factory.instantiate(env, device, self.settings)
 
-        return BufferedPolicyGradientReinforcer(device, self.settings, env, model, env_roller, self.algo)
+        return BufferedMixedPolicyIterationReinforcer(device, self.settings, env, model, env_roller, self.algo)
 
 
 def create(model_config, model, vec_env, algo, env_roller,
            number_of_steps, parallel_envs, discount_factor, batch_size=256,
            experience_replay=1, stochastic_experience_replay=True):
     """ Create a policy gradient reinforcer - factory """
-    settings = BufferedPolicyGradientSettings(
+    settings = BufferedMixedPolicyIterationReinforcerSettings(
         number_of_steps=number_of_steps,
         discount_factor=discount_factor,
         batch_size=batch_size,
@@ -171,7 +161,7 @@ def create(model_config, model, vec_env, algo, env_roller,
         stochastic_experience_replay=stochastic_experience_replay
     )
 
-    return BufferedPolicyGradientReinforcerFactory(
+    return BufferedMixedPolicyIterationReinforcerFactory(
         settings,
         env_factory=vec_env,
         model_factory=model,

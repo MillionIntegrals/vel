@@ -29,7 +29,7 @@ class PrioritizedReplayRollerEpsGreedy(ReplayEnvRollerBase):
         self.priority_weight_schedule = priority_weight
         self.priority_epsilon = priority_epsilon
 
-        self.environment = environment
+        self._environment = environment
         self.device = device
 
         self.backend = PrioritizedReplayBackend(
@@ -39,6 +39,11 @@ class PrioritizedReplayRollerEpsGreedy(ReplayEnvRollerBase):
         )
 
         self.last_observation = self.environment.reset()
+
+    @property
+    def environment(self):
+        """ Return environment of this env roller """
+        return self._environment
 
     def is_ready_for_sampling(self) -> bool:
         """ If buffer is ready for drawing samples from it (usually checks if there is enough data) """

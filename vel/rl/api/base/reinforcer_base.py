@@ -1,7 +1,7 @@
 import torch
 
 from vel.api.base import Model
-from vel.api import EpochInfo, BatchInfo
+from vel.api import TrainingInfo, EpochInfo, BatchInfo
 
 
 class ReinforcerBase:
@@ -10,7 +10,11 @@ class ReinforcerBase:
     Learner version for reinforcement-learning problems.
     """
 
-    def initialize_training(self):
+    def initialize_training(self, training_info: TrainingInfo):
+        """ Run the initialization procedure """
+        pass
+
+    def finalize_training(self, training_info: TrainingInfo):
         """ Prepare all variables for training from scratch """
         pass
 

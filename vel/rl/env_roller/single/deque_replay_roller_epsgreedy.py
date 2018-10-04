@@ -15,6 +15,7 @@ class DequeReplayRollerEpsGreedy(ReplayEnvRollerBase):
     Because framestack is implemented directly in the buffer, we can use *much* less space to hold samples in
     memory for very little additional cost.
     """
+
     def __init__(self, environment, device, epsilon_schedule: Schedule,
                  buffer_capacity: int, buffer_initial_size: int, frame_stack: int):
         self.epsilon_schedule = epsilon_schedule
@@ -23,7 +24,7 @@ class DequeReplayRollerEpsGreedy(ReplayEnvRollerBase):
         self.frame_stack = frame_stack
 
         self.device = device
-        self.environment = environment
+        self._environment = environment
         self.backend = DequeBufferBackend(
             buffer_capacity=self.buffer_capacity,
             observation_space=environment.observation_space,
@@ -31,6 +32,11 @@ class DequeReplayRollerEpsGreedy(ReplayEnvRollerBase):
         )
 
         self.last_observation = self.environment.reset()
+
+    @property
+    def environment(self):
+        """ Return environment of this env roller """
+        return self._environment
 
     def is_ready_for_sampling(self) -> bool:
         """ If buffer is ready for drawing samples from it (usually checks if there is enough data) """

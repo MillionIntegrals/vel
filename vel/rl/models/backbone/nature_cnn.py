@@ -91,3 +91,8 @@ def create(input_width, input_height, input_channels=1):
         return NatureCnn(input_width=input_width, input_height=input_height, input_channels=input_channels)
 
     return ModelFactory.generic(instantiate)
+
+
+# Add this to make nicer scripting interface
+NatureCnnFactory = create
+

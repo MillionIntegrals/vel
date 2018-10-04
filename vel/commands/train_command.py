@@ -32,8 +32,7 @@ class SimpleTrainCommand:
         # Check if training was already started and potentially continue where we left off
         training_info = self.resume_training(learner, optimizer, callbacks, metrics)
 
-        for callback in callbacks:
-            callback.on_train_begin(training_info)
+        training_info.on_train_begin()
 
         for global_epoch_idx in range(training_info.start_epoch_idx + 1, self.epochs + 1):
             epoch_info = EpochInfo(
@@ -48,10 +47,7 @@ class SimpleTrainCommand:
 
             self.storage.checkpoint(epoch_info, learner.model)
 
-            training_info.history.add(epoch_info.result)
-
-        for callback in callbacks:
-            callback.on_train_end(training_info)
+        training_info.on_train_end()
 
         return training_info
 

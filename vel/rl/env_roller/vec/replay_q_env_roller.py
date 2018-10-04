@@ -14,7 +14,7 @@ class ReplayQEnvRoller(ReplayEnvRollerBase):
 
     def __init__(self, environment: VecEnv, device, number_of_steps, discount_factor, buffer_capacity,
                  buffer_initial_size, frame_stack_compensation):
-        self.environment = environment
+        self._environment = environment
         self.device = device
         self.number_of_steps = number_of_steps
         self.discount_factor = discount_factor
@@ -43,6 +43,11 @@ class ReplayQEnvRoller(ReplayEnvRollerBase):
             },
             frame_stack_compensation=self.frame_stack_compensation is not None
         )
+
+    @property
+    def environment(self):
+        """ Return environment of this env roller """
+        return self._environment
 
     def _to_tensor(self, numpy_array):
         """ Convert numpy array to a tensor """

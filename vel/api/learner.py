@@ -37,8 +37,7 @@ class Learner:
 
     def run_epoch(self, epoch_info: EpochInfo, source):
         """ Run full epoch of learning """
-        for callback in epoch_info.training_info.callbacks:
-            callback.on_epoch_begin(epoch_info)
+        epoch_info.on_epoch_begin()
 
         lr = epoch_info.optimizer.param_groups[-1]['lr']
         print("|-------- Epoch {:06} Lr={:.6f} ----------|".format(epoch_info.global_epoch_idx, lr))
@@ -49,10 +48,7 @@ class Learner:
         self.validation_epoch(epoch_info, source)
         epoch_info.result_accumulator.freeze_results('val')
 
-        epoch_info.freeze_epoch_result()
-
-        for callback in epoch_info.callbacks:
-            callback.on_epoch_end(epoch_info)
+        epoch_info.on_epoch_end()
 
     def train_epoch(self, epoch_info, source):
         """ Run a single training epoch """
@@ -63,15 +59,9 @@ class Learner:
         for batch_idx, (data, target) in enumerate(iterator):
             batch_info = BatchInfo(epoch_info, batch_idx)
 
-            for callback in epoch_info.callbacks:
-                callback.on_batch_begin(batch_info)
-
+            batch_info.on_batch_begin()
             self.train_batch(batch_info, data, target)
-
-            for callback in epoch_info.callbacks:
-                callback.on_batch_end(batch_info)
-
-            epoch_info.result_accumulator.calculate(batch_info)
+            batch_info.on_batch_end()
 
             iterator.set_postfix(loss=epoch_info.result_accumulator.intermediate_value('loss'))
 
@@ -85,15 +75,9 @@ class Learner:
             for batch_idx, (data, target) in enumerate(iterator):
                 batch_info = BatchInfo(epoch_info, batch_idx)
 
-                for callback in epoch_info.callbacks:
-                    callback.on_validation_batch_begin(batch_info)
-
+                batch_info.on_validation_batch_begin()
                 self.feed_batch(batch_info, data, target)
-
-                for callback in epoch_info.callbacks:
-                    callback.on_validation_batch_end(batch_info)
-
-                epoch_info.result_accumulator.calculate(batch_info)
+                batch_info.on_validation_batch_end()
 
     def feed_batch(self, batch_info, data, target):
         """ Run single batch of data """

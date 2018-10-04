@@ -73,8 +73,7 @@ class PhaseTrainCommand:
         if training_info.start_epoch_idx > 0:
             current_phase.restore(training_info, local_idx, learner.model, hidden_state)
 
-        for callback in callbacks:
-            callback.on_train_begin(training_info)
+        training_info.on_train_begin()
 
         for global_epoch_idx in range(training_info.start_epoch_idx + 1, self.full_number_of_epochs + 1):
             iteration_phase_idx = self._select_phase_right_bound(global_epoch_idx-1)
@@ -99,15 +98,11 @@ class PhaseTrainCommand:
             # Epoch checkpoint
             self.storage.checkpoint(epoch_info, learner.model)
 
-            # Gather results
-            training_info.history.add(epoch_info.result)
-
-        for callback in callbacks:
-            callback.on_train_end(training_info)
-
         # Tear down the last phase
         if current_phase is not None:
             current_phase.tear_down_phase(training_info, learner.model)
+
+        training_info.on_train_end()
 
         return training_info
 

@@ -62,34 +62,24 @@ class BufferedSingleOffPolicyIterationReinforcer(ReinforcerBase):
     def model(self) -> Model:
         return self._trained_model
 
-    def initialize_training(self):
+    def initialize_training(self, training_info):
         """ Prepare models for training """
         self.model.reset_weights()
         self.algo.initialize(self.settings, model=self.model, environment=self.environment, device=self.device)
 
     def train_epoch(self, epoch_info: EpochInfo) -> None:
         """ Train model for a single epoch  """
-        for callback in epoch_info.callbacks:
-            callback.on_epoch_begin(epoch_info)
+        epoch_info.on_epoch_begin()
 
         for batch_idx in tqdm.trange(epoch_info.batches_per_epoch, file=sys.stdout, desc="Training", unit="batch"):
             batch_info = BatchInfo(epoch_info, batch_idx)
 
-            for callback in batch_info.callbacks:
-                callback.on_batch_begin(batch_info)
-
+            batch_info.on_batch_begin()
             self.train_batch(batch_info)
-
-            for callback in batch_info.callbacks:
-                callback.on_batch_end(batch_info)
-
-            epoch_info.result_accumulator.calculate(batch_info)
+            batch_info.on_batch_end()
 
         epoch_info.result_accumulator.freeze_results()
-        epoch_info.freeze_epoch_result()
-
-        for callback in epoch_info.callbacks:
-            callback.on_epoch_end(epoch_info)
+        epoch_info.on_epoch_end()
 
     def train_batch(self, batch_info: BatchInfo) -> None:
         """
