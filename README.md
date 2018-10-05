@@ -157,6 +157,7 @@ def breakout_a2c():
         settings=OnPolicyIterationReinforcerSettings(
             discount_factor=0.99,
             batch_size=256,
+            number_of_steps=5
         ),
         model=model,
         algo=A2CPolicyGradient(
