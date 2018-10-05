@@ -30,7 +30,7 @@ class DeepQLearning(OptimizerAlgoBase):
 
         self.discount_factor = settings.discount_factor
 
-    def calculate_loss(self, batch_info, device, model, rollout):
+    def calculate_gradient(self, batch_info, device, model, rollout):
         """ Calculate loss of the supplied rollout """
         observation_tensor = rollout['observations']
         observation_tensor_tplus1 = rollout['observations+1']
@@ -59,17 +59,15 @@ class DeepQLearning(OptimizerAlgoBase):
         weights = rollout['weights']
 
         loss_value = torch.mean(weights * original_losses)
+        loss_value.backward()
 
-        # This will be overwritten, but we need it to update priorities in the replay buffer
-        batch_info['errors'] = original_losses.detach().cpu().numpy()
-
-        batch_info['sub_batch_data'].append({
+        return {
             'loss': loss_value.item(),
+            # We need it to update priorities in the replay buffer:
+            'errors': original_losses.detach().cpu().numpy(),
             'average_q_selected': torch.mean(q_selected).item(),
             'average_q_target': torch.mean(expected_q).item()
-        })
-
-        return loss_value
+        }
 
     def post_optimization_step(self, batch_info, device, model, rollout):
         """ Steps to take after optimization has been done"""

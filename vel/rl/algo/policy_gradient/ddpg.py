@@ -2,19 +2,18 @@ import torch
 import torch.autograd
 import torch.nn.functional as F
 
-from vel.rl.api.base import AlgoBase
+from vel.rl.api.base import OptimizerAlgoBase
 from vel.api.metrics.averaging_metric import AveragingNamedMetric
 
 
-class DeepDeterministicPolicyGradient(AlgoBase):
+class DeepDeterministicPolicyGradient(OptimizerAlgoBase):
     """ Deep Deterministic Policy Gradient (DDPG) - policy gradient calculations """
 
     def __init__(self, model_factory, tau, max_grad_norm):
-        super().__init__()
+        super().__init__(max_grad_norm)
 
         self.model_factory = model_factory
         self.tau = tau
-        self.max_grad_norm = max_grad_norm
 
         self.discount_factor = None
         self.target_model = None
@@ -26,7 +25,7 @@ class DeepDeterministicPolicyGradient(AlgoBase):
         self.target_model = self.model_factory.instantiate(action_space=environment.action_space).to(device)
         self.target_model.load_state_dict(model.state_dict())
 
-    def calculate_loss(self, batch_info, device, model, rollout):
+    def calculate_gradient(self, batch_info, device, model, rollout):
         """ Calculate loss of the supplied rollout """
         # Calculate value loss - or critic loss
         with torch.no_grad():
@@ -57,22 +56,10 @@ class DeepDeterministicPolicyGradient(AlgoBase):
         # Backpropagate actor loss to actor only
         model_action.backward(gradient=model_action_grad)
 
-        batch_info['sub_batch_data'].append({
+        return {
             'policy_loss': policy_loss.item(),
             'value_loss': value_loss.item(),
-        })
-
-    def optimizer_step(self, batch_info, device, model, rollout):
-        """ Single optimization step for a model """
-        batch_info.optimizer.zero_grad()
-
-        self.calculate_loss(batch_info=batch_info, device=device, model=model, rollout=rollout)
-
-        self._clip_gradients(batch_info, model, self.max_grad_norm)
-
-        batch_info.optimizer.step(closure=None)
-
-        self.post_optimization_step(batch_info, device, model, rollout)
+        }
 
     def post_optimization_step(self, batch_info, device, model, rollout):
         """ Steps to take after optimization has been done"""

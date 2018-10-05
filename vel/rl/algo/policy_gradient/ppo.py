@@ -21,7 +21,7 @@ class PpoPolicyGradient(OptimizerAlgoBase):
         else:
             self.cliprange = cliprange
 
-    def calculate_loss(self, batch_info, device, model, rollout):
+    def calculate_gradient(self, batch_info, device, model, rollout):
         """ Calculate loss of the supplied rollout """
         observations = rollout['observations']
         returns = rollout['returns']
@@ -60,11 +60,13 @@ class PpoPolicyGradient(OptimizerAlgoBase):
                 policy_loss - self.entropy_coefficient * policy_entropy + self.value_coefficient * value_loss
         )
 
+        loss_value.backward()
+
         with torch.no_grad():
             approx_kl_divergence = 0.5 * torch.mean((eval_logprobs - rollout_logprobs) ** 2)
             clip_fraction = torch.mean((torch.abs(ratio - 1.0) > current_cliprange).to(dtype=torch.float))
 
-        batch_info['sub_batch_data'].append({
+        return {
             'policy_loss': policy_loss.item(),
             'value_loss': value_loss.item(),
             'policy_entropy': policy_entropy.item(),
@@ -72,9 +74,7 @@ class PpoPolicyGradient(OptimizerAlgoBase):
             'clip_fraction': clip_fraction.item(),
             'advantage_norm': torch.norm(advantages).item(),
             'explained_variance': explained_variance(returns, rollout_values)
-        })
-
-        return loss_value
+        }
 
     def metrics(self) -> list:
         """ List of metrics to track for this learning process """

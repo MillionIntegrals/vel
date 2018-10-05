@@ -57,6 +57,7 @@ class RlTrainCommand:
         training_info = self.resume_training(reinforcer, optimizer, callbacks, metrics)
 
         reinforcer.initialize_training(training_info)
+        training_info.on_train_begin()
 
         global_epoch_idx = training_info.start_epoch_idx
         training_info['total_frames'] = self.total_frames
@@ -79,6 +80,7 @@ class RlTrainCommand:
             global_epoch_idx += 1
 
         reinforcer.finalize_training(training_info)
+        training_info.on_train_end()
 
         return training_info
 

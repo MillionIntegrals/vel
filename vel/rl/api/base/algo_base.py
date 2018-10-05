@@ -16,7 +16,7 @@ class AlgoBase:
         """ List of metrics to track for this learning process """
         return []
 
-    def _clip_gradients(self, batch_info, model, max_grad_norm):
+    def _clip_gradients(self, batch_result, model, max_grad_norm):
         """ Clip gradients to a given maximum length """
         if max_grad_norm is not None:
             grad_norm = torch.nn.utils.clip_grad_norm_(
@@ -26,10 +26,7 @@ class AlgoBase:
         else:
             grad_norm = 0.0
 
-        if 'sub_batch_data' in batch_info:
-            batch_info['sub_batch_data'][-1]['grad_norm'] = grad_norm
-        else:
-            batch_info['grad_norm'] = grad_norm
+        batch_result['grad_norm'] = grad_norm
 
 
 class OptimizerAlgoBase(AlgoBase):
@@ -38,7 +35,7 @@ class OptimizerAlgoBase(AlgoBase):
     def __init__(self, max_grad_norm):
         self.max_grad_norm = max_grad_norm
 
-    def calculate_loss(self, batch_info, device, model, rollout):
+    def calculate_gradient(self, batch_info, device, model, rollout):
         """ Calculate loss of the supplied rollout """
         raise NotImplementedError
 
@@ -50,15 +47,15 @@ class OptimizerAlgoBase(AlgoBase):
         """ Single optimization step for a model """
         batch_info.optimizer.zero_grad()
 
-        loss = self.calculate_loss(batch_info=batch_info, device=device, model=model, rollout=rollout)
+        batch_result = self.calculate_gradient(batch_info=batch_info, device=device, model=model, rollout=rollout)
 
-        loss.backward()
-
-        self._clip_gradients(batch_info, model, self.max_grad_norm)
+        self._clip_gradients(batch_result, model, self.max_grad_norm)
 
         batch_info.optimizer.step(closure=None)
 
         self.post_optimization_step(batch_info, device, model, rollout)
+
+        return batch_result
 
     def metrics(self) -> list:
         """ List of metrics to track for this learning process """

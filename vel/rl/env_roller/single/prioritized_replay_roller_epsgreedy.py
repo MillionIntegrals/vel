@@ -16,11 +16,12 @@ class PrioritizedReplayRollerEpsGreedy(ReplayEnvRollerBase):
     memory for very little additional cost.
     """
 
-    def __init__(self, environment, device, epsilon_schedule: Schedule,
+    def __init__(self, environment, device, epsilon_schedule: Schedule, batch_size: int,
                  buffer_capacity: int, buffer_initial_size: int, frame_stack: int,
                  priority_exponent: float, priority_weight: Schedule, priority_epsilon: float):
         self.epsilon_schedule = epsilon_schedule
 
+        self.batch_size = batch_size
         self.buffer_capacity = buffer_capacity
         self.buffer_initial_size = buffer_initial_size
         self.frame_stack = frame_stack
@@ -81,9 +82,8 @@ class PrioritizedReplayRollerEpsGreedy(ReplayEnvRollerBase):
 
         self.last_observation = observation
 
-        batch_info['epsilon'] = epsilon_value
-
         return {
+            'epsilon': epsilon_value,
             'episode_information': info.get('episode'),
             'action': epsgreedy_step[0],
             'value': step['values'][0]
@@ -95,9 +95,9 @@ class PrioritizedReplayRollerEpsGreedy(ReplayEnvRollerBase):
             AveragingNamedMetric("epsilon"),
         ]
 
-    def sample(self, batch_info, batch_size, model) -> dict:
+    def sample(self, batch_info, model) -> dict:
         """ Sample experience from replay buffer and return a batch """
-        probs, indexes, tree_idxs = self.backend.sample_batch_prioritized(batch_size, self.frame_stack)
+        probs, indexes, tree_idxs = self.backend.sample_batch_prioritized(self.batch_size, self.frame_stack)
         batch = self.backend.get_batch(indexes, self.frame_stack)
 
         # Normalize weights properly
@@ -116,7 +116,7 @@ class PrioritizedReplayRollerEpsGreedy(ReplayEnvRollerBase):
         weights = torch.from_numpy(weights.astype(np.float32)).to(self.device)
 
         return {
-            'size': batch_size,
+            'size': self.batch_size,
             'observations': observations,
             'observations+1': observations_plus1,
             'dones': dones,
@@ -154,6 +154,7 @@ class PrioritizedReplayRollerEpsGreedyFactory(EnvRollerFactory):
             epsilon_schedule=self.epsilon_schedule,
             environment=environment,
             device=device,
+            batch_size=settings.batch_size,
             buffer_capacity=self.buffer_capacity,
             buffer_initial_size=self.buffer_initial_size,
             frame_stack=self.frame_stack,

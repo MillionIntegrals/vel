@@ -135,14 +135,14 @@ class ReplayQEnvRoller(ReplayEnvRollerBase):
         return self.replay_buffer.current_size >= self.buffer_initial_size
 
     @torch.no_grad()
-    def sample(self, batch_info, batch_size, model):
+    def sample(self, batch_info, model):
         """ Sample experience from replay buffer and return a batch """
         rollout_idx = self.replay_buffer.sample_batch_rollout(
-            rollout_length=batch_size, history_length=self.frame_stack_compensation
+            rollout_length=self.number_of_steps, history_length=self.frame_stack_compensation
         )
 
         rollout = self.replay_buffer.get_rollout(
-            rollout_idx, rollout_length=batch_size, history_length=self.frame_stack_compensation
+            rollout_idx, rollout_length=self.number_of_steps, history_length=self.frame_stack_compensation
         )
 
         action_logits_tensor = self._to_tensor(rollout['action_logits'])
@@ -178,6 +178,7 @@ class ReplayQEnvRollerFactory(EnvRollerFactory):
 
 def create(buffer_capacity, buffer_initial_size, frame_stack_compensation=None):
     return ReplayQEnvRollerFactory(
-        buffer_capacity, buffer_initial_size,
+        buffer_capacity=buffer_capacity,
+        buffer_initial_size=buffer_initial_size,
         frame_stack_compensation=frame_stack_compensation
     )

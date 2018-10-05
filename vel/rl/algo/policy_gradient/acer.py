@@ -2,7 +2,7 @@ import torch
 import torch.nn.functional as F
 
 from vel.api.metrics.averaging_metric import AveragingNamedMetric
-from vel.rl.api.base import AlgoBase
+from vel.rl.api.base import OptimizerAlgoBase
 
 
 def select_indices(tensor, indices):
@@ -10,15 +10,13 @@ def select_indices(tensor, indices):
     return tensor.gather(1, indices.unsqueeze(1)).squeeze()
 
 
-class AcerPolicyGradient(AlgoBase):
+class AcerPolicyGradient(OptimizerAlgoBase):
     """ Actor-Critic with Experience Replay - policy gradient calculations """
 
     def __init__(self, model_factory, trust_region: bool=True, entropy_coefficient: float=0.01,
                  q_coefficient: float=0.5, rho_cap: float=10.0, retrace_rho_cap: float=1.0, max_grad_norm: float=None,
                  average_model_alpha=0.99, trust_region_delta=1.0):
-        super().__init__()
-
-        self.max_grad_norm = max_grad_norm
+        super().__init__(max_grad_norm)
 
         self.discount_factor = None
         self.number_of_steps = None
@@ -151,7 +149,7 @@ class AcerPolicyGradient(AlgoBase):
 
             loss.backward()
 
-        batch_info['sub_batch_data'].append({
+        return {
             'policy_loss': policy_loss.item(),
             'policy_gradient_loss': policy_gradient_loss.item(),
             'policy_gradient_bias_correction': policy_gradient_bias_correction_loss.item(),
@@ -163,7 +161,7 @@ class AcerPolicyGradient(AlgoBase):
             'explained_variance': explained_variance.item(),
             'model_prob_std': model_probabilities.std().item(),
             'rollout_prob_std': rollout_probabilities.std().item()
-        })
+        }
 
     def retrace(self, rewards, dones, q_values, state_values, rho, final_values):
         """ Calculate Q retraced targets """
@@ -195,17 +193,6 @@ class AcerPolicyGradient(AlgoBase):
     def _reshape_to_episodes(self, array, parallel_envs):
         new_shape = tuple([self.number_of_steps, parallel_envs] + list(array.shape[2:]))
         return array.view(new_shape)
-
-    def optimizer_step(self, batch_info, device, model, rollout):
-        """ Single optimization step for a model """
-        batch_info.optimizer.zero_grad()
-
-        self.calculate_gradient(batch_info=batch_info, device=device, model=model, rollout=rollout)
-
-        # Gradient clipping
-        self._clip_gradients(batch_info, model, self.max_grad_norm)
-
-        batch_info.optimizer.step(closure=None)
 
     def metrics(self) -> list:
         """ List of metrics to track for this learning process """

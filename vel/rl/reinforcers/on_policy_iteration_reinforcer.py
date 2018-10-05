@@ -19,6 +19,7 @@ from vel.rl.metrics import (
 class OnPolicyIterationReinforcerSettings:
     """ Settings dataclass for a policy gradient reinforcer """
     discount_factor: float
+    number_of_steps: int
     batch_size: int = 256
     experience_replay: int = 1
 
@@ -112,12 +113,14 @@ class OnPolicyIterationReinforcer(ReinforcerBase):
             for sub_indices in np.array_split(indices, batch_splits):
                 batch_rollout = {k: v[sub_indices] for k, v in rollout_tensors.items()}
 
-                self.algo.optimizer_step(
+                batch_result = self.algo.optimizer_step(
                     batch_info=batch_info,
                     device=self.device,
                     model=self.model,
                     rollout=batch_rollout
                 )
+
+                batch_info['sub_batch_data'].append(batch_result)
 
         batch_info['frames'] = rollout_size
         batch_info['episode_infos'] = rollout['episode_information']
@@ -147,11 +150,12 @@ class PolicyGradientReinforcerFactory(ReinforcerFactory):
         return OnPolicyIterationReinforcer(device, self.settings, model, self.algo, env_roller)
 
 
-def create(model_config, model, vec_env, algo, env_roller, parallel_envs,
+def create(model_config, model, vec_env, algo, env_roller, parallel_envs, number_of_steps,
            discount_factor, batch_size=256, experience_replay=1):
     """ Create a policy gradient reinforcer - factory """
     settings = OnPolicyIterationReinforcerSettings(
         discount_factor=discount_factor,
+        number_of_steps=number_of_steps,
         batch_size=batch_size,
         experience_replay=experience_replay
     )

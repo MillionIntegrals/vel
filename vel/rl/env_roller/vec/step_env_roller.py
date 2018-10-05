@@ -167,7 +167,10 @@ class StepEnvRollerFactory(EnvRollerFactory):
 
     def instantiate(self, environment, device, settings):
         return StepEnvRoller(
-            environment, device, settings.number_of_steps, settings.discount_factor,
+            environment=environment,
+            device=device,
+            number_of_steps=settings.number_of_steps,
+            discount_factor=settings.discount_factor,
             gae_lambda=self.gae_lambda
         )
 

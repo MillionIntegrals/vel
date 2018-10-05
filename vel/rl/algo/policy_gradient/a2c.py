@@ -14,7 +14,7 @@ class A2CPolicyGradient(OptimizerAlgoBase):
         self.entropy_coefficient = entropy_coefficient
         self.value_coefficient = value_coefficient
 
-    def calculate_loss(self, batch_info, device, model, rollout):
+    def calculate_gradient(self, batch_info, device, model, rollout):
         """ Calculate loss of the supplied rollout """
         observations = rollout['observations']
         returns = rollout['returns']
@@ -33,16 +33,15 @@ class A2CPolicyGradient(OptimizerAlgoBase):
         loss_value = (
             policy_loss - self.entropy_coefficient * policy_entropy + self.value_coefficient * value_loss
         )
+        loss_value.backward()
 
-        batch_info['sub_batch_data'].append({
+        return {
             'policy_loss': policy_loss.item(),
             'value_loss': value_loss.item(),
             'policy_entropy': policy_entropy.item(),
             'advantage_norm': torch.norm(advantages).item(),
             'explained_variance': explained_variance(returns, values)
-        })
-
-        return loss_value
+        }
 
     def metrics(self) -> list:
         """ List of metrics to track for this learning process """

@@ -121,7 +121,7 @@ class TrpoPolicyGradient(AlgoBase):
             gradient_norm = 0.0
 
         # noinspection PyUnboundLocalVariable
-        batch_info['sub_batch_data'].append({
+        return {
             'new_policy_loss': new_policy_loss.item(),
             'policy_entropy': policy_entropy.item(),
             'value_loss': value_loss.item(),
@@ -132,7 +132,7 @@ class TrpoPolicyGradient(AlgoBase):
             'grad_norm': gradient_norm,
             'advantage_norm': torch.norm(rollout['advantages']).item(),
             'explained_variance': explained_variance(returns, rollout['values'])
-        })
+        }
 
     def line_search(self, model, rollout, original_policy_loss, original_action_pd_params, original_parameter_vec,
                     full_step, expected_improvement_full):

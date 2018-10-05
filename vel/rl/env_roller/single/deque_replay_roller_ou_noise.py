@@ -13,9 +13,10 @@ class DequeReplayRollerOuNoise(ReplayEnvRollerBase):
     with Ornstein–Uhlenbeck noise process
     """
 
-    def __init__(self, environment, device, buffer_capacity, buffer_initial_size, noise_std_dev,
+    def __init__(self, environment, device, batch_size, buffer_capacity, buffer_initial_size, noise_std_dev,
                  normalize_observations=False):
         self.device = device
+        self.batch_size = batch_size
         self.buffer_capacity = buffer_capacity
         self.buffer_initial_size = buffer_initial_size
         self.normalize_observations = normalize_observations
@@ -90,9 +91,9 @@ class DequeReplayRollerOuNoise(ReplayEnvRollerBase):
         else:
             return obs
 
-    def sample(self, batch_info, batch_size, model) -> dict:
+    def sample(self, batch_info, model) -> dict:
         """ Sample experience from replay buffer and return a batch """
-        indexes = self.backend.sample_batch_uniform(batch_size, 1)
+        indexes = self.backend.sample_batch_uniform(self.batch_size, 1)
         batch = self.backend.get_batch(indexes, 1)
 
         observations = torch.from_numpy(self._filter_observation(batch['states'])).to(self.device)
@@ -102,7 +103,7 @@ class DequeReplayRollerOuNoise(ReplayEnvRollerBase):
         actions = torch.from_numpy(batch['actions']).to(self.device)
 
         return {
-            'size': batch_size,
+            'size': self.batch_size,
             'observations': observations,
             'observations+1': observations_plus1,
             'dones': dones,
@@ -124,6 +125,7 @@ class DequeReplayRollerOuNoiseFactory(ReplayEnvRollerFactory):
         return DequeReplayRollerOuNoise(
             environment=environment,
             device=device,
+            batch_size=settings.batch_size,
             buffer_capacity=self.buffer_capacity,
             buffer_initial_size=self.buffer_initial_size,
             noise_std_dev=self.noise_std_dev,
@@ -131,7 +133,8 @@ class DequeReplayRollerOuNoiseFactory(ReplayEnvRollerFactory):
         )
 
 
-def create(buffer_capacity: int, buffer_initial_size: int, noise_std_dev: float, normalize_observations=False):
+def create(buffer_capacity: int, buffer_initial_size: int, noise_std_dev: float,
+           normalize_observations=False):
     return DequeReplayRollerOuNoiseFactory(
         noise_std_dev=noise_std_dev,
         buffer_capacity=buffer_capacity,

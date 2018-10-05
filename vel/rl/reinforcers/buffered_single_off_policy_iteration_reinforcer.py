@@ -138,16 +138,18 @@ class BufferedSingleOffPolicyIterationReinforcer(ReinforcerBase):
         batch_info['sub_batch_data'] = []
 
         for i in range(self.settings.batch_training_rounds):
-            batch_sample = self.env_roller.sample(batch_info, self.settings.batch_size, self.model)
+            batch_sample = self.env_roller.sample(batch_info, self.model)
 
-            self.algo.optimizer_step(
+            batch_result = self.algo.optimizer_step(
                 batch_info=batch_info,
                 device=self.device,
                 model=self.model,
                 rollout=batch_sample
             )
 
-            self.env_roller.update(sample=batch_sample, batch_info=batch_info)
+            self.env_roller.update(sample=batch_sample, batch_info=batch_result)
+
+            batch_info['sub_batch_data'].append(batch_result)
 
         batch_info.aggregate_key('sub_batch_data')
 

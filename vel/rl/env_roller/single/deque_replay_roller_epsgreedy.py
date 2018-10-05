@@ -16,9 +16,10 @@ class DequeReplayRollerEpsGreedy(ReplayEnvRollerBase):
     memory for very little additional cost.
     """
 
-    def __init__(self, environment, device, epsilon_schedule: Schedule,
+    def __init__(self, environment, device, epsilon_schedule: Schedule, batch_size: int,
                  buffer_capacity: int, buffer_initial_size: int, frame_stack: int):
         self.epsilon_schedule = epsilon_schedule
+        self.batch_size = batch_size
         self.buffer_capacity = buffer_capacity
         self.buffer_initial_size = buffer_initial_size
         self.frame_stack = frame_stack
@@ -73,9 +74,8 @@ class DequeReplayRollerEpsGreedy(ReplayEnvRollerBase):
 
         self.last_observation = observation
 
-        batch_info['epsilon'] = epsilon_value
-
         return {
+            'epsilon': epsilon_value,
             'episode_information': info.get('episode'),
             'action': epsgreedy_step,
             'value': step['values'][0]
@@ -87,9 +87,9 @@ class DequeReplayRollerEpsGreedy(ReplayEnvRollerBase):
             AveragingNamedMetric("epsilon"),
         ]
 
-    def sample(self, batch_info, batch_size, model) -> dict:
+    def sample(self, batch_info, model) -> dict:
         """ Sample experience from replay buffer and return a batch """
-        indexes = self.backend.sample_batch_uniform(batch_size, self.frame_stack)
+        indexes = self.backend.sample_batch_uniform(self.batch_size, self.frame_stack)
         batch = self.backend.get_batch(indexes, self.frame_stack)
 
         observations = torch.from_numpy(batch['states']).to(self.device)
@@ -99,7 +99,7 @@ class DequeReplayRollerEpsGreedy(ReplayEnvRollerBase):
         actions = torch.from_numpy(batch['actions']).to(self.device)
 
         return {
-            'size': batch_size,
+            'size': self.batch_size,
             'observations': observations,
             'observations+1': observations_plus1,
             'dones': dones,
@@ -111,7 +111,8 @@ class DequeReplayRollerEpsGreedy(ReplayEnvRollerBase):
 
 class DequeReplayRollerEpsGreedyFactory(ReplayEnvRollerFactory):
     """ Factory class for DequeReplayQRoller """
-    def __init__(self, epsilon_schedule: Schedule, buffer_capacity: int, buffer_initial_size: int,  frame_stack: int=1):
+    def __init__(self, epsilon_schedule: Schedule, buffer_capacity: int, buffer_initial_size: int,
+                 frame_stack: int=1):
         self.buffer_capacity = buffer_capacity
         self.epsilon_schedule = epsilon_schedule
         self.buffer_initial_size = buffer_initial_size
@@ -119,7 +120,7 @@ class DequeReplayRollerEpsGreedyFactory(ReplayEnvRollerFactory):
 
     def instantiate(self, environment, device, settings) -> ReplayEnvRollerBase:
         return DequeReplayRollerEpsGreedy(
-            environment, device, self.epsilon_schedule,
+            environment, device, self.epsilon_schedule, settings.batch_size,
             self.buffer_capacity, self.buffer_initial_size, self.frame_stack
         )
 

@@ -20,7 +20,6 @@ class BufferedMixedPolicyIterationReinforcerSettings:
     """ Settings dataclass for a policy gradient reinforcer """
     number_of_steps: int
     discount_factor: float
-    batch_size: int = 256
     experience_replay: int = 1
     stochastic_experience_replay: bool = True
 
@@ -97,35 +96,34 @@ class BufferedMixedPolicyIterationReinforcer(ReinforcerBase):
     def on_policy_train_batch(self, batch_info: BatchInfo):
         """ Perform an 'on-policy' training step of evaluating an env and a single backpropagation step """
         self.model.eval()
-
         rollout = self.env_roller.rollout(batch_info, self.model)
 
         self.model.train()
-
-        self.algo.optimizer_step(
+        batch_result = self.algo.optimizer_step(
             batch_info=batch_info,
             device=self.device,
             model=self.model,
             rollout=rollout
         )
 
+        batch_info['sub_batch_data'].append(batch_result)
         batch_info['frames'] = rollout['size']
         batch_info['episode_infos'] = rollout['episode_information']
 
     def off_policy_train_batch(self, batch_info: BatchInfo):
         """ Perform an 'off-policy' training step of sampling the replay buffer and gradient descent """
         self.model.eval()
-
-        rollout = self.env_roller.sample(batch_info, self.settings.number_of_steps, self.model)
+        rollout = self.env_roller.sample(batch_info, self.model)
 
         self.model.train()
-
-        self.algo.optimizer_step(
+        batch_result = self.algo.optimizer_step(
             batch_info=batch_info,
             device=self.device,
             model=self.model,
             rollout=rollout
         )
+
+        batch_info['sub_batch_data'].append(batch_result)
 
 
 class BufferedMixedPolicyIterationReinforcerFactory(ReinforcerFactory):
@@ -149,14 +147,13 @@ class BufferedMixedPolicyIterationReinforcerFactory(ReinforcerFactory):
         return BufferedMixedPolicyIterationReinforcer(device, self.settings, env, model, env_roller, self.algo)
 
 
-def create(model_config, model, vec_env, algo, env_roller,
-           number_of_steps, parallel_envs, discount_factor, batch_size=256,
+def create(model_config, model, vec_env, algo, env_roller, number_of_steps,
+           parallel_envs, discount_factor,
            experience_replay=1, stochastic_experience_replay=True):
     """ Create a policy gradient reinforcer - factory """
     settings = BufferedMixedPolicyIterationReinforcerSettings(
         number_of_steps=number_of_steps,
         discount_factor=discount_factor,
-        batch_size=batch_size,
         experience_replay=experience_replay,
         stochastic_experience_replay=stochastic_experience_replay
     )
