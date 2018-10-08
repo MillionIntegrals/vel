@@ -37,7 +37,7 @@ reinforcer:
       final_value: 0.0
 
   env_roller:
-    name: vel.rl.env_roller.step_env_roller
+    name: vel.rl.env_roller.vec.step_env_roller
     gae_lambda: 0.95 # Generalized Advantage Estimator Lambda parameter
 
   number_of_steps: 128 # How many environment steps go into a single batch
