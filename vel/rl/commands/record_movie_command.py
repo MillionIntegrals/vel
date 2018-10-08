@@ -76,7 +76,7 @@ class RecordMovieCommand:
         video = cv2.VideoWriter(takename, fourcc, self.fps, (frames[0].shape[1], frames[0].shape[0]))
 
         for i in tqdm.trange(len(frames), file=sys.stdout):
-            video.write(frames[i])
+            video.write(cv2.cvtColor(frames[i], cv2.COLOR_RGB2BGR))
 
         video.release()
         print(f"Written {takename}")
