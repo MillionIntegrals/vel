@@ -90,6 +90,37 @@ class EpisodicLifeEnv(gym.Wrapper):
         self.lives = self.env.unwrapped.ale.lives()
         return obs
 
+
+class FireEpisodicLifeEnv(gym.Wrapper):
+    def __init__(self, env):
+        """Make end-of-life == end-of-episode, but only reset on true game over.
+        Done by DeepMind for the DQN and co. since it helps value estimation.
+        """
+        gym.Wrapper.__init__(self, env)
+        self.lives = 0
+
+    def step(self, action):
+        obs, reward, done, info = self.env.step(action)
+        # check current lives, make loss of life terminal,
+        # then update lives to handle bonus lives
+        lives = self.env.unwrapped.ale.lives()
+
+        if lives < self.lives and lives > 0:
+            # for Qbert sometimes we stay in lives == 0 condtion for a few frames
+            # so its important to keep lives > 0, so that we only reset once
+            # the environment advertises done.
+            # done = True
+            obs, _, done, _ = self.env.step(1)
+            if done:
+                self.env.reset()
+            obs, _, done, _ = self.env.step(2)
+            if done:
+                self.env.reset()
+
+        self.lives = lives
+        return obs, reward, done, info
+
+
 class MaxAndSkipEnv(gym.Wrapper):
     def __init__(self, env, skip=4):
         """Return only every `skip`-th frame"""

@@ -8,7 +8,7 @@ from vel.openai.baselines import logger
 from vel.openai.baselines.bench import Monitor
 from vel.openai.baselines.common.atari_wrappers import (
     NoopResetEnv, MaxAndSkipEnv, FireResetEnv, EpisodicLifeEnv, WarpFrame, ClipRewardEnv,
-    ScaledFloatFrame, FrameStack
+    ScaledFloatFrame, FrameStack, FireEpisodicLifeEnv
 )
 
 from vel.rl.api.base import EnvFactory
@@ -76,7 +76,10 @@ def wrapped_env_maker(environment_id, seed, serial_id, disable_reward_clipping=F
 
     if 'FIRE' in env.unwrapped.get_action_meanings():
         # Take action on reset for environments that are fixed until firing.
-        env = FireResetEnv(env)
+        if disable_episodic_life:
+            env = FireEpisodicLifeEnv(env)
+        else:
+            env = FireResetEnv(env)
 
     # Warp frames to 84x84 as done in the Nature paper and later work.
     env = WarpFrame(env)
