@@ -65,3 +65,6 @@ commands:
     frame_history: 4
     sample_args:
       argmax_sampling: true
+
+  visdom:
+    name: vel.commands.vis_store_command
