@@ -1,3 +1,3 @@
 #!/bin/bash
 
-cloc --exclude-dir=data,dist,local-scripts,vel.egg-info,output .
+cloc --exclude-dir=build,data,dist,local-scripts,vel.egg-info,output .
