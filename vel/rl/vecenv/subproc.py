@@ -44,5 +44,5 @@ class SubprocVecEnvWrapper(VecEnvFactory):
         return lambda: self.env.instantiate(seed=seed, serial_id=idx, preset=preset)
 
 
-def create(env, frame_history, normalize=False):
+def create(env, frame_history=None, normalize=False):
     return SubprocVecEnvWrapper(env, frame_history=frame_history, normalize=normalize)
