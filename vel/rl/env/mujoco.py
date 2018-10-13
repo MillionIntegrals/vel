@@ -79,7 +79,7 @@ class MujocoEnv(EnvFactory):
 
         return current_settings
 
-    def instantiate(self, seed=0, serial_id=0, preset='default') -> gym.Env:
+    def instantiate(self, seed=0, serial_id=0, preset='default', extra_args=None) -> gym.Env:
         """ Make a single environment compatible with the experiments """
         settings = self.get_preset(preset)
         return env_maker(self.envname, seed, serial_id, **settings)

@@ -10,7 +10,7 @@ class EnvFactory:
         """ Return environment specification """
         raise NotImplementedError
 
-    def instantiate(self, seed=0, serial_id=1, preset='default') -> Env:
+    def instantiate(self, seed=0, serial_id=1, preset='default', extra_args=None) -> Env:
         """ Create a new Env instance """
         raise NotImplementedError
 
