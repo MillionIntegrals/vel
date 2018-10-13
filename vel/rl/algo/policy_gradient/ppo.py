@@ -10,11 +10,12 @@ from vel.schedules.constant import ConstantSchedule
 
 class PpoPolicyGradient(OptimizerAlgoBase):
     """ Proximal Policy Optimization - https://arxiv.org/abs/1707.06347 """
-    def __init__(self, entropy_coefficient, value_coefficient, cliprange, max_grad_norm):
+    def __init__(self, entropy_coefficient, value_coefficient, cliprange, max_grad_norm, normalize_advantage=True):
         super().__init__(max_grad_norm)
 
         self.entropy_coefficient = entropy_coefficient
         self.value_coefficient = value_coefficient
+        self.normalize_advantage = normalize_advantage
 
         if isinstance(cliprange, numbers.Number):
             self.cliprange = ConstantSchedule(cliprange)
@@ -34,7 +35,8 @@ class PpoPolicyGradient(OptimizerAlgoBase):
         current_cliprange = self.cliprange.value(batch_info['progress'])
 
         # Normalize the advantages?
-        advantages = (advantages - advantages.mean()) / (advantages.std() + 1e-8)
+        if self.normalize_advantage:
+            advantages = (advantages - advantages.mean()) / (advantages.std() + 1e-8)
 
         # PART 0 - model_evaluation
         eval_action_pd_params, eval_value_outputs = model(observations)
@@ -90,5 +92,7 @@ class PpoPolicyGradient(OptimizerAlgoBase):
         ]
 
 
-def create(entropy_coefficient, value_coefficient, cliprange, max_grad_norm):
-    return PpoPolicyGradient(entropy_coefficient, value_coefficient, cliprange, max_grad_norm)
+def create(entropy_coefficient, value_coefficient, cliprange, max_grad_norm, normalize_advantage=True):
+    return PpoPolicyGradient(
+        entropy_coefficient, value_coefficient, cliprange, max_grad_norm, normalize_advantage=normalize_advantage
+    )
