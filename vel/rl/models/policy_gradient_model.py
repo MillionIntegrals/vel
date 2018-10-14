@@ -1,4 +1,6 @@
 import gym
+import torch.nn as nn
+import typing
 
 from vel.api.base import LinearBackboneModel, Model, ModelFactory
 from vel.rl.modules.action_head import ActionHead
@@ -8,9 +10,11 @@ from vel.rl.modules.value_head import ValueHead
 class PolicyGradientModel(Model):
     """ For a policy gradient algorithm we need set of custom heads for our model """
 
-    def __init__(self, backbone: LinearBackboneModel, action_space: gym.Space):
+    def __init__(self, backbone: LinearBackboneModel, action_space: gym.Space,
+                 input_block: typing.Optional[nn.Module]=None):
         super().__init__()
 
+        self.input_block = input_block
         self.backbone = backbone
         self.action_head = ActionHead(
             action_space=action_space,
@@ -26,7 +30,12 @@ class PolicyGradientModel(Model):
 
     def forward(self, observations):
         """ Calculate model outputs """
-        base_output = self.backbone(observations)
+        if self.input_block is not None:
+            input_data = self.input_block(observations)
+        else:
+            input_data = observations
+
+        base_output = self.backbone(input_data)
 
         action_output = self.action_head(base_output)
         value_output = self.value_head(base_output)
@@ -51,9 +60,14 @@ class PolicyGradientModel(Model):
         """ Calculate - log(prob) of selected actions """
         return self.action_head.logprob(action_sample, action_params)
 
-    def value(self, observation):
+    def value(self, observations):
         """ Calculate only value head for given state """
-        base_output = self.backbone(observation)
+        if self.input_block is not None:
+            input_data = self.input_block(observations)
+        else:
+            input_data = observations
+
+        base_output = self.backbone(input_data)
         value_output = self.value_head(base_output)
         return value_output
 
@@ -64,15 +78,22 @@ class PolicyGradientModel(Model):
 
 class PolicyGradientModelFactory(ModelFactory):
     """ Factory  class for policy gradient models """
-    def __init__(self, backbone: ModelFactory):
+    def __init__(self, backbone: ModelFactory, input_block=None):
         self.backbone = backbone
+        self.input_block = input_block
 
     def instantiate(self, **extra_args):
         """ Instantiate the model """
         backbone = self.backbone.instantiate(**extra_args)
-        return PolicyGradientModel(backbone, extra_args['action_space'])
+
+        if self.input_block is None:
+            input_block = None
+        else:
+            input_block = self.input_block.instantiate()
+
+        return PolicyGradientModel(backbone, extra_args['action_space'], input_block)
 
 
-def create(backbone: ModelFactory):
+def create(backbone: ModelFactory, input_block=None):
     """ Vel creation function """
-    return PolicyGradientModelFactory(backbone=backbone)
+    return PolicyGradientModelFactory(backbone=backbone, input_block=input_block)
