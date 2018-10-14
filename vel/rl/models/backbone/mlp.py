@@ -57,7 +57,7 @@ class MLP(LinearBackboneModel):
         return self.model(input_data)
 
 
-def create(input_length, layers=2, hidden_units=64, activation='tanh', layer_norm=True):
+def create(input_length, layers=2, hidden_units=64, activation='tanh', layer_norm=False):
     def instantiate(**_):
         return MLP(
             input_length=input_length,
