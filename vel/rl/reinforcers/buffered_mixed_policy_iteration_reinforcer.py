@@ -25,7 +25,14 @@ class BufferedMixedPolicyIterationReinforcerSettings:
 
 
 class BufferedMixedPolicyIterationReinforcer(ReinforcerBase):
-    """ Factory class replay buffer reinforcer """
+    """
+    A 'mixed' reinforcer that does both, on-policy learning from environment rollouts and off-policy learning
+    from a replay buffer.
+
+    Environments are rolled out in parallel and used as normally in off-policy learning.
+    After that, each rollout is stored in a buffer that is sampled specified number of times per-environment
+    for replay batches.
+    """
 
     def __init__(self, device: torch.device, settings: BufferedMixedPolicyIterationReinforcerSettings, env: VecEnv,
                  model: Model, env_roller: ReplayEnvRollerBase, algo: AlgoBase) -> None:

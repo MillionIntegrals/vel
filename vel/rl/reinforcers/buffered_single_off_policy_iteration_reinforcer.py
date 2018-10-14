@@ -29,7 +29,7 @@ class BufferedSingleOffPolicyIterationReinforcerSettings:
 class BufferedSingleOffPolicyIterationReinforcer(ReinforcerBase):
     """
     An off-policy reinforcer that rolls out **single** environment and stores transitions in a buffer.
-    Afterwards, it samples batches experience from this buffer to train the policy.
+    Afterwards, it samples experience batches from this buffer to train the policy.
     """
     def __init__(self, device: torch.device, settings: BufferedSingleOffPolicyIterationReinforcerSettings,
                  environment: gym.Env, model: Model, algo: AlgoBase, env_roller: ReplayEnvRollerBase):
