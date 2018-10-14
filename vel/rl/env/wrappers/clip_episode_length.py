@@ -19,6 +19,7 @@ class ClipEpisodeEnv(gym.Wrapper):
 
         if self.current_episode_length > self.max_episode_length:
             done = True
+            info['clipped_length'] = True
 
         return ob, reward, done, info
 
