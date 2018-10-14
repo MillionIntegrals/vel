@@ -22,4 +22,3 @@ class ClipEpisodeLengthWrapper(gym.Wrapper):
             info['clipped_length'] = True
 
         return ob, reward, done, info
-
