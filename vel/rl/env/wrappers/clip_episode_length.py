@@ -1,7 +1,7 @@
 import gym
 
 
-class ClipEpisodeEnv(gym.Wrapper):
+class ClipEpisodeLengthWrapper(gym.Wrapper):
     """ Env wrapper that clips number of frames an episode can last """
     def __init__(self, env, max_episode_length):
         super().__init__(env)

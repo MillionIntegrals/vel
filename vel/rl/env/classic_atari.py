@@ -12,7 +12,7 @@ from vel.openai.baselines.common.atari_wrappers import (
 )
 
 from vel.rl.api.base import EnvFactory
-from vel.rl.env.wrappers.clip_episode_length import ClipEpisodeEnv
+from vel.rl.env.wrappers.clip_episode_length import ClipEpisodeLengthWrapper
 
 
 DEFAULT_SETTINGS = {
@@ -59,7 +59,7 @@ def wrapped_env_maker(environment_id, seed, serial_id, disable_reward_clipping=F
     env.seed(seed + serial_id)
 
     if max_episode_frames is not None:
-        env = ClipEpisodeEnv(env, max_episode_length=max_episode_frames)
+        env = ClipEpisodeLengthWrapper(env, max_episode_length=max_episode_frames)
 
     # Monitoring the env
     if monitor:
