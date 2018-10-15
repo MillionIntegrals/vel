@@ -4,6 +4,7 @@ https://github.com/openai/baselines/blob/master/baselines/common/models.py
 
 Under MIT license.
 """
+import typing
 import numpy as np
 
 import torch.nn as nn
@@ -16,29 +17,28 @@ from vel.api.base import LinearBackboneModel, ModelFactory
 
 class MLP(LinearBackboneModel):
     """ Simple Multi-Layer-Perceptron network """
-    def __init__(self, input_length, layers=2, hidden_units=64, activation='tanh', layer_norm=False):
+    def __init__(self, input_length: int, hidden_layers: typing.List[int], activation: str='tanh',
+                 normalization: typing.Optional[str]=None):
         super().__init__()
 
         self.input_length = input_length
-        self.layers = layers
-        self.hidden_units = hidden_units
+        self.hidden_layers = hidden_layers
         self.activation = activation
-        self.layer_norm = layer_norm
+        self.normalization = normalization
 
-        current_size = self.input_length
         layer_objects = []
+        layer_sizes = zip([input_length] + hidden_layers, hidden_layers)
 
-        for i in range(self.layers):
-            layer_objects.append(nn.Linear(current_size, hidden_units))
+        for input_size, output_size in layer_sizes:
+            layer_objects.append(nn.Linear(input_size, output_size))
 
-            if self.layer_norm:
-                layer_objects.append(nn.LayerNorm(hidden_units))
+            if self.normalization:
+                layer_objects.append(net_util.normalization(normalization)(output_size))
 
             layer_objects.append(net_util.activation(activation)())
 
-            current_size = hidden_units
-
         self.model = nn.Sequential(*layer_objects)
+        self.hidden_units = hidden_layers[-1] if hidden_layers else input_length
 
     @property
     def output_dim(self):
@@ -57,14 +57,13 @@ class MLP(LinearBackboneModel):
         return self.model(input_data)
 
 
-def create(input_length, layers=2, hidden_units=64, activation='tanh', layer_norm=False):
+def create(input_length, hidden_layers, activation='tanh', normalization=None):
     def instantiate(**_):
         return MLP(
             input_length=input_length,
-            layers=layers,
-            hidden_units=hidden_units,
+            hidden_layers=hidden_layers,
             activation=activation,
-            layer_norm=layer_norm
+            normalization=normalization
         )
 
     return ModelFactory.generic(instantiate)

@@ -16,8 +16,7 @@ model:
   backbone:
     name: vel.rl.models.backbone.mlp
     input_length: 11
-    layers: 2
-    hidden_units: 64
+    hidden_layers: [64, 64]
     activation: 'tanh'
 
 

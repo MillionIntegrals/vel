@@ -8,10 +8,21 @@ ACTIVATION_DICT = {
     'leaky_relu': nn.LeakyReLU
 }
 
+NORMALIZATION_DICT = {
+    'layer': nn.LayerNorm,
+    'batch1d': nn.BatchNorm1d,
+    'batch2d': nn.BatchNorm2d
+}
+
 
 def activation(name):
     """ Return activation block corresponding given name """
     return ACTIVATION_DICT[name]
+
+
+def normalization(name):
+    """ Return activation block corresponding given name """
+    return NORMALIZATION_DICT[name]
 
 
 def convolution_size_equation(size, filter_size, padding, stride):

@@ -11,18 +11,16 @@ model:
   policy_backbone:
     name: vel.rl.models.backbone.mlp
     input_length: 17
-    layers: 2
-    hidden_units: 64
+    hidden_layers: [64, 64]
     activation: 'relu'
-    layer_norm: on
+    normalization: 'layer'
 
   value_backbone:
     name: vel.rl.models.backbone.mlp
     input_length: 17
-    layers: 1 # Second layer is part of the critic head
-    hidden_units: 64
+    hidden_layers: [64] # Second layer is part of the critic head
     activation: 'relu'
-    layer_norm: on
+    normalization: 'layer'
 
 
 reinforcer:
