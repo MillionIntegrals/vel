@@ -1,6 +1,7 @@
 import collections.abc as abc
 import numpy as np
 import pandas as pd
+import typing
 
 import torch
 
@@ -32,25 +33,45 @@ class TrainingInfo(abc.MutableMapping):
     Data dict is any extra information processes may want to store
     """
 
-    def __init__(self, start_epoch_idx=0, metrics=None, callbacks=None):
+    def __init__(self, start_epoch_idx=0, run_name: typing.Optional[str]=None, metrics=None, callbacks=None):
         self.data_dict = {}
 
         self.start_epoch_idx = start_epoch_idx
         self.metrics = metrics if metrics is not None else []
         self.callbacks = callbacks if callbacks is not None else []
+        self.run_name = run_name
         self.history = TrainingHistory()
+
+        self.optimizer_initial_state = None
 
     def restore(self, hidden_state):
         """ Restore any state from checkpoint - currently not implemented but possible to do so in the future """
-        pass
+        for callback in self.callbacks:
+            callback.load_state_dict(self, hidden_state)
+
+        if 'optimizer' in hidden_state:
+            self.optimizer_initial_state = hidden_state['optimizer']
+
+    def initialize(self):
+        """
+        Runs for the first time a training process is started from scratch. Is guaranteed to be run only once
+        for the training process. Will be run before all other callbacks.
+        """
+        for callback in self.callbacks:
+            callback.on_initialization(self)
 
     def on_train_begin(self):
-        """ Initialize training process """
+        """
+        Beginning of a training process - is run every time a training process is started, even if it's restarted from
+        a checkpoint.
+        """
         for callback in self.callbacks:
             callback.on_train_begin(self)
 
     def on_train_end(self):
-        """ Finalize training process """
+        """
+        Finalize training process. Runs each time at the end of a training process.
+        """
         for callback in self.callbacks:
             callback.on_train_end(self)
 
@@ -161,6 +182,18 @@ class EpochInfo(abc.MutableMapping):
             self.callbacks = self.training_info.callbacks
         else:
             self.callbacks = callbacks
+
+    def state_dict(self) -> dict:
+        """ Calculate hidden state dictionary """
+        hidden_state = {}
+
+        if self.optimizer is not None:
+            hidden_state['optimizer'] = self.optimizer.state_dict()
+
+        for callback in self.callbacks:
+            callback.write_state_dict(self.training_info, hidden_state)
+
+        return hidden_state
 
     def on_epoch_begin(self) -> None:
         """ Initialize an epoch """

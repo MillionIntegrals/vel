@@ -2,7 +2,7 @@ import pymongo
 import pandas as pd
 
 
-class MongoDBBackend:
+class MongoDbBackend:
     """ Storage backend to store all experiment results in a MongoDB database """
 
     def __init__(self, model_config, uri, database):
@@ -13,6 +13,17 @@ class MongoDBBackend:
     def clean(self, initial_epoch):
         """ Remove entries from database that would get overwritten """
         self.db.metrics.delete_many({'run_name': self.model_config.run_name, 'epoch_idx': {'$gt': initial_epoch}})
+
+    def store_config(self, configuration):
+        """ Store model parameters in the database """
+        run_name = self.model_config.run_name
+
+        self.db.configs.delete_many({'run_name': self.model_config.run_name})
+
+        configuration = configuration.copy()
+        configuration['run_name'] = run_name
+
+        self.db.configs.insert_one(configuration)
 
     def get_frame(self):
         """ Get a dataframe of metrics from this storage """
@@ -36,5 +47,5 @@ class MongoDBBackend:
 
 def create(model_config, uri, database):
     """ Create a mongodb storage object """
-    return MongoDBBackend(model_config, uri, database)
+    return MongoDbBackend(model_config, uri, database)
 

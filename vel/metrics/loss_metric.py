@@ -6,6 +6,6 @@ class Loss(AveragingMetric):
     def __init__(self):
         super().__init__("loss")
 
-    def _value_function(self, data_dict):
+    def _value_function(self, batch_info):
         """ Just forward a value of the loss"""
-        return data_dict['loss'].item()
+        return batch_info['loss'].item()

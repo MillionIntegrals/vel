@@ -9,9 +9,9 @@ class ValueMetric(BaseMetric):
 
         self._metric_value = None
 
-    def calculate(self, data_dict):
+    def calculate(self, batch_info):
         """ Calculate value of a metric based on supplied data """
-        self._metric_value = self._value_function(data_dict)
+        self._metric_value = self._value_function(batch_info)
 
     def reset(self):
         """ Reset value of a metric """
@@ -21,6 +21,6 @@ class ValueMetric(BaseMetric):
         """ Return current value for the metric """
         return self._metric_value
 
-    def _value_function(self, data_dict):
+    def _value_function(self, batch_info):
         raise NotImplementedError
 

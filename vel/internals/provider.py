@@ -55,12 +55,28 @@ class Provider:
             name = object_data['name']
             module = importlib.import_module(name)
             return self.resolve_and_call(module.create, extra_env=object_data)
+        elif isinstance(object_data, dict):
+            return {k: self.instantiate_from_data(v) for k, v in object_data.items()}
         elif isinstance(object_data, list):
             return [self.instantiate_from_data(x) for x in object_data]
         elif isinstance(object_data, Variable):
             return object_data.resolve(self.parameters)
         else:
             return object_data
+
+    def render_configuration(self, configuration=None):
+        """ Render variables in configuration object but don't instantiate anything """
+        if configuration is None:
+            configuration = self.environment
+
+        if isinstance(configuration, dict):
+            return {k: self.render_configuration(v) for k, v in configuration.items()}
+        elif isinstance(configuration, list):
+            return [self.render_configuration(x) for x in configuration]
+        elif isinstance(configuration, Variable):
+            return configuration.resolve(self.parameters)
+        else:
+            return configuration
 
     def has_name(self, object_name):
         """ Check if given name is available in the provider """

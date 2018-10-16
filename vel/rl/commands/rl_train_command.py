@@ -10,7 +10,7 @@ import vel.openai.baselines.logger as openai_logger
 
 class FrameTracker(Callback):
     """ Aggregate frame count from each batch to a global number """
-    def on_train_begin(self, training_info: TrainingInfo):
+    def on_initialization(self, training_info: TrainingInfo):
         training_info['frames'] = 0
 
     def on_batch_begin(self, batch_info: BatchInfo):
@@ -22,6 +22,12 @@ class FrameTracker(Callback):
 
     def on_batch_end(self, batch_info: BatchInfo):
         batch_info.training_info['frames'] += batch_info['frames']
+
+    def write_state_dict(self, training_info: TrainingInfo, hidden_state_dict: dict):
+        hidden_state_dict['frame_tracker/frames'] = training_info['frames']
+
+    def load_state_dict(self, training_info: TrainingInfo, hidden_state_dict: dict):
+        training_info['frames'] = hidden_state_dict['frame_tracker/frames']
 
 
 class RlTrainCommand:
@@ -54,12 +60,15 @@ class RlTrainCommand:
         # Metrics to track through this training
         metrics = reinforcer.metrics()
 
-        training_info = self.resume_training(reinforcer, optimizer, callbacks, metrics)
+        training_info = self.resume_training(reinforcer, callbacks, metrics)
 
         reinforcer.initialize_training(training_info)
         training_info.on_train_begin()
 
-        global_epoch_idx = training_info.start_epoch_idx
+        if training_info.optimizer_initial_state:
+            optimizer.load_state_dict(training_info.optimizer_initial_state)
+
+        global_epoch_idx = training_info.start_epoch_idx + 1
         training_info['total_frames'] = self.total_frames
 
         while training_info['frames'] < self.total_frames:
@@ -79,7 +88,6 @@ class RlTrainCommand:
 
             global_epoch_idx += 1
 
-        reinforcer.finalize_training(training_info)
         training_info.on_train_end()
 
         return training_info
@@ -96,18 +104,30 @@ class RlTrainCommand:
 
         return callbacks
 
-    def resume_training(self, reinforcer, optimizer, callbacks, metrics) -> TrainingInfo:
+    def resume_training(self, reinforcer, callbacks, metrics) -> TrainingInfo:
         """ Possibly resume training from a saved state from the storage """
-        global_epoch_idx = 1
+        if self.model_config.reset:
+            start_epoch = 0
+        else:
+            start_epoch = self.storage.last_epoch_idx()
 
-        # TODO(jerry): Implement training resume
-        training_info = TrainingInfo(start_epoch_idx=global_epoch_idx, metrics=metrics, callbacks=callbacks)
+        training_info = TrainingInfo(
+            start_epoch_idx=start_epoch,
+            run_name=self.model_config.run_name,
+            metrics=metrics, callbacks=callbacks
+        )
 
-        training_info['run_name'] = self.model_config.run_name
+        if start_epoch == 0:
+            self.storage.reset(self.model_config.render_configuration())
+            training_info.initialize()
+            reinforcer.initialize_training(training_info)
+        else:
+            self.storage.resume(training_info, reinforcer.model)
 
         return training_info
 
     def _openai_logging(self, epoch_result):
+        """ Use OpenAI logging facilities for the same type of logging """
         for key in sorted(epoch_result.keys()):
             if key == 'fps':
                 # Not super elegant, but I like nicer display of FPS

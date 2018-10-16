@@ -35,9 +35,9 @@ class EpisodeRewardMetric(BaseMetric):
         super().__init__(name)
         self.buffer = collections.deque(maxlen=100)
 
-    def calculate(self, data_dict):
+    def calculate(self, batch_info):
         """ Calculate value of a metric based on supplied data """
-        self.buffer.extend(data_dict['episode_infos'])
+        self.buffer.extend(batch_info['episode_infos'])
 
     def reset(self):
         """ Reset value of a metric """
@@ -58,9 +58,9 @@ class EpisodeRewardMetricQuantile(BaseMetric):
         self.buffer = collections.deque(maxlen=buf_size)
         self.quantile = quantile
 
-    def calculate(self, data_dict):
+    def calculate(self, batch_info):
         """ Calculate value of a metric based on supplied data """
-        self.buffer.extend(ep['r'] for ep in data_dict['episode_infos'])
+        self.buffer.extend(ep['r'] for ep in batch_info['episode_infos'])
 
     def reset(self):
         """ Reset value of a metric """
@@ -80,9 +80,9 @@ class EpisodeLengthMetric(BaseMetric):
         super().__init__(name)
         self.buffer = collections.deque(maxlen=100)
 
-    def calculate(self, data_dict):
+    def calculate(self, batch_info):
         """ Calculate value of a metric based on supplied data """
-        self.buffer.extend(data_dict['episode_infos'])
+        self.buffer.extend(batch_info['episode_infos'])
 
     def reset(self):
         """ Reset value of a metric """
@@ -102,9 +102,9 @@ class ExplainedVariance(AveragingMetric):
     def __init__(self):
         super().__init__("explained_variance")
 
-    def _value_function(self, data_dict):
-        values = data_dict['values']
-        rewards = data_dict['rewards']
+    def _value_function(self, batch_info):
+        values = batch_info['values']
+        rewards = batch_info['rewards']
 
         explained_variance = 1 - torch.var(rewards - values) / torch.var(rewards)
         return explained_variance.item()

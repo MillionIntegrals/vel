@@ -2,7 +2,7 @@ import pandas as pd
 
 
 class DummyBackend:
-    """ Storage backend to store all experiment results in a MongoDB database """
+    """ Storage backend to store all experiment data in /dev/null """
 
     def __init__(self):
         pass
@@ -17,6 +17,10 @@ class DummyBackend:
 
     def store(self, metrics):
         """ Store metrics in a datastore """
+        pass
+
+    def store_config(self, configuration):
+        """ Store model parameters """
         pass
 
 

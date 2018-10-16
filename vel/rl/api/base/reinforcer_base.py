@@ -14,10 +14,6 @@ class ReinforcerBase:
         """ Run the initialization procedure """
         pass
 
-    def finalize_training(self, training_info: TrainingInfo):
-        """ Prepare all variables for training from scratch """
-        pass
-
     def train_epoch(self, epoch_info: EpochInfo):
         """ Train model on an epoch of a fixed number of batch updates """
         raise NotImplementedError

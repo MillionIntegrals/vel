@@ -10,12 +10,12 @@ class AveragingMetric(BaseMetric):
 
         self.storage = []
 
-    def calculate(self, data_dict):
+    def calculate(self, batch_info):
         """ Calculate value of a metric """
-        value = self._value_function(data_dict)
+        value = self._value_function(batch_info)
         self.storage.append(value)
 
-    def _value_function(self, data_dict):
+    def _value_function(self, batch_info):
         raise NotImplementedError
 
     def reset(self):
@@ -32,8 +32,8 @@ class AveragingNamedMetric(AveragingMetric):
     def __init__(self, name):
         super().__init__(name)
 
-    def _value_function(self, data_dict):
-        return data_dict[self.name]
+    def _value_function(self, batch_info):
+        return batch_info[self.name]
 
 
 class AveragingSupervisedMetric(BaseMetric):
@@ -43,9 +43,9 @@ class AveragingSupervisedMetric(BaseMetric):
 
         self.storage = []
 
-    def calculate(self, data_dict):
+    def calculate(self, batch_info):
         """ Calculate value of a metric """
-        value = self._value_function(data_dict['data'], data_dict['target'], data_dict['output'])
+        value = self._value_function(batch_info['data'], batch_info['target'], batch_info['output'])
         self.storage.append(value)
 
     def _value_function(self, x_input, y_true, y_pred):

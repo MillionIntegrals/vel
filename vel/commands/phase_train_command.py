@@ -118,17 +118,24 @@ class PhaseTrainCommand:
     def resume_training(self, learner, callbacks, metrics) -> (TrainingInfo, dict):
         """ Possibly resume training from a saved state from the storage """
         if self.model_config.reset:
-            start_epoch, hidden_state = 0, {}
+            start_epoch = 0
         else:
-            start_epoch, hidden_state = self.storage.resume_learning(learner.model)
+            start_epoch = self.storage.last_epoch_idx()
 
-        training_info = TrainingInfo(start_epoch_idx=start_epoch, metrics=metrics, callbacks=callbacks)
+        training_info = TrainingInfo(
+            start_epoch_idx=start_epoch,
+            run_name=self.model_config.run_name,
+            metrics=metrics,
+            callbacks=callbacks
+        )
 
-        if start_epoch > 0:
-            for callback in callbacks:
-                callback.load_state_dict(hidden_state)
-
-            training_info.restore(hidden_state)
+        if start_epoch == 0:
+            self.storage.reset(self.model_config.render_configuration())
+            training_info.initialize()
+            learner.initialize_training(training_info)
+            hidden_state = None
+        else:
+            hidden_state = self.storage.resume(training_info, learner.model)
 
         return training_info, hidden_state
 

@@ -111,3 +111,54 @@ def test_parameter_resolution():
     four = provider.instantiate_by_name('four')
 
     t.assert_equal(four['b'], '10')
+
+
+def test_render_configuration():
+    os.environ['TEST_VAR'] = '10'
+
+    provider = v.Provider({
+        'a': 1,
+        'b': p.Parameter("xxx"),
+        'one': {
+            'name': 'vel.internals.tests.fixture_a'
+        },
+        'two': {
+            'name': 'vel.internals.tests.fixture_a',
+            'b': p.Parameter('yyy', 5)
+        },
+
+        'three': {
+            'name': 'vel.internals.tests.fixture_a',
+            'b': p.Parameter('yyy', 7)
+        },
+
+        'four': {
+            'name': 'vel.internals.tests.fixture_a',
+            'b': p.EnvironmentVariable('TEST_VAR')
+        },
+
+    }, parameters={'xxx': 5})
+
+    configuration = provider.render_configuration()
+
+    t.assert_equal(configuration, {
+        'a': 1,
+        'b': 5,
+        'one': {
+            'name': 'vel.internals.tests.fixture_a'
+        },
+        'two': {
+            'name': 'vel.internals.tests.fixture_a',
+            'b': 5
+        },
+
+        'three': {
+            'name': 'vel.internals.tests.fixture_a',
+            'b': 7
+        },
+
+        'four': {
+            'name': 'vel.internals.tests.fixture_a',
+            'b': '10'
+        },
+    })

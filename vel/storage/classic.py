@@ -2,16 +2,14 @@ import os
 import pathlib
 import re
 import torch
-import typing
 
-import vel.api.base as base
 
-from vel.api import ModelConfig, EpochInfo
-from vel.api.base import Model
+from vel.api import ModelConfig, EpochInfo, TrainingInfo
+from vel.api.base import Model, Storage
 from .strategy.checkpoint_strategy import CheckpointStrategy
 
 
-class ClassicStorage(base.Storage):
+class ClassicStorage(Storage):
     """ Model and metric persistence - classic implementation """
 
     def __init__(self, model_config: ModelConfig, checkpoint_strategy: CheckpointStrategy, backend, streaming=None):
@@ -22,32 +20,35 @@ class ClassicStorage(base.Storage):
 
         self.cleaned = False
 
-    def restore(self, hidden_state):
-        """ Restore optimizer and callbacks from hidden state """
-        super().restore(hidden_state)
+    def last_epoch_idx(self):
+        """ Return last checkpointed epoch idx for given configuration. Returns 0 if no results have been stored """
+        return self._persisted_last_epoch()
+
+    def reset(self, configuration: dict) -> None:
+        """
+        Whenever there was anything stored in the database or not, purge previous state and start
+        new training process from scratch.
+        """
+        self.clean(0)
+        self.backend.store_config(configuration)
+
+    def resume(self, train_info: TrainingInfo, model: Model) -> dict:
+        """
+        Resume learning process and return loaded hidden state dictionary
+        """
+        last_epoch = train_info.start_epoch_idx
+
+        model.load_state_dict(torch.load(self.checkpoint_filename(last_epoch)))
+        hidden_state = torch.load(self.checkpoint_hidden_filename(last_epoch))
+
         self.checkpoint_strategy.restore(hidden_state)
+        train_info.restore(hidden_state)
 
-    def resume_learning(self, model) -> (int, typing.Union[dict, None]):
-        """ Resume training a model from a previously stored session """
-        last_epoch = self._persisted_last_epoch()
+        return hidden_state
 
-        if last_epoch > 0:
-            try:
-                model.load_state_dict(torch.load(self.checkpoint_filename(last_epoch)))
-                hidden_state = torch.load(self.checkpoint_hidden_filename(last_epoch))
-            except FileNotFoundError:
-                # If any of files does not exist, just ignore the checkpoint
-                return 0, None
-
-            self.restore(hidden_state)
-
-            return last_epoch, hidden_state
-        else:
-            return last_epoch, None
-
-    def get_frame(self):
+    def get_metrics_frame(self):
         """ Get a frame of metrics from backend """
-        return self.backend.get_frame()
+        return self.backend.get_metrics_frame()
 
     def clean(self, global_epoch_idx):
         """ Clean old checkpoints """
@@ -57,30 +58,49 @@ class ClassicStorage(base.Storage):
         self.cleaned = True
         self.backend.clean(global_epoch_idx)
 
-    def checkpoint(self, epoch_info: EpochInfo, model: Model, state_dict: dict=None):
-        """ When epoch is done, we persist the training state """
-        state_dict = state_dict if state_dict is not None else {}
+        self._make_sure_dir_exists()
 
-        self.clean(epoch_info.global_epoch_idx)
+        for x in os.listdir(self.model_config.checkpoint_dir()):
+            match = re.match('checkpoint_(\\d+)\\.data', x)
+
+            if match:
+                idx = int(match[1])
+
+                if idx > global_epoch_idx:
+                    os.remove(os.path.join(self.model_config.checkpoint_dir(), x))
+
+            match = re.match('checkpoint_hidden_(\\d+)\\.data', x)
+
+            if match:
+                idx = int(match[1])
+
+                if idx > global_epoch_idx:
+                    os.remove(os.path.join(self.model_config.checkpoint_dir(), x))
+
+            match = re.match('checkpoint_best_(\\d+)\\.data', x)
+
+            if match:
+                idx = int(match[1])
+
+                if idx > global_epoch_idx:
+                    os.remove(os.path.join(self.model_config.checkpoint_dir(), x))
+
+    def checkpoint(self, epoch_info: EpochInfo, model: Model):
+        """ When epoch is done, we persist the training state """
+        self.clean(epoch_info.global_epoch_idx - 1)
 
         self._make_sure_dir_exists()
 
         # Checkpoint latest
         torch.save(model.state_dict(), self.checkpoint_filename(epoch_info.global_epoch_idx))
 
-        hidden_state = state_dict.copy()
-
-        if epoch_info.optimizer is not None:
-            hidden_state['optimizer'] = epoch_info.optimizer.state_dict()
-
-        for callback in epoch_info.callbacks:
-            callback.write_state_dict(hidden_state)
-
+        hidden_state = epoch_info.state_dict()
         self.checkpoint_strategy.write_state_dict(hidden_state)
 
         torch.save(hidden_state, self.checkpoint_hidden_filename(epoch_info.global_epoch_idx))
 
-        if epoch_info.global_epoch_idx > 1 and self.checkpoint_strategy.should_delete_previous_checkpoint(epoch_info.global_epoch_idx):
+        if epoch_info.global_epoch_idx > 1 and self.checkpoint_strategy.should_delete_previous_checkpoint(
+                                                   epoch_info.global_epoch_idx):
             prev_epoch_idx = epoch_info.global_epoch_idx - 1
 
             os.remove(self.checkpoint_filename(prev_epoch_idx))

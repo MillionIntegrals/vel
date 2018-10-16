@@ -2,7 +2,7 @@ import torch
 import tqdm
 import sys
 
-from .info import BatchInfo, EpochInfo
+from .info import BatchInfo, EpochInfo, TrainingInfo
 
 
 class Learner:
@@ -31,7 +31,7 @@ class Learner:
         """ Count model parameters """
         return sum(p.numel() for p in self.model.parameters())
 
-    def initialize_training(self):
+    def initialize_training(self, training_info: TrainingInfo):
         """ Prepare for training """
         self.model.reset_weights()
 

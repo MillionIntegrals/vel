@@ -9,12 +9,12 @@ class SummingMetric(BaseMetric):
         self.reset_value = reset_value
         self.buffer = 0
 
-    def calculate(self, data_dict):
+    def calculate(self, batch_info):
         """ Calculate value of a metric """
-        value = self._value_function(data_dict)
+        value = self._value_function(batch_info)
         self.buffer += value
 
-    def _value_function(self, data_dict):
+    def _value_function(self, batch_info):
         raise NotImplementedError
 
     def reset(self):
@@ -33,5 +33,5 @@ class SummingNamedMetric(SummingMetric):
     def __init__(self, name, reset_value=True):
         super().__init__(name, reset_value=reset_value)
 
-    def _value_function(self, data_dict):
-        return data_dict[self.name].item()
+    def _value_function(self, batch_info):
+        return batch_info[self.name].item()

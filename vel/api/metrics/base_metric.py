@@ -1,3 +1,4 @@
+from vel.api import TrainingInfo
 
 
 class BaseMetric:
@@ -17,3 +18,11 @@ class BaseMetric:
     def value(self):
         """ Return current value for the metric """
         raise NotImplementedError
+
+    def write_state_dict(self, training_info: TrainingInfo, hidden_state_dict: dict) -> None:
+        """ Potentially store some metric state to the checkpoint """
+        pass
+
+    def load_state_dict(self, training_info: TrainingInfo, hidden_state_dict: dict) -> None:
+        """ Potentially load some metric state from the checkpoint """
+        pass

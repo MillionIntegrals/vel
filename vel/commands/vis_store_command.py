@@ -17,7 +17,7 @@ class VisdomCommand:
         )
 
     def run(self):
-        metrics = self.storage.get_frame().drop('run_name', axis=1)
+        metrics = self.storage.get_metrics_frame().drop('run_name', axis=1)
         visdom_push_metrics(self.vis, metrics)
 
 

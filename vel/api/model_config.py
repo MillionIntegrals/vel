@@ -104,6 +104,10 @@ class ModelConfig:
         """ Return full environment for dependency injection """
         return {**self.contents, 'run_number': self.run_number}
 
+    def render_configuration(self) -> dict:
+        """ Return a nice and picklable run configuration """
+        return self.provider.render_configuration()
+
     ####################################################################################################################
     # COMMAND UTILITIES
     def get_command(self, command_name):
@@ -130,15 +134,15 @@ class ModelConfig:
         return self.output_dir('openai', self.run_name)
 
     def project_data_dir(self, *args) -> str:
-        """ Directories where to store project files """
+        """ Directory where to store data """
         return os.path.join(self.project_dir, 'data', *args)
 
     def output_dir(self, *args) -> str:
-        """ Directories where to store project files """
+        """ Directory where to store output """
         return os.path.join(self.project_dir, 'output', *args)
 
     def project_top_dir(self, *args) -> str:
-        """ Top-level directory """
+        """ Project top-level directory """
         return os.path.join(self.project_dir, *args)
 
     ####################################################################################################################
@@ -150,7 +154,7 @@ class ModelConfig:
 
     @property
     def name(self) -> str:
-        """ Return name of the run """
+        """ Return name of the model """
         return self._model_name
 
     ####################################################################################################################

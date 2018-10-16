@@ -184,7 +184,8 @@ def breakout_a2c():
         callbacks=[StdoutStreaming()]  # Print live metrics every epoch to standard output
     )
 
-    # Training initialization
+    # A bit of training inintialization bookkeeping...
+    training_info.initialize()
     reinforcer.initialize_training(training_info)
     training_info.on_train_begin()
 
@@ -203,7 +204,6 @@ def breakout_a2c():
         reinforcer.train_epoch(epoch_info)
 
     training_info.on_train_end()
-    reinforcer.finalize_training(training_info)
 
 
 if __name__ == '__main__':

@@ -1,21 +1,27 @@
 import torch
+import typing
 
 from vel.api import Learner, ModelConfig, EpochInfo, TrainingInfo
+from vel.api.base import OptimizerFactory, SchedulerFactory, Callback, Source, Storage, ModelFactory
+from vel.callbacks.time_tracker import TimeTracker
 
 
 class SimpleTrainCommand:
     """ Very simple training command - just run the supplied generators """
 
-    def __init__(self, model_config: ModelConfig, model_factory, epochs, optimizer_factory, scheduler_factory,
-                 callbacks, source, storage):
+    def __init__(self, epochs: int, model_config: ModelConfig, model_factory: ModelFactory,
+                 optimizer_factory: OptimizerFactory, scheduler_factory: typing.Optional[SchedulerFactory],
+                 source: Source, storage: Storage, callbacks: typing.Optional[typing.List[Callback]]):
         self.epochs = epochs
-        self.callbacks = callbacks if callbacks is not None else []
+        self.model_config = model_config
+        self.model_factory = model_factory
+
         self.optimizer_factory = optimizer_factory
         self.scheduler_factory = scheduler_factory
-        self.model_factory = model_factory
+
         self.source = source
-        self.model_config = model_config
         self.storage = storage
+        self.callbacks = callbacks if callbacks is not None else []
 
     def run(self):
         """ Run the command with supplied configuration """
@@ -30,9 +36,12 @@ class SimpleTrainCommand:
         metrics = learner.metrics()
 
         # Check if training was already started and potentially continue where we left off
-        training_info = self.resume_training(learner, optimizer, callbacks, metrics)
+        training_info = self.resume_training(learner, callbacks, metrics)
 
         training_info.on_train_begin()
+
+        if training_info.optimizer_initial_state:
+            optimizer.load_state_dict(training_info.optimizer_initial_state)
 
         for global_epoch_idx in range(training_info.start_epoch_idx + 1, self.epochs + 1):
             epoch_info = EpochInfo(
@@ -53,7 +62,7 @@ class SimpleTrainCommand:
 
     def gather_callbacks(self, optimizer) -> list:
         """ Gather all the callbacks to be used in this training run """
-        callbacks = []
+        callbacks = [TimeTracker()]
 
         if self.scheduler_factory is not None:
             callbacks.append(self.scheduler_factory.instantiate(optimizer))
@@ -63,38 +72,39 @@ class SimpleTrainCommand:
 
         return callbacks
 
-    def resume_training(self, learner, optimizer, callbacks, metrics) -> TrainingInfo:
+    def resume_training(self, learner, callbacks, metrics) -> TrainingInfo:
         """ Possibly resume training from a saved state from the storage """
         if self.model_config.reset:
-            start_epoch, hidden_state = 0, {}
+            start_epoch = 0
         else:
-            start_epoch, hidden_state = self.storage.resume_learning(learner.model)
+            start_epoch = self.storage.last_epoch_idx()
 
-        training_info = TrainingInfo(start_epoch_idx=start_epoch, metrics=metrics, callbacks=callbacks)
+        training_info = TrainingInfo(
+            start_epoch_idx=start_epoch,
+            run_name=self.model_config.run_name,
+            metrics=metrics,
+            callbacks=callbacks
+        )
 
-        if start_epoch > 0:
-            self.restore_state(hidden_state, optimizer, callbacks)
-            training_info.restore(hidden_state)
+        if start_epoch == 0:
+            self.storage.reset(self.model_config.render_configuration())
+            training_info.initialize()
+            learner.initialize_training(training_info)
+        else:
+            self.storage.resume(training_info, learner.model)
 
         return training_info
-
-    def restore_state(self, hidden_state, optimizer, callbacks):
-        """ Load state into optimizer and callbacks """
-        optimizer.load_state_dict(hidden_state['optimizer'])
-
-        for callback in callbacks:
-            callback.load_state_dict(hidden_state)
 
 
 def create(model_config, epochs, optimizer, model, source, storage, scheduler=None, callbacks=None):
     """ Simply train the model """
     return SimpleTrainCommand(
+        epochs=epochs,
         model_config=model_config,
         model_factory=model,
-        epochs=epochs,
         optimizer_factory=optimizer,
         scheduler_factory=scheduler,
-        callbacks=callbacks,
         source=source,
         storage=storage,
+        callbacks=callbacks
     )
