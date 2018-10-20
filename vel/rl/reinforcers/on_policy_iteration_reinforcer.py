@@ -129,7 +129,7 @@ class OnPolicyIterationReinforcer(ReinforcerBase):
         batch_info.aggregate_key('sub_batch_data')
 
 
-class PolicyGradientReinforcerFactory(ReinforcerFactory):
+class OnPolicyIterationReinforcerFactory(ReinforcerFactory):
     """ Vel factory class for the PolicyGradientReinforcer """
     def __init__(self, settings, parallel_envs: int, env_factory: VecEnvFactory, model_factory: ModelFactory,
                  algo: AlgoBase, env_roller_factory: EnvRollerFactory, seed: int):
@@ -160,7 +160,7 @@ def create(model_config, model, vec_env, algo, env_roller, parallel_envs, number
         experience_replay=experience_replay
     )
 
-    return PolicyGradientReinforcerFactory(
+    return OnPolicyIterationReinforcerFactory(
         settings=settings,
         parallel_envs=parallel_envs,
         env_factory=vec_env,
