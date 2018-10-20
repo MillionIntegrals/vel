@@ -57,7 +57,7 @@ class NatureCnn(LinearBackboneModel):
         ])
 
         self.linear_layer = nn.Linear(
-            self.final_width * self.final_height * 64,
+            self.final_width * self.final_height * 64,  # 64 is the number of channels of the last conv layer
             self.output_dim
         )
 
@@ -67,6 +67,7 @@ class NatureCnn(LinearBackboneModel):
         return self._output_dim
 
     def reset_weights(self):
+        """ Call proper initializers for the weights """
         for m in self.modules():
             if isinstance(m, nn.Conv2d):
                 # init.kaiming_normal_(m.weight, mode='fan_out', nonlinearity='relu')
@@ -86,9 +87,12 @@ class NatureCnn(LinearBackboneModel):
         return F.relu(self.linear_layer(flattened))
 
 
-def create(input_width, input_height, input_channels=1):
+def create(input_width, input_height, input_channels=1, output_dim=512):
     def instantiate(**_):
-        return NatureCnn(input_width=input_width, input_height=input_height, input_channels=input_channels)
+        return NatureCnn(
+            input_width=input_width, input_height=input_height, input_channels=input_channels,
+            output_dim=output_dim
+        )
 
     return ModelFactory.generic(instantiate)
 
