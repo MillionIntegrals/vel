@@ -40,7 +40,8 @@ setup(
     extras_require={
         'visdom': ['visdom'],
         'mongo': ['pymongo', 'dnspython'],
-        'gym': ['gym[all]'],
+        'gym': ['gym[atari,box2d,classic_control]'],
+        'mujoco': ['gym[mujoco,robotics]'],
         'dev': ['nose']
     },
     entry_points={
