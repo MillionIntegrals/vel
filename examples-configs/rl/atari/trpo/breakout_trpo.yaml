@@ -43,11 +43,11 @@ reinforcer:
   env_roller:
     name: vel.rl.env_roller.vec.step_env_roller
     gae_lambda: 1.00 # Generalized Advantage Estimator Lambda parameter
+    number_of_steps: 32 # How many environment steps go into a single batch
 
   # In openAI baselines they rollout single env for 512 steps.
   # I roll out 16 envs for 32 steps in parallel
 
-  number_of_steps: 32 # How many environment steps go into a single batch
   parallel_envs: 16 # How many environments to run in parallel
   discount_factor: 0.99
   batch_size: 512

@@ -16,23 +16,26 @@ class A2CPolicyGradient(OptimizerAlgoBase):
 
     def calculate_gradient(self, batch_info, device, model, rollout):
         """ Calculate loss of the supplied rollout """
-        observations = rollout['observations']
-        returns = rollout['returns']
-        advantages = rollout['advantages']
-        actions = rollout['actions']
-        values = rollout['values']
+        evaluator = model.evaluate(rollout)
 
-        action_pd_params, value_outputs = model(observations)
+        # Use evaluator interface to get the what we are interested in from the model
+        advantages = evaluator.get('rollout:estimated_advantages')
+        returns = evaluator.get('rollout:estimated_returns')
+        rollout_values = evaluator.get('rollout:estimated_values')
 
-        log_prob = model.logprob(actions, action_pd_params)
+        logprobs = evaluator.get('model:action:logprobs')
+        values = evaluator.get('model:estimated_values')
+        entropy = evaluator.get('model:entropy')
 
-        policy_loss = - torch.mean(advantages * log_prob)
-        value_loss = 0.5 * F.mse_loss(value_outputs, returns)
-        policy_entropy = torch.mean(model.entropy(action_pd_params))
+        # Actual calculations. Pretty trivial
+        policy_loss = -torch.mean(advantages * logprobs)
+        value_loss = 0.5 * F.mse_loss(values, returns)
+        policy_entropy = torch.mean(entropy)
 
         loss_value = (
             policy_loss - self.entropy_coefficient * policy_entropy + self.value_coefficient * value_loss
         )
+
         loss_value.backward()
 
         return {
@@ -40,7 +43,7 @@ class A2CPolicyGradient(OptimizerAlgoBase):
             'value_loss': value_loss.item(),
             'policy_entropy': policy_entropy.item(),
             'advantage_norm': torch.norm(advantages).item(),
-            'explained_variance': explained_variance(returns, values)
+            'explained_variance': explained_variance(returns, rollout_values)
         }
 
     def metrics(self) -> list:

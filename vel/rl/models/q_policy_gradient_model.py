@@ -2,9 +2,29 @@ import gym
 import torch
 
 from vel.api.base import LinearBackboneModel, Model, ModelFactory
-
+from vel.rl.api import Rollout, Evaluator
 from vel.rl.modules.action_head import ActionHead
 from vel.rl.modules.q_head import QHead
+
+
+class QPolicyGradientEvaluator(Evaluator):
+    """ Evaluator for QPolicyGradientModel """
+    def __init__(self, model: 'QPolicyGradientModel', rollout: Rollout):
+        super().__init__(rollout)
+
+        self.model = model
+
+        observations = self.get('rollout:observations')
+        logprobs, q = model(observations)
+
+        self.provide('model:logprobs', logprobs)
+        self.provide('model:q', q)
+
+    @Evaluator.provides('model:action:logprobs')
+    def model_action_logprobs(self):
+        actions = self.get('rollout_actions')
+        logprobs = self.get('model:logprobs')
+        return self.model.action_head.logprob(actions, logprobs)
 
 
 class QPolicyGradientModel(Model):
@@ -37,32 +57,48 @@ class QPolicyGradientModel(Model):
         """ Calculate model outputs """
         base_output = self.backbone(observations)
 
-        action_output = self.action_head(base_output)
-        q_output = self.q_head(base_output)
+        policy_params = self.action_head(base_output)
+        q = self.q_head(base_output)
 
-        return action_output, q_output
+        return policy_params, q
 
     def step(self, observation, argmax_sampling=False):
         """ Select actions based on model's output """
-        action_pd_params, q_output = self(observation)
-        actions = self.action_head.sample(action_pd_params, argmax_sampling=argmax_sampling)
+        policy_params, q = self(observation)
+        actions = self.action_head.sample(policy_params, argmax_sampling=argmax_sampling)
 
         # log probability - we can do that, because we support only discrete action spaces
-        logprob = self.action_head.logprob(actions, action_pd_params)
+        logprobs = self.action_head.logprob(actions, policy_params)
 
         return {
             'actions': actions,
-            'values': q_output,
-            'action_logits': action_pd_params,
-            'logprob': logprob
+            'values': q,
+            'logprobs': policy_params,
+            'action_logprobs': logprobs
         }
+
+    def evaluate(self, rollout: Rollout) -> QPolicyGradientEvaluator:
+        """ Evaluate model on a rollout """
+        return QPolicyGradientEvaluator(self, rollout)
+
+        # observations = rollout.batch_tensor('observations')
+        # actions = rollout.batch_tensor('actions')
+        #
+        # policy_params, q = self(observations)
+        # logprobs = self.action_head.logprob(actions, policy_params)
+        #
+        # return {
+        #     'action_pd_params': policy_params,
+        #     'actiologprobs': logprobs,
+        #     'q': q
+        # }
 
     def value(self, observation):
         """ Calculate only value head for given state """
-        action_pd_params, final_q = self(observation)
+        policy_params, q = self(observation)
 
         # Expectation of Q value with respect to action
-        return (torch.exp(action_pd_params) * final_q).sum(dim=1)
+        return (torch.exp(policy_params) * q).sum(dim=1)
 
     def entropy(self, action_logits):
         """ Entropy of a probability distribution """

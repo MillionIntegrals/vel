@@ -3,6 +3,7 @@ import torch
 
 from vel.api.base import Schedule
 from vel.api.metrics import AveragingNamedMetric
+from vel.rl.api import Rollout, Transitions
 from vel.rl.api.base import ReplayEnvRollerBase, EnvRollerFactory
 from vel.rl.buffers.prioritized_backend import PrioritizedReplayBackend
 
@@ -56,7 +57,8 @@ class PrioritizedReplayRollerEpsGreedy(ReplayEnvRollerBase):
         selector = torch.rand_like(policy_action, dtype=torch.float32)
         return torch.where(selector > epsilon, policy_action, random_samples)
 
-    def rollout(self, batch_info, model) -> dict:
+    @torch.no_grad()
+    def rollout(self, batch_info, model) -> Rollout:
         """ Roll-out the environment and return it """
         epsilon_value = self.epsilon_schedule.value(batch_info['progress'])
         batch_info['epsilon'] = epsilon_value
@@ -82,12 +84,17 @@ class PrioritizedReplayRollerEpsGreedy(ReplayEnvRollerBase):
 
         self.last_observation = observation
 
-        return {
-            'epsilon': epsilon_value,
-            'episode_information': info.get('episode'),
-            'action': epsgreedy_step[0],
-            'value': step['values'][0]
-        }
+        return Transitions(
+            size=1,
+            environment_information=[info],
+            transition_tensors={
+                'actions': epsgreedy_step.unsqueeze(0),
+                'values': step['values']
+            },
+            extra_data={
+                'epsilon': epsilon_value
+            }
+        )
 
     def metrics(self):
         """ List of metrics to track for this learning process """
@@ -95,7 +102,7 @@ class PrioritizedReplayRollerEpsGreedy(ReplayEnvRollerBase):
             AveragingNamedMetric("epsilon"),
         ]
 
-    def sample(self, batch_info, model) -> dict:
+    def sample(self, batch_info, model) -> Transitions:
         """ Sample experience from replay buffer and return a batch """
         probs, indexes, tree_idxs = self.backend.sample_batch_prioritized(self.batch_size, self.frame_stack)
         batch = self.backend.get_batch(indexes, self.frame_stack)
@@ -115,24 +122,30 @@ class PrioritizedReplayRollerEpsGreedy(ReplayEnvRollerBase):
         actions = torch.from_numpy(batch['actions']).to(self.device)
         weights = torch.from_numpy(weights.astype(np.float32)).to(self.device)
 
-        return {
-            'size': self.batch_size,
-            'observations': observations,
-            'observations+1': observations_plus1,
-            'dones': dones,
-            'rewards': rewards,
-            'actions': actions,
-            'weights': weights,
-            'tree_idxs': tree_idxs
-        }
+        return Transitions(
+            size=self.batch_size,
+            environment_information=None,
+            transition_tensors={
+                'observations': observations,
+                'observations_next': observations_plus1,
+                'dones': dones,
+                'rewards': rewards,
+                'actions': actions,
+                'weights': weights,
+            },
+            extra_data={
+                'tree_idxs': tree_idxs
+            }
+        )
 
-    def update(self, sample, batch_info):
+    def update(self, rollout, batch_info):
         """ Update sample weights in the priority buffer """
         errors = batch_info['errors']
+        tree_idxs = rollout.extra_data['tree_idxs']
 
         weights = (errors + self.priority_epsilon) ** self.priority_exponent
 
-        for idx, priority in zip(sample['tree_idxs'], weights):
+        for idx, priority in zip(tree_idxs, weights):
             self.backend.update_priority(idx, priority)
 
 

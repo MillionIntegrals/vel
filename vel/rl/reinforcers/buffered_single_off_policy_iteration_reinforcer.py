@@ -1,5 +1,4 @@
 import attr
-import numpy as np
 import sys
 import tqdm
 
@@ -8,7 +7,6 @@ import torch
 
 from vel.api import BatchInfo, EpochInfo
 from vel.api.base import Model, ModelFactory
-from vel.api.metrics import AveragingNamedMetric
 from vel.rl.api.base import ReinforcerBase, ReinforcerFactory, EnvFactory, ReplayEnvRollerBase, AlgoBase
 from vel.rl.api.base.env_roller import ReplayEnvRollerFactory
 from vel.rl.metrics import (
@@ -50,10 +48,7 @@ class BufferedSingleOffPolicyIterationReinforcer(ReinforcerBase):
             EpisodeRewardMetric('PMM:episode_rewards'),
             EpisodeRewardMetricQuantile('P09:episode_rewards', quantile=0.9),
             EpisodeRewardMetricQuantile('P01:episode_rewards', quantile=0.1),
-            EpisodeLengthMetric("episode_length"),
-            AveragingNamedMetric("rollout_action_mean"),
-            AveragingNamedMetric("rollout_action_std"),
-            AveragingNamedMetric("rollout_value_mean")
+            EpisodeLengthMetric("episode_length")
         ]
 
         return my_metrics + self.algo.metrics() + self.env_roller.metrics()
@@ -67,11 +62,16 @@ class BufferedSingleOffPolicyIterationReinforcer(ReinforcerBase):
         self.model.reset_weights()
         self.algo.initialize(self.settings, model=self.model, environment=self.environment, device=self.device)
 
-    def train_epoch(self, epoch_info: EpochInfo) -> None:
+    def train_epoch(self, epoch_info: EpochInfo, interactive=True) -> None:
         """ Train model for a single epoch  """
         epoch_info.on_epoch_begin()
 
-        for batch_idx in tqdm.trange(epoch_info.batches_per_epoch, file=sys.stdout, desc="Training", unit="batch"):
+        if interactive:
+            iterator = tqdm.trange(epoch_info.batches_per_epoch, file=sys.stdout, desc="Training", unit="batch")
+        else:
+            iterator = range(epoch_info.batches_per_epoch)
+
+        for batch_idx in iterator:
             batch_info = BatchInfo(epoch_info, batch_idx)
 
             batch_info.on_batch_begin()
@@ -96,37 +96,21 @@ class BufferedSingleOffPolicyIterationReinforcer(ReinforcerBase):
 
         # Helper variables for rollouts
         episode_information = []
-        rollout_actions = []
-        rollout_values = []
         frames = 0
 
         with torch.no_grad():
             if not self.env_roller.is_ready_for_sampling():
                 while not self.env_roller.is_ready_for_sampling():
                     rollout = self.env_roller.rollout(batch_info, self.model)
-                    maybe_episode_info = rollout['episode_information']
 
-                    if maybe_episode_info is not None:
-                        episode_information.append(maybe_episode_info)
-
-                    frames += 1
-                    rollout_actions.append(rollout['action'].detach().cpu().numpy())
-                    rollout_values.append(rollout['value'].detach().cpu().numpy())
+                    episode_information.extend(rollout.episode_information())
+                    frames += rollout.frames()
             else:
                 for i in range(self.settings.batch_rollout_rounds):
                     rollout = self.env_roller.rollout(batch_info, self.model)
-                    maybe_episode_info = rollout['episode_information']
 
-                    if maybe_episode_info is not None:
-                        episode_information.append(maybe_episode_info)
-
-                    frames += 1
-                    rollout_actions.append(rollout['action'].detach().cpu().numpy())
-                    rollout_values.append(rollout['value'].detach().cpu().numpy())
-
-        batch_info['rollout_action_mean'] = np.mean(rollout_actions)
-        batch_info['rollout_action_std'] = np.std(rollout_actions)
-        batch_info['rollout_value_mean'] = np.std(rollout_values)
+                    episode_information.extend(rollout.episode_information())
+                    frames += rollout.frames()
 
         batch_info['frames'] = frames
         batch_info['episode_infos'] = episode_information
@@ -138,16 +122,16 @@ class BufferedSingleOffPolicyIterationReinforcer(ReinforcerBase):
         batch_info['sub_batch_data'] = []
 
         for i in range(self.settings.batch_training_rounds):
-            batch_sample = self.env_roller.sample(batch_info, self.model)
+            sampled_rollout = self.env_roller.sample(batch_info, self.model)
 
             batch_result = self.algo.optimizer_step(
                 batch_info=batch_info,
                 device=self.device,
                 model=self.model,
-                rollout=batch_sample
+                rollout=sampled_rollout
             )
 
-            self.env_roller.update(sample=batch_sample, batch_info=batch_result)
+            self.env_roller.update(rollout=sampled_rollout, batch_info=batch_result)
 
             batch_info['sub_batch_data'].append(batch_result)
 

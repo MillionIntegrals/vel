@@ -3,14 +3,14 @@ import numpy as np
 import bisect
 import typing
 
-from vel.api import Learner, TrainingInfo
+from vel.api import Learner, TrainingInfo, ModelConfig
 from vel.api.base import TrainPhase
 
 
 class PhaseTrainCommand:
     """ Training  command - learn according to a set of phases """
 
-    def __init__(self, model_config, model_factory, source, storage, phases: typing.List[TrainPhase],
+    def __init__(self, model_config: ModelConfig, model_factory, source, storage, phases: typing.List[TrainPhase],
                  callbacks=None, restart=True):
         self.model_config = model_config
         self.model_factory = model_factory
@@ -117,10 +117,10 @@ class PhaseTrainCommand:
 
     def resume_training(self, learner, callbacks, metrics) -> (TrainingInfo, dict):
         """ Possibly resume training from a saved state from the storage """
-        if self.model_config.reset:
-            start_epoch = 0
-        else:
+        if self.model_config.continue_training:
             start_epoch = self.storage.last_epoch_idx()
+        else:
+            start_epoch = 0
 
         training_info = TrainingInfo(
             start_epoch_idx=start_epoch,

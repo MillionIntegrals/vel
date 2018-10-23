@@ -158,22 +158,22 @@ class ActionHead(nn.Module):
     def forward(self, input_data):
         return self.head(input_data)
 
-    def sample(self, params, **kwargs):
+    def sample(self, policy_params, **kwargs):
         """ Sample from a probability space of all actions """
-        return self.head.sample(params, **kwargs)
+        return self.head.sample(policy_params, **kwargs)
 
     def reset_weights(self):
         """ Initialize weights to sane defaults """
         self.head.reset_weights()
 
-    def entropy(self, params):
+    def entropy(self, policy_params):
         """ Entropy calculation - sum probs * log(probs) """
-        return self.head.entropy(params)
+        return self.head.entropy(policy_params)
 
     def kl_divergence(self, params_q, params_p):
         """ Kullback–Leibler divergence between two sets of parameters """
         return self.head.kl_divergence(params_q, params_p)
 
-    def logprob(self, action_sample, action_params):
+    def logprob(self, action_sample, policy_params):
         """ - log probabilty of selected actions """
-        return self.head.logprob(action_sample, action_params)
+        return self.head.logprob(action_sample, policy_params)

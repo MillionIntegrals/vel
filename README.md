@@ -62,6 +62,7 @@ that are ready to run and easy to modify for other similar usecases:
 # Implemented models - Reinforcement learning
 
 - Continuous and discrete action spaces
+- Basic support for LSTM policies for A2C and PPO
 - Advantage Actor-Critic (A2C),
   Proximal Policy Optimization (PPO), 
   Trust Region Policy Optimization (TRPO),
@@ -156,8 +157,7 @@ def breakout_a2c():
         device=device,
         settings=OnPolicyIterationReinforcerSettings(
             discount_factor=0.99,
-            batch_size=256,
-            number_of_steps=5
+            batch_size=256
         ),
         model=model,
         algo=A2CPolicyGradient(
@@ -184,7 +184,7 @@ def breakout_a2c():
         callbacks=[StdoutStreaming()]  # Print live metrics every epoch to standard output
     )
 
-    # A bit of training inintialization bookkeeping...
+    # A bit of training initialization bookkeeping...
     training_info.initialize()
     reinforcer.initialize_training(training_info)
     training_info.on_train_begin()

@@ -42,8 +42,8 @@ reinforcer:
   env_roller:
     name: vel.rl.env_roller.vec.step_env_roller
     gae_lambda: 0.95 # Generalized Advantage Estimator Lambda parameter
+    number_of_steps: 2048 # How many environment steps go into a single batch
 
-  number_of_steps: 2048 # How many environment steps go into a single batch
   parallel_envs: 1 # How many environments to run in parallel
   batch_size: 64 # How many samples can go into the model in one batch
   experience_replay: 10 # How many times to replay the experience

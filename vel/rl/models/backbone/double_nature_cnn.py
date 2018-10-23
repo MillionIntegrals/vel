@@ -70,7 +70,7 @@ class DoubleNatureCnn(LinearBackboneModel):
         )
 
     @property
-    def output_dim(self):
+    def output_dim(self) -> int:
         """ Final dimension of model output """
         return self._output_dim
 

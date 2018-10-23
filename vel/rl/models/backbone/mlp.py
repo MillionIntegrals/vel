@@ -41,7 +41,7 @@ class MLP(LinearBackboneModel):
         self.hidden_units = hidden_layers[-1] if hidden_layers else input_length
 
     @property
-    def output_dim(self):
+    def output_dim(self) -> int:
         """ Final dimension of model output """
         return self.hidden_units
 

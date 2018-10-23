@@ -50,11 +50,14 @@ class Learner:
 
         epoch_info.on_epoch_end()
 
-    def train_epoch(self, epoch_info, source):
+    def train_epoch(self, epoch_info, source, interactive=True):
         """ Run a single training epoch """
         self.train()
 
-        iterator = tqdm.tqdm(source.train_loader, desc="Training", unit="iter", file=sys.stdout)
+        if interactive:
+            iterator = tqdm.tqdm(source.train_loader, desc="Training", unit="iter", file=sys.stdout)
+        else:
+            iterator = source.train_loader
 
         for batch_idx, (data, target) in enumerate(iterator):
             batch_info = BatchInfo(epoch_info, batch_idx)

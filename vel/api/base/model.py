@@ -68,16 +68,59 @@ class Model(nn.Module):
         """ Call proper initializers for the weights """
         pass
 
+    @property
+    def is_recurrent(self) -> bool:
+        """ If the network is recurrent and needs to be fed state as well as the observations """
+        return False
+
+
+class RnnModel(Model):
+    """ Class representing recurrent model """
+
+    @property
+    def is_recurrent(self) -> bool:
+        """ If the network is recurrent and needs to be fed previous state """
+        return True
+
+    @property
+    def state_dim(self) -> int:
+        """ Dimension of model state """
+        raise NotImplementedError
+
 
 class BackboneModel(Model):
     """ Model that serves as a backbone network to connect your heads to """
 
 
-class LinearBackboneModel(BackboneModel):
-    """ Model that serves as a backbone network to connect your heads to - one that spits a single-dimension output """
+class RnnLinearBackboneModel(BackboneModel):
+    """
+    Model that serves as a backbone network to connect your heads to -
+    one that spits out a single-dimension output and is a recurrent neural network
+    """
 
     @property
-    def output_dim(self):
+    def is_recurrent(self) -> bool:
+        """ If the network is recurrent and needs to be fed previous state """
+        return True
+
+    @property
+    def output_dim(self) -> int:
+        """ Final dimension of model output """
+        raise NotImplementedError
+
+    @property
+    def state_dim(self) -> int:
+        """ Dimension of model state """
+        raise NotImplementedError
+
+
+class LinearBackboneModel(BackboneModel):
+    """
+    Model that serves as a backbone network to connect your heads to - one that spits out a single-dimension output
+    """
+
+    @property
+    def output_dim(self) -> int:
         """ Final dimension of model output """
         raise NotImplementedError
 

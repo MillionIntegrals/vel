@@ -2,22 +2,61 @@ import gym
 import itertools as it
 
 from vel.api.base import LinearBackboneModel, Model, ModelFactory
+from vel.rl.api import Rollout, Evaluator
 from vel.rl.modules.deterministic_action_head import DeterministicActionHead
 from vel.rl.modules.deterministic_critic_head import DeterministicCriticHead
+
+
+class DeterministicPolicyEvaluator(Evaluator):
+    """ Evaluator for DeterministicPolicyModel """
+
+    def __init__(self, model: 'DeterministicPolicyModel', rollout: Rollout):
+        super().__init__(rollout)
+
+        self.model = model
+
+    @Evaluator.provides('model:estimated_values_next')
+    def model_estimated_values_next(self):
+        """ Estimate state-value of the transition next state """
+        observations = self.get('rollout:observations_next')
+        action, value = self.model(observations)
+        return value
+
+    @Evaluator.provides('model:actions')
+    def model_actions(self):
+        """ Estimate state-value of the transition next state """
+        observations = self.get('rollout:observations')
+        model_action = self.model.action(observations)
+        return model_action
+
+    @Evaluator.provides('model:model_action:q')
+    def model_model_action_q(self):
+        observations = self.get('rollout:observations')
+        model_actions = self.get('model:actions')
+        return self.model.value(observations, model_actions)
+
+    @Evaluator.provides('model:action:q')
+    def model_action_q(self):
+        observations = self.get('rollout:observations')
+        rollout_actions = self.get('rollout:actions')
+        return self.model.value(observations, rollout_actions)
 
 
 class DeterministicPolicyModel(Model):
     """ Deterministic Policy Gradient - model """
 
     def __init__(self, policy_backbone: LinearBackboneModel, value_backbone: LinearBackboneModel,
-                 action_space: gym.Space):
+                 action_space: gym.Space, critic_hidden_dim: int=64, critic_layer_norm=True, critic_activation='relu'):
         super().__init__()
 
         self.policy_backbone = policy_backbone
         self.value_backbone = value_backbone
 
         self.action_head = DeterministicActionHead(self.policy_backbone.output_dim, action_space)
-        self.critic_head = DeterministicCriticHead(self.value_backbone.output_dim, action_space)
+        self.critic_head = DeterministicCriticHead(
+            self.value_backbone.output_dim, action_space,
+            hidden_dim=critic_hidden_dim, layer_norm=critic_layer_norm, activation=critic_activation
+        )
 
     def reset_weights(self):
         """ Initialize properly model weights """
@@ -77,12 +116,20 @@ class DeterministicPolicyModel(Model):
         action = self.action_head(policy_hidden)
         return action
 
+    def evaluate(self, rollout: Rollout) -> Evaluator:
+        """ Evaluate model on a rollout """
+        return DeterministicPolicyEvaluator(self, rollout)
+
 
 class DeterministicPolicyModelFactory(ModelFactory):
     """ Factory  class for policy gradient models """
-    def __init__(self, policy_backbone: ModelFactory, value_backbone: ModelFactory):
+    def __init__(self, policy_backbone: ModelFactory, value_backbone: ModelFactory,
+                 critic_hidden_dim: int=64, critic_layer_norm=True, critic_activation='relu'):
         self.policy_backbone = policy_backbone
         self.value_backbone = value_backbone
+        self.critic_hidden_dim = critic_hidden_dim
+        self.critic_layer_norm = critic_layer_norm
+        self.critic_activation = critic_activation
 
     def instantiate(self, **extra_args):
         """ Instantiate the model """
@@ -92,10 +139,17 @@ class DeterministicPolicyModelFactory(ModelFactory):
         return DeterministicPolicyModel(
             policy_backbone=policy_backbone,
             value_backbone=value_backbone,
-            action_space=extra_args['action_space']
+            action_space=extra_args['action_space'],
+            critic_hidden_dim=self.critic_hidden_dim,
+            critic_layer_norm=self.critic_layer_norm,
+            critic_activation=self.critic_activation
         )
 
 
-def create(policy_backbone: ModelFactory, value_backbone: ModelFactory):
+def create(policy_backbone: ModelFactory, value_backbone: ModelFactory,
+           critic_hidden_dim: int=64, critic_layer_norm=True, critic_activation='relu'):
     """ Vel creation function """
-    return DeterministicPolicyModelFactory(policy_backbone=policy_backbone, value_backbone=value_backbone)
+    return DeterministicPolicyModelFactory(
+        policy_backbone=policy_backbone, value_backbone=value_backbone,
+        critic_hidden_dim=critic_hidden_dim, critic_layer_norm=critic_layer_norm, critic_activation=critic_activation
+    )

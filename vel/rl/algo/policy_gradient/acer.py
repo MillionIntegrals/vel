@@ -2,6 +2,7 @@ import torch
 import torch.nn.functional as F
 
 from vel.api.metrics.averaging_metric import AveragingNamedMetric
+from vel.rl.api import Trajectories
 from vel.rl.api.base import OptimizerAlgoBase
 
 
@@ -19,7 +20,6 @@ class AcerPolicyGradient(OptimizerAlgoBase):
         super().__init__(max_grad_norm)
 
         self.discount_factor = None
-        self.number_of_steps = None
 
         self.trust_region = trust_region
         self.model_factory = model_factory
@@ -39,7 +39,6 @@ class AcerPolicyGradient(OptimizerAlgoBase):
     def initialize(self, settings, model, environment, device):
         """ Initialize policy gradient from reinforcer settings """
         self.discount_factor = settings.discount_factor
-        self.number_of_steps = settings.number_of_steps
 
         if self.trust_region:
             self.average_model = self.model_factory.instantiate(action_space=environment.action_space).to(device)
@@ -57,56 +56,68 @@ class AcerPolicyGradient(OptimizerAlgoBase):
 
     def calculate_gradient(self, batch_info, device, model, rollout):
         """ Calculate loss of the supplied rollout """
+        assert isinstance(rollout, Trajectories), "ACER algorithm requires trajectory input"
+
         local_epsilon = 1e-6
 
-        actions = rollout['actions']
-        rewards = rollout['rewards']
-        dones = rollout['dones']
-        observations = rollout['observations']
-        final_values = rollout['final_values']
-        rollout_probabilities = torch.exp(rollout['action_logits'])
+        evaluator = model.evaluate(rollout)
+
+        actions = evaluator.get('rollout:actions')
+        rollout_probabilities = torch.exp(evaluator.get('rollout:logprobs'))
 
         # We calculate the trust-region update with respect to the average model
         if self.trust_region:
             self.update_average_model(model)
 
-        action_logits, q_outputs = model(observations)
-        q_selected = select_indices(q_outputs, actions)
+        logprobs = evaluator.get('model:logprobs')
+        q = evaluator.get('model:q')
+
+        # Selected action values
+        action_logprobs = select_indices(logprobs, actions)
+        action_q = select_indices(q, actions)
 
         # We only want to propagate gradients through specific variables
         with torch.no_grad():
-            # Initialize few
-            model_probabilities = torch.exp(action_logits)
+            model_probabilities = torch.exp(logprobs)
 
             # Importance sampling correction - we must find the quotient of probabilities
             rho = model_probabilities / (rollout_probabilities + local_epsilon)
 
             # Probability quotient only for selected actions
-            rho_selected = select_indices(rho, actions)
+            actions_rho = select_indices(rho, actions)
 
-            # Q values for selected actions
-            model_state_values = (model_probabilities * q_outputs).sum(dim=1)
-            q_retraced = self.retrace(rewards, dones, q_selected, model_state_values, rho_selected, final_values)
+            # Calculate policy state values
+            model_state_values = (model_probabilities * q).sum(dim=1)
+
+            trajectory_rewards = rollout.transition_tensors['rewards']
+            trajectory_dones = rollout.transition_tensors['dones']
+
+            q_retraced = self.retrace(
+                trajectory_rewards,
+                trajectory_dones,
+                action_q.reshape(trajectory_rewards.size()),
+                model_state_values.reshape(trajectory_rewards.size()),
+                actions_rho.reshape(trajectory_rewards.size()),
+                rollout.rollout_tensors['final_estimated_values']
+            ).flatten()
 
             advantages = q_retraced - model_state_values
-            importance_sampling_coefficient = torch.min(rho_selected, self.rho_cap * torch.ones_like(rho_selected))
+            importance_sampling_coefficient = torch.min(actions_rho, self.rho_cap * torch.ones_like(actions_rho))
 
-            explained_variance = 1 - torch.var(q_retraced - q_selected) / torch.var(q_retraced)
+            explained_variance = 1 - torch.var(q_retraced - action_q) / torch.var(q_retraced)
 
         # Entropy of the policy distribution
-        policy_entropy = torch.mean(model.entropy(action_logits))
-
-        neglogps = F.nll_loss(action_logits, actions, reduction='none')  # f_i
-        policy_gradient_loss = torch.mean(advantages * importance_sampling_coefficient * neglogps)
+        policy_entropy = torch.mean(model.entropy(logprobs))
+        policy_gradient_loss = -torch.mean(advantages * importance_sampling_coefficient * action_logprobs)
 
         # Policy gradient bias correction
         with torch.no_grad():
-            advantages_bias_correction = q_outputs - model_state_values.view(model_state_values.size(0), 1)
+            advantages_bias_correction = q - model_state_values.view(model_probabilities.size(0), 1)
             bias_correction_coefficient = F.relu(1.0 - self.rho_cap / (rho + local_epsilon))
 
         # This sum is an expectation with respect to action probabilities according to model policy
         policy_gradient_bias_correction_gain = torch.sum(
-            action_logits * bias_correction_coefficient * advantages_bias_correction * model_probabilities,
+            logprobs * bias_correction_coefficient * advantages_bias_correction * model_probabilities,
             dim=1
         )
 
@@ -114,23 +125,24 @@ class AcerPolicyGradient(OptimizerAlgoBase):
 
         policy_loss = policy_gradient_loss + policy_gradient_bias_correction_loss
 
-        q_function_loss = 0.5 * F.mse_loss(q_selected, q_retraced)
+        q_function_loss = 0.5 * F.mse_loss(action_q, q_retraced)
 
         if self.trust_region:
             with torch.no_grad():
-                average_action_logits, _ = self.average_model(observations)
+                average_evaluator = self.average_model.evaluate(rollout)
+                average_action_logits = average_evaluator.get('model:logprobs')
 
             actor_loss = policy_loss - self.entropy_coefficient * policy_entropy
             q_loss = self.q_coefficient * q_function_loss
 
-            actor_gradient = torch.autograd.grad(-actor_loss, action_logits, retain_graph=True)[0]
+            actor_gradient = torch.autograd.grad(-actor_loss, logprobs, retain_graph=True)[0]
 
             # kl_divergence = model.kl_divergence(average_action_logits, action_logits).mean()
             # kl_divergence_grad = torch.autograd.grad(kl_divergence, action_logits, retain_graph=True)
 
             # Analytically calculated derivative of KL divergence on logits
             # That makes it hardcoded for discrete action spaces
-            kl_divergence_grad_symbolic = - torch.exp(average_action_logits) / action_logits.size(0)
+            kl_divergence_grad_symbolic = - torch.exp(average_action_logits) / logprobs.size(0)
 
             k_dot_g = (actor_gradient * kl_divergence_grad_symbolic).sum(dim=-1)
             k_dot_k = (kl_divergence_grad_symbolic ** 2).sum(dim=-1)
@@ -141,7 +153,7 @@ class AcerPolicyGradient(OptimizerAlgoBase):
             actor_gradient_updated = actor_gradient - adjustment_clipped.view(adjustment_clipped.size(0), 1)
 
             # Populate gradient from the newly updated fn
-            action_logits.backward(gradient=-actor_gradient_updated, retain_graph=True)
+            logprobs.backward(gradient=-actor_gradient_updated, retain_graph=True)
             q_loss.backward(retain_graph=True)
         else:
             # Just populate gradient from the loss
@@ -153,7 +165,7 @@ class AcerPolicyGradient(OptimizerAlgoBase):
             'policy_loss': policy_loss.item(),
             'policy_gradient_loss': policy_gradient_loss.item(),
             'policy_gradient_bias_correction': policy_gradient_bias_correction_loss.item(),
-            'avg_q_selected': q_selected.mean().item(),
+            'avg_q_selected': action_q.mean().item(),
             'avg_q_retraced': q_retraced.mean().item(),
             'q_loss': q_function_loss.item(),
             'policy_entropy': policy_entropy.item(),
@@ -165,22 +177,13 @@ class AcerPolicyGradient(OptimizerAlgoBase):
 
     def retrace(self, rewards, dones, q_values, state_values, rho, final_values):
         """ Calculate Q retraced targets """
-        parallel_envs = rewards.size(0) // self.number_of_steps
-
-        rewards = self._reshape_to_episodes(rewards, parallel_envs)
-        dones = self._reshape_to_episodes(dones, parallel_envs).to(torch.float32)
-
-        q_values = self._reshape_to_episodes(q_values, parallel_envs)
-        state_values = self._reshape_to_episodes(state_values, parallel_envs)
-        rho = self._reshape_to_episodes(rho, parallel_envs)
-
         rho_bar = torch.min(torch.ones_like(rho) * self.retrace_rho_cap, rho)
 
         q_retraced_buffer = torch.zeros_like(rewards)
 
         next_value = final_values
 
-        for i in reversed(range(self.number_of_steps)):
+        for i in reversed(range(rewards.size(0))):
             q_retraced = rewards[i] + self.discount_factor * next_value * (1.0 - dones[i])
 
             # Next iteration
@@ -188,11 +191,7 @@ class AcerPolicyGradient(OptimizerAlgoBase):
 
             q_retraced_buffer[i] = q_retraced
 
-        return q_retraced_buffer.flatten()
-
-    def _reshape_to_episodes(self, array, parallel_envs):
-        new_shape = tuple([self.number_of_steps, parallel_envs] + list(array.shape[2:]))
-        return array.view(new_shape)
+        return q_retraced_buffer
 
     def metrics(self) -> list:
         """ List of metrics to track for this learning process """

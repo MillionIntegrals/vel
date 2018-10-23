@@ -3,8 +3,10 @@ import itertools as it
 import gym
 
 from vel.api.base import LinearBackboneModel, Model, ModelFactory
+from vel.rl.api import Rollout, Evaluator
 from vel.rl.modules.action_head import ActionHead
 from vel.rl.modules.value_head import ValueHead
+from vel.rl.models.policy_gradient_model import PolicyGradientEvaluator
 
 
 class PolicyGradientModelSeparate(Model):
@@ -44,25 +46,25 @@ class PolicyGradientModelSeparate(Model):
 
     def step(self, observation, argmax_sampling=False):
         """ Select actions based on model's output """
-        action_pd_params, value_output = self(observation)
-        actions = self.action_head.sample(action_pd_params, argmax_sampling=argmax_sampling)
+        policy_params, values = self(observation)
+        actions = self.action_head.sample(policy_params, argmax_sampling=argmax_sampling)
 
         # log likelihood of selected action
-        logprob = self.action_head.logprob(actions, action_pd_params)
+        logprobs = self.action_head.logprob(actions, policy_params)
 
         return {
             'actions': actions,
-            'values': value_output,
-            'logprob': logprob
+            'values': values,
+            'logprobs': logprobs
         }
 
     def policy_parameters(self):
         """ Parameters of policy """
         return it.chain(self.policy_backbone.parameters(), self.action_head.parameters())
 
-    def logprob(self, action_sample, action_params):
+    def logprob(self, action_sample, policy_params):
         """ Calculate - log(prob) of selected actions """
-        return self.action_head.logprob(action_sample, action_params)
+        return self.action_head.logprob(action_sample, policy_params)
 
     def value(self, observation):
         """ Calculate only value head for given state """
@@ -73,12 +75,16 @@ class PolicyGradientModelSeparate(Model):
     def policy(self, observation):
         """ Calculate only action head for given state """
         policy_base_output = self.policy_backbone(observation)
-        action_pd_params = self.action_head(policy_base_output)
-        return action_pd_params
+        policy_params = self.action_head(policy_base_output)
+        return policy_params
 
-    def entropy(self, action_pd_params):
+    def evaluate(self, rollout: Rollout) -> Evaluator:
+        """ Evaluate model on a rollout """
+        return PolicyGradientEvaluator(self, rollout)
+
+    def entropy(self, policy_params):
         """ Entropy of a probability distribution """
-        return self.action_head.entropy(action_pd_params)
+        return self.action_head.entropy(policy_params)
 
     def kl_divergence(self, pd_q, pd_p):
         """ Calculate KL-divergence between two probability distributions """

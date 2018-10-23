@@ -3,6 +3,7 @@ import torch
 
 from vel.api.base import Schedule
 from vel.api.metrics import AveragingNamedMetric
+from vel.rl.api import Rollout, Transitions
 from vel.rl.api.base import ReplayEnvRollerBase, ReplayEnvRollerFactory
 from vel.rl.buffers.deque_backend import DequeBufferBackend
 
@@ -49,7 +50,8 @@ class DequeReplayRollerEpsGreedy(ReplayEnvRollerBase):
         selector = torch.rand_like(random_samples, dtype=torch.float32)
         return torch.where(selector > epsilon, policy_samples, random_samples)
 
-    def rollout(self, batch_info, model) -> dict:
+    @torch.no_grad()
+    def rollout(self, batch_info, model) -> Rollout:
         """ Roll-out the environment and return it """
         epsilon_value = self.epsilon_schedule.value(batch_info['progress'])
         batch_info['epsilon'] = epsilon_value
@@ -74,12 +76,17 @@ class DequeReplayRollerEpsGreedy(ReplayEnvRollerBase):
 
         self.last_observation = observation
 
-        return {
-            'epsilon': epsilon_value,
-            'episode_information': info.get('episode'),
-            'action': epsgreedy_step,
-            'value': step['values'][0]
-        }
+        return Transitions(
+            size=1,
+            environment_information=[info],
+            transition_tensors={
+                'actions': epsgreedy_step.unsqueeze(0),
+                'values': step['values']
+            },
+            extra_data={
+                'epsilon': epsilon_value
+            }
+        )
 
     def metrics(self):
         """ List of metrics to track for this learning process """
@@ -87,7 +94,7 @@ class DequeReplayRollerEpsGreedy(ReplayEnvRollerBase):
             AveragingNamedMetric("epsilon"),
         ]
 
-    def sample(self, batch_info, model) -> dict:
+    def sample(self, batch_info, model) -> Transitions:
         """ Sample experience from replay buffer and return a batch """
         indexes = self.backend.sample_batch_uniform(self.batch_size, self.frame_stack)
         batch = self.backend.get_batch(indexes, self.frame_stack)
@@ -98,15 +105,18 @@ class DequeReplayRollerEpsGreedy(ReplayEnvRollerBase):
         rewards = torch.from_numpy(batch['rewards'].astype(np.float32)).to(self.device)
         actions = torch.from_numpy(batch['actions']).to(self.device)
 
-        return {
-            'size': self.batch_size,
-            'observations': observations,
-            'observations+1': observations_plus1,
-            'dones': dones,
-            'rewards': rewards,
-            'actions': actions,
-            'weights': torch.ones_like(rewards)
-        }
+        return Transitions(
+            size=self.batch_size,
+            environment_information=None,
+            transition_tensors={
+                'observations': observations,
+                'observations_next': observations_plus1,
+                'dones': dones,
+                'rewards': rewards,
+                'actions': actions,
+                'weights': torch.ones_like(rewards)
+            }
+        )
 
 
 class DequeReplayRollerEpsGreedyFactory(ReplayEnvRollerFactory):

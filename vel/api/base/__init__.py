@@ -1,5 +1,5 @@
 from .callback import Callback
-from .model import Model, BackboneModel, LinearBackboneModel, SupervisedModel
+from .model import Model, BackboneModel, LinearBackboneModel, SupervisedModel, RnnLinearBackboneModel, RnnModel
 from .model_factory import ModelFactory
 from .optimizer import OptimizerFactory
 from .schedule import Schedule

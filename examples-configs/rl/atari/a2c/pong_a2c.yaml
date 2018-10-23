@@ -1,8 +1,8 @@
-name: 'space_invaders_a2c'
+name: 'pong_a2c'
 
 env:
   name: vel.rl.env.classic_atari
-  game: 'SpaceInvadersNoFrameskip-v4'
+  game: 'PongNoFrameskip-v4'
 
 
 vec_env:
@@ -53,7 +53,7 @@ commands:
   record:
     name: vel.rl.commands.record_movie_command
     takes: 10
-    videoname: 'space_invaders_vid_{:04}.avi'
+    videoname: 'pong_vid_{:04}.avi'
     frame_history: 4
     sample_args:
       argmax_sampling: true

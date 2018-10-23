@@ -21,12 +21,14 @@ def main():
         '-p', '--param', type=str, metavar='NAME=VALUE', action='append', default=[],
         help="Configuration parameters"
     )
-    parser.add_argument('--reset', action='store_true', default=False, help="Overwrite existing model storage")
+    parser.add_argument(
+        '--continue', action='store_true', default=False, help="Continue previously started learning process"
+    )
 
     args = parser.parse_args()
 
     model_config = ModelConfig.from_file(
-        args.config, args.run_number, reset=args.reset, device=args.device, seed=args.seed,
+        args.config, args.run_number, continue_training=getattr(args, 'continue'), device=args.device, seed=args.seed,
         params={k: v for (k, v) in (Parser.parse_equality(eq) for eq in args.param)}
     )
 

@@ -31,7 +31,7 @@ class ModelConfig:
                 return ModelConfig.find_project_directory(up_path)
 
     @classmethod
-    def from_file(cls, filename: str, run_number: int, reset=False, seed: int=None, device: str='cuda', params=None):
+    def from_file(cls, filename: str, run_number: int, continue_training=False, seed: int=None, device: str='cuda', params=None):
         """ Create model config from file """
         with open(filename, 'r') as fp:
             model_config_contents = Parser.parse(fp)
@@ -58,7 +58,7 @@ class ModelConfig:
             configuration=aggregate_dictionary,
             run_number=run_number,
             project_dir=project_config_path,
-            reset=reset,
+            continue_training=continue_training,
             seed=seed,
             device=device,
             parameters=params
@@ -66,7 +66,7 @@ class ModelConfig:
 
     @classmethod
     def from_memory(cls, model_name: str, model_data: dict, run_number: int, project_dir: str,
-                    reset=False, seed: int=None, device: str='cuda', params=None):
+                    continue_training=False, seed: int=None, device: str='cuda', params=None):
         """ Create model config from supplied data """
         return ModelConfig(
             model_name=model_name,
@@ -74,18 +74,18 @@ class ModelConfig:
             configuration=model_data,
             run_number=run_number,
             project_dir=project_dir,
-            reset=reset,
+            continue_training=continue_training,
             seed=seed,
             device=device,
             parameters=params
         )
 
     def __init__(self, model_name: str, filename: str, configuration: dict, run_number: int, project_dir: str,
-                 reset=False, seed: int=None, device: str='cuda', parameters=None):
+                 continue_training=False, seed: int=None, device: str= 'cuda', parameters=None):
         self._model_name = model_name
         self.filename = filename
         self.device = device
-        self.reset = reset
+        self.continue_training = continue_training
         self.run_number = run_number
         self.seed = seed if seed is not None else (dtm.date.today().year + self.run_number)
 

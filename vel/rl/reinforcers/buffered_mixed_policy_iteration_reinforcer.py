@@ -18,7 +18,6 @@ from vel.rl.metrics import (
 @attr.s(auto_attribs=True)
 class BufferedMixedPolicyIterationReinforcerSettings:
     """ Settings dataclass for a policy gradient reinforcer """
-    number_of_steps: int
     discount_factor: float
     experience_replay: int = 1
     stochastic_experience_replay: bool = True
@@ -68,11 +67,16 @@ class BufferedMixedPolicyIterationReinforcer(ReinforcerBase):
         self.model.reset_weights()
         self.algo.initialize(self.settings, model=self.model, environment=self.environment, device=self.device)
 
-    def train_epoch(self, epoch_info: EpochInfo):
+    def train_epoch(self, epoch_info: EpochInfo, interactive=True):
         """ Train model on an epoch of a fixed number of batch updates """
         epoch_info.on_epoch_begin()
 
-        for batch_idx in tqdm.trange(epoch_info.batches_per_epoch, file=sys.stdout, desc="Training", unit="batch"):
+        if interactive:
+            iterator = tqdm.trange(epoch_info.batches_per_epoch, file=sys.stdout, desc="Training", unit="batch")
+        else:
+            iterator = range(epoch_info.batches_per_epoch)
+
+        for batch_idx in iterator:
             batch_info = BatchInfo(epoch_info, batch_idx)
 
             batch_info.on_batch_begin()
@@ -103,9 +107,11 @@ class BufferedMixedPolicyIterationReinforcer(ReinforcerBase):
     def on_policy_train_batch(self, batch_info: BatchInfo):
         """ Perform an 'on-policy' training step of evaluating an env and a single backpropagation step """
         self.model.eval()
+
         rollout = self.env_roller.rollout(batch_info, self.model)
 
         self.model.train()
+
         batch_result = self.algo.optimizer_step(
             batch_info=batch_info,
             device=self.device,
@@ -114,15 +120,17 @@ class BufferedMixedPolicyIterationReinforcer(ReinforcerBase):
         )
 
         batch_info['sub_batch_data'].append(batch_result)
-        batch_info['frames'] = rollout['size']
-        batch_info['episode_infos'] = rollout['episode_information']
+        batch_info['frames'] = rollout.frames()
+        batch_info['episode_infos'] = rollout.episode_information()
 
     def off_policy_train_batch(self, batch_info: BatchInfo):
         """ Perform an 'off-policy' training step of sampling the replay buffer and gradient descent """
         self.model.eval()
+
         rollout = self.env_roller.sample(batch_info, self.model)
 
         self.model.train()
+
         batch_result = self.algo.optimizer_step(
             batch_info=batch_info,
             device=self.device,
@@ -154,12 +162,11 @@ class BufferedMixedPolicyIterationReinforcerFactory(ReinforcerFactory):
         return BufferedMixedPolicyIterationReinforcer(device, self.settings, env, model, env_roller, self.algo)
 
 
-def create(model_config, model, vec_env, algo, env_roller, number_of_steps,
+def create(model_config, model, vec_env, algo, env_roller,
            parallel_envs, discount_factor,
            experience_replay=1, stochastic_experience_replay=True):
     """ Create a policy gradient reinforcer - factory """
     settings = BufferedMixedPolicyIterationReinforcerSettings(
-        number_of_steps=number_of_steps,
         discount_factor=discount_factor,
         experience_replay=experience_replay,
         stochastic_experience_replay=stochastic_experience_replay

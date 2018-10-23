@@ -62,19 +62,25 @@ class TrpoPolicyGradient(AlgoBase):
 
     def optimizer_step(self, batch_info, device, model, rollout):
         """ Single optimization step for a model """
-        observations = rollout['observations']
-        returns = rollout['returns']
+        rollout = rollout.to_transitions()
+
+        # This algorithm makes quote strong assumptions about how does the model look
+        # so it does not make that much sense to switch to the evaluator interface
+        # As it would be more of a problem than actual benefit
+
+        observations = rollout.batch_tensor('observations')
+        returns = rollout.batch_tensor('estimated_returns')
 
         # Evaluate model on the observations
-        action_pd_params = model.policy(observations)
-        policy_entropy = torch.mean(model.entropy(action_pd_params))
+        policy_params = model.policy(observations)
+        policy_entropy = torch.mean(model.entropy(policy_params))
 
-        policy_loss = self.calc_policy_loss(model, action_pd_params, policy_entropy, rollout)
+        policy_loss = self.calc_policy_loss(model, policy_params, policy_entropy, rollout)
         policy_grad = p2v(autograd.grad(policy_loss, model.policy_parameters(), retain_graph=True)).detach()
 
         # Calculate gradient of KL divergence of model with fixed version of itself
         # Value of kl_divergence will be 0, but what we need is the gradient, actually the 2nd derivarive
-        kl_divergence = torch.mean(model.kl_divergence(action_pd_params.detach(), action_pd_params))
+        kl_divergence = torch.mean(model.kl_divergence(policy_params.detach(), policy_params))
         kl_divergence_gradient = p2v(torch.autograd.grad(kl_divergence, model.policy_parameters(), create_graph=True))
 
         step_direction = conjugate_gradient_method(
@@ -93,7 +99,7 @@ class TrpoPolicyGradient(AlgoBase):
         original_parameter_vec = p2v(model.policy_parameters()).detach_()
 
         policy_optimization_success, ratio, policy_loss_improvement, new_policy_loss, kl_divergence_step = self.line_search(
-            model, rollout, policy_loss, action_pd_params, original_parameter_vec, full_step, expected_improvement
+            model, rollout, policy_loss, policy_params, original_parameter_vec, full_step, expected_improvement
         )
 
         gradient_norms = []
@@ -130,8 +136,8 @@ class TrpoPolicyGradient(AlgoBase):
             'kl_divergence_step': kl_divergence_step.item(),
             'policy_loss_improvement': policy_loss_improvement.item(),
             'grad_norm': gradient_norm,
-            'advantage_norm': torch.norm(rollout['advantages']).item(),
-            'explained_variance': explained_variance(returns, rollout['values'])
+            'advantage_norm': torch.norm(rollout.batch_tensor('estimated_advantages')).item(),
+            'explained_variance': explained_variance(returns, rollout.batch_tensor('estimated_values'))
         }
 
     def line_search(self, model, rollout, original_policy_loss, original_action_pd_params, original_parameter_vec,
@@ -149,11 +155,11 @@ class TrpoPolicyGradient(AlgoBase):
 
             # Calculate new loss
             with torch.no_grad():
-                action_pd_params = model.policy(rollout['observations'])
-                policy_entropy = torch.mean(model.entropy(action_pd_params))
-                kl_divergence = torch.mean(model.kl_divergence(original_action_pd_params, action_pd_params))
+                policy_params = model.policy(rollout.batch_tensor('observations'))
+                policy_entropy = torch.mean(model.entropy(policy_params))
+                kl_divergence = torch.mean(model.kl_divergence(original_action_pd_params, policy_params))
 
-                new_loss = self.calc_policy_loss(model, action_pd_params, policy_entropy, rollout)
+                new_loss = self.calc_policy_loss(model, policy_params, policy_entropy, rollout)
 
                 actual_improvement = original_policy_loss - new_loss
                 expected_improvement = expected_improvement_full * stepsize
@@ -191,15 +197,7 @@ class TrpoPolicyGradient(AlgoBase):
         value_loss = 0.5 * F.mse_loss(value_outputs, discounted_rewards)
         return value_loss
 
-    def policy_loss_from_rollout(self, model, rollout):
-        """ Policy gradient loss - calculate from env rollout """
-        observations = rollout['observations']
-
-        action_pd_params = model.policy(observations)
-        policy_entropy = torch.mean(model.entropy(action_pd_params))
-        return self.calc_policy_loss(model, action_pd_params, policy_entropy, rollout)
-
-    def calc_policy_loss(self, model, action_pd_params, policy_entropy, rollout):
+    def calc_policy_loss(self, model, policy_params, policy_entropy, rollout):
         """
         Policy gradient loss - calculate from probability distribution
 
@@ -208,11 +206,11 @@ class TrpoPolicyGradient(AlgoBase):
         Because we operate with logarithm of -probability (neglogp) we do
         - advantage * exp(fixed_neglogps - model_neglogps)
         """
-        actions = rollout['actions']
-        advantages = rollout['advantages']
-        fixed_logprobs = rollout['logprobs']
+        actions = rollout.batch_tensor('actions')
+        advantages = rollout.batch_tensor('estimated_advantages')
+        fixed_logprobs = rollout.batch_tensor('action:logprobs')
 
-        model_logprobs = model.logprob(actions, action_pd_params)
+        model_logprobs = model.logprob(actions, policy_params)
 
         # Normalize advantages
         advantages = (advantages - advantages.mean()) / (advantages.std() + 1e-8)

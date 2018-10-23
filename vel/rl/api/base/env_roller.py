@@ -1,6 +1,7 @@
 import typing
 import gym
 
+from vel.rl.api.rollout import Rollout
 from vel.api import BatchInfo
 from vel.api.base import Model
 from vel.openai.baselines.common.vec_env import VecEnv
@@ -14,7 +15,7 @@ class EnvRollerBase:
         """ Reference to environment being evaluated """
         raise NotImplementedError
 
-    def rollout(self, batch_info: BatchInfo, model: Model) -> dict:
+    def rollout(self, batch_info: BatchInfo, model: Model) -> Rollout:
         """ Roll-out the environment and return it """
         raise NotImplementedError
 
@@ -27,7 +28,7 @@ class EnvRollerBase:
 class ReplayEnvRollerBase(EnvRollerBase):
     """ Class generating environment rollouts with experience replay """
 
-    def sample(self, batch_info: BatchInfo, model: Model) -> dict:
+    def sample(self, batch_info: BatchInfo, model: Model) -> Rollout:
         """ Sample experience from replay buffer and return a batch """
         raise NotImplementedError
 
@@ -35,7 +36,7 @@ class ReplayEnvRollerBase(EnvRollerBase):
         """ If buffer is ready for drawing samples from it (usually checks if there is enough data) """
         raise NotImplementedError
 
-    def update(self, sample, batch_info):
+    def update(self, rollout, batch_info):
         """ Perform update of the internal state of the buffer - e.g. for the prioritized replay weights """
         pass
 

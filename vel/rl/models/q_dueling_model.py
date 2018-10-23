@@ -1,7 +1,9 @@
 import gym
 
 from vel.api.base import LinearBackboneModel, Model, ModelFactory
+from vel.rl.api import Rollout, Evaluator
 from vel.rl.modules.dueling_q_head import DuelingQHead
+from vel.rl.models.q_model import QModelEvaluator
 
 
 class QDuelingModel(Model):
@@ -33,6 +35,10 @@ class QDuelingModel(Model):
             'actions': self.q_head.sample(q_values),
             'values': q_values
         }
+
+    def evaluate(self, rollout: Rollout) -> Evaluator:
+        """ Evaluate model on a rollout """
+        return QModelEvaluator(self, rollout)
 
 
 class QDuelingModelFactory(ModelFactory):

@@ -30,6 +30,8 @@ reinforcer:
     # Because env has a framestack already built-in, save memory by encoding only last frames in the replay buffer
     frame_stack_compensation: 4
 
+    number_of_steps: 20 # How many environment steps go into a single batch
+
   algo:
     name: vel.rl.algo.policy_gradient.acer
     entropy_coefficient: 0.01
@@ -41,7 +43,6 @@ reinforcer:
 
     trust_region: false
 
-  number_of_steps: 20 # How many environment steps go into a single batch
   parallel_envs: 12 # How many environments to run in parallel
   discount_factor: 0.99
 

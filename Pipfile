@@ -19,6 +19,7 @@ torchvision = "*"
 tqdm = "*"
 visdom = "*"
 dnspython = "*"
+"box2d" = "*"
 
 [requires]
 python_version = "3.6"

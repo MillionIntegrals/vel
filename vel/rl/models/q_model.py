@@ -1,7 +1,34 @@
 import gym
 
 from vel.api.base import LinearBackboneModel, Model, ModelFactory
+from vel.rl.api import Evaluator, Rollout
 from vel.rl.modules.q_head import QHead
+
+
+class QModelEvaluator(Evaluator):
+    """ Evaluate simple q-model """
+    def __init__(self, model: 'QModel', rollout: Rollout):
+        super().__init__(rollout)
+        self.model = model
+
+    @Evaluator.provides('model:q')
+    def model_q(self):
+        """ Action values for all (discrete) actions """
+        observations = self.get('rollout:observations')
+        return self.model(observations)
+
+    @Evaluator.provides('model:action:q')
+    def model_action_q(self):
+        """ Action values for all (discrete) actions """
+        q = self.get('model:q')
+        actions = self.get('rollout:actions')
+        return q.gather(1, actions.unsqueeze(1)).squeeze(1)
+
+    @Evaluator.provides('model:q_next')
+    def model_q_next(self):
+        """ Action values for all (discrete) actions """
+        observations = self.get('rollout:observations_next')
+        return self.model(observations)
 
 
 class QModel(Model):
@@ -32,6 +59,10 @@ class QModel(Model):
             'actions': self.q_head.sample(q_values),
             'values': q_values
         }
+
+    def evaluate(self, rollout: Rollout) -> Evaluator:
+        """ Evaluate model on a rollout """
+        return QModelEvaluator(self, rollout)
 
 
 class QModelFactory(ModelFactory):

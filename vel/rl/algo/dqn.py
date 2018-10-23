@@ -32,31 +32,33 @@ class DeepQLearning(OptimizerAlgoBase):
 
     def calculate_gradient(self, batch_info, device, model, rollout):
         """ Calculate loss of the supplied rollout """
-        observation_tensor = rollout['observations']
-        observation_tensor_tplus1 = rollout['observations+1']
-        dones_tensor = rollout['dones']
-        rewards_tensor = rollout['rewards']
-        actions_tensor = rollout['actions']
+        evaluator = model.evaluate(rollout)
+
+        dones_tensor = evaluator.get('rollout:dones')
+        rewards_tensor = evaluator.get('rollout:rewards')
+
+        assert dones_tensor.dtype == torch.float32
 
         with torch.no_grad():
+            target_evaluator = self.target_model.evaluate(rollout)
+
             if self.double_dqn:
                 # DOUBLE DQN
-                target_values = self.target_model(observation_tensor_tplus1)
-                model_values = model(observation_tensor_tplus1)
+                target_q = target_evaluator.get('model:q_next')
+                model_q = evaluator.get('model:q_next')
                 # Select largest 'target' value based on action that 'model' selects
-                values = target_values.gather(1, model_values.argmax(dim=1, keepdim=True)).squeeze(1)
+                values = target_q.gather(1, model_q.argmax(dim=1, keepdim=True)).squeeze(1)
             else:
                 # REGULAR DQN
-                values = self.target_model(observation_tensor_tplus1).max(dim=1)[0]
+                # [0] is because in pytorch .max(...) returns tuple (max values, argmax)
+                values = target_evaluator.get('model:q_next').max(dim=1)[0]
 
-            expected_q = rewards_tensor + self.discount_factor * values * (1 - dones_tensor.float())
+            estimated_return = rewards_tensor + self.discount_factor * values * (1 - dones_tensor)
 
-        q = model(observation_tensor)
-        q_selected = q.gather(1, actions_tensor.unsqueeze(1)).squeeze(1)
+        q_selected = evaluator.get('model:action:q')
+        weights = evaluator.get('rollout:weights')
 
-        original_losses = F.smooth_l1_loss(q_selected, expected_q.detach(), reduction='none')
-
-        weights = rollout['weights']
+        original_losses = F.smooth_l1_loss(q_selected, estimated_return, reduction='none')
 
         loss_value = torch.mean(weights * original_losses)
         loss_value.backward()
@@ -66,7 +68,7 @@ class DeepQLearning(OptimizerAlgoBase):
             # We need it to update priorities in the replay buffer:
             'errors': original_losses.detach().cpu().numpy(),
             'average_q_selected': torch.mean(q_selected).item(),
-            'average_q_target': torch.mean(expected_q).item()
+            'average_q_target': torch.mean(estimated_return).item()
         }
 
     def post_optimization_step(self, batch_info, device, model, rollout):

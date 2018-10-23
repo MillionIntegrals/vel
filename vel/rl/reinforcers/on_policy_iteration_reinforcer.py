@@ -4,8 +4,6 @@ import sys
 import torch
 import tqdm
 
-import vel.util.math as math_util
-
 from vel.api.base import Model, ModelFactory
 from vel.api.info import EpochInfo, BatchInfo
 from vel.rl.api.base import ReinforcerBase, ReinforcerFactory, VecEnvFactory, EnvRollerFactory, EnvRollerBase, AlgoBase
@@ -19,9 +17,15 @@ from vel.rl.metrics import (
 class OnPolicyIterationReinforcerSettings:
     """ Settings dataclass for a policy gradient reinforcer """
     discount_factor: float
-    number_of_steps: int
+
     batch_size: int = 256
     experience_replay: int = 1
+    stochastic_experience_replay: bool = False
+
+    # For each experience replay loop, shuffle transitions to randomize gradient calculations
+    # That means, disregarding actual trajectory order
+    # Does not work with RNN policies
+    shuffle_transitions: bool = True
 
 
 class OnPolicyIterationReinforcer(ReinforcerBase):
@@ -64,11 +68,16 @@ class OnPolicyIterationReinforcer(ReinforcerBase):
             self.settings, model=self.model, environment=self.env_roller.environment, device=self.device
         )
 
-    def train_epoch(self, epoch_info: EpochInfo) -> None:
+    def train_epoch(self, epoch_info: EpochInfo, interactive=True) -> None:
         """ Train model on an epoch of a fixed number of batch updates """
         epoch_info.on_epoch_begin()
 
-        for batch_idx in tqdm.trange(epoch_info.batches_per_epoch, file=sys.stdout, desc="Training", unit="batch"):
+        if interactive:
+            iterator = tqdm.trange(epoch_info.batches_per_epoch, file=sys.stdout, desc="Training", unit="batch")
+        else:
+            iterator = range(epoch_info.batches_per_epoch)
+
+        for batch_idx in iterator:
             batch_info = BatchInfo(epoch_info, batch_idx)
 
             batch_info.on_batch_begin()
@@ -92,27 +101,25 @@ class OnPolicyIterationReinforcer(ReinforcerBase):
 
         rollout = self.env_roller.rollout(batch_info, self.model)
 
-        rollout_size = rollout['size']
-        indices = np.arange(rollout_size)
-
-        # We may potentially need to split rollout into multiple batches
-        batch_splits = math_util.divide_ceiling(rollout_size, self.settings.batch_size)
-
         # Perform the training step
         self.model.train()
 
         # Algo will aggregate data into this list:
         batch_info['sub_batch_data'] = []
 
-        rollout_tensors = {k: v for k, v in rollout.items() if isinstance(v, torch.Tensor)}
+        if self.settings.shuffle_transitions:
+            rollout = rollout.to_transitions()
 
-        for i in range(self.settings.experience_replay):
-            # Repeat the experience N times
-            np.random.shuffle(indices)
+        if self.settings.stochastic_experience_replay:
+            # Always play experience at least once
+            experience_replay_count = max(np.random.poisson(self.settings.experience_replay), 1)
+        else:
+            experience_replay_count = self.settings.experience_replay
 
-            for sub_indices in np.array_split(indices, batch_splits):
-                batch_rollout = {k: v[sub_indices] for k, v in rollout_tensors.items()}
-
+        # Repeat the experience N times
+        for i in range(experience_replay_count):
+            # We may potentially need to split rollout into multiple batches
+            for batch_rollout in rollout.shuffled_batches(self.settings.batch_size):
                 batch_result = self.algo.optimizer_step(
                     batch_info=batch_info,
                     device=self.device,
@@ -122,8 +129,8 @@ class OnPolicyIterationReinforcer(ReinforcerBase):
 
                 batch_info['sub_batch_data'].append(batch_result)
 
-        batch_info['frames'] = rollout_size
-        batch_info['episode_infos'] = rollout['episode_information']
+        batch_info['frames'] = rollout.frames()
+        batch_info['episode_infos'] = rollout.episode_information()
 
         # Even with all the experience replay, we count the single rollout as a single batch
         batch_info.aggregate_key('sub_batch_data')
@@ -150,14 +157,15 @@ class OnPolicyIterationReinforcerFactory(ReinforcerFactory):
         return OnPolicyIterationReinforcer(device, self.settings, model, self.algo, env_roller)
 
 
-def create(model_config, model, vec_env, algo, env_roller, parallel_envs, number_of_steps,
-           discount_factor, batch_size=256, experience_replay=1):
+def create(model_config, model, vec_env, algo, env_roller, parallel_envs, discount_factor,
+           batch_size=256, experience_replay=1, stochastic_experience_replay=False, shuffle_transitions=True):
     """ Create a policy gradient reinforcer - factory """
     settings = OnPolicyIterationReinforcerSettings(
         discount_factor=discount_factor,
-        number_of_steps=number_of_steps,
         batch_size=batch_size,
-        experience_replay=experience_replay
+        experience_replay=experience_replay,
+        stochastic_experience_replay=stochastic_experience_replay,
+        shuffle_transitions=shuffle_transitions
     )
 
     return OnPolicyIterationReinforcerFactory(

@@ -3,6 +3,7 @@ import torch
 
 from vel.math.processes import OrnsteinUhlenbeckNoiseProcess
 from vel.openai.baselines.common.running_mean_std import RunningMeanStd
+from vel.rl.api import Rollout, Transitions
 from vel.rl.api.base import ReplayEnvRollerBase, ReplayEnvRollerFactory
 from vel.rl.buffers.deque_backend import DequeBufferBackend
 
@@ -50,7 +51,8 @@ class DequeReplayRollerOuNoise(ReplayEnvRollerBase):
         """ If buffer is ready for drawing samples from it (usually checks if there is enough data) """
         return self.backend.current_size >= self.buffer_initial_size
 
-    def rollout(self, batch_info, model) -> dict:
+    @torch.no_grad()
+    def rollout(self, batch_info, model) -> Rollout:
         """ Roll-out the environment and return it """
         observation_tensor = torch.from_numpy(self.last_observation).to(self.device)
 
@@ -67,7 +69,7 @@ class DequeReplayRollerOuNoise(ReplayEnvRollerBase):
         if self.ob_rms is not None:
             self.ob_rms.update(observation)
 
-        self.backend.store_transition(self.last_observation, action, reward, done)
+        self.backend.store_transition(self.last_observation, action_perturbed, reward, done)
 
         # Usual, reset on done
         if done:
@@ -76,11 +78,14 @@ class DequeReplayRollerOuNoise(ReplayEnvRollerBase):
 
         self.last_observation = observation
 
-        return {
-            'episode_information': info.get('episode'),
-            'action': step['actions'][0],
-            'value': step['values'][0]
-        }
+        return Transitions(
+            size=1,
+            environment_information=[info],
+            transition_tensors={
+                'actions': step['actions'],
+                'values': step['values']
+            },
+        )
 
     def _filter_observation(self, obs):
         """ Potentially normalize observation """
@@ -91,10 +96,10 @@ class DequeReplayRollerOuNoise(ReplayEnvRollerBase):
         else:
             return obs
 
-    def sample(self, batch_info, model) -> dict:
+    def sample(self, batch_info, model) -> Transitions:
         """ Sample experience from replay buffer and return a batch """
-        indexes = self.backend.sample_batch_uniform(self.batch_size, 1)
-        batch = self.backend.get_batch(indexes, 1)
+        indexes = self.backend.sample_batch_uniform(self.batch_size, history_length=1)
+        batch = self.backend.get_batch(indexes, history_length=1)
 
         observations = torch.from_numpy(self._filter_observation(batch['states'])).to(self.device)
         observations_plus1 = torch.from_numpy(self._filter_observation(batch['states+1'])).to(self.device)
@@ -102,14 +107,17 @@ class DequeReplayRollerOuNoise(ReplayEnvRollerBase):
         rewards = torch.from_numpy(batch['rewards'].astype(np.float32)).to(self.device)
         actions = torch.from_numpy(batch['actions']).to(self.device)
 
-        return {
-            'size': self.batch_size,
-            'observations': observations,
-            'observations+1': observations_plus1,
-            'dones': dones,
-            'rewards': rewards,
-            'actions': actions
-        }
+        return Transitions(
+            size=self.batch_size,
+            environment_information=[],
+            transition_tensors={
+                'observations': observations,
+                'observations_next': observations_plus1,
+                'dones': dones,
+                'rewards': rewards,
+                'actions': actions
+            }
+        )
 
 
 class DequeReplayRollerOuNoiseFactory(ReplayEnvRollerFactory):

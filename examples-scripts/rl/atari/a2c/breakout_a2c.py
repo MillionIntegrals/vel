@@ -48,7 +48,6 @@ def breakout_a2c():
         settings=OnPolicyIterationReinforcerSettings(
             discount_factor=0.99,
             batch_size=256,
-            number_of_steps=5
         ),
         model=model,
         algo=A2CPolicyGradient(
@@ -75,7 +74,7 @@ def breakout_a2c():
         callbacks=[StdoutStreaming()]  # Print live metrics every epoch to standard output
     )
 
-    # A bit of training inintialization bookkeeping...
+    # A bit of training initialization bookkeeping...
     training_info.initialize()
     reinforcer.initialize_training(training_info)
     training_info.on_train_begin()
