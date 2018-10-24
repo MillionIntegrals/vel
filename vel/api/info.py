@@ -197,7 +197,7 @@ class EpochInfo(abc.MutableMapping):
 
     def on_epoch_begin(self) -> None:
         """ Initialize an epoch """
-        for callback in self:
+        for callback in self.callbacks:
             callback.on_epoch_begin(self)
 
     def on_epoch_end(self):
