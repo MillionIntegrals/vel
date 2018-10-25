@@ -119,15 +119,26 @@ class OnPolicyIterationReinforcer(ReinforcerBase):
         # Repeat the experience N times
         for i in range(experience_replay_count):
             # We may potentially need to split rollout into multiple batches
-            for batch_rollout in rollout.shuffled_batches(self.settings.batch_size):
+            if self.settings.batch_size >= rollout.frames():
                 batch_result = self.algo.optimizer_step(
                     batch_info=batch_info,
                     device=self.device,
                     model=self.model,
-                    rollout=batch_rollout
+                    rollout=rollout
                 )
 
                 batch_info['sub_batch_data'].append(batch_result)
+            else:
+                # Rollout too big, need to split in batches
+                for batch_rollout in rollout.shuffled_batches(self.settings.batch_size):
+                    batch_result = self.algo.optimizer_step(
+                        batch_info=batch_info,
+                        device=self.device,
+                        model=self.model,
+                        rollout=batch_rollout
+                    )
+
+                    batch_info['sub_batch_data'].append(batch_result)
 
         batch_info['frames'] = rollout.frames()
         batch_info['episode_infos'] = rollout.episode_information()
