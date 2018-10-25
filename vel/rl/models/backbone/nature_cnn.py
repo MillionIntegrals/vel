@@ -53,15 +53,15 @@ class NatureCnn(LinearBackboneModel):
         )
 
         self.final_width = net_util.convolutional_layer_series(input_width, [
-            (8, 0, 4),
-            (4, 0, 2),
-            (3, 0, 1)
+            (self.hparams.kernel1, 0, 4),
+            (self.hparams.kernel2, 0, 2),
+            (self.hparams.kernel3, 0, 1)
         ])
 
         self.final_height = net_util.convolutional_layer_series(input_height, [
-            (8, 0, 4),
-            (4, 0, 2),
-            (3, 0, 1)
+            (self.hparams.kernel1, 0, 4),
+            (self.hparams.kernel2, 0, 2),
+            (self.hparams.kernel3, 0, 1)
         ])
 
         self.linear_layer = nn.Linear(
