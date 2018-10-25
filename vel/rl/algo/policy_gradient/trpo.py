@@ -140,7 +140,7 @@ class TrpoPolicyGradient(AlgoBase):
             'explained_variance': explained_variance(returns, rollout.batch_tensor('estimated_values'))
         }
 
-    def line_search(self, model, rollout, original_policy_loss, original_action_pd_params, original_parameter_vec,
+    def line_search(self, model, rollout, original_policy_loss, original_policy_params, original_parameter_vec,
                     full_step, expected_improvement_full):
         """ Find the right stepsize to make sure policy improves """
         current_parameter_vec = original_parameter_vec.clone()
@@ -157,7 +157,7 @@ class TrpoPolicyGradient(AlgoBase):
             with torch.no_grad():
                 policy_params = model.policy(rollout.batch_tensor('observations'))
                 policy_entropy = torch.mean(model.entropy(policy_params))
-                kl_divergence = torch.mean(model.kl_divergence(original_action_pd_params, policy_params))
+                kl_divergence = torch.mean(model.kl_divergence(original_policy_params, policy_params))
 
                 new_loss = self.calc_policy_loss(model, policy_params, policy_entropy, rollout)
 
