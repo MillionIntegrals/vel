@@ -147,9 +147,6 @@ class StepEnvRoller(EnvRollerBase):
         advantage_buffer = torch.zeros_like(rewards_buffer)
         advantage_buffer = advantage_buffer
         dones_buffer = dones_buffer
-        print(f'adnvantage buffer: {type(advantage_buffer)}')
-        print(f'dones buffer: {type(dones_buffer)}')
-        print(f'last buffer: {type(last_values_buffer)}')
         # Accmulate sums
         sum_accumulator = 0
 
