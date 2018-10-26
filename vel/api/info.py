@@ -75,6 +75,8 @@ class TrainingInfo(abc.MutableMapping):
         for callback in self.callbacks:
             callback.on_train_end(self)
 
+        return self.history.data
+
     def __getitem__(self, item):
         return self.data_dict[item]
 
