@@ -145,6 +145,7 @@ class StepEnvRoller(EnvRollerBase):
                                discount_factor, gae_lambda):
         """ Calculate state values bootstrapping off the following state values - Generalized Advantage Estimation """
         advantage_buffer = torch.zeros_like(rewards_buffer)
+        advantage_buffer = advantage_buffer.device('cuda:3')
         dones_buffer = dones_buffer
 
         # Accmulate sums
