@@ -1,4 +1,5 @@
 import torch
+import typing
 import torch.autograd
 import torch.nn.functional as F
 
@@ -9,7 +10,7 @@ from vel.api.metrics.averaging_metric import AveragingNamedMetric
 class DeepDeterministicPolicyGradient(OptimizerAlgoBase):
     """ Deep Deterministic Policy Gradient (DDPG) - policy gradient calculations """
 
-    def __init__(self, model_factory, tau, max_grad_norm):
+    def __init__(self, model_factory, tau: float, max_grad_norm: typing.Optional[float]=None):
         super().__init__(max_grad_norm)
 
         self.model_factory = model_factory

@@ -46,7 +46,8 @@ class DeterministicPolicyModel(Model):
     """ Deterministic Policy Gradient - model """
 
     def __init__(self, policy_backbone: LinearBackboneModel, value_backbone: LinearBackboneModel,
-                 action_space: gym.Space, critic_hidden_dim: int=64, critic_layer_norm=True, critic_activation='relu'):
+                 action_space: gym.Space, critic_hidden_dim: int=64,
+                 critic_normalization='layer', critic_activation='relu'):
         super().__init__()
 
         self.policy_backbone = policy_backbone
@@ -55,7 +56,7 @@ class DeterministicPolicyModel(Model):
         self.action_head = DeterministicActionHead(self.policy_backbone.output_dim, action_space)
         self.critic_head = DeterministicCriticHead(
             self.value_backbone.output_dim, action_space,
-            hidden_dim=critic_hidden_dim, layer_norm=critic_layer_norm, activation=critic_activation
+            hidden_dim=critic_hidden_dim, normalization=critic_normalization, activation=critic_activation
         )
 
     def reset_weights(self):
@@ -124,11 +125,11 @@ class DeterministicPolicyModel(Model):
 class DeterministicPolicyModelFactory(ModelFactory):
     """ Factory  class for policy gradient models """
     def __init__(self, policy_backbone: ModelFactory, value_backbone: ModelFactory,
-                 critic_hidden_dim: int=64, critic_layer_norm=True, critic_activation='relu'):
+                 critic_hidden_dim: int=64, critic_normalization='layer', critic_activation='relu'):
         self.policy_backbone = policy_backbone
         self.value_backbone = value_backbone
         self.critic_hidden_dim = critic_hidden_dim
-        self.critic_layer_norm = critic_layer_norm
+        self.critic_normalization = critic_normalization
         self.critic_activation = critic_activation
 
     def instantiate(self, **extra_args):
@@ -141,15 +142,16 @@ class DeterministicPolicyModelFactory(ModelFactory):
             value_backbone=value_backbone,
             action_space=extra_args['action_space'],
             critic_hidden_dim=self.critic_hidden_dim,
-            critic_layer_norm=self.critic_layer_norm,
+            critic_normalization=self.critic_normalization,
             critic_activation=self.critic_activation
         )
 
 
 def create(policy_backbone: ModelFactory, value_backbone: ModelFactory,
-           critic_hidden_dim: int=64, critic_layer_norm=True, critic_activation='relu'):
+           critic_hidden_dim: int=64, critic_normalization='layer', critic_activation='relu'):
     """ Vel creation function """
     return DeterministicPolicyModelFactory(
         policy_backbone=policy_backbone, value_backbone=value_backbone,
-        critic_hidden_dim=critic_hidden_dim, critic_layer_norm=critic_layer_norm, critic_activation=critic_activation
+        critic_hidden_dim=critic_hidden_dim, critic_normalization=critic_normalization,
+        critic_activation=critic_activation
     )

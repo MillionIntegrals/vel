@@ -13,7 +13,7 @@ class DeterministicCriticHead(nn.Module):
     Returns deterministic action-value for given combination of action and state.
     """
 
-    def __init__(self, input_dim, action_space, hidden_dim=64, layer_norm=True, activation='relu'):
+    def __init__(self, input_dim, action_space, hidden_dim=64, normalization='layer', activation='relu'):
         super().__init__()
 
         self.action_space = action_space
@@ -23,8 +23,8 @@ class DeterministicCriticHead(nn.Module):
 
         self.linear_layer = nn.Linear(input_dim + action_space.shape[0], hidden_dim)
 
-        if layer_norm:
-            self.layer_norm = nn.LayerNorm(hidden_dim)
+        if normalization is not None:
+            self.layer_norm = net_util.normalization(normalization)(hidden_dim)
         else:
             self.layer_norm = None
 
