@@ -3,6 +3,7 @@ name: 'half_cheetah_ddpg'
 env:
   name: vel.rl.env.mujoco
   game: 'HalfCheetah-v2'
+  normalize_returns: true
 
 
 model:
@@ -12,15 +13,15 @@ model:
     name: vel.rl.models.backbone.mlp
     input_length: 17
     hidden_layers: [64, 64]
-    activation: 'relu'
-    normalization: 'layer'
+    activation: 'tanh'
+#    normalization: 'layer'
 
   value_backbone:
     name: vel.rl.models.backbone.mlp
-    input_length: 17
-    hidden_layers: [64] # Second layer is part of the critic head
-    activation: 'relu'
-    normalization: 'layer'
+    input_length: 23  # Has to be observation size(17) + action size(6)
+    hidden_layers: [64, 64]
+    activation: 'tanh'
+#    normalization: 'layer'
 
 
 reinforcer:
@@ -52,8 +53,8 @@ optimizer:
   # OpenAI has two different optimizers optimizing each network separately.
   # As far as I know it should be equivalent to optimizing two separate networks together with a sum of loss functions
   lr: [1.0e-4, 1.0e-3]
-  weight_decay: [0.0, 0.001]
-  epsilon: 1.0e-4
+  weight_decay: [0.0, 0.01]
+  epsilon: 1.0e-8
   layer_groups: on
 
 

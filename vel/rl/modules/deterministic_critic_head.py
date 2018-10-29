@@ -1,10 +1,5 @@
-import gym.spaces as spaces
-
-import torch
 import torch.nn as nn
 import torch.nn.init as init
-
-import vel.util.network as net_util
 
 
 class DeterministicCriticHead(nn.Module):
@@ -13,46 +8,16 @@ class DeterministicCriticHead(nn.Module):
     Returns deterministic action-value for given combination of action and state.
     """
 
-    def __init__(self, input_dim, action_space, hidden_dim=64, normalization='layer', activation='relu'):
+    def __init__(self, input_dim):
         super().__init__()
 
-        self.action_space = action_space
+        self.input_dim = input_dim
+        self.linear = nn.Linear(input_dim, 1)
 
-        assert isinstance(action_space, spaces.Box)
-        assert len(action_space.shape) == 1
-
-        self.linear_layer = nn.Linear(input_dim + action_space.shape[0], hidden_dim)
-
-        if normalization is not None:
-            self.layer_norm = net_util.normalization(normalization)(hidden_dim)
-        else:
-            self.layer_norm = None
-
-        self.activation = net_util.activation(activation)()
-
-        self.output_layer = nn.Linear(hidden_dim, 1)
-
-    def forward(self, observation_data, action_data):
-        combined_data = torch.cat([observation_data, action_data], dim=1)
-
-        linear_output = self.linear_layer(combined_data)
-
-        if self.layer_norm is not None:
-            linear_output = self.layer_norm(linear_output)
-
-        activated = self.activation(linear_output)
-
-        final_output = self.output_layer(activated)
-
-        return final_output[:, 0]
-
-    def sample(self, params, **kwargs):
-        """ Sample from a probability space of all actions """
-        return self.head.sample(params, **kwargs)
+    def forward(self, input_data):
+        return self.linear(input_data)[:, 0]
 
     def reset_weights(self):
         """ Initialize weights to sane defaults """
-        for m in self.modules():
-            if isinstance(m, nn.Linear):
-                init.orthogonal_(m.weight, gain=0.01)
-                init.constant_(m.bias, 0.0)
+        init.uniform_(self.linear.weight, -3e-3, 3e-3)
+        init.zeros_(self.linear.bias)
