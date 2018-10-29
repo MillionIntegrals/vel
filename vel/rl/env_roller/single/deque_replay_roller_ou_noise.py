@@ -40,7 +40,7 @@ class DequeReplayRollerOuNoise(ReplayEnvRollerBase):
         )
 
         self.ob_rms = RunningMeanStd(shape=self.environment.observation_space.shape) if normalize_observations else None
-        self.clip_obs = 10.0
+        self.clip_obs = 5.0
 
     @property
     def environment(self):
@@ -51,12 +51,16 @@ class DequeReplayRollerOuNoise(ReplayEnvRollerBase):
         """ If buffer is ready for drawing samples from it (usually checks if there is enough data) """
         return self.backend.current_size >= self.buffer_initial_size
 
+    def _observation_to_tensor(self, observation_array):
+        """ Convert observation numpy array to a tensor """
+        return torch.from_numpy(self._filter_observation(observation_array)).to(self.device)
+
     @torch.no_grad()
     def rollout(self, batch_info, model) -> Rollout:
         """ Roll-out the environment and return it """
-        observation_tensor = torch.from_numpy(self.last_observation).to(self.device)
+        observation_tensor = self._observation_to_tensor(self.last_observation[None])
 
-        step = model.step(observation_tensor[None])
+        step = model.step(observation_tensor)
         action = step['actions'].detach().cpu().numpy()[0]
         noise = self.noise_process()
 
@@ -67,7 +71,7 @@ class DequeReplayRollerOuNoise(ReplayEnvRollerBase):
         observation, reward, done, info = self.environment.step(action_perturbed)
 
         if self.ob_rms is not None:
-            self.ob_rms.update(observation)
+            self.ob_rms.update(observation[None])
 
         self.backend.store_transition(self.last_observation, action_perturbed, reward, done)
 
@@ -101,8 +105,9 @@ class DequeReplayRollerOuNoise(ReplayEnvRollerBase):
         indexes = self.backend.sample_batch_uniform(self.batch_size, history_length=1)
         batch = self.backend.get_batch(indexes, history_length=1)
 
-        observations = torch.from_numpy(self._filter_observation(batch['states'])).to(self.device)
-        observations_plus1 = torch.from_numpy(self._filter_observation(batch['states+1'])).to(self.device)
+        observations = self._observation_to_tensor(batch['states'])
+        observations_plus1 = self._observation_to_tensor(batch['states+1'])
+
         dones = torch.from_numpy(batch['dones'].astype(np.float32)).to(self.device)
         rewards = torch.from_numpy(batch['rewards'].astype(np.float32)).to(self.device)
         actions = torch.from_numpy(batch['actions']).to(self.device)
