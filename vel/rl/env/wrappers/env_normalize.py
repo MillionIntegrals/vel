@@ -41,7 +41,7 @@ class EnvNormalize(gym.Wrapper):
 
     def _filter_observation(self, obs):
         if self.ob_rms:
-            self.ob_rms.update(obs)
+            self.ob_rms.update(obs[None])
             obs = np.clip((obs - self.ob_rms.mean) / np.sqrt(self.ob_rms.var + self.epsilon), -self.clipob, self.clipob)
 
             return obs.astype(np.float32)
