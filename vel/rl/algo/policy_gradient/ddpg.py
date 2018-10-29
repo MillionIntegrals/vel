@@ -30,19 +30,19 @@ class DeepDeterministicPolicyGradient(OptimizerAlgoBase):
         """ Calculate loss of the supplied rollout """
         rollout = rollout.to_transitions()
 
-        evaluator = model.evaluate(rollout)
-        target_evaluator = self.target_model.evaluate(rollout)
-
-        dones = evaluator.get('rollout:dones')
-        rewards = evaluator.get('rollout:rewards')
+        dones = rollout.batch_tensor('dones')
+        rewards = rollout.batch_tensor('rewards')
+        observations_next = rollout.batch_tensor('observations_next')
+        actions = rollout.batch_tensor('actions')
+        observations = rollout.batch_tensor('observations')
 
         # Calculate value loss - or critic loss
         with torch.no_grad():
-            target_next_value = target_evaluator.get('model:estimated_values_next')
+            target_next_value = self.target_model.value(observations_next)
             target_value = rewards + (1.0 - dones) * self.discount_factor * target_next_value
 
         # Value estimation error vs the target network
-        model_value = evaluator.get('model:action:q')
+        model_value = model.value(observations, actions)
         value_loss = F.mse_loss(model_value, target_value)
 
         # It may seem a bit tricky what I'm doing here, but the underlying idea is simple
@@ -55,12 +55,8 @@ class DeepDeterministicPolicyGradient(OptimizerAlgoBase):
         # Backpropagate value loss to critic only
         value_loss.backward()
 
-        # This code assumes that evaluator works in a certain way and that
-        # it is possible to differentiate model_action_value with respect to model_action
-        # It is really hard to be super-generic and not let your abstractions leak anywhere, but at least I'll
-        # try to put comments in places such as this one.
-        model_action = evaluator.get('model:actions')
-        model_action_value = evaluator.get('model:model_action:q')
+        model_action = model.action(observations)
+        model_action_value = model.value(observations, model_action)
 
         policy_loss = -model_action_value.mean()
 
