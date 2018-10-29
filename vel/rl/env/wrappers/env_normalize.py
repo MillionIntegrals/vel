@@ -34,7 +34,7 @@ class EnvNormalize(gym.Wrapper):
         obs = self._filter_observation(obs)
 
         if self.ret_rms:
-            self.ret_rms.update(self.ret)
+            self.ret_rms.update(np.array([self.ret]))
             rews = np.clip(rews / np.sqrt(self.ret_rms.var + self.epsilon), -self.cliprew, self.cliprew)
 
         return obs, rews, news, infos
