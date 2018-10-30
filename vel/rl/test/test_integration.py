@@ -431,7 +431,8 @@ def test_ddpg_bipedal_walker():
             buffer_capacity=100,
             buffer_initial_size=100,
             noise_std_dev=0.2,
-            normalize_observations=True
+            normalize_observations=True,
+            discount_factor=0.99
         )
     )
 

@@ -4,6 +4,7 @@ https://github.com/fastai/fastai/blob/master/fastai/model.py
 """
 import torch.nn as nn
 
+import collections
 import itertools as it
 
 
@@ -55,7 +56,10 @@ def unfreeze_layer(module):
 
 def trainable_params_(m):
     """ Returns a list of trainable parameters in the model m. (i.e., those that require gradients.) """
-    return [p for p in m.parameters() if p.requires_grad]
+    if isinstance(m, collections.Sequence):
+        return [p for p in m if p.requires_grad]
+    else:
+        return [p for p in m.parameters() if p.requires_grad]
 
 
 def chain_params(p):
