@@ -52,7 +52,7 @@ def env_maker(environment_id, seed, serial_id, monitor=False, allow_early_resets
 
 class MujocoEnv(EnvFactory):
     """ Atari game environment wrapped in the same way as Deep Mind and OpenAI baselines """
-    def __init__(self, envname, env_settings=None):
+    def __init__(self, envname, env_settings=None, normalize_observations=False, normalize_returns=False):
         self.envname = envname
 
         env_settings = env_settings if env_settings is not None else {}
@@ -61,7 +61,18 @@ class MujocoEnv(EnvFactory):
         self.presets = {}
 
         for key in env_keys:
-            self.presets[key] = env_settings.get(key, {})
+            preset_settings = DEFAULT_SETTINGS.get(key, {}).copy()
+
+            if normalize_observations:
+                preset_settings['normalize_observations'] = True
+
+            if normalize_returns:
+                preset_settings['normalize_returns'] = True
+
+            if key in env_settings:
+                preset_settings.update(env_settings[key])
+
+            self.presets[key] = preset_settings
 
     def specification(self) -> EnvSpec:
         """ Return environment specification """
@@ -69,15 +80,7 @@ class MujocoEnv(EnvFactory):
 
     def get_preset(self, preset_key='default') -> dict:
         """ Get env settings for given preset """
-        current_settings = DEFAULT_SETTINGS.get(preset_key, {}).copy()
-
-        if 'all' in self.presets:
-            current_settings.update(self.presets['all'])
-
-        # Key must be present in presets
-        current_settings.update(self.presets[preset_key])
-
-        return current_settings
+        return self.presets[preset_key]
 
     def instantiate(self, seed=0, serial_id=0, preset='default', extra_args=None) -> gym.Env:
         """ Make a single environment compatible with the experiments """
@@ -85,5 +88,10 @@ class MujocoEnv(EnvFactory):
         return env_maker(self.envname, seed, serial_id, **settings)
 
 
-def create(game, env_settings=None):
-    return MujocoEnv(game, env_settings)
+def create(game, env_settings=None, normalize_observations=False, normalize_returns=False):
+    return MujocoEnv(
+        envname=game,
+        env_settings=env_settings,
+        normalize_observations=normalize_observations,
+        normalize_returns=normalize_returns
+    )

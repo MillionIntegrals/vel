@@ -405,7 +405,7 @@ def test_ddpg_bipedal_walker():
     # but from reinforcer.model property
     model_factory = DeterministicPolicyModelFactory(
         policy_backbone=MLPFactory(input_length=24, hidden_layers=[64, 64], normalization='layer'),
-        value_backbone=MLPFactory(input_length=24, hidden_layers=[64], normalization='layer')
+        value_backbone=MLPFactory(input_length=28, hidden_layers=[64, 64], normalization='layer')
     )
 
     # Reinforcer - an object managing the learning process

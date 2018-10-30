@@ -10,6 +10,7 @@ ACTIVATION_DICT = {
 
 NORMALIZATION_DICT = {
     'layer': nn.LayerNorm,
+    'layer-noscale': lambda normalized_shape: nn.LayerNorm(normalized_shape, elementwise_affine=False),
     'batch1d': nn.BatchNorm1d,
     'batch2d': nn.BatchNorm2d
 }

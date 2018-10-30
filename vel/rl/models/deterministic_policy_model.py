@@ -1,5 +1,6 @@
 import gym
 import itertools as it
+import torch
 
 from vel.api.base import LinearBackboneModel, Model, ModelFactory
 from vel.rl.api import Rollout, Evaluator
@@ -46,17 +47,14 @@ class DeterministicPolicyModel(Model):
     """ Deterministic Policy Gradient - model """
 
     def __init__(self, policy_backbone: LinearBackboneModel, value_backbone: LinearBackboneModel,
-                 action_space: gym.Space, critic_hidden_dim: int=64, critic_layer_norm=True, critic_activation='relu'):
+                 action_space: gym.Space):
         super().__init__()
 
         self.policy_backbone = policy_backbone
         self.value_backbone = value_backbone
 
         self.action_head = DeterministicActionHead(self.policy_backbone.output_dim, action_space)
-        self.critic_head = DeterministicCriticHead(
-            self.value_backbone.output_dim, action_space,
-            hidden_dim=critic_hidden_dim, layer_norm=critic_layer_norm, activation=critic_activation
-        )
+        self.critic_head = DeterministicCriticHead(self.value_backbone.output_dim)
 
     def reset_weights(self):
         """ Initialize properly model weights """
@@ -68,17 +66,24 @@ class DeterministicPolicyModel(Model):
     def forward(self, observations, input_actions=None):
         """ Calculate model outputs """
         observations = observations.float()
-        value_hidden = self.value_backbone(observations)
 
         if input_actions is not None:
-            action = input_actions
-            value = self.critic_head(value_hidden, input_actions)
+            actions = input_actions
+
+            value_input = torch.cat([observations, actions], dim=1)
+            value_hidden = self.value_backbone(value_input)
+
+            values = self.critic_head(value_hidden)
         else:
             policy_hidden = self.policy_backbone(observations)
-            action = self.action_head(policy_hidden)
-            value = self.critic_head(value_hidden, action)
+            actions = self.action_head(policy_hidden)
 
-        return action, value
+            value_input = torch.cat([observations, actions], dim=1)
+            value_hidden = self.value_backbone(value_input)
+
+            values = self.critic_head(value_hidden)
+
+        return actions, values
 
     def policy_parameters(self):
         """ Parameters of policy """
@@ -123,13 +128,9 @@ class DeterministicPolicyModel(Model):
 
 class DeterministicPolicyModelFactory(ModelFactory):
     """ Factory  class for policy gradient models """
-    def __init__(self, policy_backbone: ModelFactory, value_backbone: ModelFactory,
-                 critic_hidden_dim: int=64, critic_layer_norm=True, critic_activation='relu'):
+    def __init__(self, policy_backbone: ModelFactory, value_backbone: ModelFactory):
         self.policy_backbone = policy_backbone
         self.value_backbone = value_backbone
-        self.critic_hidden_dim = critic_hidden_dim
-        self.critic_layer_norm = critic_layer_norm
-        self.critic_activation = critic_activation
 
     def instantiate(self, **extra_args):
         """ Instantiate the model """
@@ -140,16 +141,11 @@ class DeterministicPolicyModelFactory(ModelFactory):
             policy_backbone=policy_backbone,
             value_backbone=value_backbone,
             action_space=extra_args['action_space'],
-            critic_hidden_dim=self.critic_hidden_dim,
-            critic_layer_norm=self.critic_layer_norm,
-            critic_activation=self.critic_activation
         )
 
 
-def create(policy_backbone: ModelFactory, value_backbone: ModelFactory,
-           critic_hidden_dim: int=64, critic_layer_norm=True, critic_activation='relu'):
+def create(policy_backbone: ModelFactory, value_backbone: ModelFactory):
     """ Vel creation function """
     return DeterministicPolicyModelFactory(
-        policy_backbone=policy_backbone, value_backbone=value_backbone,
-        critic_hidden_dim=critic_hidden_dim, critic_layer_norm=critic_layer_norm, critic_activation=critic_activation
+        policy_backbone=policy_backbone, value_backbone=value_backbone
     )
