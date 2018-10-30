@@ -5,7 +5,6 @@
 [![GitHub](https://img.shields.io/github/license/mashape/apistatus.svg)](https://github.com/MillionIntegrals/vel/blob/master/LICENSE)
 
 
-
 Bring **velocity** to deep-learning research,
 by providing tried and tested large pool of prebuilt components that are 
 known to be working well together.
