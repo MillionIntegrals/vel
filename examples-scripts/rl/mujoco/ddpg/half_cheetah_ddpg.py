@@ -26,11 +26,8 @@ def half_cheetah_ddpg():
     env = MujocoEnv('HalfCheetah-v2').instantiate(seed=seed)
 
     model_factory = DeterministicPolicyModelFactory(
-        policy_backbone=MLPFactory(input_length=17, hidden_layers=[64, 64], activation='relu', normalization='layer'),
-        value_backbone=MLPFactory(input_length=17, hidden_layers=[64], activation='relu', normalization='layer'),
-        critic_hidden_dim=64,
-        critic_normalization='layer',
-        critic_activation='relu'
+        policy_backbone=MLPFactory(input_length=17, hidden_layers=[64, 64], activation='tanh'),
+        value_backbone=MLPFactory(input_length=23, hidden_layers=[64, 64], activation='tanh'),
     )
 
     model = model_factory.instantiate(action_space=env.action_space)
@@ -54,16 +51,18 @@ def half_cheetah_ddpg():
             device=device,
             batch_size=64,
             buffer_capacity=1_000_000,
-            buffer_initial_size=1_000,
+            buffer_initial_size=2_000,
             noise_std_dev=0.2,
-            normalize_observations=True
+            normalize_observations=True,
+            normalize_returns=True,
+            discount_factor=0.99
         )
     )
 
-    # Optimizer helper
+    # Optimizer helper - A weird regularization settings I've copied from OpenAI code
     adam_optimizer = AdamFactory(
-        lr=[1.0e-4, 1.0e-3],
-        weight_decay=[0.0, 0.001],
+        lr=[1.0e-4, 1.0e-3, 1.0e-3],
+        weight_decay=[0.0, 0.0, 0.001],
         eps=1.0e-4,
         layer_groups=True
     ).instantiate(model)
