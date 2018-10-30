@@ -97,7 +97,9 @@ class DeterministicPolicyModel(Model):
         """ Return layers grouped """
         return [
             [self.policy_backbone, self.action_head],
-            [self.value_backbone, self.critic_head]
+            [self.value_backbone, [y for (x, y) in self.critic_head.named_parameters() if x.endswith('bias')]],
+            # OpenAI regularizes only weight on the last layer. I'm just replicating that
+            [[y for (x, y) in self.critic_head.named_parameters() if x.endswith('weight')]]
         ]
 
     def step(self, observation):

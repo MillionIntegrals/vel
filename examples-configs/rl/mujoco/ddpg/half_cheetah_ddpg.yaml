@@ -3,7 +3,8 @@ name: 'half_cheetah_ddpg'
 env:
   name: vel.rl.env.mujoco
   game: 'HalfCheetah-v2'
-  normalize_returns: true
+#  normalize_returns: true
+#  normalize_observations: true
 
 
 model:
@@ -38,9 +39,10 @@ reinforcer:
     noise_std_dev: 0.2
 
     buffer_capacity: 1_000_000
-    buffer_initial_size: 1_000
+    buffer_initial_size: 2_000
 
     normalize_observations: true
+    normalize_returns: true
 
   batch_size: 64
   discount_factor: 0.99
@@ -52,9 +54,9 @@ optimizer:
   name: vel.optimizers.adam
   # OpenAI has two different optimizers optimizing each network separately.
   # As far as I know it should be equivalent to optimizing two separate networks together with a sum of loss functions
-  lr: [1.0e-4, 1.0e-3]
-  weight_decay: [0.0, 0.01]
-  epsilon: 1.0e-8
+  lr: [1.0e-4, 1.0e-3, 1.0e-3]
+  weight_decay: [0.0, 0.0, 0.01]
+  epsilon: 1.0e-4
   layer_groups: on
 
 

@@ -15,12 +15,14 @@ class DequeReplayRollerOuNoise(ReplayEnvRollerBase):
     """
 
     def __init__(self, environment, device, batch_size, buffer_capacity, buffer_initial_size, noise_std_dev,
-                 normalize_observations=False):
+                 discount_factor, normalize_observations=False, normalize_returns=False):
         self.device = device
         self.batch_size = batch_size
         self.buffer_capacity = buffer_capacity
         self.buffer_initial_size = buffer_initial_size
         self.normalize_observations = normalize_observations
+        self.normalize_returns = normalize_returns
+        self.discount_factor = discount_factor
 
         self.device = device
         self._environment = environment
@@ -40,7 +42,9 @@ class DequeReplayRollerOuNoise(ReplayEnvRollerBase):
         )
 
         self.ob_rms = RunningMeanStd(shape=self.environment.observation_space.shape) if normalize_observations else None
+        self.ret_rms = RunningMeanStd(shape=()) if normalize_returns else None
         self.clip_obs = 5.0
+        self.accumulated_return = 0.0
 
     @property
     def environment(self):
@@ -73,12 +77,18 @@ class DequeReplayRollerOuNoise(ReplayEnvRollerBase):
         if self.ob_rms is not None:
             self.ob_rms.update(observation[None])
 
+        if self.ret_rms is not None:
+            self.accumulated_return = reward + self.discount_factor * self.accumulated_return
+
+            self.ret_rms.update(np.array([self.accumulated_return]))
+
         self.backend.store_transition(self.last_observation, action_perturbed, reward, done)
 
         # Usual, reset on done
         if done:
             observation = self.environment.reset()
             self.noise_process.reset()
+            self.accumulated_return = 0.0
 
         self.last_observation = observation
 
@@ -108,8 +118,13 @@ class DequeReplayRollerOuNoise(ReplayEnvRollerBase):
         observations = self._observation_to_tensor(batch['states'])
         observations_plus1 = self._observation_to_tensor(batch['states+1'])
 
+        rewards = batch['rewards'].astype(np.float32)
+
+        if self.ret_rms is not None:
+            rewards = np.clip(rewards / np.sqrt(self.ret_rms.var + 1e-8), -self.clip_obs, self.clip_obs)
+
         dones = torch.from_numpy(batch['dones'].astype(np.float32)).to(self.device)
-        rewards = torch.from_numpy(batch['rewards'].astype(np.float32)).to(self.device)
+        rewards = torch.from_numpy(rewards).to(self.device)
         actions = torch.from_numpy(batch['actions']).to(self.device)
 
         return Transitions(
@@ -128,11 +143,12 @@ class DequeReplayRollerOuNoise(ReplayEnvRollerBase):
 class DequeReplayRollerOuNoiseFactory(ReplayEnvRollerFactory):
     """ Factory class for DequeReplayQRoller """
     def __init__(self, buffer_capacity: int, buffer_initial_size: int, noise_std_dev: float,
-                 normalize_observations: bool=False):
+                 normalize_observations: bool=False, normalize_returns: bool=False):
         self.buffer_capacity = buffer_capacity
         self.buffer_initial_size = buffer_initial_size
         self.noise_std_dev = noise_std_dev
         self.normalize_observations = normalize_observations
+        self.normalize_returns = normalize_returns
 
     def instantiate(self, environment, device, settings) -> ReplayEnvRollerBase:
         return DequeReplayRollerOuNoise(
@@ -141,16 +157,19 @@ class DequeReplayRollerOuNoiseFactory(ReplayEnvRollerFactory):
             batch_size=settings.batch_size,
             buffer_capacity=self.buffer_capacity,
             buffer_initial_size=self.buffer_initial_size,
+            discount_factor=settings.discount_factor,
             noise_std_dev=self.noise_std_dev,
-            normalize_observations=self.normalize_observations
+            normalize_observations=self.normalize_observations,
+            normalize_returns=self.normalize_returns
         )
 
 
 def create(buffer_capacity: int, buffer_initial_size: int, noise_std_dev: float,
-           normalize_observations=False):
+           normalize_observations=False, normalize_returns=False):
     return DequeReplayRollerOuNoiseFactory(
         noise_std_dev=noise_std_dev,
         buffer_capacity=buffer_capacity,
         buffer_initial_size=buffer_initial_size,
-        normalize_observations=normalize_observations
+        normalize_observations=normalize_observations,
+        normalize_returns=normalize_returns
     )
