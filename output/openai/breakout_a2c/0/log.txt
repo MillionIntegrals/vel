@@ -1,1 +1,1 @@
-Logging to /home/ygx/src/vel/output/openai/breakout_a2c/0
+Logging to /home/ygx/dev/nykyinen/vel/output/openai/breakout_a2c/0
