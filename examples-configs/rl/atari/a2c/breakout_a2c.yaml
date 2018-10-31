@@ -3,6 +3,9 @@ name: 'breakout_a2c'
 env:
   name: vel.rl.env.classic_atari
   game: 'BreakoutNoFrameskip-v4'
+  env_settings:
+    default:
+      monitor: true
 
 
 vec_env:
@@ -18,6 +21,9 @@ model:
     input_width: 84
     input_height: 84
     input_channels: 4  # The same as frame_history
+    kernel1: 8
+    kernel2: 4
+    kernel3: 3
 
 
 reinforcer:
@@ -50,6 +56,7 @@ commands:
     name: vel.rl.commands.rl_train_command
     total_frames: 1.1e7
     batches_per_epoch: 100
+    openai_logging: true
 
   record:
     name: vel.rl.commands.record_movie_command

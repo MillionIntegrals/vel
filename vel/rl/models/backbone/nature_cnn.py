@@ -16,52 +16,47 @@ import vel.util.network as net_util
 from vel.api.base import LinearBackboneModel, ModelFactory
 
 
-class Config:
-
-    def __init__(self, kernel1=8, kernel2=4, kernel3=3):
+class NatureCnn(LinearBackboneModel):
+    """ Neural network as defined in the paper 'Human-level control through deep reinforcement learning'"""
+    def __init__(self, input_width, input_height, input_channels, output_dim=512,
+                 kernel1=8, kernel2=4, kernel3=3):
+        super().__init__()
+        self._output_dim = output_dim
         self.kernel1 = kernel1
         self.kernel2 = kernel2
         self.kernel3 = kernel3
 
-
-class NatureCnn(LinearBackboneModel):
-    """ Neural network as defined in the paper 'Human-level control through deep reinforcement learning'"""
-    def __init__(self, input_width, input_height, input_channels, output_dim=512, hparams=Config()):
-        super().__init__()
-        self.hparams = hparams
-        self._output_dim = output_dim
-
         self.conv1 = nn.Conv2d(
             in_channels=input_channels,
             out_channels=32,
-            kernel_size=self.hparams.kernel1,
+            kernel_size=self.kernel1,
             stride=4
         )
 
         self.conv2 = nn.Conv2d(
             in_channels=32,
             out_channels=64,
-            kernel_size=self.hparams.kernel2,
+            kernel_size=self.kernel2,
             stride=2
         )
 
         self.conv3 = nn.Conv2d(
             in_channels=64,
             out_channels=64,
-            kernel_size=self.hparams.kernel3,
+            kernel_size=self.kernel3,
             stride=1
         )
 
         self.final_width = net_util.convolutional_layer_series(input_width, [
-            (self.hparams.kernel1, 0, 4),
-            (self.hparams.kernel2, 0, 2),
-            (self.hparams.kernel3, 0, 1)
+            (self.kernel1, 0, 4),
+            (self.kernel2, 0, 2),
+            (self.kernel3, 0, 1)
         ])
 
         self.final_height = net_util.convolutional_layer_series(input_height, [
-            (self.hparams.kernel1, 0, 4),
-            (self.hparams.kernel2, 0, 2),
-            (self.hparams.kernel3, 0, 1)
+            (self.kernel1, 0, 4),
+            (self.kernel2, 0, 2),
+            (self.kernel3, 0, 1)
         ])
 
         self.linear_layer = nn.Linear(
@@ -95,11 +90,11 @@ class NatureCnn(LinearBackboneModel):
         return F.relu(self.linear_layer(flattened))
 
 
-def create(input_width, input_height, input_channels=1, output_dim=512, hparams=Config()):
+def create(input_width, input_height, input_channels=1, output_dim=512, kernel1=8, kernel2=4, kernel3=3):
     def instantiate(**_):
         return NatureCnn(
             input_width=input_width, input_height=input_height, input_channels=input_channels,
-            output_dim=output_dim, hparams=hparams
+            output_dim=output_dim, kernel1=kernel1, kernel2=kernel2, kernel3=kernel3 
         )
 
     return ModelFactory.generic(instantiate)
