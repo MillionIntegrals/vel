@@ -104,8 +104,8 @@ ENV/
 /.idea
 
 # Data files
-/data
-/output
+#/data
+#/output
 
 # Local scripts
 /local-scripts
