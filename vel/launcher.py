@@ -32,6 +32,8 @@ def main():
         params={k: v for (k, v) in (Parser.parse_equality(eq) for eq in args.param)}
     )
 
+    print(model_config)
+
     # Set seed already in the launcher
     set_seed(model_config.seed)
 

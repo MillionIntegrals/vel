@@ -1,0 +1,75 @@
+name: 'breakout_a2c'
+
+env:
+  name: vel.rl.env.classic_atari
+  game: 'BreakoutNoFrameskip-v4'
+
+
+vec_env:
+  name: vel.rl.vecenv.subproc
+  frame_history: 4  # How many stacked frames go into a single observation
+
+
+model:
+  name: vel.rl.models.policy_gradient_model
+
+  config:
+    kernel1: 8
+    kernel2: 4
+    kernel3: 3
+
+  backbone:
+    name: vel.rl.models.backbone.nature_cnn
+    input_width: 84
+    input_height: 84
+    input_channels: 4  # The same as frame_history
+
+
+reinforcer:
+  name: vel.rl.reinforcers.on_policy_iteration_reinforcer
+
+  algo:
+    name: vel.rl.algo.policy_gradient.a2c
+    entropy_coefficient: 0.01
+    value_coefficient: 0.5
+
+    max_grad_norm: 0.5
+
+  env_roller:
+    name: vel.rl.env_roller.vec.step_env_roller
+    number_of_steps: 5 # How many environment steps go into a single batch
+
+  parallel_envs: 16 # How many environments to run in parallel
+  discount_factor: 0.99
+
+
+optimizer:
+  name: vel.optimizers.rmsprop
+  lr: 7.0e-4
+  alpha: 0.99
+  epsilon: 1.0e-3
+
+
+commands:
+  train:
+    name: vel.rl.commands.rl_train_command
+    total_frames: 1.1e7
+    batches_per_epoch: 100
+
+  record:
+    name: vel.rl.commands.record_movie_command
+    takes: 10
+    videoname: 'breakout_vid_{:04}.avi'
+    frame_history: 4
+    sample_args:
+      argmax_sampling: true
+
+  evaluate:
+    name: vel.rl.commands.evaluate_env_command
+    takes: 100
+    frame_history: 4
+    sample_args:
+      argmax_sampling: true
+
+  visdom:
+    name: vel.commands.vis_store_command
