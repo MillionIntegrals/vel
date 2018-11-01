@@ -48,7 +48,7 @@ class ClassicStorage(Storage):
 
     def get_metrics_frame(self):
         """ Get a frame of metrics from backend """
-        return self.backend.get_metrics_frame()
+        return self.backend.get_frame()
 
     def clean(self, global_epoch_idx):
         """ Clean old checkpoints """
