@@ -7,7 +7,7 @@ import torch
 import tqdm
 import typing
 
-from vel.api import ModelConfig
+from vel.api import ModelConfig, TrainingInfo
 from vel.api.base import Storage, ModelFactory
 from vel.rl.api.base import EnvFactory
 from vel.openai.baselines.common.atari_wrappers import FrameStack
@@ -38,7 +38,8 @@ class RecordMovieCommand:
 
         model = self.model_factory.instantiate(action_space=env.action_space).to(device)
 
-        self.storage.resume_learning(model)
+        training_info = TrainingInfo(start_epoch_idx=self.storage.last_epoch_idx(), run_name=self.model_config.run_name)
+        self.storage.resume(training_info, model)
 
         model.eval()
 
