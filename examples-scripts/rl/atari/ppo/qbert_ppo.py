@@ -20,6 +20,7 @@ from vel.rl.algo.policy_gradient.ppo import PpoPolicyGradient
 from vel.rl.env_roller.vec.step_env_roller import StepEnvRoller
 
 from vel.api.info import TrainingInfo, EpochInfo
+from vel.rl.commands.rl_train_command import FrameTracker
 
 
 def qbert_ppo():
@@ -80,8 +81,12 @@ def qbert_ppo():
         metrics=[
             EpisodeRewardMetric('episode_rewards'),  # Calculate average reward from episode
         ],
-        callbacks=[StdoutStreaming()]  # Print live metrics every epoch to standard output
+        callbacks=[
+            StdoutStreaming(), # Print live metrics every epoch to standard output
+            FrameTracker()]    # We need frame tracker to track the progress of learning
     )
+
+    training_info['total_frames'] = 1.1e7  # How many frames in the whole training process
 
     # A bit of training initialization bookkeeping...
     training_info.initialize()
