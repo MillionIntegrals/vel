@@ -11,8 +11,7 @@ from vel.openai.baselines.common.atari_wrappers import FrameStack
 class EvaluateEnvCommand:
     """ Record environment playthrough as a game  """
     def __init__(self, model_config: ModelConfig, env_factory: EnvFactory, model_factory: ModelFactory,
-                 storage: Storage, takes: int, frame_history: int,
-                 sample_args: dict = None):
+                 storage: Storage, takes: int, frame_history: int, sample_args: dict = None):
         self.model_config = model_config
         self.model_factory = model_factory
         self.env_factory = env_factory
