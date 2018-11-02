@@ -17,7 +17,7 @@ class FrameTracker(Callback):
         if 'total_frames' in batch_info.training_info:
             # Track progress during learning
             batch_info['progress'] = (
-                    batch_info.training_info['frames'] / batch_info.training_info['total_frames']
+                batch_info.training_info['frames'] / batch_info.training_info['total_frames']
             )
 
     def on_batch_end(self, batch_info: BatchInfo):
