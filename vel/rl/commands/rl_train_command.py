@@ -1,4 +1,5 @@
 import torch
+import typing
 
 from vel.api import ModelConfig, EpochInfo, TrainingInfo, BatchInfo
 from vel.api.base import OptimizerFactory, Storage, Callback
@@ -10,14 +11,20 @@ import vel.openai.baselines.logger as openai_logger
 
 class FrameTracker(Callback):
     """ Aggregate frame count from each batch to a global number """
+    def __init__(self, max_frames: typing.Optional[typing.Union[int, float]] = None):
+        self.max_frames = max_frames
+
     def on_initialization(self, training_info: TrainingInfo):
+        if self.max_frames is not None:
+            training_info['total_frames'] = int(self.max_frames)
+
         training_info['frames'] = 0
 
     def on_batch_begin(self, batch_info: BatchInfo):
         if 'total_frames' in batch_info.training_info:
             # Track progress during learning
             batch_info['progress'] = (
-                batch_info.training_info['frames'] / batch_info.training_info['total_frames']
+                float(batch_info.training_info['frames']) / batch_info.training_info['total_frames']
             )
 
     def on_batch_end(self, batch_info: BatchInfo):
@@ -69,7 +76,6 @@ class RlTrainCommand:
             optimizer.load_state_dict(training_info.optimizer_initial_state)
 
         global_epoch_idx = training_info.start_epoch_idx + 1
-        training_info['total_frames'] = self.total_frames
 
         while training_info['frames'] < self.total_frames:
             epoch_info = EpochInfo(
@@ -94,7 +100,7 @@ class RlTrainCommand:
 
     def gather_callbacks(self, optimizer) -> list:
         """ Gather all the callbacks to be used in this training run """
-        callbacks = [FrameTracker(), TimeTracker()]
+        callbacks = [FrameTracker(self.total_frames), TimeTracker()]
 
         if self.scheduler_factory is not None:
             callbacks.append(self.scheduler_factory.instantiate(optimizer))

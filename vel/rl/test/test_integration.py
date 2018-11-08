@@ -183,11 +183,9 @@ def test_ppo_breakout():
             EpisodeRewardMetric('episode_rewards'),  # Calculate average reward from episode
         ],
         callbacks=[
-            FrameTracker()
+            FrameTracker(100_000)
         ]  # Print live metrics every epoch to standard output
     )
-
-    training_info['total_frames'] = 100_000
 
     # A bit of training initialization bookkeeping...
     training_info.initialize()
@@ -268,11 +266,9 @@ def test_dqn_breakout():
             EpisodeRewardMetric('episode_rewards'),  # Calculate average reward from episode
         ],
         callbacks=[
-            FrameTracker()
+            FrameTracker(100_000)
         ]  # Print live metrics every epoch to standard output
     )
-
-    training_info['total_frames'] = 100_000
 
     # A bit of training initialization bookkeeping...
     training_info.initialize()
@@ -359,11 +355,9 @@ def test_prioritized_dqn_breakout():
             EpisodeRewardMetric('episode_rewards'),  # Calculate average reward from episode
         ],
         callbacks=[
-            FrameTracker()
+            FrameTracker(100_000)
         ]  # Print live metrics every epoch to standard output
     )
-
-    training_info['total_frames'] = 100_000
 
     # A bit of training initialization bookkeeping...
     training_info.initialize()
@@ -445,11 +439,9 @@ def test_ddpg_bipedal_walker():
             EpisodeRewardMetric('episode_rewards'),  # Calculate average reward from episode
         ],
         callbacks=[
-            FrameTracker()
+            FrameTracker(100_000)
         ]  # Print live metrics every epoch to standard output
     )
-
-    training_info['total_frames'] = 100_000
 
     # A bit of training initialization bookkeeping...
     training_info.initialize()
@@ -529,11 +521,9 @@ def test_trpo_bipedal_walker():
             EpisodeRewardMetric('episode_rewards'),  # Calculate average reward from episode
         ],
         callbacks=[
-            FrameTracker()
+            FrameTracker(100_000)
         ]  # Print live metrics every epoch to standard output
     )
-
-    training_info['total_frames'] = 100_000
 
     # A bit of training initialization bookkeeping...
     training_info.initialize()

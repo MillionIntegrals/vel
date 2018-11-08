@@ -82,19 +82,19 @@ def qbert_ppo():
             EpisodeRewardMetric('episode_rewards'),  # Calculate average reward from episode
         ],
         callbacks=[
-            StdoutStreaming(), # Print live metrics every epoch to standard output
-            FrameTracker()]    # We need frame tracker to track the progress of learning
+            StdoutStreaming(),   # Print live metrics every epoch to standard output
+            FrameTracker(1.1e7)      # We need frame tracker to track the progress of learning
+        ]
     )
-
-    training_info['total_frames'] = 1.1e7  # How many frames in the whole training process
 
     # A bit of training initialization bookkeeping...
     training_info.initialize()
     reinforcer.initialize_training(training_info)
     training_info.on_train_begin()
 
-    # Let's make 100 batches per epoch to average metrics nicely
-    num_epochs = int(1.1e7 / (5 * 16) / 100)
+    # Let's make 10 batches per epoch to average metrics nicely
+    # Rollout size is 8 environments times 128 steps
+    num_epochs = int(1.1e7 / (128 * 8) / 10)
 
     # Normal handrolled training loop
     for i in range(1, num_epochs+1):
