@@ -3,6 +3,7 @@
 [![Build Status](https://travis-ci.org/MillionIntegrals/vel.svg?branch=master)](https://travis-ci.org/MillionIntegrals/vel)
 [![PyPI version](https://badge.fury.io/py/vel.svg)](https://badge.fury.io/py/vel)
 [![GitHub](https://img.shields.io/github/license/mashape/apistatus.svg)](https://github.com/MillionIntegrals/vel/blob/master/LICENSE)
+[![Gitter chat](https://badges.gitter.im/MillionIngegrals/vel.png)](https://gitter.im/deep-learning-vel)
 
 
 Bring **velocity** to deep-learning research,
