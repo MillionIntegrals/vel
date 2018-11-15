@@ -86,7 +86,7 @@ def breakout_dqn():
         ],
         callbacks=[
             StdoutStreaming(),   # Print live metrics every epoch to standard output
-            FrameTracker(1.1e7)      # We need frame tracker to track the progress of learning
+            FrameTracker(1.1e7)  # We need frame tracker to track the progress of learning
         ]
     )
 
