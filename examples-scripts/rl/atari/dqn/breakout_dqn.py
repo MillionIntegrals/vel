@@ -48,7 +48,7 @@ def breakout_dqn():
     reinforcer = BufferedSingleOffPolicyIterationReinforcer(
         device=device,
         settings=BufferedSingleOffPolicyIterationReinforcerSettings(
-            batch_training_rounds=4,
+            batch_training_rounds=1,
             batch_rollout_rounds=4,
             batch_size=32,
             discount_factor=0.99

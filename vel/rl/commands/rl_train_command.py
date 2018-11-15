@@ -46,6 +46,7 @@ class RlTrainCommand:
                  scheduler_factory=None, openai_logging=False):
         self.model_config = model_config
         self.reinforcer = reinforcer
+        print(f'Training rounds: {self.reinforcer.settings.batch_rollout_rounds}')
         self.optimizer_factory = optimizer_factory
         self.scheduler_factory = scheduler_factory
         self.storage = storage
