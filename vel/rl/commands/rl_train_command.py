@@ -162,4 +162,3 @@ def create(model_config, reinforcer, optimizer, storage,
         batches_per_epoch=int(batches_per_epoch),
         openai_logging=openai_logging
     )
-
