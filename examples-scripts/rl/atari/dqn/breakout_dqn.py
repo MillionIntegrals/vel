@@ -6,7 +6,6 @@ from vel.storage.streaming.stdout import StdoutStreaming
 from vel.util.random import set_seed
 
 from vel.rl.env.classic_atari import ClassicAtariEnv
-from vel.rl.vecenv.subproc import SubprocVecEnvWrapper
 
 from vel.rl.models.q_model import QModelFactory
 from vel.rl.models.backbone.nature_cnn import NatureCnnFactory
@@ -33,9 +32,7 @@ def breakout_dqn():
 
     # Create 16 environments evaluated in parallel in sub processess with all usual DeepMind wrappers
     # These are just helper functions for that
-    vec_env = SubprocVecEnvWrapper(
-        ClassicAtariEnv('BreakoutNoFrameskip-v4')
-    ).instantiate(parallel_envs=8, seed=seed)
+    env = ClassicAtariEnv('BreakoutNoFrameskip-v4').instantiate(seed=seed)
 
     # Again, use a helper to create a model
     # But because model is owned by the reinforcer, model should not be accessed using this variable
@@ -53,8 +50,8 @@ def breakout_dqn():
             batch_size=32,
             discount_factor=0.99
         ),
-        model=model.instantiate(action_space=vec_env.action_space),
-        environment=vec_env,
+        model=model.instantiate(action_space=env.action_space),
+        environment=env,
         algo=DeepQLearning(
             model_factory=model,
             target_update_frequency=10000,
@@ -62,7 +59,7 @@ def breakout_dqn():
             max_grad_norm=0.5,
         ),
         env_roller=DequeReplayRollerEpsGreedy(
-            environment=vec_env,
+            environment=env,
             device=device,
             buffer_capacity=250000,
             buffer_initial_size=30000,
