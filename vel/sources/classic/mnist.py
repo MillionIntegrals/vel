@@ -1,7 +1,7 @@
 from torchvision import datasets, transforms
 
 
-from vel.api.base import Source
+from vel.api.base import TrainingData
 
 
 def create(batch_size, model_config, normalize=True, num_workers=0):
@@ -26,7 +26,7 @@ def create(batch_size, model_config, normalize=True, num_workers=0):
     train_dataset.transform = transform
     test_dataset.transform = transform
 
-    return Source(
+    return TrainingData(
         train_dataset,
         test_dataset,
         num_workers=num_workers,

@@ -1,9 +1,11 @@
 """
-Code based on:
+Code (partially) based on:
 https://github.com/fastai/fastai/blob/master/fastai/layers.py
 """
 import torch
 import torch.nn as nn
+
+from vel.util.tensor_util import one_hot_encoding
 
 
 class AdaptiveConcatPool2d(nn.Module):
@@ -35,4 +37,23 @@ class Flatten(nn.Module):
 
     def forward(self, x):
         return x.view(x.size(0), -1)
+
+
+class Identity(nn.Module):
+    """ Identity transformation that doesn't do anything """
+    def __init__(self):
+        super().__init__()
+
+    def forward(self, x):
+        return x
+
+
+class OneHotEncode(nn.Module):
+    """ One-hot encoding layer """
+    def __init__(self, num_classes):
+        super().__init__()
+        self.num_classes = num_classes
+
+    def forward(self, x):
+        return one_hot_encoding(x.view(-1), self.num_classes).view(list(x.shape) + [-1])
 

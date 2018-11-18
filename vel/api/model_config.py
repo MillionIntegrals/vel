@@ -135,7 +135,7 @@ class ModelConfig:
 
     def project_data_dir(self, *args) -> str:
         """ Directory where to store data """
-        return os.path.join(self.project_dir, 'data', *args)
+        return os.path.normpath(os.path.join(self.project_dir, 'data', *args))
 
     def output_dir(self, *args) -> str:
         """ Directory where to store output """

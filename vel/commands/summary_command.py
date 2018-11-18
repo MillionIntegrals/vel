@@ -1,8 +1,9 @@
+from vel.api.base import Source
 
 
 class ModelSummary:
     """ Just print model summary """
-    def __init__(self, model, source):
+    def __init__(self, model, source: Source):
         self.model = model
         self.source = source
 
@@ -11,7 +12,7 @@ class ModelSummary:
         if self.source is None:
             self.model.summary()
         else:
-            x_data, y_data = next(iter(self.source.train_loader))
+            x_data, y_data = next(iter(self.source.train_loader()))
             self.model.summary(input_size=x_data.shape[1:])
 
 

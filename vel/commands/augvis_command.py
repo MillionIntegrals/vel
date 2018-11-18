@@ -1,10 +1,12 @@
 import matplotlib.pyplot as plt
 import numpy as np
 
+from vel.api.base import Source
+
 
 class AugmentationVisualizationCommand:
     """ Visualize augmentations """
-    def __init__(self, source, samples, cases):
+    def __init__(self, source: Source, samples, cases):
         self.source = source
         self.samples = samples
         self.cases = cases

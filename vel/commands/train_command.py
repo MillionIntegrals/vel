@@ -11,7 +11,8 @@ class SimpleTrainCommand:
 
     def __init__(self, epochs: int, model_config: ModelConfig, model_factory: ModelFactory,
                  optimizer_factory: OptimizerFactory, scheduler_factory: typing.Optional[SchedulerFactory],
-                 source: Source, storage: Storage, callbacks: typing.Optional[typing.List[Callback]]):
+                 source: Source, storage: Storage, callbacks: typing.Optional[typing.List[Callback]],
+                 max_grad_norm: typing.Optional[float]):
         self.epochs = epochs
         self.model_config = model_config
         self.model_factory = model_factory
@@ -22,11 +23,12 @@ class SimpleTrainCommand:
         self.source = source
         self.storage = storage
         self.callbacks = callbacks if callbacks is not None else []
+        self.max_grad_norm = max_grad_norm
 
     def run(self):
         """ Run the command with supplied configuration """
         device = torch.device(self.model_config.device)
-        learner = Learner(device, self.model_factory.instantiate())
+        learner = Learner(device, self.model_factory.instantiate(), self.max_grad_norm)
         optimizer = self.optimizer_factory.instantiate(learner.model)
 
         # All callbacks used for learning
@@ -96,7 +98,7 @@ class SimpleTrainCommand:
         return training_info
 
 
-def create(model_config, epochs, optimizer, model, source, storage, scheduler=None, callbacks=None):
+def create(model_config, epochs, optimizer, model, source, storage, scheduler=None, callbacks=None, max_grad_norm=None):
     """ Simply train the model """
     return SimpleTrainCommand(
         epochs=epochs,
@@ -106,5 +108,6 @@ def create(model_config, epochs, optimizer, model, source, storage, scheduler=No
         scheduler_factory=scheduler,
         source=source,
         storage=storage,
-        callbacks=callbacks
+        callbacks=callbacks,
+        max_grad_norm=max_grad_norm
     )

@@ -1,0 +1,39 @@
+name: 'gen_shakespeare_lstm_embedding'
+
+
+source:
+  name: vel.sources.nlp.text_url
+  # Andrej Karpathy built a small (4.4mb) file with combined all works of Shakespeare
+  url: 'https://cs.stanford.edu/people/karpathy/char-rnn/shakespeare_input.txt'
+  local_dir: './rnn_shakespeare'
+  sequence_length: 128
+  batch_size: 64
+  dropout: 0.5
+
+
+model:
+  name: vel.models.rnn.multilayer_sequence_lstm
+  alphabet_size: 68  # Size of the alphabet + 1
+  hidden_layers: [512, 512, 512]
+  output_dim: 68 # Size of the alphabet + 1
+  use_embedding: true
+
+optimizer:
+  name: vel.optimizers.adam
+  lr: 1.0e-3
+  epsilon: 1.0e-5
+
+
+commands:
+  train:
+    name: vel.commands.train_command
+    max_grad_norm: 0.5
+    epochs: 12
+
+  generate:
+    name: vel.commands.rnn.generate_text
+    start_letter: !param start_letter = 'A'
+    length: !param length = 500
+    temperature: !param temperature = 0.8
+
+

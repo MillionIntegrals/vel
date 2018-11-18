@@ -1,15 +1,17 @@
+import sys
 import torch
 import tqdm
-import sys
+import typing
 
 from .info import BatchInfo, EpochInfo, TrainingInfo
 
 
 class Learner:
     """ Manages training process of a single model """
-    def __init__(self, device: torch.device, model):
+    def __init__(self, device: torch.device, model, max_grad_norm: typing.Optional[float]=None):
         self.device = device
         self.model = model.to(device)
+        self.max_grad_norm = max_grad_norm
 
     def metrics(self):
         """ Return metrics for given learner/model """
@@ -35,7 +37,7 @@ class Learner:
         """ Prepare for training """
         self.model.reset_weights()
 
-    def run_epoch(self, epoch_info: EpochInfo, source):
+    def run_epoch(self, epoch_info: EpochInfo, source: 'vel.api.base.Source'):
         """ Run full epoch of learning """
         epoch_info.on_epoch_begin()
 
@@ -50,14 +52,14 @@ class Learner:
 
         epoch_info.on_epoch_end()
 
-    def train_epoch(self, epoch_info, source, interactive=True):
+    def train_epoch(self, epoch_info, source: 'vel.api.base.Source', interactive=True):
         """ Run a single training epoch """
         self.train()
 
         if interactive:
-            iterator = tqdm.tqdm(source.train_loader, desc="Training", unit="iter", file=sys.stdout)
+            iterator = tqdm.tqdm(source.train_loader(), desc="Training", unit="iter", file=sys.stdout)
         else:
-            iterator = source.train_loader
+            iterator = source.train_loader()
 
         for batch_idx, (data, target) in enumerate(iterator):
             batch_info = BatchInfo(epoch_info, batch_idx)
@@ -68,11 +70,11 @@ class Learner:
 
             iterator.set_postfix(loss=epoch_info.result_accumulator.intermediate_value('loss'))
 
-    def validation_epoch(self, epoch_info, source):
+    def validation_epoch(self, epoch_info, source: 'vel.api.base.Source'):
         """ Run a single evaluation epoch """
         self.eval()
 
-        iterator = tqdm.tqdm(source.val_loader, desc="Validation", unit="iter", file=sys.stdout)
+        iterator = tqdm.tqdm(source.val_loader(), desc="Validation", unit="iter", file=sys.stdout)
 
         with torch.no_grad():
             for batch_idx, (data, target) in enumerate(iterator):
@@ -100,4 +102,11 @@ class Learner:
         batch_info.optimizer.zero_grad()
         loss = self.feed_batch(batch_info, data, target)
         loss.backward()
+
+        if self.max_grad_norm is not None:
+            batch_info['grad_norm'] = torch.nn.utils.clip_grad_norm_(
+                filter(lambda p: p.requires_grad, self.model.parameters()),
+                max_norm=self.max_grad_norm
+            )
+
         batch_info.optimizer.step()

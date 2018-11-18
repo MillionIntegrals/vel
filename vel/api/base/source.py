@@ -1,10 +1,43 @@
 import torch.utils.data as data
-import vel.api.data as wdata
 
 
 class Source:
-    """ Very simple wrapper for a training and validation datasource """
+    """ Source of data for supervised learning algorithms """
+    def __init__(self):
+        pass
+
+    def train_loader(self):
+        """ PyTorch loader of training data """
+        raise NotImplementedError
+
+    def val_loader(self):
+        """ PyTorch loader of validation data """
+        raise NotImplementedError
+
+    def train_dataset(self):
+        """ Return the training dataset """
+        raise NotImplementedError
+
+    def val_dataset(self):
+        """ Return the validation dataset """
+        raise NotImplementedError
+
+    def train_iterations_per_epoch(self):
+        """ Return number of iterations per epoch """
+        raise NotImplementedError
+
+    def val_iterations_per_epoch(self):
+        """ Return number of iterations per epoch - validation """
+        raise NotImplementedError
+
+
+class TrainingData(Source):
+    """ Most common source of data combining a basic datasource and sampler """
     def __init__(self, train_source, val_source, num_workers, batch_size, augmentations=None):
+        import vel.api.data as vel_data
+
+        super().__init__()
+
         self.train_source = train_source
         self.val_source = val_source
 
@@ -12,33 +45,26 @@ class Source:
         self.batch_size = batch_size
 
         self.augmentations = augmentations
-        # self.tta = test_time_augmentation
 
         # Derived values
-        self.train_ds = wdata.DataFlow(self.train_source, augmentations, tag='train')
-        self.val_ds = wdata.DataFlow(self.val_source, augmentations, tag='val')
+        self.train_ds = vel_data.DataFlow(self.train_source, augmentations, tag='train')
+        self.val_ds = vel_data.DataFlow(self.val_source, augmentations, tag='val')
 
-        self.train_loader = data.DataLoader(
+        self._train_loader = data.DataLoader(
             self.train_ds, batch_size=batch_size, shuffle=True, num_workers=num_workers
         )
 
-        self.val_loader = data.DataLoader(
+        self._val_loader = data.DataLoader(
             self.val_ds, batch_size=batch_size, shuffle=False, num_workers=num_workers
         )
-        
-        # self.val_tta_loader = self.val_loader
-        # else:
-        #     self.val_tta_loader = self.tta.loader(
-        #         self.val_source, self.augmentations, self.batch_size, self.num_workers
-        #     )
-            
-    # def is_tta_enabled(self):
-    #     """ Is test-time augmentation enabled """
-    #     return self.tta is not None
-    #
-    # def tta_accumulator(self, result_accumulator):
-    #     """ Return metric accumulator for the 'tta' calculations """
-    #     return self.tta.accumulator(result_accumulator, self.val_source)
+
+    def train_loader(self):
+        """ PyTorch loader of training data """
+        return self._train_loader
+
+    def val_loader(self):
+        """ PyTorch loader of validation data """
+        return self._val_loader
 
     def train_dataset(self):
         """ Return the training dataset """
@@ -50,12 +76,8 @@ class Source:
 
     def train_iterations_per_epoch(self):
         """ Return number of iterations per epoch """
-        return len(self.train_loader)
+        return len(self._train_loader)
 
     def val_iterations_per_epoch(self):
         """ Return number of iterations per epoch - validation """
-        return len(self.val_loader)
-
-    # def tta_postprocess(self, x):
-    #     """ Prostprocess the test-time-augmentation data """
-    #     raise NotImplementedError
+        return len(self._val_loader)

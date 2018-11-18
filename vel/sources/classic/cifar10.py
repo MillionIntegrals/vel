@@ -1,6 +1,6 @@
 from torchvision import datasets
 
-from vel.api.base import Source
+from vel.api.base import TrainingData
 
 from vel.augmentations.normalize import Normalize
 from vel.augmentations.to_tensor import ToTensor
@@ -28,7 +28,7 @@ def create(batch_size, model_config, normalize=True, num_workers=0, augmentation
 
     augmentations.append(ToTensor())
 
-    return Source(
+    return TrainingData(
         train_dataset,
         test_dataset,
         batch_size=batch_size,

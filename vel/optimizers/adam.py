@@ -26,7 +26,7 @@ class AdamFactory(OptimizerFactory):
 
                 default_lr = self.lr[0]
             else:
-                default_lr = self.lr
+                default_lr = float(self.lr)
 
             if isinstance(self.weight_decay, collections.Sequence):
                 for idx, weight_decay in enumerate(self.weight_decay):

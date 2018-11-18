@@ -2,7 +2,7 @@ import os.path
 
 import torchvision.datasets as ds
 
-from vel.api.base import Source
+from vel.api.base import TrainingData
 
 
 class ImageDirSource(ds.ImageFolder):
@@ -20,7 +20,7 @@ def create(model_config, path, num_workers, batch_size, augmentations=None, tta=
     train_ds = ImageDirSource(train_path)
     val_ds = ImageDirSource(valid_path)
 
-    return Source(
+    return TrainingData(
         train_ds,
         val_ds,
         num_workers=num_workers,

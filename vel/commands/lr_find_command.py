@@ -76,7 +76,7 @@ class LrFindCommand:
         # Optimizer shoudl be created after freeze
         optimizer = self.optimizer_factory.instantiate(learner.model)
 
-        iterator = iter(self.source.train_loader)
+        iterator = iter(self.source.train_loader())
 
         # Metrics to track through this training
         metrics = learner.metrics() + [AveragingNamedMetric("lr")]
@@ -102,7 +102,7 @@ class LrFindCommand:
             try:
                 data, target = next(iterator)
             except StopIteration:
-                iterator = iter(self.source.train_loader)
+                iterator = iter(self.source.train_loader())
                 data, target = next(iterator)
 
             learner.train_batch(batch_info, data, target)
