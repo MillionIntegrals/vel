@@ -87,6 +87,11 @@ on this library:
 - (Jul 2017) **Proximal Policy Optimization Algorithms**
   John Schulman and Filip Wolski and Prafulla Dhariwal and Alec Radford and Oleg Klimov
   https://arxiv.org/abs/1707.06347
+  
+  
+### Various blogposts
+
+- http://karpathy.github.io/2015/05/21/rnn-effectiveness/
 
   
 ### Open source repositories

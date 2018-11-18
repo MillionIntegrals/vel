@@ -60,6 +60,11 @@ that are ready to run and easy to modify for other similar usecases:
 - Cats vs dogs classification using transfer learning from a resnet34 model pretrained on 
   ImageNet
   
+# Implemented models - Natural language processing
+
+- Character-level language models based on LSTM and GRU recurrent networks, with example trained on
+  works of Shakespeare
+  
 # Implemented models - Reinforcement learning
 
 - Continuous and discrete action spaces
