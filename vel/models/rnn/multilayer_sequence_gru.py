@@ -8,8 +8,8 @@ from vel.api.base import SupervisedModel, ModelFactory
 from vel.modules.layers import OneHotEncode
 
 
-class MultilayerSequenceLSTM(SupervisedModel):
-    """ Multilayer LSTM network for sequence modeling """
+class MultilayerSequenceGRU(SupervisedModel):
+    """ Multilayer GRU network for sequence modeling """
 
     def __init__(self, alphabet_size: int, hidden_layers: typing.List[int], output_dim: int, use_embedding=False,
                  dropout: float=0.0):
@@ -27,18 +27,18 @@ class MultilayerSequenceLSTM(SupervisedModel):
             self.input_layer = OneHotEncode(alphabet_size)
             current_dim = alphabet_size
 
-        self.lstm_layers = []
+        self.gru_layers = []
 
         for idx, current_layer in enumerate(hidden_layers, 1):
-            lstm = nn.LSTM(
+            lstm = nn.GRU(
                 input_size=current_dim,
                 hidden_size=current_layer,
                 batch_first=True,
                 dropout=dropout
             )
 
-            self.add_module('lstm{:02}'.format(idx), lstm)
-            self.lstm_layers.append(lstm)
+            self.add_module('gru{:02}'.format(idx), lstm)
+            self.gru_layers.append(lstm)
 
             current_dim = current_layer
 
@@ -49,7 +49,7 @@ class MultilayerSequenceLSTM(SupervisedModel):
         """ Forward propagate batch of sequences through the network, without accounting for the state """
         data = self.input_layer(sequence)
 
-        for layer in self.lstm_layers:
+        for layer in self.gru_layers:
             data, _ = layer(data)
 
         data = self.output_layer(data)
@@ -65,20 +65,15 @@ class MultilayerSequenceLSTM(SupervisedModel):
 
         state_outputs = []
 
-        for layer_length, layer in zip(self.hidden_layers, self.lstm_layers):
+        for layer_length, layer in zip(self.hidden_layers, self.gru_layers):
             # Partition hidden state, for each layer we have layer_length of h state and layer_length of c state
-            current_state = state[:, :, :layer_length * 2]
-            state = state[:, :, 2 * layer_length:]
-
-            # Split into h and c state
-            current_h = current_state[:, :, :layer_length]
-            current_c = current_state[:, :, layer_length:]
+            current_state = state[:, :, :layer_length]
+            state = state[:, :, layer_length:]
 
             # Propagate through the LSTM state
-            data, (new_h, new_c) = layer(data, (current_h, current_c))
+            data, new_h = layer(data, current_state)
 
             state_outputs.append(new_h)
-            state_outputs.append(new_c)
 
         output_data = self.output_activation(self.output_layer(data))
 
@@ -88,7 +83,7 @@ class MultilayerSequenceLSTM(SupervisedModel):
 
     def initial_state(self, batch_size):
         """ Initial state of the network """
-        return torch.zeros(batch_size, 1, 2 * sum(self.hidden_layers))
+        return torch.zeros(batch_size, 1, sum(self.hidden_layers))
 
     def loss_value(self, x_data, y_true, y_pred):
         """ Calculate a value of loss function """
@@ -100,7 +95,7 @@ class MultilayerSequenceLSTM(SupervisedModel):
 def create(alphabet_size: int, hidden_layers: typing.List[int], output_dim: int, use_embedding=False, dropout=0.0):
     """ Vel creation function """
     def instantiate(**_):
-        return MultilayerSequenceLSTM(
+        return MultilayerSequenceGRU(
             alphabet_size, hidden_layers, output_dim, use_embedding=use_embedding, dropout=dropout
         )
 
