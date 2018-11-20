@@ -8,7 +8,6 @@ source:
   local_dir: './rnn_shakespeare'
   sequence_length: 128
   batch_size: 64
-  dropout: 0.5
 
 
 model:
@@ -16,6 +15,7 @@ model:
   alphabet_size: 68  # Size of the alphabet + 1
   hidden_layers: [512, 512, 512]
   output_dim: 68 # Size of the alphabet + 1
+  dropout: 0.5
   use_embedding: true
 
 optimizer:
@@ -28,7 +28,7 @@ commands:
   train:
     name: vel.commands.train_command
     max_grad_norm: 0.5
-    epochs: 14
+    epochs: 20
 
   generate:
     name: vel.commands.rnn.generate_text

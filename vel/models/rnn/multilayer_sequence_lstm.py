@@ -19,26 +19,37 @@ class MultilayerSequenceLSTM(SupervisedModel):
         self.output_dim = output_dim
         self.hidden_layers = hidden_layers
 
+        input_dim = hidden_layers[0] if hidden_layers else output_dim
+
         if use_embedding:
-            input_dim = hidden_layers[0] if hidden_layers else output_dim
             self.input_layer = nn.Embedding(alphabet_size, input_dim)
             current_dim = input_dim
         else:
-            self.input_layer = OneHotEncode(alphabet_size)
-            current_dim = alphabet_size
+            self.input_layer = nn.Sequential(
+                OneHotEncode(alphabet_size),
+                nn.Linear(alphabet_size, input_dim)
+            )
+            current_dim = input_dim
 
         self.lstm_layers = []
+        self.dropout_layers = []
 
         for idx, current_layer in enumerate(hidden_layers, 1):
             lstm = nn.LSTM(
                 input_size=current_dim,
                 hidden_size=current_layer,
                 batch_first=True,
-                dropout=dropout
+                # dropout=dropout
             )
 
             self.add_module('lstm{:02}'.format(idx), lstm)
             self.lstm_layers.append(lstm)
+
+            if dropout > 0.0:
+                dropout_layer = nn.Dropout(p=dropout)
+
+                self.add_module('dropout{:02}'.format(idx), dropout_layer)
+                self.dropout_layers.append(dropout_layer)
 
             current_dim = current_layer
 
@@ -49,15 +60,18 @@ class MultilayerSequenceLSTM(SupervisedModel):
         """ Forward propagate batch of sequences through the network, without accounting for the state """
         data = self.input_layer(sequence)
 
-        for layer in self.lstm_layers:
-            data, _ = layer(data)
+        for idx in range(len(self.lstm_layers)):
+            data, _ = self.lstm_layers[idx](data)
+
+            if self.dropout_layers:
+                data = self.dropout_layers[idx](data)
 
         data = self.output_layer(data)
 
         return self.output_activation(data)
 
     def forward_state(self, sequence, state=None):
-        """ Forward propagate a single character through the network accounting for the state """
+        """ Forward propagate a sequence through the network accounting for the state """
         if state is None:
             state = self.initial_state(sequence.size(0))
 
@@ -65,7 +79,9 @@ class MultilayerSequenceLSTM(SupervisedModel):
 
         state_outputs = []
 
-        for layer_length, layer in zip(self.hidden_layers, self.lstm_layers):
+        for idx in range(len(self.lstm_layers)):
+            layer_length = self.hidden_layers[idx]
+
             # Partition hidden state, for each layer we have layer_length of h state and layer_length of c state
             current_state = state[:, :, :layer_length * 2]
             state = state[:, :, 2 * layer_length:]
@@ -75,7 +91,10 @@ class MultilayerSequenceLSTM(SupervisedModel):
             current_c = current_state[:, :, layer_length:]
 
             # Propagate through the LSTM state
-            data, (new_h, new_c) = layer(data, (current_h, current_c))
+            data, (new_h, new_c) = self.lstm_layers[idx](data, (current_h, current_c))
+
+            if self.dropout_layers:
+                data = self.dropout_layers[idx](data)
 
             state_outputs.append(new_h)
             state_outputs.append(new_c)
