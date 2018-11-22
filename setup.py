@@ -16,7 +16,7 @@ This repository is still in an early stage of that journey but it will grow as I
 
 setup(
     name='vel',
-    version='0.2.0',
+    version='0.2.1',
     description="Velocity in deep-learning research",
     long_description=long_description,
     url='https://github.com/MillionIntegrals/vel',
@@ -34,7 +34,6 @@ setup(
         'torch == 0.4.1',
         'torchvision',
         'opencv-python',
-        'pillow-simd',
         'tqdm'
     ],
     extras_require={
