@@ -28,12 +28,29 @@ If that's not the case few bits of custom glue code should do the job.
 This repository is still in an early stage of that journey but it will grow
 as I'll be putting work into it.
 
-# Requirements
+# How to run it 
 
-This project requires Python 3.6 and PyTorch 0.4.1. Default project configuration writes
-metrics to MongoDB instance open on localhost port 27017 and Visom instance 
-on localhost port 8097. These can be changed in project-wide config file
-`.velproject.yaml`.
+Although possible to install from `pip`, while this project is under active development
+`pip` versions may be behind current repository head.
+It is advised to install latest version by running
+```bash
+pip install -e .
+```
+from the repository root directory.
+
+This project requires Python 3.6 and PyTorch 0.4.1.
+If you want to run YAML config examples, you'll also need a **project configuration file**
+`.velproject.yaml`. An example is included in this repository.
+
+Default project configuration writes
+metrics to MongoDB instance open on localhost port 27017 and Visdom instance 
+on localhost port 8097. 
+
+If you don't want to run these services, there is included
+another example file `.velproject.dummy.yaml`
+that writes training progress to the standard output only.
+To use it, just rename it to `.velproject.yaml`.
+
 
 # Features
 

@@ -12,6 +12,6 @@ RUN pip install -U pip cython
 COPY --chown=user:user . /vel
 WORKDIR /vel
 RUN pip install -e .[gym,mongo]
-RUN mv .velproject.docker.yaml .velproject.yaml
+RUN mv .velproject.dummy.yaml .velproject.yaml
 
 CMD vel examples-configs/rl/atari/a2c/breakout_a2c.yaml train -d cuda:0
