@@ -55,5 +55,5 @@ class OneHotEncode(nn.Module):
         self.num_classes = num_classes
 
     def forward(self, x):
-        return one_hot_encoding(x.view(-1), self.num_classes).view(list(x.shape) + [-1])
+        return one_hot_encoding(x, self.num_classes)
 
