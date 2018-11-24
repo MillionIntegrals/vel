@@ -17,7 +17,7 @@ from vel.api.base import LinearBackboneModel, ModelFactory
 
 
 class NatureCnn(LinearBackboneModel):
-    """ Neural network as defined in the paper 'Human-level control through deep reinforcement learning'"""
+    """ Neural network as defined in the paper 'Human-level control through deep reinforcement learning' """
     def __init__(self, input_width, input_height, input_channels, output_dim=512):
         super().__init__()
 
