@@ -91,3 +91,16 @@ class Provider:
             return instance
         else:
             return self.instances[object_name]
+
+    def instantiate_by_name_with_default(self, object_name, default_value=None):
+        """ Instantiate object from the environment, possibly giving some extra arguments """
+        if object_name not in self.instances:
+            if object_name not in self.environment:
+                return default_value
+            else:
+                instance = self.instantiate_from_data(self.environment[object_name])
+
+                self.instances[object_name] = instance
+                return instance
+        else:
+            return self.instances[object_name]

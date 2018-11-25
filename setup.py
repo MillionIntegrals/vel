@@ -16,7 +16,7 @@ This repository is still in an early stage of that journey but it will grow as I
 
 setup(
     name='vel',
-    version='0.2.1',
+    version='0.2.2',
     description="Velocity in deep-learning research",
     long_description=long_description,
     url='https://github.com/MillionIntegrals/vel',
@@ -27,13 +27,14 @@ setup(
     python_requires='>=3.6',
     install_requires=[
         'attrs',
-        'pyyaml',
+        'cloudpickle',
         'numpy',
+        'opencv-python',
         'pandas',
+        'pyyaml',
         'scikit-learn',
         'torch == 0.4.1',
         'torchvision',
-        'opencv-python',
         'tqdm'
     ],
     extras_require={

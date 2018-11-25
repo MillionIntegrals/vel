@@ -1,6 +1,5 @@
 import datetime as dtm
 import os.path
-import torch
 
 from vel.exceptions import VelInitializationException
 from vel.internals.parser import Parser
@@ -163,10 +162,15 @@ class ModelConfig:
         """ Return a dependency-injected instance """
         return self.provider.instantiate_by_name(name)
 
+    def provide_with_default(self, name, default=None):
+        """ Return a dependency-injected instance """
+        return self.provider.instantiate_by_name_with_default(name, default_value=default)
+
     ####################################################################################################################
     # BANNERS - Maybe shouldn't be here, but they are for now
     def banner(self, command_name) -> None:
         """ Print a banner for running the system """
+        import torch
         device = torch.device(self.device)
         print("=" * 80)
         print(f"Pytorch version: {torch.__version__} cuda version {torch.version.cuda} cudnn version {torch.backends.cudnn.version()}")

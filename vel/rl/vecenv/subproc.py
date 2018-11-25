@@ -12,12 +12,15 @@ class SubprocVecEnvWrapper(VecEnvFactory):
 
     def __init__(self, env, frame_history=None, normalize=False):
         self.env = env
+
         self.frame_history = frame_history
         self.normalize = normalize
 
     def instantiate(self, parallel_envs, seed=0, preset='default') -> VecEnv:
         """ Make parallel environments """
-        envs = SubprocVecEnv([self._creation_function(i, seed, preset) for i in range(parallel_envs)])
+        envs = SubprocVecEnv(
+            [self._creation_function(i, seed, preset) for i in range(parallel_envs)]
+        )
 
         if self.normalize:
             envs = VecNormalize(envs)
