@@ -28,6 +28,10 @@ If that's not the case few bits of custom glue code should do the job.
 This repository is still in an early stage of that journey but it will grow
 as I'll be putting work into it.
 
+# Blogposts
+
+- https://blog.millionintegrals.com/vel-pytorch-meets-baselines/
+
 # How to run it 
 
 Although possible to install from `pip`, while this project is under active development
@@ -249,6 +253,11 @@ or
 ```
 pip install vel[gym,mongo,visdom]
 ```
+
+# Projects using Vel
+
+- https://github.com/MillionIntegrals/baselines-experiments
+- https://github.com/MillionIntegrals/vel-miniworld
 
 # Glossary
 
