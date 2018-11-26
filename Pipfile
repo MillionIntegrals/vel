@@ -22,6 +22,7 @@ dnspython = "*"
 "box2d" = "*"
 cloudpickle = "*"
 torchtext = "*"
+spacy = "*"
 
 [requires]
 python_version = "3.6"
