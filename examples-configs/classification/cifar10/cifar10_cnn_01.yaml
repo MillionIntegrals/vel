@@ -2,7 +2,7 @@ name: 'cifar10_cnn_01'
 
 
 model:
-  name: vel.models.classic.cifar10_cnn_01
+  name: vel.models.vision.cifar10_cnn_01
   img_rows: 32
   img_cols: 32
   img_channels: 3

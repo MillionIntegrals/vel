@@ -2,7 +2,7 @@ name: 'cifar10_resnetv1_32'
 
 
 model:
-  name: vel.models.classic.cifar_resnext
+  name: vel.models.vision.cifar_resnext
   img_channels: 3
   num_classes: 10
 

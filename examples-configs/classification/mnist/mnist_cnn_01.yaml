@@ -2,7 +2,7 @@ name: 'mnist_cnn_01'
 
 
 model:
-  name: vel.models.classic.mnist_cnn_01
+  name: vel.models.vision.mnist_cnn_01
   img_rows: 28
   img_cols: 28
   img_channels: 1
