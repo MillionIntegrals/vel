@@ -17,6 +17,7 @@ model:
   output_dim: 68 # Size of the alphabet + 1
   dropout: 0.5
 
+
 optimizer:
   name: vel.optimizers.adam
   lr: 1.0e-3

@@ -18,6 +18,7 @@ model:
   dropout: 0.5
   use_embedding: true
 
+
 optimizer:
   name: vel.optimizers.adam
   lr: 1.0e-3
