@@ -35,6 +35,7 @@ setup(
         'scikit-learn',
         'torch == 0.4.1',
         'torchvision',
+        'torchtext',
         'tqdm'
     ],
     extras_require={

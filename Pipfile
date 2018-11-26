@@ -21,6 +21,7 @@ visdom = "*"
 dnspython = "*"
 "box2d" = "*"
 cloudpickle = "*"
+torchtext = "*"
 
 [requires]
 python_version = "3.6"
