@@ -10,7 +10,7 @@ model:
 
 
 source:
-  name: vel.sources.classic.mnist
+  name: vel.sources.vision.mnist
   batch_size: 128
   normalize: False
   num_workers: 4

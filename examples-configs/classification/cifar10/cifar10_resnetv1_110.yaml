@@ -10,7 +10,7 @@ model:
   blocks: [18, 18, 18] # ResNet110
 
 source:
-  name: vel.sources.classic.cifar10
+  name: vel.sources.vision.cifar10
   batch_size: 128
 #  batch_size: 32
   num_workers: 4
