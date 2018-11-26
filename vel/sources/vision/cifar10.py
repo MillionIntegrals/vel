@@ -7,7 +7,7 @@ from vel.augmentations.to_tensor import ToTensor
 from vel.augmentations.to_array import ToArray
 
 
-def create(batch_size, model_config, normalize=True, num_workers=0, augmentations=None):
+def create(model_config, batch_size, normalize=True, num_workers=0, augmentations=None):
     """
     Create a CIFAR10 dataset, normalized.
     Augmentations are the same as in the literature benchmarking CIFAR performance.

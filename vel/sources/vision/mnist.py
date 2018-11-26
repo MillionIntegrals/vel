@@ -4,7 +4,7 @@ from torchvision import datasets, transforms
 from vel.api.base import TrainingData
 
 
-def create(batch_size, model_config, normalize=True, num_workers=0):
+def create(model_config, batch_size, normalize=True, num_workers=0):
     """ Create a MNIST dataset, normalized """
     path = model_config.data_dir('mnist')
 
