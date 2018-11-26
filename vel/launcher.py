@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 import argparse
 import multiprocessing
+import sys
 
 from vel.internals.model_config import ModelConfig
 from vel.internals.parser import Parser
@@ -33,6 +34,9 @@ def main():
         args.config, args.run_number, continue_training=getattr(args, 'continue'), device=args.device, seed=args.seed,
         params={k: v for (k, v) in (Parser.parse_equality(eq) for eq in args.param)}
     )
+
+    if model_config.project_dir not in sys.path:
+        sys.path.append(model_config.project_dir)
 
     multiprocessing_setting = model_config.provide_with_default('multiprocessing', default=None)
 

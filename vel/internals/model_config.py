@@ -89,7 +89,7 @@ class ModelConfig:
         self.seed = seed if seed is not None else (dtm.date.today().year + self.run_number)
 
         self.contents = configuration
-        self.project_dir = project_dir
+        self.project_dir = os.path.normpath(project_dir)
 
         self.command_descriptors = self.contents.get('commands', [])
 
