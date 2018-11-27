@@ -49,6 +49,6 @@ class AdamFactory(OptimizerFactory):
             )
 
 
-def create(lr, weight_decay=0, epsilon=1e-8, layer_groups=False):
+def create(lr, betas=(0.9, 0.999), weight_decay=0, epsilon=1e-8, layer_groups=False):
     """ Return an ADAM optimizer """
-    return AdamFactory(lr=lr, weight_decay=weight_decay, eps=epsilon, layer_groups=layer_groups)
+    return AdamFactory(lr=lr, betas=betas, weight_decay=weight_decay, eps=epsilon, layer_groups=layer_groups)

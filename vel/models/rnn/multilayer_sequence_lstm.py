@@ -4,32 +4,22 @@ import torch
 import torch.nn.functional as F
 import torch.nn as nn
 
-from vel.api.base import SupervisedModel, ModelFactory
-from vel.modules.layers import OneHotEncode
+from vel.api.base import SupervisedModel, ModelFactory, LinearBackboneModel
 
 
 class MultilayerSequenceLSTM(SupervisedModel):
-    """ Multilayer LSTM network for sequence modeling """
+    """ Multilayer LSTM network for sequence modeling (n:n) """
 
-    def __init__(self, alphabet_size: int, hidden_layers: typing.List[int], output_dim: int, use_embedding=False,
+    def __init__(self, input_block: LinearBackboneModel, hidden_layers: typing.List[int], output_dim: int,
                  dropout: float=0.0):
         super().__init__()
 
-        self.alphabet_size = alphabet_size
         self.output_dim = output_dim
         self.hidden_layers = hidden_layers
 
-        input_dim = hidden_layers[0] if hidden_layers else output_dim
+        self.input_block = input_block
 
-        if use_embedding:
-            self.input_layer = nn.Embedding(alphabet_size, input_dim)
-            current_dim = input_dim
-        else:
-            self.input_layer = nn.Sequential(
-                OneHotEncode(alphabet_size),
-                nn.Linear(alphabet_size, input_dim)
-            )
-            current_dim = input_dim
+        current_dim = self.input_block.output_dim
 
         self.lstm_layers = []
         self.dropout_layers = []
@@ -56,9 +46,12 @@ class MultilayerSequenceLSTM(SupervisedModel):
         self.output_layer = nn.Linear(current_dim, output_dim)
         self.output_activation = nn.LogSoftmax(dim=2)
 
+    def reset_weights(self):
+        self.input_block.reset_weights()
+
     def forward(self, sequence):
         """ Forward propagate batch of sequences through the network, without accounting for the state """
-        data = self.input_layer(sequence)
+        data = self.input_block(sequence)
 
         for idx in range(len(self.lstm_layers)):
             data, _ = self.lstm_layers[idx](data)
@@ -116,11 +109,11 @@ class MultilayerSequenceLSTM(SupervisedModel):
         return F.nll_loss(y_pred, y_true)
 
 
-def create(alphabet_size: int, hidden_layers: typing.List[int], output_dim: int, use_embedding=False, dropout=0.0):
+def create(input_block: LinearBackboneModel, hidden_layers: typing.List[int], output_dim: int, dropout=0.0):
     """ Vel creation function """
     def instantiate(**_):
         return MultilayerSequenceLSTM(
-            alphabet_size, hidden_layers, output_dim, use_embedding=use_embedding, dropout=dropout
+            input_block, hidden_layers, output_dim, dropout=dropout
         )
 
     return ModelFactory.generic(instantiate)

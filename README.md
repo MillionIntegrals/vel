@@ -85,6 +85,7 @@ that are ready to run and easy to modify for other similar usecases:
 
 - Character-level language models based on LSTM and GRU recurrent networks, with example trained on
   works of Shakespeare
+- Sentiment analysis of IMDB movie reviews
   
 # Implemented models - Reinforcement learning
 

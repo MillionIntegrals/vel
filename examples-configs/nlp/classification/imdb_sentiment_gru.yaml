@@ -1,0 +1,45 @@
+name: 'imdb_sentiment_gru'
+
+
+source:
+  name: vel.sources.nlp.imdb
+  vectors: "glove.6B.100d"  # precomputed 100-dimensional embeddings
+  batch_size: 32
+
+
+model:
+  name: vel.models.rnn.multilayer_sequence_classification_gru
+
+  input_block:
+    name: vel.modules.nlp.input.embedding
+    alphabet_size: 25_002  # Size of the alphabet
+
+    output_dim: 100 # Embedding dimension
+
+    pretrained: True
+#    frozen: True
+
+  rnn_layers: [256, 128]
+  rnn_dropout: 0.5
+  bidirectional: True
+
+  linear_layers: [64]
+  linear_dropout: 0.2
+
+  output_dim: 2 # Positive or negative sentiment
+
+
+optimizer:
+  name: vel.optimizers.adam
+  lr: [1.0e-4, 1.0e-3, 1.0e-2, 1.0e-2]
+  weight_decay: [0.0, 0.0001, 0.001, 0.001]
+  epsilon: 1.0e-5
+  betas: [0.7, 0.99]
+  layer_groups: true
+
+
+commands:
+  train:
+    name: vel.commands.train_command
+    max_grad_norm: 5.0
+    epochs: 10

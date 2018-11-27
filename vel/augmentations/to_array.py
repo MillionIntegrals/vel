@@ -4,7 +4,7 @@ import vel.api.data as data
 
 
 class ToArray(data.Augmentation):
-    """ Scales the image so that the smallest axis is of 'size'. """
+    """ Convert imate to an array of floats """
     def __init__(self, mode='x', tags=None):
         super().__init__(mode, tags)
 

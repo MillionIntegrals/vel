@@ -156,6 +156,12 @@ class ModelConfig:
         """ Return name of the model """
         return self._model_name
 
+    @property
+    def torch_device(self):
+        """ Return torch device object """
+        import torch
+        return torch.device(self.device)
+
     ####################################################################################################################
     # PROVIDER API
     def provide(self, name):
@@ -171,7 +177,7 @@ class ModelConfig:
     def banner(self, command_name) -> None:
         """ Print a banner for running the system """
         import torch
-        device = torch.device(self.device)
+        device = self.torch_device
         print("=" * 80)
         print(f"Pytorch version: {torch.__version__} cuda version {torch.version.cuda} cudnn version {torch.backends.cudnn.version()}")
         print("Running model {}, run {} -- command {} -- device {}".format(self._model_name, self.run_number, command_name, self.device))
