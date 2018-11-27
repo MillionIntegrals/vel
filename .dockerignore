@@ -2,9 +2,11 @@
 /.git
 /.idea
 /.ipynb_checkpoints
+/.vector_cache
 /data
 /dist
 /local-scripts
+/locally_excluded_files
 /notebooks
 /output
 /scripts
