@@ -279,3 +279,4 @@ For a more or less exhaustive bibliography please refer to [Bibliography](docs/B
 - https://github.com/rlworkgroup/garage
 - https://github.com/unixpickle/anyrl-py
 - https://github.com/zuoxingdong/lagom
+- https://github.com/inoryy/reaver-pysc2
