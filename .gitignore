@@ -113,3 +113,5 @@ ENV/
 # Env file
 environment.yaml
 
+# Word embedding cache
+/.vector_cache
