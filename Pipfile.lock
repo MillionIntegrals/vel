@@ -1,7 +1,7 @@
 {
     "_meta": {
         "hash": {
-            "sha256": "126665b6fc942588c5315dc0c01865f4af8db415b21d5fc6fec936b9b2f6039a"
+            "sha256": "17411e725109f5780316f35494ba324cb555d7a3c001d3d7918b2c2fd36f8be2"
         },
         "pipfile-spec": 6,
         "requires": {
@@ -803,18 +803,18 @@
         },
         "torch": {
             "hashes": [
-                "sha256:108aef4c2744724d19d76c2344108db6abb60e86cfc9e06eb3d46386ea3b6097",
-                "sha256:2acd73723a0f0bd0b8114531e78b7ad3c753a2f2c0047623043cba4dae08ae90",
-                "sha256:400f50a9551c5ed2fbea9bd199e14e2ec79964dd792053802b51269eec96320b",
-                "sha256:4bf7ffe72bf1af8305b6a3acbe246351f4e09a1c4d4de2364066064da56c869b",
-                "sha256:725ae85be70a569583863c263e281938b21e5e92d9a8f480094555b59a82936d",
-                "sha256:762eeb0ef4c6de1d9bf12616f362d979cabf1c2b988d5a90bb074adcdc30a079",
-                "sha256:7e3bac584473688720e26323bf209b97c015fc4e9a12a34962df3ff7ad0ce597",
-                "sha256:db668180b11144579d503041339025cc76a70bc0da877f2f91f386fe9229e292",
-                "sha256:e740fb4442ab0cf6a5e5c5279b6ad3cebdeb8f30ce1dabb293cf437178f12a78"
+                "sha256:012a9c7efce86c7a0ce78cd7945fe7c798049537fc3e85af9f14e8789d13c17f",
+                "sha256:4aadc7124afc431ac6a227a05dc8eff417b6fd8f90fc6c44d514ddfca9a6b474",
+                "sha256:53e12607830ccb1e5fc4076aafe19bdbbc380799793fbaad696714b72859bde6",
+                "sha256:7e73a141bf817c0a914131dec51ea24a2f1946b96749b003af664230a9b95197",
+                "sha256:cb92ac65fcc7685fa6c5920b24101182dcb706d841fc6154ada604f749b615e3",
+                "sha256:cedbc382a0e992a169c73d2c469887c2e5ce0c6fa88b1dabe8f9021e1acb564f",
+                "sha256:ded9e2e59c086127423c23e902e2bec42b3b443a0e458fae76c013f62a7e0748",
+                "sha256:df005dff3e3f12911630e48e0e75d3594a424a317d785b49426c23d0810a4682",
+                "sha256:f4196ce8ba17797f3c2d13c0d53cf461a8e32f6130a08e6e4ce917637afccdc6"
             ],
             "index": "pypi",
-            "version": "==0.4.1"
+            "version": "==1.0"
         },
         "torchfile": {
             "hashes": [
