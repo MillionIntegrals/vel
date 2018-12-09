@@ -29,6 +29,7 @@ class Provider:
         kwargs = {}
 
         for parameter_name, is_required in parameter_list:
+            # extra_env is a 'local' object data defined in-place
             if parameter_name in extra_env:
                 kwargs[parameter_name] = self.instantiate_from_data(extra_env[parameter_name])
                 continue
