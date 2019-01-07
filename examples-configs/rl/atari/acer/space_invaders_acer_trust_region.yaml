@@ -1,5 +1,6 @@
 name: 'spaceinvaders_acer'
 
+
 env:
   name: vel.rl.env.classic_atari
   game: 'SpaceInvadersNoFrameskip-v4'
@@ -11,10 +12,13 @@ vec_env:
 
 
 model:
-  name: vel.rl.models.q_policy_gradient_model
+  name: vel.rl.models.q_stochastic_policy_model
+
+  input_block:
+    name: vel.modules.input.image_to_tensor
+
   backbone:
     name: vel.rl.models.backbone.nature_cnn
-
     input_width: 84
     input_height: 84
     input_channels: 4  # The same as frame_history
@@ -24,13 +28,17 @@ reinforcer:
   name: vel.rl.reinforcers.buffered_mixed_policy_iteration_reinforcer
 
   env_roller:
-    name: vel.rl.env_roller.vec.replay_q_env_roller
-    buffer_capacity: 50_000
-    buffer_initial_size: 10_000
-    # Because env has a framestack already built-in, save memory by encoding only last frames in the replay buffer
-    frame_stack_compensation: 4
+    name: vel.rl.env_roller.trajectory_replay_env_roller
 
-    number_of_steps: 20 # How many environment steps go into a single batch
+    replay_buffer:
+      name: vel.rl.buffers.circular_replay_buffer
+
+      buffer_initial_size: 1_000 # How many samples we need in the buffer before we start using replay buffer
+      buffer_capacity: 50_000
+
+      # Because env has a framestack already built-in, save memory by encoding only last frames in the replay buffer
+      frame_stack_compensation: true
+      frame_history: 4  # How many stacked frames go into a single observation
 
   algo:
     name: vel.rl.algo.policy_gradient.acer
@@ -40,13 +48,13 @@ reinforcer:
     retrace_rho_cap: 1.0
 
     max_grad_norm: 10.0
+    discount_factor: 0.99
 
     trust_region: true
     trust_region_delta: 1.0
 
   parallel_envs: 12 # How many environments to run in parallel
-  discount_factor: 0.99
-
+  number_of_steps: 20 # How many environment steps go into a single batch
   experience_replay: 4
 
 
@@ -68,6 +76,8 @@ commands:
     name: vel.rl.commands.record_movie_command
     takes: 10
     videoname: 'spaceinvaders_vid_{:04}.avi'
-    frame_history: 4
-    sample_args:
-      argmax_sampling: true
+
+  evaluate:
+    name: vel.rl.commands.evaluate_env_command
+    takes: 100
+    parallel_envs: 12 # How many environments to run in parallel

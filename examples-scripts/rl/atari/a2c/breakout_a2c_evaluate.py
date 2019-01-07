@@ -2,12 +2,11 @@ import torch
 import pandas as pd
 import numpy as np
 
-from vel.rl.env.classic_atari import ClassicAtariEnv
-
-from vel.rl.models.policy_gradient_model import PolicyGradientModelFactory
-from vel.rl.models.backbone.nature_cnn import NatureCnnFactory
-
+from vel.modules.input.image_to_tensor import ImageToTensorFactory
 from vel.openai.baselines.common.atari_wrappers import FrameStack
+from vel.rl.env.classic_atari import ClassicAtariEnv
+from vel.rl.models.backbone.nature_cnn import NatureCnnFactory
+from vel.rl.models.stochastic_policy_model import StochasticPolicyModelFactory
 
 
 def breakout_a2c_evaluate(checkpoint_file_path, takes=10):
@@ -15,10 +14,11 @@ def breakout_a2c_evaluate(checkpoint_file_path, takes=10):
     device = torch.device('cuda:0')
 
     env = FrameStack(
-        ClassicAtariEnv('BreakoutNoFrameskip-v4').instantiate(preset='raw'), k=4
+        ClassicAtariEnv('BreakoutNoFrameskip-v4').instantiate(preset='record'), k=4
     )
 
-    model = PolicyGradientModelFactory(
+    model = StochasticPolicyModelFactory(
+        input_block=ImageToTensorFactory(),
         backbone=NatureCnnFactory(input_width=84, input_height=84, input_channels=4)
     ).instantiate(action_space=env.action_space)
 

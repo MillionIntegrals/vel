@@ -47,6 +47,7 @@ class ClassicCheckpointStrategy(CheckpointStrategy):
 
 
 def create(checkpoint_frequency=0, metric=None, metric_mode='min', store_best=False):
+    """ Vel factory function """
     return ClassicCheckpointStrategy(
         checkpoint_frequency=checkpoint_frequency,
         metric=metric,

@@ -23,6 +23,14 @@ class Rollout:
         """ A buffer of a given value in a 'flat' (minibatch-indexed) format """
         raise NotImplementedError
 
+    def has_tensor(self, name):
+        """ Return true if rollout contains tensor with given name """
+        raise NotImplementedError
+
+    def to_device(self, device):
+        """ Move a rollout to a selected device """
+        raise NotImplementedError
+
 
 class Transitions(Rollout):
     """
@@ -59,7 +67,7 @@ class Transitions(Rollout):
 
             for sub_indices in np.array_split(indices, batch_splits):
                 yield Transitions(
-                    len(sub_indices),
+                    size=len(sub_indices),
                     environment_information=None,
                     # Dont use it in batches for a moment, can be uncommented later if needed
                     # environment_information=[info[sub_indices.tolist()] for info in self.environment_information]
@@ -67,9 +75,22 @@ class Transitions(Rollout):
                     # extra_data does not go into batches
                 )
 
+    def has_tensor(self, name):
+        """ Return true if rollout contains tensor with given name """
+        return name in self.transition_tensors
+
     def batch_tensor(self, name):
         """ A buffer of a given value in a 'flat' (minibatch-indexed) format """
         return self.transition_tensors[name]
+
+    def to_device(self, device, non_blocking=True):
+        """ Move a rollout to a selected device """
+        return Transitions(
+            size=self.size,
+            environment_information=self.environment_information,
+            transition_tensors={k: v.to(device, non_blocking=non_blocking) for k, v in self.transition_tensors.items()},
+            extra_data=self.extra_data
+        )
 
 
 class Trajectories(Rollout):
@@ -92,7 +113,9 @@ class Trajectories(Rollout):
         # No need to propagate 'rollout_tensors' as they won't mean anything
         return Transitions(
             size=self.num_steps * self.num_envs,
-            environment_information=[ei for l in self.environment_information for ei in l],
+            environment_information=
+                [ei for l in self.environment_information for ei in l]
+                if self.environment_information is not None else None,
             transition_tensors={
                 name: tensor_util.merge_first_two_dims(t) for name, t in self.transition_tensors.items()
             },
@@ -130,6 +153,10 @@ class Trajectories(Rollout):
         else:
             return self.rollout_tensors[name]
 
+    def has_tensor(self, name):
+        """ Return true if rollout contains tensor with given name """
+        return (name in self.transition_tensors) or (name in self.rollout_tensors)
+
     def flatten_tensor(self, tensor):
         """ Merge first two dims of a tensor """
         return tensor_util.merge_first_two_dims(tensor)
@@ -143,3 +170,14 @@ class Trajectories(Rollout):
     def frames(self):
         """ Number of frames in rollout """
         return self.num_steps * self.num_envs
+
+    def to_device(self, device, non_blocking=True):
+        """ Move a rollout to a selected device """
+        return Trajectories(
+            num_steps=self.num_steps,
+            num_envs=self.num_envs,
+            environment_information=self.environment_information,
+            transition_tensors={k: v.to(device, non_blocking=non_blocking) for k, v in self.transition_tensors.items()},
+            rollout_tensors={k: v.to(device, non_blocking=non_blocking) for k, v in self.rollout_tensors.items()},
+            extra_data=self.extra_data
+        )

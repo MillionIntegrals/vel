@@ -65,7 +65,7 @@ class LrFindCommand:
 
     def run(self):
         """ Run the command with supplied configuration """
-        device = torch.device(self.model_config.device)
+        device = self.model_config.torch_device()
         learner = Learner(device, self.model.instantiate())
 
         lr_schedule = interp.interpolate_series(self.start_lr, self.end_lr, self.num_it, self.interpolation)
@@ -152,7 +152,7 @@ class LrFindCommand:
 
 def create(model_config, model, source, optimizer, start_lr=1e-5, end_lr=10, iterations=100, freeze=False,
            interpolation='logscale', stop_dv=True, divergence_threshold=4.0, metric='loss'):
-    """ Create a learning rate finder """
+    """ Vel factory function """
     return LrFindCommand(
         model_config=model_config,
         model=model,

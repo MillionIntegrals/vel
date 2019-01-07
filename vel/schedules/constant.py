@@ -1,4 +1,4 @@
-from vel.api.base import Schedule
+from vel.api import Schedule
 
 
 class ConstantSchedule(Schedule):
@@ -13,5 +13,5 @@ class ConstantSchedule(Schedule):
 
 
 def create(value):
-    """ Vel creation function """
+    """ Vel factory function """
     return ConstantSchedule(value)

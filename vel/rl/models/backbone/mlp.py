@@ -12,7 +12,7 @@ import torch.nn.init as init
 
 import vel.util.network as net_util
 
-from vel.api.base import LinearBackboneModel, ModelFactory
+from vel.api import LinearBackboneModel, ModelFactory
 
 
 class MLP(LinearBackboneModel):
@@ -58,6 +58,7 @@ class MLP(LinearBackboneModel):
 
 
 def create(input_length, hidden_layers, activation='tanh', normalization=None):
+    """ Vel factory function """
     def instantiate(**_):
         return MLP(
             input_length=input_length,

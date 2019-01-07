@@ -15,5 +15,5 @@ class Accuracy(AveragingSupervisedMetric):
 
 
 def create():
-    """ Create accuracy metric """
+    """ Vel factory function """
     return Accuracy()

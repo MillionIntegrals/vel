@@ -3,14 +3,16 @@ import torch
 import numbers
 
 from vel.api.metrics.averaging_metric import AveragingNamedMetric
-from vel.rl.api.base import OptimizerAlgoBase
 from vel.math.functions import explained_variance
+from vel.rl.api import OptimizerAlgoBase, Rollout, Trajectories
+from vel.rl.discount_bootstrap import discount_bootstrap_gae
 from vel.schedules.constant import ConstantSchedule
 
 
 class PpoPolicyGradient(OptimizerAlgoBase):
     """ Proximal Policy Optimization - https://arxiv.org/abs/1707.06347 """
-    def __init__(self, entropy_coefficient, value_coefficient, cliprange, max_grad_norm, normalize_advantage=True):
+    def __init__(self, entropy_coefficient, value_coefficient, cliprange, max_grad_norm, discount_factor: float,
+                 normalize_advantage: bool=True, gae_lambda: float=1.0):
         super().__init__(max_grad_norm)
 
         self.entropy_coefficient = entropy_coefficient
@@ -22,19 +24,43 @@ class PpoPolicyGradient(OptimizerAlgoBase):
         else:
             self.cliprange = cliprange
 
+        self.gae_lambda = gae_lambda
+        self.discount_factor = discount_factor
+
+    def process_rollout(self, batch_info, rollout: Rollout):
+        """ Process rollout for ALGO before any chunking/shuffling  """
+        assert isinstance(rollout, Trajectories), "PPO requires trajectory rollouts"
+
+        advantages = discount_bootstrap_gae(
+            rewards_buffer=rollout.transition_tensors['rewards'],
+            dones_buffer=rollout.transition_tensors['dones'],
+            values_buffer=rollout.transition_tensors['values'],
+            final_values=rollout.rollout_tensors['final_values'],
+            discount_factor=self.discount_factor,
+            gae_lambda=self.gae_lambda,
+            number_of_steps=rollout.num_steps
+        )
+
+        returns = advantages + rollout.transition_tensors['values']
+
+        rollout.transition_tensors['advantages'] = advantages
+        rollout.transition_tensors['returns'] = returns
+
+        return rollout
+
     def calculate_gradient(self, batch_info, device, model, rollout):
         """ Calculate loss of the supplied rollout """
         evaluator = model.evaluate(rollout)
 
         # Part 0.0 - Rollout values
-        advantages = evaluator.get('rollout:estimated_advantages')
-        rollout_values = evaluator.get('rollout:estimated_values')
+        advantages = evaluator.get('rollout:advantages')
+        rollout_values = evaluator.get('rollout:values')
         rollout_action_logprobs = evaluator.get('rollout:action:logprobs')
-        returns = evaluator.get('rollout:estimated_returns')
+        returns = evaluator.get('rollout:returns')
 
         # PART 0.1 - Model evaluation
         entropy = evaluator.get('model:entropy')
-        model_values = evaluator.get('model:estimated_values')
+        model_values = evaluator.get('model:values')
         model_action_logprobs = evaluator.get('model:action:logprobs')
 
         # Select the cliprange
@@ -96,7 +122,12 @@ class PpoPolicyGradient(OptimizerAlgoBase):
         ]
 
 
-def create(entropy_coefficient, value_coefficient, cliprange, max_grad_norm, normalize_advantage=True):
+def create(entropy_coefficient, value_coefficient, cliprange, max_grad_norm, discount_factor,
+           normalize_advantage=True, gae_lambda=1.0):
+    """ Vel factory function """
     return PpoPolicyGradient(
-        entropy_coefficient, value_coefficient, cliprange, max_grad_norm, normalize_advantage=normalize_advantage
+        entropy_coefficient, value_coefficient, cliprange, max_grad_norm,
+        discount_factor=discount_factor,
+        normalize_advantage=normalize_advantage,
+        gae_lambda=gae_lambda
     )

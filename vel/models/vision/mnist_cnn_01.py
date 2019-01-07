@@ -8,7 +8,7 @@ import torch.nn as nn
 import torch.nn.init as init
 import torch.nn.functional as F
 
-from vel.api.base import SupervisedModel, ModelFactory
+from vel.api import SupervisedModel, ModelFactory
 from vel.metrics.loss_metric import Loss
 from vel.metrics.accuracy import Accuracy
 
@@ -72,7 +72,7 @@ class Net(SupervisedModel):
 
 
 def create(img_rows, img_cols, img_channels, num_classes):
-    """ Create the model matching specified image dimensions """
+    """ Vel factory function """
     def instantiate(**_):
         return Net(img_rows, img_cols, img_channels, num_classes)
 

@@ -3,9 +3,8 @@ import numpy as np
 import torch
 import tqdm
 
-from vel.api import ModelConfig, TrainingInfo
-from vel.api.base import Storage, ModelFactory
-from vel.rl.api.base import VecEnvFactory
+from vel.api import ModelConfig, TrainingInfo, Storage, ModelFactory
+from vel.rl.api import VecEnvFactory
 
 
 class EvaluateEnvCommand:
@@ -73,6 +72,7 @@ class EvaluateEnvCommand:
 
 
 def create(model_config, model, vec_env, storage, takes, parallel_envs, sample_args=None):
+    """ Vel factory function """
     return EvaluateEnvCommand(
         model_config=model_config,
         model_factory=model,

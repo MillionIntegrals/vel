@@ -1,9 +1,7 @@
-import vel.api.base as base
-
-from vel.api import EpochInfo
+from vel.api import EpochInfo, Callback
 
 
-class StdoutStreaming(base.Callback):
+class StdoutStreaming(Callback):
     """ Stream results to stdout """
     def on_epoch_end(self, epoch_info: EpochInfo):
         if epoch_info.training_info.run_name:
@@ -41,5 +39,5 @@ class StdoutStreaming(base.Callback):
 
 
 def create():
-    """ Vel create function """
+    """ Vel factory function """
     return StdoutStreaming()

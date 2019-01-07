@@ -3,26 +3,24 @@ import typing
 import torch.autograd
 import torch.nn.functional as F
 
-from vel.rl.api.base import OptimizerAlgoBase
+from vel.rl.api import OptimizerAlgoBase
 from vel.api.metrics.averaging_metric import AveragingNamedMetric
 
 
 class DeepDeterministicPolicyGradient(OptimizerAlgoBase):
     """ Deep Deterministic Policy Gradient (DDPG) - policy gradient calculations """
 
-    def __init__(self, model_factory, tau: float, max_grad_norm: typing.Optional[float]=None):
+    def __init__(self, model_factory, discount_factor: float, tau: float, max_grad_norm: typing.Optional[float]=None):
         super().__init__(max_grad_norm)
 
         self.model_factory = model_factory
         self.tau = tau
+        self.discount_factor = discount_factor
 
-        self.discount_factor = None
         self.target_model = None
 
-    def initialize(self, settings, model, environment, device):
+    def initialize(self, model, environment, device):
         """ Initialize algo from reinforcer settings """
-        self.discount_factor = settings.discount_factor
-
         self.target_model = self.model_factory.instantiate(action_space=environment.action_space).to(device)
         self.target_model.load_state_dict(model.state_dict())
 
@@ -85,9 +83,11 @@ class DeepDeterministicPolicyGradient(OptimizerAlgoBase):
         ]
 
 
-def create(model, tau: float, max_grad_norm: float=None):
+def create(model, discount_factor: float, tau: float, max_grad_norm: float=None):
+    """ Vel factory function """
     return DeepDeterministicPolicyGradient(
         tau=tau,
+        discount_factor=discount_factor,
         model_factory=model,
         max_grad_norm=max_grad_norm
     )

@@ -7,9 +7,8 @@ import torch
 import tqdm
 import typing
 
-from vel.api import ModelConfig, TrainingInfo
-from vel.api.base import Storage, ModelFactory
-from vel.rl.api.base import VecEnvFactory
+from vel.api import ModelConfig, TrainingInfo, Storage, ModelFactory
+from vel.rl.api import VecEnvFactory
 
 
 class RecordMovieCommand:
@@ -92,6 +91,7 @@ class RecordMovieCommand:
 
 
 def create(model_config, model, vec_env, storage, takes, videoname, fps=30, sample_args=None):
+    """ Vel factory function """
     return RecordMovieCommand(
         model_config=model_config,
         model_factory=model,

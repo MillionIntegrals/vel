@@ -1,7 +1,6 @@
 import time
 
-from vel.api import BatchInfo, TrainingInfo
-from vel.api.base import Callback
+from vel.api import BatchInfo, TrainingInfo, Callback
 
 
 class TimeTracker(Callback):

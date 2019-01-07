@@ -1,10 +1,7 @@
-import vel.api.base as base
-
-from vel.api import TrainingInfo, EpochInfo
-from vel.api.base import Source
+from vel.api import TrainingInfo, EpochInfo, TrainPhase, Source
 
 
-class GenericPhase(base.TrainPhase):
+class GenericPhase(TrainPhase):
     """ Most generic phase of training """
 
     def __init__(self, lr, epochs, optimizer_factory):
@@ -45,7 +42,7 @@ class GenericPhase(base.TrainPhase):
 
 
 def create(lr, epochs, optimizer):
-    """ Vel creation function """
+    """ Vel factory function """
     return GenericPhase(
         lr=lr,
         epochs=epochs,

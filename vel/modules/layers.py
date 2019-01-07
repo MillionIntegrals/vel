@@ -39,15 +39,6 @@ class Flatten(nn.Module):
         return x.view(x.size(0), -1)
 
 
-class Identity(nn.Module):
-    """ Identity transformation that doesn't do anything """
-    def __init__(self):
-        super().__init__()
-
-    def forward(self, x):
-        return x
-
-
 class OneHotEncode(nn.Module):
     """ One-hot encoding layer """
     def __init__(self, num_classes):

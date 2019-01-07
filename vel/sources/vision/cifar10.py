@@ -1,6 +1,6 @@
 from torchvision import datasets
 
-from vel.api.base import TrainingData
+from vel.api import TrainingData
 
 from vel.augmentations.normalize import Normalize
 from vel.augmentations.to_tensor import ToTensor

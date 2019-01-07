@@ -2,7 +2,7 @@ import os.path
 
 import torchvision.datasets as ds
 
-from vel.api.base import TrainingData
+from vel.api import TrainingData
 
 
 class ImageDirSource(ds.ImageFolder):

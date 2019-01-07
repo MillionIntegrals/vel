@@ -2,6 +2,7 @@ import importlib
 import inspect
 
 from vel.internals.parser import Variable
+from vel.internals.generic_factory import GenericFactory
 
 
 class Provider:
@@ -20,8 +21,8 @@ class Provider:
         """ Inject an object into the provider """
         self.instances[name] = value
 
-    def resolve_and_call(self, func, extra_env=None):
-        """ Resolve function arguments and call them, possibily filling from the environment """
+    def resolve_parameters(self, func, extra_env=None):
+        """ Resolve parameter dictionary for the supplied function """
         parameter_list = [
             (k, v.default == inspect.Parameter.empty) for k, v in inspect.signature(func).parameters.items()
         ]
@@ -48,6 +49,11 @@ class Provider:
                     parameter_name, funcname
                 ))
 
+        return kwargs
+
+    def resolve_and_call(self, func, extra_env=None):
+        """ Resolve function arguments and call them, possibily filling from the environment """
+        kwargs = self.resolve_parameters(func, extra_env=extra_env)
         return func(**kwargs)
 
     def instantiate_from_data(self, object_data):
@@ -56,6 +62,11 @@ class Provider:
             name = object_data['name']
             module = importlib.import_module(name)
             return self.resolve_and_call(module.create, extra_env=object_data)
+        if isinstance(object_data, dict) and 'factory' in object_data:
+            factory = object_data['factory']
+            module = importlib.import_module(factory)
+            params = self.resolve_parameters(module.create, extra_env=object_data)
+            return GenericFactory(module.create, params)
         elif isinstance(object_data, dict):
             return {k: self.instantiate_from_data(v) for k, v in object_data.items()}
         elif isinstance(object_data, list):

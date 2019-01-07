@@ -6,7 +6,8 @@ import torch.nn.utils
 
 from vel.api.metrics.averaging_metric import AveragingNamedMetric
 from vel.math.functions import explained_variance
-from vel.rl.api.base import AlgoBase
+from vel.rl.api import AlgoBase, Rollout, Trajectories
+from vel.rl.discount_bootstrap import discount_bootstrap_gae
 
 
 def p2v(params):
@@ -50,15 +51,38 @@ class TrpoPolicyGradient(AlgoBase):
     """ Trust Region Policy Optimization - https://arxiv.org/abs/1502.05477 """
 
     def __init__(self, max_kl, cg_iters, line_search_iters, cg_damping, entropy_coef, vf_iters,
-                 improvement_acceptance_ratio, max_grad_norm):
+                 discount_factor, gae_lambda, improvement_acceptance_ratio, max_grad_norm):
         self.mak_kl = max_kl
         self.cg_iters = cg_iters
         self.line_search_iters = line_search_iters
         self.cg_damping = cg_damping
         self.entropy_coef = entropy_coef
         self.vf_iters = vf_iters
+        self.discount_factor = discount_factor
+        self.gae_lambda = gae_lambda
         self.improvement_acceptance_ratio = improvement_acceptance_ratio
         self.max_grad_norm = max_grad_norm
+
+    def process_rollout(self, batch_info, rollout: Rollout):
+        """ Process rollout for ALGO before any chunking/shuffling  """
+        assert isinstance(rollout, Trajectories), "TRPO requires trajectory rollouts"
+
+        advantages = discount_bootstrap_gae(
+            rewards_buffer=rollout.transition_tensors['rewards'],
+            dones_buffer=rollout.transition_tensors['dones'],
+            values_buffer=rollout.transition_tensors['values'],
+            final_values=rollout.rollout_tensors['final_values'],
+            discount_factor=self.discount_factor,
+            gae_lambda=self.gae_lambda,
+            number_of_steps=rollout.num_steps
+        )
+
+        returns = advantages + rollout.transition_tensors['values']
+
+        rollout.transition_tensors['advantages'] = advantages
+        rollout.transition_tensors['returns'] = returns
+
+        return rollout
 
     def optimizer_step(self, batch_info, device, model, rollout):
         """ Single optimization step for a model """
@@ -69,7 +93,7 @@ class TrpoPolicyGradient(AlgoBase):
         # As it would be more of a problem than actual benefit
 
         observations = rollout.batch_tensor('observations')
-        returns = rollout.batch_tensor('estimated_returns')
+        returns = rollout.batch_tensor('returns')
 
         # Evaluate model on the observations
         policy_params = model.policy(observations)
@@ -136,8 +160,8 @@ class TrpoPolicyGradient(AlgoBase):
             'kl_divergence_step': kl_divergence_step.item(),
             'policy_loss_improvement': policy_loss_improvement.item(),
             'grad_norm': gradient_norm,
-            'advantage_norm': torch.norm(rollout.batch_tensor('estimated_advantages')).item(),
-            'explained_variance': explained_variance(returns, rollout.batch_tensor('estimated_values'))
+            'advantage_norm': torch.norm(rollout.batch_tensor('advantages')).item(),
+            'explained_variance': explained_variance(returns, rollout.batch_tensor('values'))
         }
 
     def line_search(self, model, rollout, original_policy_loss, original_policy_params, original_parameter_vec,
@@ -207,7 +231,7 @@ class TrpoPolicyGradient(AlgoBase):
         - advantage * exp(fixed_neglogps - model_neglogps)
         """
         actions = rollout.batch_tensor('actions')
-        advantages = rollout.batch_tensor('estimated_advantages')
+        advantages = rollout.batch_tensor('advantages')
         fixed_logprobs = rollout.batch_tensor('action:logprobs')
 
         model_logprobs = model.logprob(actions, policy_params)
@@ -236,9 +260,13 @@ class TrpoPolicyGradient(AlgoBase):
         ]
 
 
-def create(max_kl, cg_iters, line_search_iters, cg_damping, entropy_coef, vf_iters, improvement_acceptance_ratio=0.1,
-           max_grad_norm=0.5):
+def create(max_kl, cg_iters, line_search_iters, cg_damping, entropy_coef, vf_iters, discount_factor,
+           gae_lambda=1.0, improvement_acceptance_ratio=0.1, max_grad_norm=0.5):
+    """ Vel factory function """
     return TrpoPolicyGradient(
-        max_kl, int(cg_iters), int(line_search_iters), cg_damping, entropy_coef, vf_iters, improvement_acceptance_ratio,
+        max_kl, int(cg_iters), int(line_search_iters), cg_damping, entropy_coef, vf_iters,
+        discount_factor=discount_factor,
+        gae_lambda=gae_lambda,
+        improvement_acceptance_ratio=improvement_acceptance_ratio,
         max_grad_norm=max_grad_norm
     )

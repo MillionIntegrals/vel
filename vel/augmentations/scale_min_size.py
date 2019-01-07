@@ -18,4 +18,5 @@ class ScaleMinSize(data.Augmentation):
 
 
 def create(size, mode='x', tags=None):
+    """ Vel factory function """
     return ScaleMinSize(size, mode, tags)

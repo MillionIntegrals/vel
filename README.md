@@ -1,4 +1,4 @@
-# Vel
+# Vel 0.3
 
 [![Build Status](https://travis-ci.org/MillionIntegrals/vel.svg?branch=master)](https://travis-ci.org/MillionIntegrals/vel)
 [![PyPI version](https://badge.fury.io/py/vel.svg)](https://badge.fury.io/py/vel)
@@ -147,15 +147,17 @@ from vel.util.random import set_seed
 from vel.rl.env.classic_atari import ClassicAtariEnv
 from vel.rl.vecenv.subproc import SubprocVecEnvWrapper
 
-from vel.rl.models.policy_gradient_model import PolicyGradientModelFactory
+from vel.modules.input.image_to_tensor import ImageToTensorFactory
+from vel.rl.models.stochastic_policy_model import StochasticPolicyModelFactory
 from vel.rl.models.backbone.nature_cnn import NatureCnnFactory
+
 
 from vel.rl.reinforcers.on_policy_iteration_reinforcer import (
     OnPolicyIterationReinforcer, OnPolicyIterationReinforcerSettings
 )
 
 from vel.rl.algo.policy_gradient.a2c import A2CPolicyGradient
-from vel.rl.env_roller.vec.step_env_roller import StepEnvRoller
+from vel.rl.env_roller.step_env_roller import StepEnvRoller
 
 from vel.api.info import TrainingInfo, EpochInfo
 
@@ -176,7 +178,8 @@ def breakout_a2c():
     # Again, use a helper to create a model
     # But because model is owned by the reinforcer, model should not be accessed using this variable
     # but from reinforcer.model property
-    model = PolicyGradientModelFactory(
+    model = StochasticPolicyModelFactory(
+        input_block=ImageToTensorFactory(),
         backbone=NatureCnnFactory(input_width=84, input_height=84, input_channels=4)
     ).instantiate(action_space=vec_env.action_space)
 
@@ -184,20 +187,19 @@ def breakout_a2c():
     reinforcer = OnPolicyIterationReinforcer(
         device=device,
         settings=OnPolicyIterationReinforcerSettings(
-            discount_factor=0.99,
-            batch_size=256
+            batch_size=256,
+            number_of_steps=5,
         ),
         model=model,
         algo=A2CPolicyGradient(
             entropy_coefficient=0.01,
             value_coefficient=0.5,
-            max_grad_norm=0.5
+            max_grad_norm=0.5,
+            discount_factor=0.99,
         ),
         env_roller=StepEnvRoller(
             environment=vec_env,
             device=device,
-            number_of_steps=5,
-            discount_factor=0.99,
         )
     )
 

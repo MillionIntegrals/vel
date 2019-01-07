@@ -20,5 +20,6 @@ class Normalize(data.Augmentation):
 
 
 def create(mean, std, mode='x', tags=None):
+    """ Vel factory function """
     return Normalize(mean=mean, std=std, mode=mode, tags=tags)
 

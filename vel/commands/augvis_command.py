@@ -1,7 +1,7 @@
 import matplotlib.pyplot as plt
 import numpy as np
 
-from vel.api.base import Source
+from vel.api import Source
 
 
 class AugmentationVisualizationCommand:
@@ -35,5 +35,5 @@ class AugmentationVisualizationCommand:
 
 
 def create(source, samples, cases):
-    """ Visualize augmentations in the source """
+    """ Vel factory function """
     return AugmentationVisualizationCommand(source, samples, cases)

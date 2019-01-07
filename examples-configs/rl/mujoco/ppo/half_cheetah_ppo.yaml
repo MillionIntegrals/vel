@@ -1,17 +1,22 @@
 name: 'half_cheetah_ppo'
 
+
 env:
   name: vel.rl.env.mujoco
   game: 'HalfCheetah-v2'
+  normalize_returns: true
 
 
 vec_env:
   name: vel.rl.vecenv.dummy
-  normalize: true  # Normalize observations
 
 
 model:
-  name: vel.rl.models.policy_gradient_model_separate
+  name: vel.rl.models.stochastic_policy_model_separate
+
+  input_block:
+    name: vel.modules.input.normalize_observations
+    input_shape: 17
 
   policy_backbone:
     name: vel.rl.models.backbone.mlp
@@ -38,17 +43,16 @@ reinforcer:
     cliprange: 0.2
 
     max_grad_norm: 0.5 # Gradient clipping parameter
+    discount_factor: 0.99 # Discount factor for the rewards
+    gae_lambda: 0.95 # Generalized Advantage Estimator Lambda parameter
 
   env_roller:
-    name: vel.rl.env_roller.vec.step_env_roller
-    gae_lambda: 0.95 # Generalized Advantage Estimator Lambda parameter
-    number_of_steps: 2048 # How many environment steps go into a single batch
+    name: vel.rl.env_roller.step_env_roller
 
   parallel_envs: 1 # How many environments to run in parallel
   batch_size: 64 # How many samples can go into the model in one batch
+  number_of_steps: 2048 # How many environment steps go into a single batch
   experience_replay: 10 # How many times to replay the experience
-
-  discount_factor: 0.99 # Discount factor for the rewards
 
 
 optimizer:
@@ -71,5 +75,3 @@ commands:
     name: vel.rl.commands.record_movie_command
     takes: 10
     videoname: 'half_cheetah_vid_{:04}.avi'
-    sample_args:
-      argmax_sampling: true

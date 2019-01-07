@@ -86,4 +86,5 @@ class RandomCrop(data.Augmentation):
 
 
 def create(width, height, padding=0, padding_mode='constant', mode='x', tags=None):
+    """ Vel factory function """
     return RandomCrop(size=(width, height), padding=padding, padding_mode=padding_mode, mode=mode, tags=tags)

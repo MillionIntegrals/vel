@@ -3,7 +3,7 @@ import os.path
 
 from gym.envs.registration import EnvSpec
 
-from vel.rl.api.base import EnvFactory
+from vel.rl.api import EnvFactory
 from vel.openai.baselines import logger
 from vel.openai.baselines.bench import Monitor
 from vel.rl.env.wrappers.env_normalize import EnvNormalize
@@ -16,7 +16,7 @@ DEFAULT_SETTINGS = {
         'normalize_observations': False,
         'normalize_returns': False,
     },
-    'raw': {
+    'record': {
         'monitor': False,
         'allow_early_resets': True,
         'normalize_observations': False,
@@ -52,11 +52,11 @@ def env_maker(environment_id, seed, serial_id, monitor=False, allow_early_resets
 
 class MujocoEnv(EnvFactory):
     """ Atari game environment wrapped in the same way as Deep Mind and OpenAI baselines """
-    def __init__(self, envname, env_settings=None, normalize_observations=False, normalize_returns=False):
+    def __init__(self, envname, presets=None, normalize_observations=False, normalize_returns=False):
         self.envname = envname
 
-        env_settings = env_settings if env_settings is not None else {}
-        env_keys = set(DEFAULT_SETTINGS.keys()).union(set(env_settings.keys()))
+        presets = presets if presets is not None else {}
+        env_keys = set(DEFAULT_SETTINGS.keys()).union(set(presets.keys()))
 
         self.presets = {}
 
@@ -69,8 +69,8 @@ class MujocoEnv(EnvFactory):
             if normalize_returns:
                 preset_settings['normalize_returns'] = True
 
-            if key in env_settings:
-                preset_settings.update(env_settings[key])
+            if key in presets:
+                preset_settings.update(presets[key])
 
             self.presets[key] = preset_settings
 
@@ -88,10 +88,10 @@ class MujocoEnv(EnvFactory):
         return env_maker(self.envname, seed, serial_id, **settings)
 
 
-def create(game, env_settings=None, normalize_observations=False, normalize_returns=False):
+def create(game, presets=None, normalize_returns=False):
+    """ Vel factory function """
     return MujocoEnv(
         envname=game,
-        env_settings=env_settings,
-        normalize_observations=normalize_observations,
+        presets=presets,
         normalize_returns=normalize_returns
     )

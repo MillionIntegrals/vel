@@ -2,8 +2,7 @@ import torch
 import torch.nn.functional as F
 
 from vel.api.metrics.averaging_metric import AveragingNamedMetric
-from vel.rl.api import Trajectories
-from vel.rl.api.base import OptimizerAlgoBase
+from vel.rl.api import Trajectories, OptimizerAlgoBase
 
 
 def select_indices(tensor, indices):
@@ -14,12 +13,12 @@ def select_indices(tensor, indices):
 class AcerPolicyGradient(OptimizerAlgoBase):
     """ Actor-Critic with Experience Replay - policy gradient calculations """
 
-    def __init__(self, model_factory, trust_region: bool=True, entropy_coefficient: float=0.01,
+    def __init__(self, model_factory, discount_factor, trust_region: bool=True, entropy_coefficient: float=0.01,
                  q_coefficient: float=0.5, rho_cap: float=10.0, retrace_rho_cap: float=1.0, max_grad_norm: float=None,
-                 average_model_alpha=0.99, trust_region_delta=1.0):
+                  average_model_alpha=0.99, trust_region_delta=1.0):
         super().__init__(max_grad_norm)
 
-        self.discount_factor = None
+        self.discount_factor = discount_factor
 
         self.trust_region = trust_region
         self.model_factory = model_factory
@@ -36,10 +35,8 @@ class AcerPolicyGradient(OptimizerAlgoBase):
         self.average_model_alpha = average_model_alpha
         self.trust_region_delta = trust_region_delta
 
-    def initialize(self, settings, model, environment, device):
+    def initialize(self, model, environment, device):
         """ Initialize policy gradient from reinforcer settings """
-        self.discount_factor = settings.discount_factor
-
         if self.trust_region:
             self.average_model = self.model_factory.instantiate(action_space=environment.action_space).to(device)
 
@@ -98,7 +95,7 @@ class AcerPolicyGradient(OptimizerAlgoBase):
                 action_q.reshape(trajectory_rewards.size()),
                 model_state_values.reshape(trajectory_rewards.size()),
                 actions_rho.reshape(trajectory_rewards.size()),
-                rollout.rollout_tensors['final_estimated_values']
+                rollout.rollout_tensors['final_values']
             ).flatten()
 
             advantages = q_retraced - model_state_values
@@ -211,8 +208,9 @@ class AcerPolicyGradient(OptimizerAlgoBase):
         ]
 
 
-def create(model, trust_region, entropy_coefficient, q_coefficient, max_grad_norm, rho_cap=10.0, retrace_rho_cap=1.0,
-           average_model_alpha=0.99, trust_region_delta=1.0):
+def create(model, trust_region, entropy_coefficient, q_coefficient, max_grad_norm, discount_factor,
+           rho_cap=10.0, retrace_rho_cap=1.0, average_model_alpha=0.99, trust_region_delta=1.0):
+    """ Vel factory function """
     return AcerPolicyGradient(
         trust_region=trust_region,
         model_factory=model,
@@ -221,6 +219,7 @@ def create(model, trust_region, entropy_coefficient, q_coefficient, max_grad_nor
         rho_cap=rho_cap,
         retrace_rho_cap=retrace_rho_cap,
         max_grad_norm=max_grad_norm,
+        discount_factor=discount_factor,
         average_model_alpha=average_model_alpha,
         trust_region_delta=trust_region_delta
     )

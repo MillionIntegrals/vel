@@ -1,7 +1,7 @@
-import vel.api.base as base
+import vel.api as api
 
 
-class UnfreezePhase(base.EmptyTrainPhase):
+class UnfreezePhase(api.EmptyTrainPhase):
     """ Freeze the model """
 
     def set_up_phase(self, training_info, model, source):
@@ -10,5 +10,5 @@ class UnfreezePhase(base.EmptyTrainPhase):
 
 
 def create():
-    """ Vel creation function """
+    """ Vel factory function """
     return UnfreezePhase()

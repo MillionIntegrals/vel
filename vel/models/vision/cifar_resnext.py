@@ -6,7 +6,7 @@ https://github.com/fastai/fastai/blob/master/fastai/models/cifar10/resnext.py
 import torch.nn as nn
 import torch.nn.functional as F
 
-from vel.api.base import SupervisedModel, ModelFactory
+from vel.api import SupervisedModel, ModelFactory
 from vel.modules.resnext import ResNeXtBottleneck
 
 
@@ -87,9 +87,7 @@ class ResNeXt(SupervisedModel):
 
 
 def create(blocks, mode='basic', inplanes=64, cardinality=4, image_features=64, divisor=4, num_classes=1000):
-    """
-    Create a ResNetV1 model
-    """
+    """ Vel factory function """
     block_dict = {
         # 'basic': BasicBlock,
         'bottleneck': ResNeXtBottleneck

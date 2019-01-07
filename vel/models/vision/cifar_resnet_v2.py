@@ -6,7 +6,7 @@ https://github.com/pytorch/vision/blob/master/torchvision/models/resnet.py
 import torch.nn as nn
 import torch.nn.functional as F
 
-from vel.api.base import SupervisedModel, ModelFactory
+from vel.api import SupervisedModel, ModelFactory
 from vel.modules.resnet_v2 import Bottleneck, BasicBlock
 
 
@@ -88,9 +88,7 @@ class ResNetV2(SupervisedModel):
 
 
 def create(blocks, mode='basic', inplanes=16, divisor=4, num_classes=1000):
-    """
-    Create a ResNetV1 model
-    """
+    """ Vel factory function """
     block_dict = {
         'basic': BasicBlock,
         'bottleneck': Bottleneck

@@ -4,8 +4,7 @@ import re
 import torch
 
 
-from vel.api import ModelConfig, EpochInfo, TrainingInfo
-from vel.api.base import Model, Storage
+from vel.api import ModelConfig, EpochInfo, TrainingInfo, Model, Storage
 from .strategy.checkpoint_strategy import CheckpointStrategy
 
 
@@ -160,7 +159,7 @@ class ClassicStorage(Storage):
 
 
 def create(model_config, backend, checkpoint_strategy, streaming=None):
-    """ Vel creation function """
+    """ Vel factory function """
     return ClassicStorage(
         model_config=model_config,
         backend=backend,

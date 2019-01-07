@@ -25,4 +25,5 @@ class RandomRotate(data.Augmentation):
 
 
 def create(deg, p=0.75, mode='x', tags=None):
+    """ Vel factory function """
     return RandomRotate(deg, p, mode, tags)

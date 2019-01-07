@@ -4,9 +4,8 @@ import sys
 import torch
 import tqdm
 
-from vel.api.base import Model, ModelFactory
-from vel.api.info import EpochInfo, BatchInfo
-from vel.rl.api.base import ReinforcerBase, ReinforcerFactory, VecEnvFactory, EnvRollerFactory, EnvRollerBase, AlgoBase
+from vel.api import Model, ModelFactory, EpochInfo, BatchInfo
+from vel.rl.api import ReinforcerBase, ReinforcerFactory, VecEnvFactory, EnvRollerFactoryBase, EnvRollerBase, AlgoBase
 from vel.rl.metrics import (
     FPSMetric, EpisodeLengthMetric, EpisodeRewardMetricQuantile,
     EpisodeRewardMetric, FramesMetric
@@ -16,7 +15,7 @@ from vel.rl.metrics import (
 @attr.s(auto_attribs=True)
 class OnPolicyIterationReinforcerSettings:
     """ Settings dataclass for a policy gradient reinforcer """
-    discount_factor: float
+    number_of_steps: int
 
     batch_size: int = 256
     experience_replay: int = 1
@@ -65,7 +64,7 @@ class OnPolicyIterationReinforcer(ReinforcerBase):
         """ Prepare models for training """
         self.model.reset_weights()
         self.algo.initialize(
-            self.settings, model=self.model, environment=self.env_roller.environment, device=self.device
+            model=self.model, environment=self.env_roller.environment, device=self.device
         )
 
     def train_epoch(self, epoch_info: EpochInfo, interactive=True) -> None:
@@ -99,7 +98,10 @@ class OnPolicyIterationReinforcer(ReinforcerBase):
         # Calculate environment rollout on the evaluation version of the model
         self.model.eval()
 
-        rollout = self.env_roller.rollout(batch_info, self.model)
+        rollout = self.env_roller.rollout(batch_info, self.model, self.settings.number_of_steps)
+
+        # Process rollout by the 'algo' (e.g. perform the advantage estimation)
+        rollout = self.algo.process_rollout(batch_info, rollout)
 
         # Perform the training step
         self.model.train()
@@ -124,7 +126,7 @@ class OnPolicyIterationReinforcer(ReinforcerBase):
                     batch_info=batch_info,
                     device=self.device,
                     model=self.model,
-                    rollout=rollout
+                    rollout=rollout.to_device(self.device)
                 )
 
                 batch_info['sub_batch_data'].append(batch_result)
@@ -135,7 +137,7 @@ class OnPolicyIterationReinforcer(ReinforcerBase):
                         batch_info=batch_info,
                         device=self.device,
                         model=self.model,
-                        rollout=batch_rollout
+                        rollout=batch_rollout.to_device(self.device)
                     )
 
                     batch_info['sub_batch_data'].append(batch_result)
@@ -150,7 +152,7 @@ class OnPolicyIterationReinforcer(ReinforcerBase):
 class OnPolicyIterationReinforcerFactory(ReinforcerFactory):
     """ Vel factory class for the PolicyGradientReinforcer """
     def __init__(self, settings, parallel_envs: int, env_factory: VecEnvFactory, model_factory: ModelFactory,
-                 algo: AlgoBase, env_roller_factory: EnvRollerFactory, seed: int):
+                 algo: AlgoBase, env_roller_factory: EnvRollerFactoryBase, seed: int):
         self.settings = settings
         self.parallel_envs = parallel_envs
 
@@ -162,17 +164,17 @@ class OnPolicyIterationReinforcerFactory(ReinforcerFactory):
 
     def instantiate(self, device: torch.device) -> ReinforcerBase:
         env = self.env_factory.instantiate(parallel_envs=self.parallel_envs, seed=self.seed)
+        env_roller = self.env_roller_factory.instantiate(environment=env, device=device)
         model = self.model_factory.instantiate(action_space=env.action_space)
-        env_roller = self.env_roller_factory.instantiate(environment=env, device=device, settings=self.settings)
 
         return OnPolicyIterationReinforcer(device, self.settings, model, self.algo, env_roller)
 
 
-def create(model_config, model, vec_env, algo, env_roller, parallel_envs, discount_factor,
+def create(model_config, model, vec_env, algo, env_roller, parallel_envs, number_of_steps,
            batch_size=256, experience_replay=1, stochastic_experience_replay=False, shuffle_transitions=True):
-    """ Create a policy gradient reinforcer - factory """
+    """ Vel factory function """
     settings = OnPolicyIterationReinforcerSettings(
-        discount_factor=discount_factor,
+        number_of_steps=number_of_steps,
         batch_size=batch_size,
         experience_replay=experience_replay,
         stochastic_experience_replay=stochastic_experience_replay,

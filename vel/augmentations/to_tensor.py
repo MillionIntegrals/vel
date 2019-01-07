@@ -22,4 +22,5 @@ class ToTensor(data.Augmentation):
 
 
 def create(mode='x', tags=None):
+    """ Vel factory function """
     return ToTensor(mode, tags)

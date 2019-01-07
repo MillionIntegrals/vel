@@ -1,4 +1,4 @@
-import vel.api.base as base
+import vel.api as base
 
 from vel.api import BatchInfo, TrainingInfo
 
@@ -30,6 +30,7 @@ class LinearBatchScalerFactory(base.SchedulerFactory):
 
 
 def create():
+    """ Vel factory function """
     return LinearBatchScalerFactory()
 
 

@@ -1,12 +1,11 @@
 import numpy as np
 
-import vel.api.base as base
 import vel.util.intepolate as interp
 
-from vel.api import BatchInfo, EpochInfo, TrainingInfo
+from vel.api import BatchInfo, EpochInfo, TrainingInfo, Callback, TrainPhase
 
 
-class CycleCallback(base.Callback):
+class CycleCallback(Callback):
     """ A callback that manages setting the proper learning rate """
 
     def __init__(self, optimizer, max_lr, min_lr, cycles, cycle_len=1, cycle_mult=1, init_iter=0, init_lr=0,
@@ -83,7 +82,7 @@ class CycleCallback(base.Callback):
                 param_group['lr'] = lr
 
 
-class CyclePhase(base.TrainPhase):
+class CyclePhase(TrainPhase):
     """ Most generic phase of training """
 
     def __init__(self, optimizer_factory, max_lr, min_lr, cycles, cycle_len=1, cycle_mult=1, interpolate='linear',
@@ -150,7 +149,7 @@ class CyclePhase(base.TrainPhase):
 
 
 def create(optimizer, max_lr, min_lr, cycles, cycle_len=1, cycle_mult=1, interpolate='linear', init_lr=0, init_iter=0):
-    """ Vel creation function """
+    """ Vel factory function """
     return CyclePhase(
         max_lr=max_lr,
         min_lr=min_lr,

@@ -1,4 +1,4 @@
-from vel.api.base import RnnLinearBackboneModel, ModelFactory
+from vel.api import RnnLinearBackboneModel, ModelFactory
 
 
 class LstmBackbone(RnnLinearBackboneModel):
@@ -13,8 +13,8 @@ class LstmBackbone(RnnLinearBackboneModel):
         self.hidden_units = hidden_units
 
     def forward(self, input_data, masks, state):
-        pass
+        raise NotImplementedError
 
     def initial_state(self):
         """ Initial state of the network """
-        pass
+        raise NotImplementedError

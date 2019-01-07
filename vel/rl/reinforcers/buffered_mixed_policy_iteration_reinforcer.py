@@ -4,21 +4,20 @@ import sys
 import torch
 import tqdm
 
-from vel.api import EpochInfo, BatchInfo
-from vel.api.base import Model, ModelFactory
+from vel.api import EpochInfo, BatchInfo, Model, ModelFactory
 from vel.openai.baselines.common.vec_env import VecEnv
-from vel.rl.api.base import ReinforcerBase, ReinforcerFactory, VecEnvFactory, ReplayEnvRollerBase, AlgoBase
-from vel.rl.api.base.env_roller import ReplayEnvRollerFactory
+from vel.rl.api import (
+    ReinforcerBase, ReinforcerFactory, VecEnvFactory, ReplayEnvRollerBase, AlgoBase, ReplayEnvRollerFactoryBase
+)
 from vel.rl.metrics import (
-    FPSMetric, EpisodeLengthMetric, EpisodeRewardMetricQuantile,
-    EpisodeRewardMetric, FramesMetric
+    FPSMetric, EpisodeLengthMetric, EpisodeRewardMetricQuantile, EpisodeRewardMetric, FramesMetric
 )
 
 
 @attr.s(auto_attribs=True)
 class BufferedMixedPolicyIterationReinforcerSettings:
     """ Settings dataclass for a policy gradient reinforcer """
-    discount_factor: float
+    number_of_steps: int
     experience_replay: int = 1
     stochastic_experience_replay: bool = True
 
@@ -65,7 +64,7 @@ class BufferedMixedPolicyIterationReinforcer(ReinforcerBase):
     def initialize_training(self, training_info):
         """ Prepare models for training """
         self.model.reset_weights()
-        self.algo.initialize(self.settings, model=self.model, environment=self.environment, device=self.device)
+        self.algo.initialize(model=self.model, environment=self.environment, device=self.device)
 
     def train_epoch(self, epoch_info: EpochInfo, interactive=True):
         """ Train model on an epoch of a fixed number of batch updates """
@@ -108,7 +107,7 @@ class BufferedMixedPolicyIterationReinforcer(ReinforcerBase):
         """ Perform an 'on-policy' training step of evaluating an env and a single backpropagation step """
         self.model.eval()
 
-        rollout = self.env_roller.rollout(batch_info, self.model)
+        rollout = self.env_roller.rollout(batch_info, self.model, self.settings.number_of_steps).to_device(self.device)
 
         self.model.train()
 
@@ -127,7 +126,7 @@ class BufferedMixedPolicyIterationReinforcer(ReinforcerBase):
         """ Perform an 'off-policy' training step of sampling the replay buffer and gradient descent """
         self.model.eval()
 
-        rollout = self.env_roller.sample(batch_info, self.model)
+        rollout = self.env_roller.sample(batch_info, self.model, self.settings.number_of_steps).to_device(self.device)
 
         self.model.train()
 
@@ -144,7 +143,7 @@ class BufferedMixedPolicyIterationReinforcer(ReinforcerBase):
 class BufferedMixedPolicyIterationReinforcerFactory(ReinforcerFactory):
     """ Factory class for the PolicyGradientReplayBuffer factory """
     def __init__(self, settings, env_factory: VecEnvFactory, model_factory: ModelFactory,
-                 env_roller_factory: ReplayEnvRollerFactory, algo: AlgoBase, parallel_envs: int, seed: int):
+                 env_roller_factory: ReplayEnvRollerFactoryBase, algo: AlgoBase, parallel_envs: int, seed: int):
         self.settings = settings
 
         self.model_factory = model_factory
@@ -157,19 +156,19 @@ class BufferedMixedPolicyIterationReinforcerFactory(ReinforcerFactory):
     def instantiate(self, device: torch.device) -> ReinforcerBase:
         env = self.env_factory.instantiate(parallel_envs=self.parallel_envs, seed=self.seed)
         model = self.model_factory.instantiate(action_space=env.action_space)
-        env_roller = self.env_roller_factory.instantiate(env, device, self.settings)
+        env_roller = self.env_roller_factory.instantiate(env, device)
 
         return BufferedMixedPolicyIterationReinforcer(device, self.settings, env, model, env_roller, self.algo)
 
 
 def create(model_config, model, vec_env, algo, env_roller,
-           parallel_envs, discount_factor,
+           parallel_envs, number_of_steps,
            experience_replay=1, stochastic_experience_replay=True):
-    """ Create a policy gradient reinforcer - factory """
+    """ Vel factory function """
     settings = BufferedMixedPolicyIterationReinforcerSettings(
-        discount_factor=discount_factor,
         experience_replay=experience_replay,
-        stochastic_experience_replay=stochastic_experience_replay
+        stochastic_experience_replay=stochastic_experience_replay,
+        number_of_steps=number_of_steps
     )
 
     return BufferedMixedPolicyIterationReinforcerFactory(

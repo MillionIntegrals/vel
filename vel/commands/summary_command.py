@@ -1,4 +1,4 @@
-from vel.api.base import Source
+from vel.api import Source
 
 
 class ModelSummary:
@@ -17,5 +17,5 @@ class ModelSummary:
 
 
 def create(model, source=None):
-    """ Vel creation function """
+    """ Vel factory function """
     return ModelSummary(model, source)

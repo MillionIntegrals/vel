@@ -6,7 +6,7 @@ import urllib3
 
 import torch
 
-from vel.api.base import Source
+from vel.api import Source
 
 
 class TextIterator:
@@ -187,7 +187,7 @@ class TextUrlSource(Source):
 
 
 def create(model_config, url, local_dir, sequence_length=64, batch_size=64, train_val_split=0.8):
-    """ Vel creation function """
+    """ Vel factory function """
     if not os.path.isabs(local_dir):
         local_dir = model_config.project_data_dir(local_dir)
 

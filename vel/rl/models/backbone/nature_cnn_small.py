@@ -6,18 +6,20 @@ Under MIT license.
 """
 import numpy as np
 
-import torch
 import torch.nn as nn
 import torch.nn.init as init
 import torch.nn.functional as F
 
 import vel.util.network as net_util
 
-from vel.api.base import LinearBackboneModel, ModelFactory
+from vel.api import LinearBackboneModel, ModelFactory
 
 
 class NatureCnnSmall(LinearBackboneModel):
-    """ Neural network as defined in the paper 'Human-level control through deep reinforcement learning'"""
+    """
+    Neural network as defined in the paper 'Human-level control through deep reinforcement learning'
+    Smaller version.
+    """
     def __init__(self, input_width, input_height, input_channels, output_dim=128):
         super().__init__()
 
@@ -69,7 +71,7 @@ class NatureCnnSmall(LinearBackboneModel):
                 init.constant_(m.bias, 0.0)
 
     def forward(self, image):
-        result = image.permute(0, 3, 1, 2).contiguous().type(torch.float) / 255.0
+        result = image
         result = F.relu(self.conv1(result))
         result = F.relu(self.conv2(result))
         flattened = result.view(result.size(0), -1)
@@ -77,6 +79,7 @@ class NatureCnnSmall(LinearBackboneModel):
 
 
 def create(input_width, input_height, input_channels=1):
+    """ Vel factory function """
     def instantiate(**_):
         return NatureCnnSmall(input_width=input_width, input_height=input_height, input_channels=input_channels)
 

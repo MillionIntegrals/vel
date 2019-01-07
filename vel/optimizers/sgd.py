@@ -2,7 +2,7 @@ import torch.optim
 
 import vel.util.module_util as mu
 
-from vel.api.base import OptimizerFactory, Model
+from vel.api import OptimizerFactory, Model
 
 
 class SgdFactory(OptimizerFactory):
@@ -30,5 +30,5 @@ class SgdFactory(OptimizerFactory):
 
 
 def create(lr, weight_decay=0, momentum=0, layer_groups=False):
-    """ Return an SGD optimizer """
+    """ Vel factory function """
     return SgdFactory(lr=lr, weight_decay=weight_decay, momentum=momentum, layer_groups=layer_groups)

@@ -11,7 +11,7 @@ from vel.openai.baselines.common.atari_wrappers import (
     ScaledFloatFrame, FrameStack, FireEpisodicLifeEnv
 )
 
-from vel.rl.api.base import EnvFactory
+from vel.rl.api import EnvFactory
 from vel.rl.env.wrappers.clip_episode_length import ClipEpisodeLengthWrapper
 
 
@@ -25,7 +25,7 @@ DEFAULT_SETTINGS = {
         'max_episode_frames': 10000,
         'frame_stack': None
     },
-    'raw': {
+    'record': {
         'disable_reward_clipping': False,
         'disable_episodic_life': True,
         'monitor': False,
@@ -99,16 +99,16 @@ def wrapped_env_maker(environment_id, seed, serial_id, disable_reward_clipping=F
 
 class ClassicAtariEnv(EnvFactory):
     """ Atari game environment wrapped in the same way as Deep Mind and OpenAI baselines """
-    def __init__(self, envname, env_settings=None):
+    def __init__(self, envname, presets=None):
         self.envname = envname
 
-        env_settings = env_settings if env_settings is not None else {}
-        env_keys = set(DEFAULT_SETTINGS.keys()).union(set(env_settings.keys()))
+        presets = presets if presets is not None else {}
+        env_keys = set(DEFAULT_SETTINGS.keys()).union(set(presets.keys()))
 
         self.presets = {}
 
         for key in env_keys:
-            self.presets[key] = env_settings.get(key, {})
+            self.presets[key] = presets.get(key, {})
 
     def specification(self) -> EnvSpec:
         """ Return environment specification """
@@ -132,5 +132,6 @@ class ClassicAtariEnv(EnvFactory):
         return wrapped_env_maker(self.envname, seed, serial_id, **settings)
 
 
-def create(game, env_settings=None):
-    return ClassicAtariEnv(game, env_settings)
+def create(game, presets=None):
+    """ Vel factory function """
+    return ClassicAtariEnv(game, presets)

@@ -7,8 +7,16 @@ env:
 #  normalize_observations: true
 
 
+vec_env:
+  name: vel.rl.vecenv.dummy
+
+
 model:
   name: vel.rl.models.deterministic_policy_model
+
+  input_block:
+    name: vel.modules.input.normalize_observations
+    input_shape: 17
 
   policy_backbone:
     name: vel.rl.models.backbone.mlp
@@ -26,28 +34,34 @@ model:
 
 
 reinforcer:
-  name: vel.rl.reinforcers.buffered_single_off_policy_iteration_reinforcer
+  name: vel.rl.reinforcers.buffered_off_policy_iteration_reinforcer
+
+  env_roller:
+    name: vel.rl.env_roller.transition_replay_env_roller
+
+    replay_buffer:
+      name: vel.rl.buffers.circular_replay_buffer
+
+      buffer_capacity: 1_000_000
+      buffer_initial_size: 2_000
+
+    normalize_returns: true
+    discount_factor: 0.99
+
+    action_noise:
+      name: vel.rl.modules.noise.ou_noise
+      std_dev: 0.2
 
   algo:
     name: vel.rl.algo.policy_gradient.ddpg
 
     tau: 0.01
+    discount_factor: 0.99
 
-  env_roller:
-    name: vel.rl.env_roller.single.deque_replay_roller_ou_noise
+  rollout_steps: 2
+  training_steps: 64
 
-    noise_std_dev: 0.2
-
-    buffer_capacity: 1_000_000
-    buffer_initial_size: 2_000
-
-    normalize_observations: true
-    normalize_returns: true
-
-  batch_size: 64
-  discount_factor: 0.99
-  batch_rollout_rounds: 100
-  batch_training_rounds: 50
+  parallel_envs: 1
 
 
 optimizer:
@@ -64,13 +78,16 @@ commands:
   train:
     name: vel.rl.commands.rl_train_command
     total_frames: 1.0e6
-    batches_per_epoch: 20
+    batches_per_epoch: 1000
 
-    openai_logging: true
+#    openai_logging: true
 
   record:
     name: vel.rl.commands.record_movie_command
     takes: 10
     videoname: 'half_cheetah_vid_{:04}.avi'
-    sample_args:
-      argmax_sampling: true
+
+  evaluate:
+    name: vel.rl.commands.evaluate_env_command
+    takes: 100
+    frame_history: 4

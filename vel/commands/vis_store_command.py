@@ -22,4 +22,5 @@ class VisdomCommand:
 
 
 def create(model_config, storage, visdom_settings):
+    """ Vel factory function """
     return VisdomCommand(model_config, storage, VisdomSettings(**visdom_settings))

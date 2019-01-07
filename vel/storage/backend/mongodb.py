@@ -46,6 +46,6 @@ class MongoDbBackend:
 
 
 def create(model_config, uri, database):
-    """ Create a mongodb storage object """
+    """ Vel factory function """
     return MongoDbBackend(model_config, uri, database)
 

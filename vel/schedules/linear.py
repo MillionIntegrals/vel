@@ -1,6 +1,6 @@
 import vel.util.intepolate as interpolate
 
-from vel.api.base import Schedule
+from vel.api import Schedule
 
 
 class LinearSchedule(Schedule):
@@ -16,6 +16,6 @@ class LinearSchedule(Schedule):
 
 
 def create(initial_value, final_value):
-    """ Vel creation function """
+    """ Vel factory function """
     return LinearSchedule(initial_value, final_value)
 

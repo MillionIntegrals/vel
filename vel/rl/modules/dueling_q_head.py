@@ -32,5 +32,5 @@ class DuelingQHead(nn.Module):
         return (adv - adv.mean(dim=1, keepdim=True)) + value
 
     def sample(self, q_values):
-        """ Sample from epsilon-greedy strategy with given q-values """
+        """ Sample from greedy strategy with given q-values """
         return q_values.argmax(dim=1)

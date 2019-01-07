@@ -2,17 +2,16 @@ import visdom
 import pandas as pd
 
 
-import vel.api.base as base
-
-from vel.api import ModelConfig
+from vel.api import ModelConfig, Callback
 from vel.util.visdom import visdom_append_metrics, VisdomSettings
 
 
-class VisdomStreaming(base.Callback):
+class VisdomStreaming(Callback):
     """ Stream live results to visdom from training """
     def __init__(self, model_config: ModelConfig, visdom_settings: VisdomSettings):
         self.model_config = model_config
         self.settings = visdom_settings
+
         self.vis = visdom.Visdom(
             server=visdom_settings.server,
             endpoint=visdom_settings.endpoint,
@@ -50,4 +49,5 @@ class VisdomStreaming(base.Callback):
 
 
 def create(model_config, visdom_settings):
+    """ Vel factory function """
     return VisdomStreaming(model_config, VisdomSettings(**visdom_settings))

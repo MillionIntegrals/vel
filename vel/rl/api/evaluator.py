@@ -27,7 +27,7 @@ class Evaluator(metaclass=EvaluatorMeta):
 
     - rollout:estimated_returns
         - Bootstrapped return (sum of discounted future rewards) estimated using returns and value estimates
-    - rollout:estimated_values
+    - rollout:values
         - Value estimates from the model that was used to generate the rollout
     - rollout:estimated_advantages
         - Advantage of a rollout (state, action) pair by the model that was used to generate the rollout
@@ -42,7 +42,7 @@ class Evaluator(metaclass=EvaluatorMeta):
         - Whether given observation is last in a trajectory
     - rollout:dones
         - Raw rewards received from the environment in this learning process
-    - rollout:final_estimated_values
+    - rollout:final_values
         - Value estimates for observation after final observation in the rollout
     - rollout:observations
         - Observations of the rollout
@@ -50,6 +50,9 @@ class Evaluator(metaclass=EvaluatorMeta):
         - Next observations in the rollout
     - rollout:weights
         - Error weights of rollout samples
+    - rollout:q
+        - Action-values for each action in current space
+        (defined only for finite action spaces)
 
     - model:logprobs
         - Logarithm of probability of **all** actions in an environment as in current model policy
@@ -72,9 +75,9 @@ class Evaluator(metaclass=EvaluatorMeta):
         - Logarithm of probability for performed actions
     - model:policy_params
         - Parametrizations of policy for each state
-    - model:estimated_values
-        - Value estimates for each state
-    - model:estimated_values_next
+    - model:values
+        - Value estimates for each state, estimated by the current model
+    - model:values_next
         - Value estimates for 'next' state of each transition
     """
 
@@ -90,6 +93,17 @@ class Evaluator(metaclass=EvaluatorMeta):
     def __init__(self, rollout):
         self._storage = {}
         self.rollout = rollout
+
+    def is_provided(self, name):
+        """ Capability check if evaluator provides given value """
+        if name in self._storage:
+            return True
+        elif name in self._providers:
+            return True
+        elif name.startswith('rollout:'):
+            rollout_name = name[8:]
+        else:
+            return False
 
     def get(self, name):
         """

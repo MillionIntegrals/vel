@@ -6,14 +6,13 @@ Under MIT license.
 """
 import numpy as np
 
-import torch
 import torch.nn as nn
 import torch.nn.init as init
 import torch.nn.functional as F
 
 import vel.util.network as net_util
 
-from vel.api.base import LinearBackboneModel, ModelFactory
+from vel.api import LinearBackboneModel, ModelFactory
 
 
 class DoubleNatureCnn(LinearBackboneModel):
@@ -86,7 +85,7 @@ class DoubleNatureCnn(LinearBackboneModel):
                 init.constant_(m.bias, 0.0)
 
     def forward(self, image):
-        result = image.permute(0, 3, 1, 2).contiguous().type(torch.float) / 255.0
+        result = image
         result = F.relu(self.conv1(result))
         result = F.relu(self.conv2(result))
         result = F.relu(self.conv3(result))
@@ -99,6 +98,7 @@ class DoubleNatureCnn(LinearBackboneModel):
 
 
 def create(input_width, input_height, input_channels=1):
+    """ Vel factory function """
     def instantiate(**_):
         return DoubleNatureCnn(input_width=input_width, input_height=input_height, input_channels=input_channels)
 

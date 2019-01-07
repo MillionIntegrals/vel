@@ -11,16 +11,17 @@ source:
 
 
 model:
-  name: vel.models.rnn.multilayer_sequence_lstm
+  name: vel.models.rnn.multilayer_rnn_sequence_model
 
   input_block:
-    name: vel.modules.nlp.input.embedding
+    name: vel.modules.input.embedding
     alphabet_size: 68  # Size of the alphabet + 1
     output_dim: 512 # Embedding dimension
 
   hidden_layers: [512, 512, 512]
   output_dim: 68 # Size of the alphabet + 1
   dropout: 0.5
+  rnn_type: 'lstm'
 
 
 optimizer:

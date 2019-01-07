@@ -1,6 +1,6 @@
 import torch.optim
 
-from vel.api.base import OptimizerFactory, Model
+from vel.api import OptimizerFactory, Model
 
 
 class RMSpropFactory(OptimizerFactory):
@@ -23,5 +23,5 @@ class RMSpropFactory(OptimizerFactory):
 
 
 def create(lr, alpha, momentum=0, weight_decay=0, epsilon=1e-8):
-    """ Vel creation function - RMSprop optimizer"""
+    """ Vel factory function """
     return RMSpropFactory(lr=lr, alpha=alpha, momentum=momentum, weight_decay=weight_decay, eps=float(epsilon))

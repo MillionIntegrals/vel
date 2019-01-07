@@ -25,5 +25,5 @@ class DummyBackend:
 
 
 def create():
-    """ Create a mongodb storage object """
+    """ Vel factory function """
     return DummyBackend()

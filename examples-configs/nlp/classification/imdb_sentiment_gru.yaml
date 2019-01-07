@@ -8,10 +8,10 @@ source:
 
 
 model:
-  name: vel.models.rnn.multilayer_sequence_classification_gru
+  name: vel.models.rnn.multilayer_rnn_sequence_classification
 
   input_block:
-    name: vel.modules.nlp.input.embedding
+    name: vel.modules.input.embedding
     alphabet_size: 25_002  # Size of the alphabet
 
     output_dim: 100 # Embedding dimension
@@ -19,6 +19,7 @@ model:
     pretrained: True
 #    frozen: True
 
+  rnn_type: 'gru'
   rnn_layers: [256, 128]
   rnn_dropout: 0.5
   bidirectional: True

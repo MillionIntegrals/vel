@@ -7,7 +7,7 @@ import torchtext.datasets.imdb as imdb
 import torchtext.data as data
 
 
-from vel.api.base import TextData
+from vel.api import TextData
 
 
 class IMDBCached(imdb.IMDB):
@@ -64,7 +64,7 @@ def create(model_config, batch_size, vectors=None):
     train_iterator, test_iterator = data.BucketIterator.splits(
         (train_source, test_source),
         batch_size=batch_size,
-        device=model_config.torch_device,
+        device=model_config.torch_device(),
         shuffle=True
     )
 

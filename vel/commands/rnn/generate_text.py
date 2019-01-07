@@ -22,7 +22,7 @@ class GenerateTextCommand:
 
     @torch.no_grad()
     def run(self):
-        device = torch.device(self.model_config.device)
+        device = self.model_config.torch_device()
         model = self.model_factory.instantiate().to(device)
 
         start_epoch = self.storage.last_epoch_idx()
@@ -41,7 +41,7 @@ class GenerateTextCommand:
 
         generated_text = [current_char]
 
-        state = model.initial_state(1).to(device)
+        state = model.zero_state(1).to(device)
 
         char_tensor = torch.from_numpy(np.array([current_char_encoded])).view(1, 1).to(device)
 
@@ -70,4 +70,5 @@ class GenerateTextCommand:
 
 
 def create(model_config, model, source, storage, start_letter, length, temperature):
+    """ Vel factory function """
     return GenerateTextCommand(model_config, model, source, storage, start_letter, length, temperature)

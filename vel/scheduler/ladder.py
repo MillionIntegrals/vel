@@ -1,10 +1,11 @@
 import torch.optim.lr_scheduler as scheduler
 import numpy as np
 
-import vel.api.base as base
+
+from vel.api import Callback, SchedulerFactory
 
 
-class LadderScheduler(base.Callback):
+class LadderScheduler(Callback):
     """ Scheduler defined by a set of learning rates after reaching given number of iterations """
     def __init__(self, optimizer, ladder, last_epoch):
         self.schedule_limits = np.cumsum([x[0] for x in ladder])
@@ -19,7 +20,7 @@ class LadderScheduler(base.Callback):
         self.scheduler.step(epoch=epoch_info.global_epoch_idx)
 
 
-class LadderSchedulerFactory(base.SchedulerFactory):
+class LadderSchedulerFactory(SchedulerFactory):
     """ Factory class for ladder scheduler """
     def __init__(self, ladder):
         self.ladder = ladder
@@ -29,5 +30,5 @@ class LadderSchedulerFactory(base.SchedulerFactory):
 
 
 def create(ladder):
-    """ Create a hand-scheduled ladder scheduler """
+    """ Vel factory function """
     return LadderSchedulerFactory(ladder)

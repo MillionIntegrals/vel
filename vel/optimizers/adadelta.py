@@ -1,6 +1,6 @@
 import torch.optim
 
-from vel.api.base import OptimizerFactory, Model
+from vel.api import OptimizerFactory, Model
 
 
 class AdadeltaFactory(OptimizerFactory):
@@ -20,5 +20,5 @@ class AdadeltaFactory(OptimizerFactory):
 
 
 def create():
-    """ Return an ADADELTA optimizer """
+    """ Vel factory function """
     return AdadeltaFactory()

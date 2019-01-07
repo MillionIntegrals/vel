@@ -37,7 +37,7 @@ class Learner:
         """ Prepare for training """
         self.model.reset_weights()
 
-    def run_epoch(self, epoch_info: EpochInfo, source: 'vel.api.base.Source'):
+    def run_epoch(self, epoch_info: EpochInfo, source: 'vel.api.Source'):
         """ Run full epoch of learning """
         epoch_info.on_epoch_begin()
 
@@ -52,7 +52,7 @@ class Learner:
 
         epoch_info.on_epoch_end()
 
-    def train_epoch(self, epoch_info, source: 'vel.api.base.Source', interactive=True):
+    def train_epoch(self, epoch_info, source: 'vel.api.Source', interactive=True):
         """ Run a single training epoch """
         self.train()
 
@@ -70,7 +70,7 @@ class Learner:
 
             iterator.set_postfix(loss=epoch_info.result_accumulator.intermediate_value('loss'))
 
-    def validation_epoch(self, epoch_info, source: 'vel.api.base.Source'):
+    def validation_epoch(self, epoch_info, source: 'vel.api.Source'):
         """ Run a single evaluation epoch """
         self.eval()
 

@@ -1,9 +1,12 @@
 import gym
 import itertools as it
 import torch
+import torch.nn as nn
+import typing
 
-from vel.api.base import LinearBackboneModel, Model, ModelFactory
-from vel.rl.api import Rollout, Evaluator
+from vel.api import LinearBackboneModel, ModelFactory, BackboneModel
+from vel.modules.input.identity import IdentityFactory
+from vel.rl.api import Rollout, Evaluator, RlModel
 from vel.rl.modules.deterministic_action_head import DeterministicActionHead
 from vel.rl.modules.deterministic_critic_head import DeterministicCriticHead
 
@@ -16,7 +19,7 @@ class DeterministicPolicyEvaluator(Evaluator):
 
         self.model = model
 
-    @Evaluator.provides('model:estimated_values_next')
+    @Evaluator.provides('model:values_next')
     def model_estimated_values_next(self):
         """ Estimate state-value of the transition next state """
         observations = self.get('rollout:observations_next')
@@ -43,13 +46,14 @@ class DeterministicPolicyEvaluator(Evaluator):
         return self.model.value(observations, rollout_actions)
 
 
-class DeterministicPolicyModel(Model):
+class DeterministicPolicyModel(RlModel):
     """ Deterministic Policy Gradient - model """
 
-    def __init__(self, policy_backbone: LinearBackboneModel, value_backbone: LinearBackboneModel,
-                 action_space: gym.Space):
+    def __init__(self, input_block: BackboneModel, policy_backbone: LinearBackboneModel,
+                 value_backbone: LinearBackboneModel, action_space: gym.Space):
         super().__init__()
 
+        self.input_block = input_block
         self.policy_backbone = policy_backbone
         self.value_backbone = value_backbone
 
@@ -58,6 +62,7 @@ class DeterministicPolicyModel(Model):
 
     def reset_weights(self):
         """ Initialize properly model weights """
+        self.input_block.reset_weights()
         self.policy_backbone.reset_weights()
         self.value_backbone.reset_weights()
         self.action_head.reset_weights()
@@ -65,7 +70,7 @@ class DeterministicPolicyModel(Model):
 
     def forward(self, observations, input_actions=None):
         """ Calculate model outputs """
-        observations = observations.float()
+        observations = self.input_block(observations)
 
         if input_actions is not None:
             actions = input_actions
@@ -102,9 +107,9 @@ class DeterministicPolicyModel(Model):
             [[y for (x, y) in self.critic_head.named_parameters() if x.endswith('weight')]]
         ]
 
-    def step(self, observation):
+    def step(self, observations):
         """ Select actions based on model's output """
-        action, value = self(observation)
+        action, value = self(observations)
 
         return {
             'actions': action,
@@ -118,7 +123,7 @@ class DeterministicPolicyModel(Model):
 
     def action(self, observations):
         """ Calculate value for given state """
-        observations = observations.float()
+        observations = self.input_block(observations)
         policy_hidden = self.policy_backbone(observations)
         action = self.action_head(policy_hidden)
         return action
@@ -129,25 +134,32 @@ class DeterministicPolicyModel(Model):
 
 
 class DeterministicPolicyModelFactory(ModelFactory):
-    """ Factory  class for policy gradient models """
-    def __init__(self, policy_backbone: ModelFactory, value_backbone: ModelFactory):
+    """ Factory class for policy gradient models """
+    def __init__(self, input_block: ModelFactory, policy_backbone: ModelFactory, value_backbone: ModelFactory):
+        self.input_block = input_block
         self.policy_backbone = policy_backbone
         self.value_backbone = value_backbone
 
     def instantiate(self, **extra_args):
         """ Instantiate the model """
+        input_block = self.input_block.instantiate()
         policy_backbone = self.policy_backbone.instantiate(**extra_args)
         value_backbone = self.value_backbone.instantiate(**extra_args)
 
         return DeterministicPolicyModel(
+            input_block=input_block,
             policy_backbone=policy_backbone,
             value_backbone=value_backbone,
             action_space=extra_args['action_space'],
         )
 
 
-def create(policy_backbone: ModelFactory, value_backbone: ModelFactory):
-    """ Vel creation function """
+def create(policy_backbone: ModelFactory, value_backbone: ModelFactory,
+           input_block: typing.Optional[ModelFactory]=None):
+    """ Vel factory function """
+    if input_block is None:
+        input_block = IdentityFactory()
+
     return DeterministicPolicyModelFactory(
-        policy_backbone=policy_backbone, value_backbone=value_backbone
+        input_block=input_block, policy_backbone=policy_backbone, value_backbone=value_backbone
     )

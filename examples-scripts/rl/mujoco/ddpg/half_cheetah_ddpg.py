@@ -2,17 +2,21 @@ import torch
 import torch.optim
 
 from vel.api import TrainingInfo, EpochInfo
+from vel.modules.input.normalize_observations import NormalizeObservationsFactory
+from vel.rl.buffers.circular_replay_buffer import CircularReplayBuffer
+from vel.rl.env_roller.transition_replay_env_roller import TransitionReplayEnvRoller
 from vel.rl.metrics import EpisodeRewardMetric
+from vel.rl.modules.noise.ou_noise import OuNoise
 from vel.storage.streaming.stdout import StdoutStreaming
 from vel.util.random import set_seed
 from vel.rl.env.mujoco import MujocoEnv
 from vel.rl.models.deterministic_policy_model import DeterministicPolicyModelFactory
 from vel.rl.models.backbone.mlp import MLPFactory
-from vel.rl.reinforcers.buffered_single_off_policy_iteration_reinforcer import (
-    BufferedSingleOffPolicyIterationReinforcer, BufferedSingleOffPolicyIterationReinforcerSettings
+from vel.rl.reinforcers.buffered_off_policy_iteration_reinforcer import (
+    BufferedOffPolicyIterationReinforcer, BufferedOffPolicyIterationReinforcerSettings
 )
 from vel.rl.algo.policy_gradient.ddpg import DeepDeterministicPolicyGradient
-from vel.rl.env_roller.single.deque_replay_roller_ou_noise import DequeReplayRollerOuNoise
+from vel.rl.vecenv.dummy import DummyVecEnvWrapper
 from vel.optimizers.adam import AdamFactory
 
 
@@ -23,40 +27,45 @@ def half_cheetah_ddpg():
     # Set random seed in python std lib, numpy and pytorch
     set_seed(seed)
 
-    env = MujocoEnv('HalfCheetah-v2').instantiate(seed=seed)
+    vec_env = DummyVecEnvWrapper(
+        MujocoEnv('HalfCheetah-v2')
+    ).instantiate(parallel_envs=1, seed=seed)
 
     model_factory = DeterministicPolicyModelFactory(
+        input_block=NormalizeObservationsFactory(input_shape=17),
         policy_backbone=MLPFactory(input_length=17, hidden_layers=[64, 64], activation='tanh'),
         value_backbone=MLPFactory(input_length=23, hidden_layers=[64, 64], activation='tanh'),
     )
 
-    model = model_factory.instantiate(action_space=env.action_space)
+    model = model_factory.instantiate(action_space=vec_env.action_space)
 
-    reinforcer = BufferedSingleOffPolicyIterationReinforcer(
+    reinforcer = BufferedOffPolicyIterationReinforcer(
         device=device,
-        settings=BufferedSingleOffPolicyIterationReinforcerSettings(
-            batch_rollout_rounds=100,
-            batch_training_rounds=50,
-            batch_size=64,
-            discount_factor=0.99
+        environment=vec_env,
+        settings=BufferedOffPolicyIterationReinforcerSettings(
+            rollout_steps=2,
+            training_steps=64,
         ),
-        environment=env,
         model=model,
         algo=DeepDeterministicPolicyGradient(
             model_factory=model_factory,
+            discount_factor=0.99,
             tau=0.01,
         ),
-        env_roller=DequeReplayRollerOuNoise(
-            environment=env,
+        env_roller=TransitionReplayEnvRoller(
+            environment=vec_env,
             device=device,
-            batch_size=64,
-            buffer_capacity=1_000_000,
-            buffer_initial_size=2_000,
-            noise_std_dev=0.2,
-            normalize_observations=True,
+            action_noise=OuNoise(std_dev=0.2, environment=vec_env),
+            replay_buffer=CircularReplayBuffer(
+                buffer_capacity=1_000_000,
+                buffer_initial_size=2_000,
+                num_envs=vec_env.num_envs,
+                observation_space=vec_env.observation_space,
+                action_space=vec_env.action_space
+            ),
             normalize_returns=True,
             discount_factor=0.99
-        )
+        ),
     )
 
     # Optimizer helper - A weird regularization settings I've copied from OpenAI code
@@ -81,14 +90,14 @@ def half_cheetah_ddpg():
     training_info.on_train_begin()
 
     # Let's make 20 batches per epoch to average metrics nicely
-    num_epochs = int(1.0e6 / 64 / 20)
+    num_epochs = int(1.0e6 / 2 / 1000)
 
     # Normal handrolled training loop
     for i in range(1, num_epochs+1):
         epoch_info = EpochInfo(
             training_info=training_info,
             global_epoch_idx=i,
-            batches_per_epoch=20,
+            batches_per_epoch=1000,
             optimizer=adam_optimizer
         )
 

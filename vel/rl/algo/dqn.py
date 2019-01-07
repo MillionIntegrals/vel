@@ -2,33 +2,31 @@ import torch
 import torch.nn.functional as F
 import torch.nn.utils
 
-from vel.api.base import ModelFactory
+from vel.api import ModelFactory
 from vel.api.metrics.averaging_metric import AveragingNamedMetric
-from vel.rl.api.base import OptimizerAlgoBase
+from vel.rl.api import OptimizerAlgoBase
 
 
 class DeepQLearning(OptimizerAlgoBase):
     """ Deep Q-Learning algorithm """
 
-    def __init__(self, model_factory: ModelFactory, double_dqn: bool,
-                 target_update_frequency: int, max_grad_norm: float):
+    def __init__(self, model_factory: ModelFactory, discount_factor: float, double_dqn: bool, target_update_frequency: int,
+                 max_grad_norm: float):
         super().__init__(max_grad_norm)
 
         self.model_factory = model_factory
+        self.discount_factor = discount_factor
 
         self.double_dqn = double_dqn
         self.target_update_frequency = target_update_frequency
 
-        self.discount_factor = None
         self.target_model = None
 
-    def initialize(self, settings, model, environment, device):
+    def initialize(self, model, environment, device):
         """ Initialize policy gradient from reinforcer settings """
         self.target_model = self.model_factory.instantiate(action_space=environment.action_space).to(device)
         self.target_model.load_state_dict(model.state_dict())
         self.target_model.eval()
-
-        self.discount_factor = settings.discount_factor
 
     def calculate_gradient(self, batch_info, device, model, rollout):
         """ Calculate loss of the supplied rollout """
@@ -56,7 +54,11 @@ class DeepQLearning(OptimizerAlgoBase):
             estimated_return = rewards_tensor + self.discount_factor * values * (1 - dones_tensor)
 
         q_selected = evaluator.get('model:action:q')
-        weights = evaluator.get('rollout:weights')
+
+        if evaluator.is_provided('rollout:weights'):
+            weights = evaluator.get('rollout:weights')
+        else:
+            weights = torch.ones_like(rewards_tensor)
 
         original_losses = F.smooth_l1_loss(q_selected, estimated_return, reduction='none')
 
@@ -87,10 +89,12 @@ class DeepQLearning(OptimizerAlgoBase):
         ]
 
 
-def create(model: ModelFactory, target_update_frequency: int,
+def create(model: ModelFactory, discount_factor: float, target_update_frequency: int,
            max_grad_norm: float, double_dqn: bool=False):
+    """ Vel factory function """
     return DeepQLearning(
         model_factory=model,
+        discount_factor=discount_factor,
         double_dqn=double_dqn,
         target_update_frequency=target_update_frequency,
         max_grad_norm=max_grad_norm
