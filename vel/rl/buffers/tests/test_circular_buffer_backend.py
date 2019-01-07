@@ -1,4 +1,5 @@
 import gym
+import gym.spaces
 import nose.tools as t
 import numpy as np
 import numpy.testing as nt

@@ -2,10 +2,8 @@ import gym
 import random
 import numpy as np
 
-from vel.api import Schedule
-
-from vel.rl.buffers.circular_replay_buffer import CircularVecEnvBufferBackend
-from vel.rl.buffers.backend.segment_tree import SegmentTree
+from .circular_vec_buffer_backend import CircularVecEnvBufferBackend
+from .segment_tree import SegmentTree
 
 
 class PrioritizedCircularVecEnvBufferBackend:
