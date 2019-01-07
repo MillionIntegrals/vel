@@ -4,7 +4,6 @@ import torch
 def discount_bootstrap(rewards_buffer, dones_buffer, final_values, discount_factor, number_of_steps):
     """ Calculate state values bootstrapping off the following state values """
     true_value_buffer = torch.zeros_like(rewards_buffer)
-    dones_buffer = dones_buffer
 
     # discount/bootstrap off value fn
     current_value = final_values
