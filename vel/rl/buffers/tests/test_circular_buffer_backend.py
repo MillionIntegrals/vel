@@ -332,10 +332,10 @@ def test_get_batch():
 
     batch = buffer.get_transitions(np.array([0, 1, 2, 3, 4, 5, 6, 7, 8]), history_length=4)
 
-    obs = batch['states']
+    obs = batch['observations']
     act = batch['actions']
     rew = batch['rewards']
-    obs_tp1 = batch['states+1']
+    obs_tp1 = batch['observations_next']
     dones = batch['dones']
 
     nt.assert_array_equal(dones, np.array([False, False, True, False, False, False, False, False, True]))
@@ -378,10 +378,10 @@ def test_sample_and_get_batch():
         indexes = buffer.sample_batch_transitions(batch_size=5, history_length=4)
         batch = buffer.get_transitions(indexes, history_length=4)
 
-        obs = batch['states']
+        obs = batch['observations']
         act = batch['actions']
         rew = batch['rewards']
-        obs_tp1 = batch['states+1']
+        obs_tp1 = batch['observations_next']
         dones = batch['dones']
 
         t.eq_(obs.shape[0], 5)
@@ -415,8 +415,8 @@ def test_sample_rollout_half_filled():
         rollout_idx = buffer.sample_batch_trajectories(rollout_length=5, history_length=4)
         rollout = buffer.get_trajectories(index=rollout_idx, rollout_length=5, history_length=4)
 
-        t.assert_equal(rollout['states'].shape[0], 5)  # Rollout length
-        t.assert_equal(rollout['states'].shape[-1], 4)  # History length
+        t.assert_equal(rollout['observations'].shape[0], 5)  # Rollout length
+        t.assert_equal(rollout['observations'].shape[-1], 4)  # History length
 
         indexes.append(rollout_idx)
 
@@ -446,8 +446,8 @@ def test_sample_rollout_filled():
         rollout_idx = buffer.sample_batch_trajectories(rollout_length=5, history_length=4)
         rollout = buffer.get_trajectories(index=rollout_idx, rollout_length=5, history_length=4)
 
-        t.assert_equal(rollout['states'].shape[0], 5)  # Rollout length
-        t.assert_equal(rollout['states'].shape[-1], 4)  # History length
+        t.assert_equal(rollout['observations'].shape[0], 5)  # Rollout length
+        t.assert_equal(rollout['observations'].shape[-1], 4)  # History length
 
         indexes.append(rollout_idx)
 
@@ -474,9 +474,9 @@ def test_buffer_flexible_obs_action_sizes():
     nt.assert_array_almost_equal(b2x2.get_frame(0), np.array([[21, 21], [210, 210]]))
     nt.assert_array_almost_equal(b3x3.get_frame(0), np.array([[[21, 21], [21, 21]], [[210, 210], [210, 210]]]))
 
-    nt.assert_array_almost_equal(b1x1.get_transition(0, 0)['action'], np.array([0, 20]))
-    nt.assert_array_almost_equal(b2x2.get_transition(0, 0)['action'], np.array([[0, 20], [40, 60]]))
-    nt.assert_array_almost_equal(b3x3.get_transition(0, 0)['action'], np.array(
+    nt.assert_array_almost_equal(b1x1.get_transition(0, 0)['actions'], np.array([0, 20]))
+    nt.assert_array_almost_equal(b2x2.get_transition(0, 0)['actions'], np.array([[0, 20], [40, 60]]))
+    nt.assert_array_almost_equal(b3x3.get_transition(0, 0)['actions'], np.array(
         [[[0, 20], [40, 60]],
          [[80, 100], [120, 140]]]
     ))
@@ -513,11 +513,11 @@ def test_buffer_flexible_obs_action_sizes_with_history():
         [[[[20, 21], [20, 21]], [[20, 21], [20, 21]]], [[[200, 210], [200, 210]], [[200, 210], [200, 210]]]]
     ))
 
-    nt.assert_array_almost_equal(b1x1.get_transition(0, history_length=2)['state+1'], np.array([[21, 22], [210, 220]]))
-    nt.assert_array_almost_equal(b2x2.get_transition(0, history_length=2)['state+1'], np.array(
+    nt.assert_array_almost_equal(b1x1.get_transition(0, history_length=2)['observations_next'], np.array([[21, 22], [210, 220]]))
+    nt.assert_array_almost_equal(b2x2.get_transition(0, history_length=2)['observations_next'], np.array(
         [[[21, 22], [21, 22]], [[210, 220], [210, 220]]]
     ))
-    nt.assert_array_almost_equal(b3x3.get_transition(0, history_length=2)['state+1'], np.array(
+    nt.assert_array_almost_equal(b3x3.get_transition(0, history_length=2)['observations_next'], np.array(
         [[[[21, 22], [21, 22]], [[21, 22], [21, 22]]],
          [[[210, 220], [210, 220]], [[210, 220], [210, 220]]]]
     ))

@@ -43,7 +43,8 @@ class CircularVecEnvBufferBackend:
         # Data buffers
         if self.frame_stack_compensation:
             self.state_buffer = np.zeros(
-                [self.buffer_capacity, self.num_envs] + list(observation_space.shape)[:-1] + [1],
+                [self.buffer_capacity, self.num_envs] + list(observation_space.shape)[:-1] +
+                [observation_space.shape[-1] // self.frame_history],
                 dtype=observation_space.dtype
             )
         else:
@@ -69,7 +70,8 @@ class CircularVecEnvBufferBackend:
 
         if self.frame_stack_compensation:
             # Compensate for frame stack built into the environment
-            frame = np.expand_dims(np.take(frame, indices=-1, axis=-1), axis=-1)
+            idx_range = np.arange(-frame.shape[-1] // self.frame_history, 0)
+            frame = np.take(frame, indices=idx_range, axis=-1)
 
         self.state_buffer[self.current_idx] = frame
 
@@ -92,16 +94,16 @@ class CircularVecEnvBufferBackend:
 
         return self.current_idx
 
-    def get_frame_with_future(self, frame_idx, env_idx, history_length=1):
+    def get_frame_with_future(self, frame_idx, env_idx):
         """ Return frame from the buffer together with the next frame """
         if frame_idx == self.current_idx:
             raise VelException("Cannot provide enough future for the frame")
 
-        past_frame = self.get_frame(frame_idx, env_idx, history_length)
+        past_frame = self.get_frame(frame_idx, env_idx)
 
-        if history_length > 1:
-            assert self.state_buffer.shape[-1] == 1, \
-                "State buffer must have last dimension of 1 if we want frame history"
+        # if self.frame_history > 1:
+        #     assert self.state_buffer.shape[-1] == 1, \
+        #         "State buffer must have last dimension of 1 if we want frame history"
 
         if not self.dones_buffer[frame_idx, env_idx]:
             next_idx = (frame_idx + 1) % self.buffer_capacity
@@ -110,7 +112,7 @@ class CircularVecEnvBufferBackend:
             next_idx = (frame_idx + 1) % self.buffer_capacity
             next_frame = np.zeros_like(self.state_buffer[next_idx, env_idx])
 
-        if history_length > 1:
+        if self.frame_history > 1:
             future_frame = np.concatenate([
                 past_frame.take(indices=np.arange(1, past_frame.shape[-1]), axis=-1), next_frame
             ], axis=-1)
@@ -119,14 +121,14 @@ class CircularVecEnvBufferBackend:
 
         return past_frame, future_frame
 
-    def get_frame(self, frame_idx, env_idx, history_length=1):
+    def get_frame(self, frame_idx, env_idx):
         """ Return frame from the buffer """
         if frame_idx >= self.current_size:
             raise VelException("Requested frame beyond the size of the buffer")
 
-        if history_length > 1:
-            assert self.state_buffer.shape[-1] == 1, \
-                "State buffer must have last dimension of 1 if we want frame history"
+        # if self.frame_history > 1:
+        #     assert self.state_buffer.shape[-1] == 1, \
+        #         "State buffer must have last dimension of 1 if we want frame history"
 
         accumulator = []
 
@@ -134,7 +136,7 @@ class CircularVecEnvBufferBackend:
 
         accumulator.append(last_frame)
 
-        for i in range(history_length - 1):
+        for i in range(self.frame_history - 1):
             prev_idx = (frame_idx - 1) % self.buffer_capacity
 
             if prev_idx == self.current_idx:
@@ -149,16 +151,16 @@ class CircularVecEnvBufferBackend:
         # We're pushing the elements in reverse order
         return np.concatenate(accumulator[::-1], axis=-1)
 
-    def get_transition(self, frame_idx, env_idx, history_length=1):
+    def get_transition(self, frame_idx, env_idx):
         """ Single transition with given index """
-        past_frame, future_frame = self.get_frame_with_future(frame_idx, env_idx, history_length)
+        past_frame, future_frame = self.get_frame_with_future(frame_idx, env_idx)
 
         data_dict = {
-            'state': past_frame,
-            'state+1': future_frame,
-            'action': self.action_buffer[frame_idx, env_idx],
-            'reward': self.reward_buffer[frame_idx, env_idx],
-            'done': self.dones_buffer[frame_idx, env_idx],
+            'observations': past_frame,
+            'observations_next': future_frame,
+            'actions': self.action_buffer[frame_idx, env_idx],
+            'rewards': self.reward_buffer[frame_idx, env_idx],
+            'dones': self.dones_buffer[frame_idx, env_idx],
         }
 
         for name in self.extra_data:
@@ -183,7 +185,7 @@ class CircularVecEnvBufferBackend:
         for buffer_idx, frame_row in enumerate(indexes):
             for env_idx, frame_idx in enumerate(frame_row):
                 past_frame_buffer[buffer_idx, env_idx], future_frame_buffer[buffer_idx, env_idx] = (
-                    self.get_frame_with_future(frame_idx, env_idx, self.frame_history)
+                    self.get_frame_with_future(frame_idx, env_idx)
                 )
 
         actions = take_along_axis(self.action_buffer, indexes)

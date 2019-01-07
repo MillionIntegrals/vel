@@ -32,13 +32,13 @@ class PrioritizedCircularVecEnvBufferBackend:
         for segment_tree in self.segment_trees:
             segment_tree.append(segment_tree.max)
 
-    def get_frame(self, idx, history):
-        """ Return frame from the buffer """
-        return self.deque.get_frame(idx, history)
-
-    def get_frame_with_future(self, idx, history):
+    def get_frame_with_future(self, frame_idx, env_idx):
         """ Return frame from the buffer together with the next frame """
-        return self.deque.get_frame_with_future(idx, history)
+        return self.deque.get_frame_with_future(frame_idx, env_idx)
+
+    def get_frame(self, frame_idx, env_idx):
+        """ Return frame from the buffer """
+        return self.deque.get_frame(frame_idx, env_idx)
 
     def get_trajectories(self, indexes, rollout_length):
         """ Return batch consisting of *consecutive* transitions """

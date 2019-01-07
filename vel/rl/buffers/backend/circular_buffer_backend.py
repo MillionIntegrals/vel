@@ -83,11 +83,11 @@ class CircularBufferBackend:
         past_frame, future_frame = self.get_frame_with_future(frame_idx, history_length)
 
         data_dict = {
-            'state': past_frame,
-            'state+1': future_frame,
-            'action': self.action_buffer[frame_idx],
-            'reward': self.reward_buffer[frame_idx],
-            'done': self.dones_buffer[frame_idx],
+            'observations': past_frame,
+            'observations_next': future_frame,
+            'actions': self.action_buffer[frame_idx],
+            'rewards': self.reward_buffer[frame_idx],
+            'dones': self.dones_buffer[frame_idx],
         }
 
         for name in self.extra_data:
@@ -143,10 +143,10 @@ class CircularBufferBackend:
         dones = self.dones_buffer[indexes]
 
         data_dict = {
-            'states': past_frame_buffer,
+            'observations': past_frame_buffer,
             'actions': actions,
             'rewards': rewards,
-            'states+1': future_frame_buffer,
+            'observations_next': future_frame_buffer,
             'dones': dones,
         }
 
