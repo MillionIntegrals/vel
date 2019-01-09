@@ -79,3 +79,7 @@ commands:
     parallel_envs: 16 # How many environments to run in parallel
 
     takes: 20
+
+  enjoy:
+    name: vel.rl.commands.enjoy
+    fps: 15
