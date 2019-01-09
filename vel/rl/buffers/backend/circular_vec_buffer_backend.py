@@ -101,10 +101,6 @@ class CircularVecEnvBufferBackend:
 
         past_frame = self.get_frame(frame_idx, env_idx)
 
-        # if self.frame_history > 1:
-        #     assert self.state_buffer.shape[-1] == 1, \
-        #         "State buffer must have last dimension of 1 if we want frame history"
-
         if not self.dones_buffer[frame_idx, env_idx]:
             next_idx = (frame_idx + 1) % self.buffer_capacity
             next_frame = self.state_buffer[next_idx, env_idx]
@@ -125,10 +121,6 @@ class CircularVecEnvBufferBackend:
         """ Return frame from the buffer """
         if frame_idx >= self.current_size:
             raise VelException("Requested frame beyond the size of the buffer")
-
-        # if self.frame_history > 1:
-        #     assert self.state_buffer.shape[-1] == 1, \
-        #         "State buffer must have last dimension of 1 if we want frame history"
 
         accumulator = []
 

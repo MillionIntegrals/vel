@@ -40,6 +40,10 @@ class PrioritizedCircularVecEnvBufferBackend:
         """ Return frame from the buffer """
         return self.deque.get_frame(frame_idx, env_idx)
 
+    def get_transition(self, frame_idx, env_idx):
+        """ Single transition with given index """
+        return self.deque.get_transition(frame_idx, env_idx)
+
     def get_trajectories(self, indexes, rollout_length):
         """ Return batch consisting of *consecutive* transitions """
         return self.deque.get_trajectories(indexes, rollout_length)
@@ -101,5 +105,3 @@ class PrioritizedCircularVecEnvBufferBackend:
                 valid = True  # Note that conditions are valid but extra conservative around buffer index 0
 
         return prob, idx, tree_idx
-
-
