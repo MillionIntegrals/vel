@@ -7,7 +7,7 @@ env:
 
 
 vec_env:
-  name: vel.rl.vecenv.subproc
+  name: vel.rl.vecenv.shared_mem
   frame_history: 4  # How many stacked frames go into a single observation
 
 
