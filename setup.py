@@ -33,7 +33,7 @@ setup(
         'pandas',
         'pyyaml',
         'scikit-learn',
-        'torch == 0.4.1',
+        'torch == 1.0',
         'torchvision',
         'torchtext',
         'tqdm'
