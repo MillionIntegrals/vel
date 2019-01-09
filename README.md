@@ -6,9 +6,19 @@
 [![Gitter chat](https://badges.gitter.im/MillionIngegrals/vel.png)](https://gitter.im/deep-learning-vel)
 
 
-Bring **velocity** to deep-learning research,
-by providing tried and tested large pool of prebuilt components that are 
-known to be working well together.
+Bring **velocity** to deep-learning research.
+
+
+This project hosts a collection of **highly modular** deep learning components that are tested to be working well together.
+There is a simple yaml-based system provided to tie these modules together declaratively using configuration files,
+but everything that can be defined using config files can be code directly in the python script as well. It is just that
+config files suit better to my workflow.
+
+
+This is still an early version and a hobby project so documentation is unfortunately nonexistent. I've tried to make the
+code as clear as possible, and provide many usage examples, but whenever there was a tradeoff to be made between 
+simplicity and modularity I've chosen modularity first and simplicity second.
+
 
 Having conducted a few research projects, I've gathered a small collection of repositories 
 lying around with various model implementations suited to a particular usecase. 
@@ -16,33 +26,37 @@ Usually, starting a new project involved copying pieces of code from
 one or multiple of these past experiments, gluing, tweaking and debugging
 them until the code started working in a new setting. 
 
+
 After repeating that pattern multiple times, I've decided that this is the
 time to bite the bullet and start organising deep learning models
 into a structure that is designed to be reused rather than copied over.
+
 
 As a goal, it should be enough to write a config file that
 wires existing components together and defines their hyperparameters
 for most common applications.
 If that's not the case few bits of custom glue code should do the job.
 
+
 This repository is still in an early stage of that journey but it will grow
 as I'll be putting work into it.
+
 
 # Blogposts
 
 - https://blog.millionintegrals.com/vel-pytorch-meets-baselines/
 
+
 # How to run it 
 
-Although possible to install from `pip`, while this project is under active development
-`pip` versions may be behind current repository head.
-It is advised to install latest version by running
+Project can be installed from PyPi via `pip install vel` but also can be checked out from github
+and installed directly by running
 ```bash
 pip install -e .
 ```
 from the repository root directory.
 
-This project requires Python 3.6 and PyTorch 0.4.1.
+This project requires Python at least 3.6 and PyTorch 1.0.
 If you want to run YAML config examples, you'll also need a **project configuration file**
 `.velproject.yaml`. An example is included in this repository.
 
@@ -60,16 +74,15 @@ To use it, just rename it to `.velproject.yaml`.
 
 - Models should be runnable from the configuration files
   that are easy to store in version control, generate automatically and diff.
-  Codebase should be generic and not contain any of the model hyperparameters.
+  Codebase should be generic and do not contain any of the model hyperparameters.
   Unless user intervenes, it should be obvious which model was run
   with which hyperparameters and what output it gave.
 - The amount of "magic" in the framework should be limited and it should be easy to
   understand what exactly the model is doing for newcomers already comfortable with PyTorch. 
 - All state-of-the-art models should be implemented in the framework with accuracy
   matching published results.
-  Currently I'm focusing on computer vision and reinforcement learning models.
 - All common deep learning workflows should be fast to implement, while 
-  uncommon ones should be possible. At least as far as PyTorch allows.
+  uncommon ones should be possible, at least as far as PyTorch allows.
   
   
 # Implemented models - Computer Vision
