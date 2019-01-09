@@ -1,3 +1,4 @@
+ # flake8: noqa F403, F405
 from .atari_wrappers import *
 import numpy as np
 import gym
@@ -102,8 +103,10 @@ class Downsample(gym.ObservationWrapper):
         gym.ObservationWrapper.__init__(self, env)
         (oldh, oldw, oldc) = env.observation_space.shape
         newshape = (oldh//ratio, oldw//ratio, oldc)
-        self.observation_space = spaces.Box(low=0, high=255,
-                                            shape=newshape, dtype=np.uint8)
+        self.observation_space = spaces.Box(
+            low=0, high=255,
+            shape=newshape, dtype=np.uint8
+        )
 
     def observation(self, frame):
         height, width, _ = self.observation_space.shape
@@ -120,8 +123,10 @@ class Rgb2gray(gym.ObservationWrapper):
         """
         gym.ObservationWrapper.__init__(self, env)
         (oldh, oldw, _oldc) = env.observation_space.shape
-        self.observation_space = spaces.Box(low=0, high=255,
-                                            shape=(oldh, oldw, 1), dtype=np.uint8)
+        self.observation_space = spaces.Box(
+            low=0, high=255,
+            shape=(oldh, oldw, 1), dtype=np.uint8
+        )
 
     def observation(self, frame):
         frame = cv2.cvtColor(frame, cv2.COLOR_RGB2GRAY)
@@ -136,10 +141,8 @@ class MovieRecord(gym.Wrapper):
         self.epcount = 0
     def reset(self):
         if self.epcount % self.k == 0:
-            print('saving movie this episode', self.savedir)
             self.env.unwrapped.movie_path = self.savedir
         else:
-            print('not saving this episode')
             self.env.unwrapped.movie_path = None
             self.env.unwrapped.movie = None
         self.epcount += 1

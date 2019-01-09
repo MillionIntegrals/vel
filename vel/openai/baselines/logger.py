@@ -54,7 +54,7 @@ class HumanOutputFormat(KVWriter, SeqWriter):
         # Write out the data
         dashes = '-' * (keywidth + valwidth + 7)
         lines = [dashes]
-        for (key, val) in sorted(key2str.items()):
+        for (key, val) in sorted(key2str.items(), key=lambda kv: kv[0].lower()):
             lines.append('| %s%s | %s%s |' % (
                 key,
                 ' ' * (keywidth - len(key)),
@@ -106,7 +106,8 @@ class CSVOutputFormat(KVWriter):
 
     def writekvs(self, kvs):
         # Add our current row to the history
-        extra_keys = kvs.keys() - self.keys
+        extra_keys = list(kvs.keys() - self.keys)
+        extra_keys.sort()
         if extra_keys:
             self.keys.extend(extra_keys)
             self.file.seek(0)
@@ -290,7 +291,7 @@ def profile(n):
 
 class Logger(object):
     DEFAULT = None  # A logger with no output files. (See right below class definition)
-    # So that you can still log to the terminal without setting up any output files
+                    # So that you can still log to the terminal without setting up any output files
     CURRENT = None  # Current logger being used by the free functions above
 
     def __init__(self, dir, output_formats):
@@ -344,23 +345,22 @@ class Logger(object):
             if isinstance(fmt, SeqWriter):
                 fmt.writeseq(map(str, args))
 
-Logger.DEFAULT = Logger.CURRENT = Logger(dir=None, output_formats=[HumanOutputFormat(sys.stdout)])
-
 def configure(dir=None, format_strs=None):
     if dir is None:
         dir = os.getenv('OPENAI_LOGDIR')
     if dir is None:
         dir = osp.join(tempfile.gettempdir(),
-                       datetime.datetime.now().strftime("openai-%Y-%m-%d-%H-%M-%S-%f"))
+            datetime.datetime.now().strftime("openai-%Y-%m-%d-%H-%M-%S-%f"))
     assert isinstance(dir, str)
     os.makedirs(dir, exist_ok=True)
 
     log_suffix = ''
-
-    # from mpi4py import MPI
-    # rank = MPI.COMM_WORLD.Get_rank()
     rank = 0
-
+    # check environment variables here instead of importing mpi4py
+    # to avoid calling MPI_Init() when this module is imported
+    for varname in ['PMI_RANK', 'OMPI_COMM_WORLD_RANK']:
+        if varname in os.environ:
+            rank = int(os.environ[varname])
     if rank > 0:
         log_suffix = "-rank%03i" % rank
 
@@ -369,12 +369,19 @@ def configure(dir=None, format_strs=None):
             format_strs = os.getenv('OPENAI_LOG_FORMAT', 'stdout,log,csv').split(',')
         else:
             format_strs = os.getenv('OPENAI_LOG_FORMAT_MPI', 'log').split(',')
-
     format_strs = filter(None, format_strs)
     output_formats = [make_output_format(f, dir, log_suffix) for f in format_strs]
 
     Logger.CURRENT = Logger(dir=dir, output_formats=output_formats)
     log('Logging to %s'%dir)
+
+def _configure_default_logger():
+    format_strs = None
+    # keep the old default of only writing to stdout
+    if 'OPENAI_LOG_FORMAT' not in os.environ:
+        format_strs = ['stdout']
+    configure(format_strs=format_strs)
+    Logger.DEFAULT = Logger.CURRENT
 
 def reset():
     if Logger.CURRENT is not Logger.DEFAULT:
@@ -474,6 +481,9 @@ def read_tb(path):
         for (step, value) in pairs:
             data[step-1, colidx] = value
     return pandas.DataFrame(data, columns=tags)
+
+# configure the default logger on import
+_configure_default_logger()
 
 if __name__ == "__main__":
     _demo()
