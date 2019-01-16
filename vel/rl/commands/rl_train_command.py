@@ -31,8 +31,14 @@ class FrameTracker(Callback):
     def write_state_dict(self, training_info: TrainingInfo, hidden_state_dict: dict):
         hidden_state_dict['frame_tracker/frames'] = training_info['frames']
 
+        if 'total_frames' in training_info:
+            hidden_state_dict['frame_tracker/total_frames'] = training_info['total_frames']
+
     def load_state_dict(self, training_info: TrainingInfo, hidden_state_dict: dict):
         training_info['frames'] = hidden_state_dict['frame_tracker/frames']
+
+        if 'frame_tracker/total_frames' in hidden_state_dict:
+            training_info['total_frames'] = hidden_state_dict['frame_tracker/total_frames']
 
 
 class RlTrainCommand:
