@@ -15,7 +15,7 @@ class Rollout:
         """ List of information about finished episodes """
         raise NotImplementedError
 
-    def frames(self):
+    def frames(self) -> int:
         """ Number of frames in rollout """
         raise NotImplementedError
 

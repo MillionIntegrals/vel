@@ -60,6 +60,12 @@ class Evaluator(metaclass=EvaluatorMeta):
     - model:q
         - Action-value for **all** actions
         (defined only for finite action spaces)
+    - model:q_dist
+        - Action-value histogram for **all** actions
+        (defined only for finite action spaces)
+    - model:q_dist_next
+        - Action-value histogram for **all** actions from the 'next' state in the rollout
+        (defined only for finite action spaces)
     - model:q_next
         - Action-value for **all** actions from the 'next' state in the rollout
         (defined only for finite action spaces)
