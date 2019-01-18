@@ -16,9 +16,10 @@ class DistributionalQModelEvaluator(Evaluator):
     @Evaluator.provides('model:q')
     def model_q(self):
         """ Action values for all (discrete) actions """
-        observations = self.get('rollout:observations')
-        # This mean of last dimension collapses the histogram/calculates mean reward
-        return self.model(observations).mean(dim=-1)
+        # observations = self.get('rollout:observations')
+        # # This mean of last dimension collapses the histogram/calculates mean reward
+        # return self.model(observations).mean(dim=-1)
+        raise NotImplementedError
 
     @Evaluator.provides('model:q_dist')
     def model_q_dist(self):
@@ -30,9 +31,7 @@ class DistributionalQModelEvaluator(Evaluator):
     @Evaluator.provides('model:action:q')
     def model_action_q(self):
         """ Action values for selected actions in the rollout """
-        q = self.get('model:q')
-        actions = self.get('rollout:actions')
-        return q.gather(1, actions.unsqueeze(1)).squeeze(1)
+        raise NotImplementedError
 
     @Evaluator.provides('model:action:q_dist')
     def model_action_q_dist(self):
@@ -44,9 +43,7 @@ class DistributionalQModelEvaluator(Evaluator):
     @Evaluator.provides('model:q_next')
     def model_q_next(self):
         """ Action values for all (discrete) actions """
-        observations = self.get('rollout:observations_next')
-        # This mean of last dimension collapses the histogram/calculates mean reward
-        return self.model(observations).mean(dim=-1)
+        raise NotImplementedError
 
     @Evaluator.provides('model:q_dist_next')
     def model_q_dist_next(self):
@@ -84,10 +81,10 @@ class DistributionalQModel(RlModel):
 
     def forward(self, observations):
         """ Model forward pass """
-        observations = self.input_block(observations)
-        base_output = self.backbone(observations)
-        q_values = self.q_head(base_output)
-        return q_values
+        input_data = self.input_block(observations)
+        base_output = self.backbone(input_data)
+        log_histogram = self.q_head(base_output)
+        return log_histogram
 
     def histogram_info(self):
         """ Return extra information about histogram """
@@ -95,12 +92,12 @@ class DistributionalQModel(RlModel):
 
     def step(self, observations):
         """ Sample action from an action space for given state """
-        q_values = self(observations)
-        actions = self.q_head.sample(q_values)
+        log_histogram = self(observations)
+        actions = self.q_head.sample(log_histogram)
 
         return {
             'actions': actions,
-            'q': q_values
+            'log_histogram': log_histogram
         }
 
     def evaluate(self, rollout: Rollout) -> Evaluator:
