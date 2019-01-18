@@ -43,6 +43,14 @@ on this library:
   Ziyu Wang and Nando de Freitas and Marc Lanctot
   http://arxiv.org/abs/1511.06581
   
+- (Jul 2017) **A Distributional Perspective on Reinforcement Learning**
+  Marc G. Bellemare, Will Dabney, Rémi Munos
+  https://arxiv.org/abs/1707.06887  
+  
+- (Oct 2017) **Rainbow: Combining Improvements in Deep Reinforcement Learning**
+  Matteo Hessel, Joseph Modayil, Hado van Hasselt, Tom Schaul, Georg Ostrovski, Will Dabney, Dan Horgan, Bilal Piot, Mohammad Azar, David Silver
+  https://arxiv.org/abs/1710.02298
+  
   
 ### Policy gradient methods
 
