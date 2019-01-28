@@ -43,17 +43,14 @@ class NatureCnn(LinearBackboneModel):
             stride=1
         )
 
-        self.final_width = net_util.convolutional_layer_series(input_width, [
+        layer_series = [
             (8, 0, 4),
             (4, 0, 2),
             (3, 0, 1)
-        ])
+        ]
 
-        self.final_height = net_util.convolutional_layer_series(input_height, [
-            (8, 0, 4),
-            (4, 0, 2),
-            (3, 0, 1)
-        ])
+        self.final_width = net_util.convolutional_layer_series(input_width, layer_series)
+        self.final_height = net_util.convolutional_layer_series(input_height, layer_series)
 
         self.linear_layer = nn.Linear(
             self.final_width * self.final_height * 64,  # 64 is the number of channels of the last conv layer
