@@ -104,15 +104,19 @@ that are ready to run and easy to modify for other similar usecases:
 
 - Continuous and discrete action spaces
 - Basic support for LSTM policies for A2C and PPO
-- Advantage Actor-Critic (A2C),
-  Proximal Policy Optimization (PPO), 
-  Trust Region Policy Optimization (TRPO),
-  Deep Deterministic Policy Gradient (DDPG),
-  and 
-  Actor-Critic with Experience Replay (ACER)
-  policy gradient reinforcement learning algorithms.
+- Following published policy gradient reinforcement learning algorithms:
+    - Advantage Actor-Critic (A2C)
+    - Deep Deterministic Policy Gradient (DDPG)
+    - Proximal Policy Optimization (PPO)
+    - Trust Region Policy Optimization (TRPO)
+    - Actor-Critic with Experience Replay (ACER)
 - Deep Q-Learning (DQN) as described by DeepMind in their Nature publication with following 
-  improvements: Double DQN, Dueling DQN, Prioritized experience replay.
+  improvements:
+    - Double DQN
+    - Dueling DQN
+    - Prioritized experience replay
+    - N-Step Bellman updates
+    - Distributional Q-Learning
 
 
 # Examples
