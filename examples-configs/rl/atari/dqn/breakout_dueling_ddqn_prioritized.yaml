@@ -90,9 +90,7 @@ commands:
     name: vel.rl.commands.record_movie_command
     takes: 10
     videoname: 'breakout_vid_{:04}.avi'
-    frame_history: 4
 
   evaluate:
     name: vel.rl.commands.evaluate_env_command
     takes: 100
-    frame_history: 4

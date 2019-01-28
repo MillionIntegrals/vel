@@ -77,16 +77,14 @@ optimizer:
 commands:
   train:
     name: vel.rl.commands.rl_train_command
-    total_frames: 1.1e7  # 11M
+    total_frames: 5.0e7  # 11M
     batches_per_epoch: 2500
 
   record:
     name: vel.rl.commands.record_movie_command
     takes: 10
     videoname: 'breakout_vid_{:04}.avi'
-    frame_history: 4
 
   evaluate:
     name: vel.rl.commands.evaluate_env_command
     takes: 100
-    frame_history: 4
