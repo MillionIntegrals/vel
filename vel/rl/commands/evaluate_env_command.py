@@ -1,7 +1,8 @@
-import pandas as pd
 import numpy as np
+import pandas as pd
 import torch
 import tqdm
+import typing
 
 from vel.api import ModelConfig, TrainingInfo, Storage, ModelFactory
 from vel.rl.api import VecEnvFactory
@@ -10,13 +11,15 @@ from vel.rl.api import VecEnvFactory
 class EvaluateEnvCommand:
     """ Record environment playthrough as a game  """
     def __init__(self, model_config: ModelConfig, env_factory: VecEnvFactory, model_factory: ModelFactory,
-                 storage: Storage, parallel_envs: int, takes: int, sample_args: dict = None):
+                 storage: Storage, parallel_envs: int, action_noise: typing.Optional[ModelFactory],  takes: int, sample_args: dict = None):
         self.model_config = model_config
         self.model_factory = model_factory
         self.env_factory = env_factory
         self.storage = storage
         self.takes = takes
         self.parallel_envs = parallel_envs
+        self.action_noise_factory = action_noise
+
         self.sample_args = sample_args if sample_args is not None else {}
 
     @torch.no_grad()
@@ -25,6 +28,11 @@ class EvaluateEnvCommand:
 
         env = self.env_factory.instantiate(parallel_envs=self.parallel_envs, preset='record', seed=self.model_config.seed)
         model = self.model_factory.instantiate(action_space=env.action_space).to(device)
+
+        if self.action_noise_factory is not None:
+            action_noise = self.action_noise_factory.instantiate(environment=env).to(device)
+        else:
+            action_noise = None
 
         training_info = TrainingInfo(
             start_epoch_idx=self.storage.last_epoch_idx(), run_name=self.model_config.run_name
@@ -54,6 +62,9 @@ class EvaluateEnvCommand:
                 else:
                     actions = model.step(observations_tensor, **self.sample_args)['actions']
 
+                if action_noise is not None:
+                    actions = action_noise(actions)
+
                 observations, rewards, dones, infos = env.step(actions.cpu().numpy())
                 observations_tensor = torch.from_numpy(observations).to(device)
 
@@ -71,13 +82,14 @@ class EvaluateEnvCommand:
         print(pd.DataFrame({'lengths': episode_lengths, 'rewards': episode_rewards}).describe())
 
 
-def create(model_config, model, vec_env, storage, takes, parallel_envs, sample_args=None):
+def create(model_config, model, vec_env, storage, takes, parallel_envs, action_noise=None, sample_args=None):
     """ Vel factory function """
     return EvaluateEnvCommand(
         model_config=model_config,
         model_factory=model,
         env_factory=vec_env,
         parallel_envs=parallel_envs,
+        action_noise=action_noise,
         storage=storage,
         takes=takes,
         sample_args=sample_args
