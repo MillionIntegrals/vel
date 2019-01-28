@@ -42,7 +42,7 @@ class Transitions(Rollout):
         self.size = size
         self.environment_information = environment_information
         self.transition_tensors = transition_tensors
-        self.extra_data = extra_data
+        self.extra_data = extra_data if extra_data is not None else {}
 
     def to_transitions(self) -> 'Transitions':
         """ Convert given rollout to Transitions """
@@ -106,7 +106,7 @@ class Trajectories(Rollout):
         self.environment_information = environment_information
         self.transition_tensors = transition_tensors
         self.rollout_tensors = rollout_tensors
-        self.extra_data = extra_data
+        self.extra_data = extra_data if extra_data is not None else {}
 
     def to_transitions(self) -> 'Transitions':
         """ Convert given rollout to Transitions """

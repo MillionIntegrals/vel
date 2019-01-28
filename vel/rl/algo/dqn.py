@@ -51,7 +51,8 @@ class DeepQLearning(OptimizerAlgoBase):
                 # [0] is because in pytorch .max(...) returns tuple (max values, argmax)
                 values = target_evaluator.get('model:q_next').max(dim=1)[0]
 
-            estimated_return = rewards_tensor + self.discount_factor * values * (1 - dones_tensor)
+            forward_steps = rollout.extra_data.get('forward_steps', 1)
+            estimated_return = rewards_tensor + (self.discount_factor ** forward_steps) * values * (1 - dones_tensor)
 
         q_selected = evaluator.get('model:action:q')
 

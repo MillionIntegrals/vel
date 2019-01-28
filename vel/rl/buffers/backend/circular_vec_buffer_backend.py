@@ -102,20 +102,64 @@ class CircularVecEnvBufferBackend:
         past_frame = self.get_frame(frame_idx, env_idx)
 
         if not self.dones_buffer[frame_idx, env_idx]:
+            # We're not done
             next_idx = (frame_idx + 1) % self.buffer_capacity
             next_frame = self.state_buffer[next_idx, env_idx]
-        else:
-            next_idx = (frame_idx + 1) % self.buffer_capacity
-            next_frame = np.zeros_like(self.state_buffer[next_idx, env_idx])
 
-        if self.frame_history > 1:
-            future_frame = np.concatenate([
-                past_frame.take(indices=np.arange(1, past_frame.shape[-1]), axis=-1), next_frame
-            ], axis=-1)
+            if self.frame_history > 1:
+                future_frame = np.concatenate([
+                    past_frame.take(indices=np.arange(1, past_frame.shape[-1]), axis=-1), next_frame
+                ], axis=-1)
+            else:
+                future_frame = next_frame
         else:
-            future_frame = next_frame
+            # We are done
+            future_frame = np.zeros_like(past_frame)
 
         return past_frame, future_frame
+
+    def get_frame_with_future_forward_steps(self, frame_idx, env_idx, forward_steps, discount_factor):
+        """ Return frame from the buffer together with the next frame """
+        index_array = np.arange(frame_idx, frame_idx+forward_steps) % self.current_size
+
+        if self.current_idx in index_array:
+            raise VelException("Cannot provide enough future for the frame")
+
+        past_frame = self.get_frame(frame_idx, env_idx)
+        dones_array = self.dones_buffer[index_array, env_idx]
+
+        rewards_array = self.reward_buffer[index_array, env_idx]
+        discounted_rewards_array = rewards_array * (discount_factor ** np.arange(forward_steps))
+
+        if dones_array.any():
+            # Are we done between current frame and frame + n
+            done = True
+
+            dones_shifted = np.zeros_like(dones_array)
+            dones_shifted[1:] = dones_array[:-1]
+            reward = discounted_rewards_array[~np.logical_or.accumulate(dones_shifted)].sum()
+            future_frame = np.zeros_like(past_frame)
+        else:
+            done = False
+            reward = discounted_rewards_array.sum()
+
+            if forward_steps >= self.frame_history:
+                frame_indices = (index_array[:self.frame_history] + 1) % self.buffer_capacity
+                future_frame = np.moveaxis(self.state_buffer[frame_indices, env_idx], 0, -2).reshape(past_frame.shape)
+            else:
+                frame_candidate = np.moveaxis(
+                    self.state_buffer[(index_array + 1) % self.buffer_capacity, env_idx], 0, -2
+                )
+                frame_candidate_target_shape = (
+                    list(frame_candidate.shape[:-2]) + [frame_candidate.shape[-2] * frame_candidate.shape[-1]]
+                )
+
+                future_frame = np.concatenate([
+                    past_frame[..., (frame_candidate_target_shape[-1] - past_frame.shape[-1]):],
+                    frame_candidate.reshape(frame_candidate_target_shape)
+                ], -1)
+
+        return past_frame, future_frame, reward, done
 
     def get_frame(self, frame_idx, env_idx):
         """ Return frame from the buffer """
@@ -197,6 +241,52 @@ class CircularVecEnvBufferBackend:
 
         return transition_tensors
 
+    def get_transitions_forward_steps(self, indexes, forward_steps, discount_factor):
+        """
+        Get dictionary of a transition data - where the target of a transition is
+        n steps forward along the trajectory. Rewards are properly aggregated according to the discount factor,
+        and the process stops when trajectory is done.
+        """
+        frame_batch_shape = (
+                [indexes.shape[0], indexes.shape[1]]
+                + list(self.state_buffer.shape[2:-1])
+                + [self.state_buffer.shape[-1] * self.frame_history]
+        )
+
+        simple_batch_shape = [indexes.shape[0], indexes.shape[1]]
+
+        past_frame_buffer = np.zeros(frame_batch_shape, dtype=self.state_buffer.dtype)
+        future_frame_buffer = np.zeros(frame_batch_shape, dtype=self.state_buffer.dtype)
+
+        reward_buffer = np.zeros(simple_batch_shape, dtype=np.float32)
+        dones_buffer = np.zeros(simple_batch_shape, dtype=bool)
+
+        for buffer_idx, frame_row in enumerate(indexes):
+            for env_idx, frame_idx in enumerate(frame_row):
+                past_frame, future_frame, reward, done = self.get_frame_with_future_forward_steps(
+                    frame_idx, env_idx, forward_steps=forward_steps, discount_factor=discount_factor
+                )
+
+                past_frame_buffer[buffer_idx, env_idx] = past_frame
+                future_frame_buffer[buffer_idx, env_idx] = future_frame
+                reward_buffer[buffer_idx, env_idx] = reward
+                dones_buffer[buffer_idx, env_idx] = done
+
+        actions = take_along_axis(self.action_buffer, indexes)
+
+        transition_tensors = {
+            'observations': past_frame_buffer,
+            'actions': actions,
+            'rewards': reward_buffer,
+            'observations_next': future_frame_buffer,
+            'dones': dones_buffer.astype(np.float32),
+        }
+
+        for name in self.extra_data:
+            transition_tensors[name] = take_along_axis(self.extra_data[name], indexes)
+
+        return transition_tensors
+
     def get_trajectories(self, indexes, rollout_length):
         """ Return batch consisting of *consecutive* transitions """
         # assert indexes.shape[0] > 1, "There must be multiple indexes supplied"
@@ -208,12 +298,12 @@ class CircularVecEnvBufferBackend:
 
         return self.get_transitions(batch_indexes)
 
-    def sample_batch_transitions(self, batch_size):
+    def sample_batch_transitions(self, batch_size, forward_steps=1):
         """ Return indexes of next sample"""
         results = []
 
         for i in range(self.num_envs):
-            results.append(self.sample_uniform_single_env(batch_size))
+            results.append(self.sample_frame_single_env(batch_size, forward_steps=forward_steps))
 
         return np.stack(results, axis=-1)
 
@@ -253,17 +343,21 @@ class CircularVecEnvBufferBackend:
 
             return candidate
 
-    def sample_uniform_single_env(self, batch_size):
-        """ Return indexes of next sample"""
-        # Sample from up to total size
+    def sample_frame_single_env(self, batch_size, forward_steps=1):
+        """ Return an in index of a random set of frames from a buffer, that have enough history and future """
+        # Whole idea of this function is to make sure that sample we take is far away from the point which we are
+        # currently writing to the buffer, which is 'discontinuous'
+
         if self.current_size < self.buffer_capacity:
+            # Sample from up to total size of the buffer
             # -1 because we cannot take the last one
-            return np.random.choice(self.current_size - 1, batch_size, replace=False)
+            return np.random.choice(self.current_size - forward_steps, batch_size, replace=False)
         else:
             candidate = np.random.choice(self.buffer_capacity, batch_size, replace=False)
 
             forbidden_ones = (
-                    np.arange(self.current_idx, self.current_idx + self.frame_history) % self.buffer_capacity
+                np.arange(self.current_idx - forward_steps + 1, self.current_idx + self.frame_history)
+                % self.buffer_capacity
             )
 
             # Exclude these frames for learning as they may have some part of history overwritten

@@ -266,7 +266,7 @@ def test_dqn_breakout():
                 frame_history=4
             ),
             action_noise=EpsGreedy(
-                epsilon_schedule=LinearAndConstantSchedule(
+                epsilon=LinearAndConstantSchedule(
                     initial_value=1.0, final_value=0.1, end_of_interpolation=0.1
                 ),
                 environment=vec_env
@@ -367,7 +367,7 @@ def test_prioritized_dqn_breakout():
                 frame_history=4
             ),
             action_noise=EpsGreedy(
-                epsilon_schedule=LinearAndConstantSchedule(
+                epsilon=LinearAndConstantSchedule(
                     initial_value=1.0, final_value=0.1, end_of_interpolation=0.1
                 ),
                 environment=vec_env

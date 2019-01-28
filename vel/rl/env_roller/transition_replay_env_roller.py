@@ -19,17 +19,22 @@ class TransitionReplayEnvRoller(ReplayEnvRollerBase):
     """
 
     def __init__(self, environment, device, replay_buffer: ReplayBuffer, discount_factor: typing.Optional[float]=None,
-                 normalize_returns: bool=False, action_noise: typing.Optional[nn.Module]=None):
+                 normalize_returns: bool=False, forward_steps: int=1, action_noise: typing.Optional[nn.Module]=None):
         self._environment = environment
         self.device = device
         self.replay_buffer = replay_buffer
         self.normalize_returns = normalize_returns
+        self.forward_steps = forward_steps
         self.discount_factor = discount_factor
         self.action_noise = action_noise.to(self.device) if action_noise is not None else None
 
         if self.normalize_returns:
             assert self.discount_factor is not None, \
                 "TransitionReplayEnvRoller must have a discount factor defined if normalize_returns is turned on"
+
+        if self.forward_steps > 1:
+            assert self.discount_factor is not None, \
+                "TransitionReplayEnvRoller must have a discount factor defined if forward_steps is larger than one"
 
         self.ret_rms = RunningMeanStd(shape=()) if normalize_returns else None
 
@@ -120,7 +125,13 @@ class TransitionReplayEnvRoller(ReplayEnvRollerBase):
 
     def sample(self, batch_info: BatchInfo, model: RlModel, number_of_steps: int) -> Rollout:
         """ Sample experience from replay buffer and return a batch """
-        transitions = self.replay_buffer.sample_transitions(batch_size=number_of_steps, batch_info=batch_info)
+        if self.forward_steps > 1:
+            transitions = self.replay_buffer.sample_forward_transitions(
+                batch_size=number_of_steps, batch_info=batch_info, forward_steps=self.forward_steps,
+                discount_factor=self.discount_factor
+            )
+        else:
+            transitions = self.replay_buffer.sample_transitions(batch_size=number_of_steps, batch_info=batch_info)
 
         if self.ret_rms is not None:
             rewards = transitions.transition_tensors['rewards']
@@ -142,9 +153,10 @@ class TransitionReplayEnvRollerFactory(ReplayEnvRollerFactoryBase):
     """ Factory for the ReplayEnvRoller """
 
     def __init__(self, replay_buffer_factory: ReplayBufferFactory, discount_factor: typing.Optional[float]=None,
-                 normalize_returns: bool=False, action_noise: typing.Optional[ModelFactory]=None):
+                 normalize_returns: bool=False, forward_steps: int=1, action_noise: typing.Optional[ModelFactory]=None):
         self.replay_buffer_factory = replay_buffer_factory
         self.normalize_returns = normalize_returns
+        self.forward_steps = forward_steps
         self.discount_factor = discount_factor
         self.action_noise_factory = action_noise
 
@@ -162,16 +174,18 @@ class TransitionReplayEnvRollerFactory(ReplayEnvRollerFactoryBase):
             replay_buffer=replay_buffer,
             discount_factor=self.discount_factor,
             normalize_returns=self.normalize_returns,
+            forward_steps=self.forward_steps,
             action_noise=action_noise
         )
 
 
 def create(replay_buffer, discount_factor: typing.Optional[float]=None, normalize_returns: bool=False,
-           action_noise: typing.Optional[ModelFactory]=None):
+           forward_steps: int=1, action_noise: typing.Optional[ModelFactory]=None):
     """ Vel factory function """
     return TransitionReplayEnvRollerFactory(
         replay_buffer_factory=replay_buffer,
         discount_factor=discount_factor,
+        forward_steps=forward_steps,
         normalize_returns=normalize_returns,
         action_noise=action_noise
     )

@@ -3,7 +3,7 @@ import numpy as np
 import torch
 
 from vel.api import Schedule
-from vel.rl.api import ReplayBuffer, Trajectories
+from vel.rl.api import ReplayBuffer, Trajectories, Transitions
 from .backend.prioritized_vec_buffer_backend import PrioritizedCircularVecEnvBufferBackend
 
 
@@ -66,11 +66,22 @@ class PrioritizedCircularReplayBuffer(ReplayBuffer):
 
         return transitions.to_transitions()
 
-    def sample_transitions(self, batch_size, batch_info):
+    def sample_transitions(self, batch_size, batch_info) -> Transitions:
         """ Sample batch of transitions and return them """
         probs, indexes, tree_idxs = self.backend.sample_batch_transitions(batch_size)
 
         return self._get_transitions(probs, indexes, tree_idxs, batch_info)
+
+    def sample_forward_transitions(self, batch_size, batch_info,
+                                   forward_steps: int, discount_factor: float) -> Transitions:
+        """
+        Sample transitions from replay buffer with _forward steps_.
+        That is, instead of getting a transition s_t -> s_t+1 with reward r,
+        get a transition s_t -> s_t+n with sum of intermediate rewards.
+
+        Used in a variant of Deep Q-Learning
+        """
+        raise NotImplementedError
 
     def sample_trajectories(self, rollout_length, batch_info):
         """ Sample batch of trajectories and return them """

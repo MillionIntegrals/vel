@@ -444,17 +444,17 @@ def test_get_frame_future_with_dones():
 
     nt.assert_array_equal(buffer.get_frame_with_future(0, 0)[1].max(0).max(0), np.array([0, 20, 21, 22]))
     nt.assert_array_equal(buffer.get_frame_with_future(1, 0)[1].max(0).max(0), np.array([20, 21, 22, 23]))
-    nt.assert_array_equal(buffer.get_frame_with_future(2, 0)[1].max(0).max(0), np.array([21, 22, 23, 0]))
+    nt.assert_array_equal(buffer.get_frame_with_future(2, 0)[1].max(0).max(0), np.array([0, 0, 0, 0]))
 
     nt.assert_array_equal(buffer.get_frame_with_future(3, 0)[1].max(0).max(0), np.array([0, 0, 24, 25]))
-    nt.assert_array_equal(buffer.get_frame_with_future(8, 0)[1].max(0).max(0), np.array([27, 28, 29, 0]))
+    nt.assert_array_equal(buffer.get_frame_with_future(8, 0)[1].max(0).max(0), np.array([0, 0, 0, 0]))
 
     nt.assert_array_equal(buffer.get_frame_with_future(0, 1)[1].max(0).max(0), np.array([190, 200, 210, 220]))
-    nt.assert_array_equal(buffer.get_frame_with_future(1, 1)[1].max(0).max(0), np.array([200, 210, 220, 0]))
+    nt.assert_array_equal(buffer.get_frame_with_future(1, 1)[1].max(0).max(0), np.array([0, 0, 0, 0]))
     nt.assert_array_equal(buffer.get_frame_with_future(2, 1)[1].max(0).max(0), np.array([0, 0, 230, 240]))
 
     nt.assert_array_equal(buffer.get_frame_with_future(3, 1)[1].max(0).max(0), np.array([0, 230, 240, 250]))
-    nt.assert_array_equal(buffer.get_frame_with_future(7, 1)[1].max(0).max(0), np.array([260, 270, 280, 0]))
+    nt.assert_array_equal(buffer.get_frame_with_future(7, 1)[1].max(0).max(0), np.array([0, 0, 0, 0]))
 
     with t.assert_raises(VelException):
         buffer.get_frame_with_future(9, 0)
@@ -529,7 +529,7 @@ def test_get_batch():
     nt.assert_array_equal(obs_tp1[:, 0].max(1).max(1), np.array([
         [0, 20, 21, 22],
         [20, 21, 22, 23],
-        [21, 22, 23, 0],
+        [0, 0, 0, 0],
         [0, 0, 24, 25],
         [0, 24, 25, 26],
         [24, 25, 26, 27],
@@ -538,13 +538,13 @@ def test_get_batch():
     ]))
 
     nt.assert_array_equal(obs_tp1[:, 1].max(1).max(1), np.array([
-        [200, 210, 220, 0],
+        [0, 0, 0, 0],
         [0, 0, 230, 240],
         [0, 230, 240, 250],
         [230, 240, 250, 260],
         [240, 250, 260, 270],
         [250, 260, 270, 280],
-        [260, 270, 280, 0],
+        [0, 0, 0, 0],
         [0, 0, 290, 300],
     ]))
 
@@ -728,8 +728,8 @@ def test_frame_stack_compensation_single_dim():
     )
 
     nt.assert_array_almost_equal(
-        observations_3, np.array([[[ 20,  21,  22,  23],
-                                   [ 20,  21,  22,  23]],
+        observations_3, np.array([[[20,  21,  22,  23],
+                                   [20,  21,  22,  23]],
                                   [[200, 210, 220, 230],
                                    [200, 210, 220, 230]]])
     )
@@ -761,4 +761,177 @@ def test_frame_stack_compensation_multi_dim():
                                    [20, 20, 21, 21, 22, 22, 23, 23]],
                                   [[200, 200, 210, 210, 220, 220, 230, 230],
                                    [200, 200, 210, 210, 220, 220, 230, 230]]])
+    )
+
+
+def test_get_frame_with_future_forward_steps_exceptions():
+    """
+    Test function get_frame_with_future_forward_steps.
+
+    Does it throw vel exception properly if and only if cannot provide enough future frames.
+    """
+    buffer = get_filled_buffer_frame_stack(frame_stack=4, frame_dim=2)
+
+    buffer.get_frame_with_future_forward_steps(0, 0, forward_steps=2, discount_factor=0.9)
+    buffer.get_frame_with_future_forward_steps(1, 0, forward_steps=2, discount_factor=0.9)
+    buffer.get_frame_with_future_forward_steps(2, 0, forward_steps=2, discount_factor=0.9)
+    buffer.get_frame_with_future_forward_steps(3, 0, forward_steps=2, discount_factor=0.9)
+    buffer.get_frame_with_future_forward_steps(4, 0, forward_steps=2, discount_factor=0.9)
+    buffer.get_frame_with_future_forward_steps(5, 0, forward_steps=2, discount_factor=0.9)
+    buffer.get_frame_with_future_forward_steps(6, 0, forward_steps=2, discount_factor=0.9)
+    buffer.get_frame_with_future_forward_steps(7, 0, forward_steps=2, discount_factor=0.9)
+
+    with t.assert_raises(VelException):
+        # No future for the frame
+        buffer.get_frame_with_future_forward_steps(8, 0, forward_steps=2, discount_factor=0.9)
+
+    with t.assert_raises(VelException):
+        # No future for the frame
+        buffer.get_frame_with_future_forward_steps(9, 0, forward_steps=2, discount_factor=0.9)
+
+    with t.assert_raises(VelException):
+        # No history for the frame
+        buffer.get_frame_with_future_forward_steps(10, 0, forward_steps=2, discount_factor=0.9)
+
+    buffer.get_frame_with_future_forward_steps(11, 0, forward_steps=2, discount_factor=0.9)
+    buffer.get_frame_with_future_forward_steps(12, 0, forward_steps=2, discount_factor=0.9)
+    buffer.get_frame_with_future_forward_steps(13, 0, forward_steps=2, discount_factor=0.9)
+    buffer.get_frame_with_future_forward_steps(14, 0, forward_steps=2, discount_factor=0.9)
+    buffer.get_frame_with_future_forward_steps(15, 0, forward_steps=2, discount_factor=0.9)
+    buffer.get_frame_with_future_forward_steps(16, 0, forward_steps=2, discount_factor=0.9)
+    buffer.get_frame_with_future_forward_steps(17, 0, forward_steps=2, discount_factor=0.9)
+    buffer.get_frame_with_future_forward_steps(18, 0, forward_steps=2, discount_factor=0.9)
+    buffer.get_frame_with_future_forward_steps(19, 0, forward_steps=2, discount_factor=0.9)
+
+    with t.assert_raises(VelException):
+        # Index beyond buffer size
+        buffer.get_frame_with_future_forward_steps(20, 0, forward_steps=2, discount_factor=0.9)
+
+
+def test_get_frame_with_future_forward_steps_with_dones():
+    """
+    Test function get_frame_with_future_forward_steps.
+
+    Does it return empty frame if there is a done in between.
+    Does it return correct rewards if there is a done in between
+    Does it return correct rewards if there is no done in between
+    """
+    buffer = get_filled_buffer_frame_stack(frame_stack=4, frame_dim=2)
+
+    # Just a check to be sure
+    nt.assert_array_equal(
+        buffer.dones_buffer[:, 0],
+        np.array([
+            False, False, True, False, False, False, False, False, True, False,
+            True, False, False, True, False, False, False, False, True, False
+        ])
+    )
+
+    nt.assert_array_equal(
+        buffer.reward_buffer[:, 0],
+        np.array([
+            10., 10.5, 11., 11.5, 12., 12.5, 13., 13.5, 14., 14.5, 5., 5.5, 6., 6.5, 7., 7.5, 8., 8.5, 9., 9.5
+        ])
+    )
+
+    for i in [0, 3, 4, 5, 6, 11, 14, 15, 19]:
+        result = buffer.get_frame_with_future_forward_steps(i, 0, forward_steps=2, discount_factor=0.9)
+
+        next_frame = result[1]
+        reward = result[2]
+        done = result[3]
+
+        t.assert_not_equal(next_frame.max(), 0)
+        t.assert_equals(done, False)
+        t.assert_equals(reward, buffer.reward_buffer[i, 0] + 0.9 * buffer.reward_buffer[(i+1) % 20, 0])
+
+    for i in [1, 2, 7,  12, 13, 17, 18]:
+        result = buffer.get_frame_with_future_forward_steps(i, 0, forward_steps=2, discount_factor=0.9)
+
+        next_frame = result[1]
+        done = result[3]
+
+        t.assert_equal(next_frame.max(), 0)
+        t.assert_equals(done, True)
+
+    for i in [1, 7, 12, 17]:
+        result = buffer.get_frame_with_future_forward_steps(i, 0, forward_steps=2, discount_factor=0.9)
+        reward = result[2]
+        t.assert_equals(reward, buffer.reward_buffer[i, 0] + 0.9 * buffer.reward_buffer[(i+1) % 20, 0])
+
+    for i in [2, 13, 18]:
+        result = buffer.get_frame_with_future_forward_steps(i, 0, forward_steps=2, discount_factor=0.9)
+        reward = result[2]
+        t.assert_equals(reward, buffer.reward_buffer[i, 0])
+
+
+def test_get_frame_with_future_forward_steps_without_dones():
+    """
+    Test function get_frame_with_future_forward_steps.
+
+    Does it return correct frame if there is no done in between
+    """
+    buffer = get_filled_buffer_frame_stack(frame_stack=4, frame_dim=2)
+
+    result = buffer.get_frame_with_future_forward_steps(0, 0, forward_steps=2, discount_factor=0.9)
+
+    frame = result[0]
+    future_frame = result[1]
+
+    nt.assert_array_equal(
+        frame,
+        np.array([[[0, 0, 0, 0, 20, 20, 21, 21],
+                   [0, 0, 0, 0, 20, 20, 21, 21]],
+                  [[0, 0, 0, 0, 200, 200, 210, 210],
+                   [0, 0, 0, 0, 200, 200, 210, 210]]])
+    )
+
+    nt.assert_array_equal(
+        future_frame,
+        np.array([[[20, 20, 21, 21, 22, 22, 23, 23],
+                   [20, 20, 21, 21, 22, 22, 23, 23]],
+                  [[200, 200, 210, 210, 220, 220, 230, 230],
+                   [200, 200, 210, 210, 220, 220, 230, 230]]])
+    )
+
+    result = buffer.get_frame_with_future_forward_steps(3, 0, forward_steps=4, discount_factor=0.9)
+
+    frame = result[0]
+    future_frame = result[1]
+
+    nt.assert_array_equal(
+        frame,
+        np.array([[[0, 0, 0, 0, 0, 0, 24, 24],
+                   [0, 0, 0, 0, 0, 0, 24, 24]],
+                  [[0, 0, 0, 0, 0, 0, 240, 240],
+                   [0, 0, 0, 0, 0, 0, 240, 240]]])
+    )
+
+    nt.assert_array_equal(
+        future_frame,
+        np.array([[[25, 25, 26, 26, 27, 27, 28, 28],
+                   [25, 25, 26, 26, 27, 27, 28, 28]],
+                  [[250, 250, 260, 260, 270, 270, 280, 280],
+                   [250, 250, 260, 260, 270, 270, 280, 280]]])
+    )
+
+    result = buffer.get_frame_with_future_forward_steps(19, 0, forward_steps=2, discount_factor=0.9)
+
+    frame = result[0]
+    future_frame = result[1]
+
+    nt.assert_array_equal(
+        frame,
+        np.array([[[0, 0, 0, 0, 0, 0, 20, 20],
+                   [0, 0, 0, 0, 0, 0, 20, 20]],
+                  [[0, 0, 0, 0, 0, 0, 200, 200],
+                   [0, 0, 0, 0, 0, 0, 200, 200]]])
+    )
+
+    nt.assert_array_equal(
+        future_frame,
+        np.array([[[0, 0, 20, 20, 21, 21, 22, 22],
+                   [0, 0, 20, 20, 21, 21, 22, 22]],
+                  [[0, 0, 200, 200, 210, 210, 220, 220],
+                   [0, 0, 200, 200, 210, 210, 220, 220]]])
     )

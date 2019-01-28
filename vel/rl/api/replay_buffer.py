@@ -20,6 +20,17 @@ class ReplayBuffer:
         """ Sample transitions from replay buffer """
         raise NotImplementedError
 
+    def sample_forward_transitions(self, batch_size, batch_info, forward_steps: int,
+                                   discount_factor: float) -> Transitions:
+        """
+        Sample transitions from replay buffer with _forward steps_.
+        That is, instead of getting a transition s_t -> s_t+1 with reward r,
+        get a transition s_t -> s_t+n with sum of intermediate rewards.
+
+        Used in a variant of Deep Q-Learning
+        """
+        raise NotImplementedError
+
     def sample_trajectories(self, rollout_length, batch_info) -> Trajectories:
         """ Sample transitions from replay buffer """
         raise NotImplementedError

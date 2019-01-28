@@ -1,9 +1,12 @@
-name: 'breakout_dqn_distributional'
+name: 'atlantis_rp_dqn_raw'
 
 
 env:
   name: vel.rl.env.classic_atari
-  game: 'BreakoutNoFrameskip-v4'
+  game: 'AtlantisNoFrameskip-v4'
+
+  settings:
+    max_episode_frames: 108_000
 
 
 vec_env:
@@ -12,11 +15,7 @@ vec_env:
 
 
 model:
-  name: vel.rl.models.distributional_q_model
-
-  atoms: 51  # 51 bins for Distributional DQN
-  vmin: -10.0
-  vmax: 10.0
+  name: vel.rl.models.q_model
 
   input_block:
     name: vel.modules.input.image_to_tensor
@@ -37,8 +36,9 @@ reinforcer:
     replay_buffer:
       name: vel.rl.buffers.circular_replay_buffer
 
-      buffer_initial_size: 30_000 # How many samples we need in the buffer before we start using replay buffer
-      buffer_capacity: 250_000
+#      buffer_initial_size: 80_000 # How many samples we need in the buffer before we start using replay buffer
+      buffer_initial_size: 200_000 # How many samples we need in the buffer before we start using replay buffer
+      buffer_capacity: 1_000_000
 
       # Because env has a framestack already built-in, save memory by encoding only last frames in the replay buffer
       frame_stack_compensation: true
@@ -54,9 +54,9 @@ reinforcer:
         final_value: 0.1
 
   algo:
-    name: vel.rl.algo.distributional_dqn
+    name: vel.rl.algo.dqn
 
-    target_update_frequency: 10_000  # After how many batches to update the target network
+    target_update_frequency: 32_000  # After how many batches to update the target network
     max_grad_norm: 0.5
 
     discount_factor: 0.99
@@ -67,26 +67,23 @@ reinforcer:
 
 
 optimizer:
-  name: vel.optimizers.rmsprop
-  lr: 2.5e-4
-  alpha: 0.95
-  momentum: 0.95
-  epsilon: 1.0e-1
+  name: vel.optimizers.adam
+  lr: 6.25e-05
+  epsilon: 1.5e-4
 
 
 commands:
   train:
     name: vel.rl.commands.rl_train_command
-    total_frames: 1.1e7  # 11M
+    total_frames: 5.0e7  # 50M
     batches_per_epoch: 2500
 
   record:
     name: vel.rl.commands.record_movie_command
     takes: 10
-    videoname: 'breakout_vid_{:04}.avi'
-    frame_history: 4
+    videoname: 'atlantis_vid_{:04}.avi'
 
   evaluate:
     name: vel.rl.commands.evaluate_env_command
+    parallel_envs: 12
     takes: 100
-    frame_history: 4

@@ -88,9 +88,12 @@ class DistributionalDeepQLearning(OptimizerAlgoBase):
                 )
 
             # HISTOGRAM PROJECTION CODE
+            forward_steps = rollout.extra_data.get('forward_steps', 1)
+
             atoms_projected = (
                 rewards_tensor.unsqueeze(1) +
-                self.discount_factor * (1 - dones_tensor).unsqueeze(1) * self.support_atoms.unsqueeze(0)
+                (self.discount_factor ** forward_steps) *
+                (1 - dones_tensor).unsqueeze(1) * self.support_atoms.unsqueeze(0)
             )
 
             atoms_projected = atoms_projected.clamp(min=self.vmin, max=self.vmax)

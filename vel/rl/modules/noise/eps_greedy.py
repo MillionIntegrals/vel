@@ -1,20 +1,31 @@
+import typing
+
 import torch
 import torch.nn as nn
 
 from vel.api import Schedule
 from vel.internals.generic_factory import GenericFactory
+from vel.schedules.constant import ConstantSchedule
 
 
 class EpsGreedy(nn.Module):
     """ Epsilon-greedy action selection """
-    def __init__(self, epsilon_schedule: Schedule, environment):
+    def __init__(self, epsilon: typing.Union[Schedule, float], environment):
         super().__init__()
 
-        self.epsilon_schedule = epsilon_schedule
+        if isinstance(epsilon, Schedule):
+            self.epsilon_schedule = epsilon
+        else:
+            self.epsilon_schedule = ConstantSchedule(epsilon)
+
         self.action_space = environment.action_space
 
-    def forward(self, actions, batch_info):
-        epsilon = self.epsilon_schedule.value(batch_info['progress'])
+    def forward(self, actions, batch_info=None):
+        if batch_info is None:
+            # Just take final value if there is no batch info
+            epsilon = self.epsilon_schedule.value(1.0)
+        else:
+            epsilon = self.epsilon_schedule.value(batch_info['progress'])
 
         random_samples = torch.randint_like(actions, self.action_space.n)
         selector = torch.rand_like(random_samples, dtype=torch.float32)
@@ -29,6 +40,6 @@ class EpsGreedy(nn.Module):
         pass
 
 
-def create(epsilon_schedule: Schedule):
+def create(epsilon: typing.Union[Schedule, float]):
     """ Vel factory function """
-    return GenericFactory(EpsGreedy, arguments={'epsilon_schedule': epsilon_schedule})
+    return GenericFactory(EpsGreedy, arguments={'epsilon': epsilon})

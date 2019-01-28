@@ -57,7 +57,7 @@ class CircularReplayBuffer(ReplayBuffer):
             rollout_tensors={}
         )
 
-    def sample_transitions(self, batch_size, batch_info) -> Transitions:
+    def sample_transitions(self, batch_size, batch_info, discount_factor=None) -> Transitions:
         """ Sample batch of transitions and return them """
         indexes = self.backend.sample_batch_transitions(batch_size)
         transition_tensors = self.backend.get_transitions(indexes)
@@ -68,6 +68,31 @@ class CircularReplayBuffer(ReplayBuffer):
             environment_information=None,
             transition_tensors={k: torch.from_numpy(v) for k, v in transition_tensors.items()},
             rollout_tensors={}
+        ).to_transitions()
+
+    def sample_forward_transitions(self, batch_size, batch_info, forward_steps: int,
+                                   discount_factor: float) -> Transitions:
+        """
+        Sample transitions from replay buffer with _forward steps_.
+        That is, instead of getting a transition s_t -> s_t+1 with reward r,
+        get a transition s_t -> s_t+n with sum of intermediate rewards.
+
+        Used in a variant of Deep Q-Learning
+        """
+        indexes = self.backend.sample_batch_transitions(batch_size, forward_steps=forward_steps)
+        transition_tensors = self.backend.get_transitions_forward_steps(
+            indexes, forward_steps=forward_steps, discount_factor=discount_factor
+        )
+
+        return Trajectories(
+            num_steps=batch_size,
+            num_envs=self.backend.num_envs,
+            environment_information=None,
+            transition_tensors={k: torch.from_numpy(v) for k, v in transition_tensors.items()},
+            rollout_tensors={},
+            extra_data={
+                'forward_steps': forward_steps
+            }
         ).to_transitions()
 
     def store_transition(self, frame, action, reward, done, extra_info=None):

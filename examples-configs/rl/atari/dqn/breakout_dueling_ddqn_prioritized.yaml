@@ -51,7 +51,7 @@ reinforcer:
     action_noise:
       name: vel.rl.modules.noise.eps_greedy
 
-      epsilon_schedule:
+      epsilon:
         name: vel.schedules.linear_and_constant
         end_of_interpolation: 0.1
         initial_value: 1.0
