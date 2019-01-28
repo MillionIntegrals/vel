@@ -11,6 +11,8 @@ from vel.openai.baselines.common.atari_wrappers import (
     ScaledFloatFrame, FrameStack, FireEpisodicLifeEnv
 )
 
+from vel.util.situational import process_environment_settings
+
 from vel.rl.api import EnvFactory
 from vel.rl.env.wrappers.clip_episode_length import ClipEpisodeLengthWrapper
 
@@ -99,16 +101,9 @@ def wrapped_env_maker(environment_id, seed, serial_id, disable_reward_clipping=F
 
 class ClassicAtariEnv(EnvFactory):
     """ Atari game environment wrapped in the same way as Deep Mind and OpenAI baselines """
-    def __init__(self, envname, presets=None):
+    def __init__(self, envname, settings=None, presets=None):
         self.envname = envname
-
-        presets = presets if presets is not None else {}
-        env_keys = set(DEFAULT_SETTINGS.keys()).union(set(presets.keys()))
-
-        self.presets = {}
-
-        for key in env_keys:
-            self.presets[key] = presets.get(key, {})
+        self.settings = process_environment_settings(DEFAULT_SETTINGS, settings, presets)
 
     def specification(self) -> EnvSpec:
         """ Return environment specification """
@@ -116,15 +111,7 @@ class ClassicAtariEnv(EnvFactory):
 
     def get_preset(self, preset_key='default') -> dict:
         """ Get env settings for given preset """
-        current_settings = DEFAULT_SETTINGS.get(preset_key, {}).copy()
-
-        if 'all' in self.presets:
-            current_settings.update(self.presets['all'])
-
-        # Key must be present in presets
-        current_settings.update(self.presets[preset_key])
-
-        return current_settings
+        return self.settings[preset_key]
 
     def instantiate(self, seed=0, serial_id=0, preset='default', extra_args=None) -> gym.Env:
         """ Make a single environment compatible with the experiments """
@@ -132,6 +119,6 @@ class ClassicAtariEnv(EnvFactory):
         return wrapped_env_maker(self.envname, seed, serial_id, **settings)
 
 
-def create(game, presets=None):
+def create(game, settings=None, presets=None):
     """ Vel factory function """
-    return ClassicAtariEnv(game, presets)
+    return ClassicAtariEnv(game, settings, presets)

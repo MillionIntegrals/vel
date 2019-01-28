@@ -3,10 +3,11 @@ import os.path
 
 from gym.envs.registration import EnvSpec
 
-from vel.rl.api import EnvFactory
 from vel.openai.baselines import logger
 from vel.openai.baselines.bench import Monitor
+from vel.rl.api import EnvFactory
 from vel.rl.env.wrappers.env_normalize import EnvNormalize
+from vel.util.situational import process_environment_settings
 
 
 DEFAULT_SETTINGS = {
@@ -52,27 +53,18 @@ def env_maker(environment_id, seed, serial_id, monitor=False, allow_early_resets
 
 class MujocoEnv(EnvFactory):
     """ Atari game environment wrapped in the same way as Deep Mind and OpenAI baselines """
-    def __init__(self, envname, presets=None, normalize_observations=False, normalize_returns=False):
+    def __init__(self, envname, normalize_observations=False, normalize_returns=False, settings=None, presets=None):
         self.envname = envname
 
-        presets = presets if presets is not None else {}
-        env_keys = set(DEFAULT_SETTINGS.keys()).union(set(presets.keys()))
+        settings = settings if settings is not None else {}
 
-        self.presets = {}
+        if normalize_observations:
+            settings['normalize_observations'] = True
 
-        for key in env_keys:
-            preset_settings = DEFAULT_SETTINGS.get(key, {}).copy()
+        if normalize_returns:
+            settings['normalize_returns'] = True
 
-            if normalize_observations:
-                preset_settings['normalize_observations'] = True
-
-            if normalize_returns:
-                preset_settings['normalize_returns'] = True
-
-            if key in presets:
-                preset_settings.update(presets[key])
-
-            self.presets[key] = preset_settings
+        self.settings = process_environment_settings(DEFAULT_SETTINGS, settings, presets)
 
     def specification(self) -> EnvSpec:
         """ Return environment specification """
@@ -80,7 +72,7 @@ class MujocoEnv(EnvFactory):
 
     def get_preset(self, preset_key='default') -> dict:
         """ Get env settings for given preset """
-        return self.presets[preset_key]
+        return self.settings[preset_key]
 
     def instantiate(self, seed=0, serial_id=0, preset='default', extra_args=None) -> gym.Env:
         """ Make a single environment compatible with the experiments """
@@ -88,10 +80,11 @@ class MujocoEnv(EnvFactory):
         return env_maker(self.envname, seed, serial_id, **settings)
 
 
-def create(game, presets=None, normalize_returns=False):
+def create(game, normalize_returns=False, settings=None, presets=None):
     """ Vel factory function """
     return MujocoEnv(
         envname=game,
-        presets=presets,
-        normalize_returns=normalize_returns
+        normalize_returns=normalize_returns,
+        settings=settings,
+        presets=presets
     )
