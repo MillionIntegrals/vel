@@ -43,6 +43,21 @@ on this library:
   Ziyu Wang and Nando de Freitas and Marc Lanctot
   http://arxiv.org/abs/1511.06581
   
+- (Jun 2017) **Noisy Networks for Exploration**
+  Meire Fortunato and
+  Mohammad Gheshlaghi Azar and
+  Bilal Piot and
+  Jacob Menick and
+  Ian Osband and
+  Alex Graves and
+  Vlad Mnih and
+  Rémi Munos and
+  Demis Hassabis and
+  Olivier Pietquin and
+  Charles Blundell and
+  Shane Legg
+  https://arxiv.org/abs/1901.01753
+  
 - (Jul 2017) **A Distributional Perspective on Reinforcement Learning**
   Marc G. Bellemare, Will Dabney, Rémi Munos
   https://arxiv.org/abs/1707.06887  
