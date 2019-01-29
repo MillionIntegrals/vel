@@ -96,7 +96,7 @@ class OnPolicyIterationReinforcer(ReinforcerBase):
         2. Use that rollout to train the policy
         """
         # Calculate environment rollout on the evaluation version of the model
-        self.model.eval()
+        self.model.train()
 
         rollout = self.env_roller.rollout(batch_info, self.model, self.settings.number_of_steps)
 
@@ -104,8 +104,6 @@ class OnPolicyIterationReinforcer(ReinforcerBase):
         rollout = self.algo.process_rollout(batch_info, rollout)
 
         # Perform the training step
-        self.model.train()
-
         # Algo will aggregate data into this list:
         batch_info['sub_batch_data'] = []
 

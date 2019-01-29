@@ -10,5 +10,6 @@ class ModelFactory:
 
     @staticmethod
     def generic(closure, **kwargs) -> 'ModelFactory':
+        """ Return a generic model factory """
         # noinspection PyTypeChecker
         return GenericFactory(closure, kwargs)

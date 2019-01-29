@@ -105,11 +105,9 @@ class BufferedMixedPolicyIterationReinforcer(ReinforcerBase):
 
     def on_policy_train_batch(self, batch_info: BatchInfo):
         """ Perform an 'on-policy' training step of evaluating an env and a single backpropagation step """
-        self.model.eval()
+        self.model.train()
 
         rollout = self.env_roller.rollout(batch_info, self.model, self.settings.number_of_steps).to_device(self.device)
-
-        self.model.train()
 
         batch_result = self.algo.optimizer_step(
             batch_info=batch_info,
@@ -124,11 +122,9 @@ class BufferedMixedPolicyIterationReinforcer(ReinforcerBase):
 
     def off_policy_train_batch(self, batch_info: BatchInfo):
         """ Perform an 'off-policy' training step of sampling the replay buffer and gradient descent """
-        self.model.eval()
+        self.model.train()
 
         rollout = self.env_roller.sample(batch_info, self.model, self.settings.number_of_steps).to_device(self.device)
-
-        self.model.train()
 
         batch_result = self.algo.optimizer_step(
             batch_info=batch_info,

@@ -10,9 +10,8 @@ Bring **velocity** to deep-learning research.
 
 
 This project hosts a collection of **highly modular** deep learning components that are tested to be working well together.
-There is a simple yaml-based system provided to tie these modules together declaratively using configuration files,
-but everything that can be defined using config files can be code directly in the python script as well. It is just that
-config files suit better to my workflow.
+A simple yaml-based system ties these modules together declaratively using configuration files,
+but everything that can be defined using config files can be coded directly in the python script as well.
 
 
 This is still an early version and a hobby project so documentation is unfortunately nonexistent. I've tried to make the
@@ -117,6 +116,7 @@ that are ready to run and easy to modify for other similar usecases:
     - Prioritized experience replay
     - N-Step Bellman updates
     - Distributional Q-Learning
+    - Noisy Networks for Exploration
 
 
 # Examples

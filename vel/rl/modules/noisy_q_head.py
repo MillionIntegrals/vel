@@ -3,10 +3,12 @@ import torch.nn.init as init
 
 import gym.spaces as spaces
 
+from vel.rl.modules.noisy_linear import NoisyLinear
 
-class QHead(nn.Module):
+
+class NoisyQHead(nn.Module):
     """ Network head calculating Q-function value for each (discrete) action. """
-    def __init__(self, input_dim, action_space):
+    def __init__(self, input_dim, action_space, initial_std_dev=0.4, factorized_noise=True):
         super().__init__()
 
         # Q-function requires a discrete action space
@@ -14,11 +16,12 @@ class QHead(nn.Module):
 
         self.action_space = action_space
 
-        self.linear_layer = nn.Linear(input_dim, action_space.n)
+        self.linear_layer = NoisyLinear(
+            input_dim, action_space.n, initial_std_dev=initial_std_dev, factorized_noise=factorized_noise
+        )
 
     def reset_weights(self):
-        init.orthogonal_(self.linear_layer.weight, gain=1.0)
-        init.constant_(self.linear_layer.bias, 0.0)
+        self.linear_layer.reset_weights()
 
     def forward(self, input_data):
         return self.linear_layer(input_data)
