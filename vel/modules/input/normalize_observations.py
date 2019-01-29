@@ -25,7 +25,7 @@ class NormalizeObservations(BackboneModel):
     def forward(self, input_vector):
         if self.training:
             batch_mean = input_vector.mean(dim=0)
-            batch_var = input_vector.var(dim=0)
+            batch_var = input_vector.var(dim=0, unbiased=False)
             batch_count = input_vector.size(0)
 
             delta = batch_mean - self.running_mean
