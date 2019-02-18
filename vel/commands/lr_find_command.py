@@ -4,7 +4,6 @@ Loosely based on: https://github.com/fastai/fastai/blob/master/fastai/learner.py
 """
 import matplotlib.pyplot as plt
 import numpy as np
-import torch
 import tqdm
 
 import vel.util.intepolate as interp
