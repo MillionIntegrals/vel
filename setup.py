@@ -43,9 +43,9 @@ setup(
         'mongo': ['pymongo', 'dnspython'],
         'gym': ['gym[atari,box2d,classic_control]'],
         'mujoco': ['gym[mujoco,robotics]'],
-        'dev': ['pytest'],
+        'dev': ['pytest', 'ipython', 'jupyter'],
         'text': ['spacy'],
-        'all': ['visdom', 'pymongo', 'dnspython', 'gym[all]', 'pytest', 'spacy']
+        'all': ['visdom', 'pymongo', 'dnspython', 'gym[all]', 'pytest', 'spacy', 'ipython', 'jupyter']
     },
     tests_require=[
         'pytest'
