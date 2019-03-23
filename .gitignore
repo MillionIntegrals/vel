@@ -115,3 +115,6 @@ environment.yaml
 
 # Word embedding cache
 /.vector_cache
+
+# Test cache
+/.pytest_cache

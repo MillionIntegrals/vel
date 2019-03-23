@@ -1,6 +1,6 @@
 import numpy as np
+import pytest
 
-import nose.tools as t
 import numpy.testing as nt
 
 import torch
@@ -81,7 +81,7 @@ def test_kl_divergence_diag_gaussian():
     kl_div_1 = d.kl_divergence(distrib1, distrib2)
     kl_div_2 = head.kl_divergence(pd_params1[None], pd_params2[None])
 
-    t.assert_almost_equal(kl_div_1.item(), kl_div_2.item(), places=3)
+    assert kl_div_1.item() == pytest.approx(kl_div_2.item(), 0.001)
 
 
 def test_sample_categorical():

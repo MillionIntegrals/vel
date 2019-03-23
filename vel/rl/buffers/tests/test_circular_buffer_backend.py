@@ -1,8 +1,8 @@
 import gym
 import gym.spaces
-import nose.tools as t
 import numpy as np
 import numpy.testing as nt
+import pytest
 
 from vel.exceptions import VelException
 from vel.rl.buffers.backend.circular_buffer_backend import CircularBufferBackend
@@ -212,10 +212,10 @@ def test_simple_get_frame():
     assert np.all(buffer.get_frame(1, 4).max(0).max(0) == np.array([0, 0, 1, 2]))
     assert np.all(buffer.get_frame(2, 4).max(0).max(0) == np.array([0, 1, 2, 3]))
 
-    with t.assert_raises(VelException):
+    with pytest.raises(VelException):
         buffer.get_frame(3, 4)
 
-    with t.assert_raises(VelException):
+    with pytest.raises(VelException):
         buffer.get_frame(4, 4)
 
 
@@ -227,13 +227,13 @@ def test_full_buffer_get_frame():
     nt.assert_array_equal(buffer.get_frame(1, 4).max(0).max(0), np.array([19, 20, 21, 22]))
     nt.assert_array_equal(buffer.get_frame(9, 4).max(0).max(0), np.array([27, 28, 29, 30]))
 
-    with t.assert_raises(VelException):
+    with pytest.raises(VelException):
         buffer.get_frame(10, 4)
 
-    with t.assert_raises(VelException):
+    with pytest.raises(VelException):
         buffer.get_frame(11, 4)
 
-    with t.assert_raises(VelException):
+    with pytest.raises(VelException):
         buffer.get_frame(12, 4)
 
     nt.assert_array_equal(buffer.get_frame(13, 4).max(0).max(0), np.array([11, 12, 13, 14]))
@@ -247,16 +247,16 @@ def test_full_buffer_get_future_frame():
     nt.assert_array_equal(buffer.get_frame_with_future(0, 4)[1].max(0).max(0), np.array([19, 20, 21, 22]))
     nt.assert_array_equal(buffer.get_frame_with_future(1, 4)[1].max(0).max(0), np.array([20, 21, 22, 23]))
 
-    with t.assert_raises(VelException):
+    with pytest.raises(VelException):
         buffer.get_frame_with_future(9, 4)
 
-    with t.assert_raises(VelException):
+    with pytest.raises(VelException):
         buffer.get_frame_with_future(10, 4)
 
-    with t.assert_raises(VelException):
+    with pytest.raises(VelException):
         buffer.get_frame_with_future(11, 4)
 
-    with t.assert_raises(VelException):
+    with pytest.raises(VelException):
         buffer.get_frame_with_future(12, 4)
 
     nt.assert_array_equal(buffer.get_frame_with_future(13, 4)[1].max(0).max(0), np.array([12, 13, 14, 15]))
@@ -271,17 +271,17 @@ def test_buffer_filling_size():
 
     v1 = np.ones(4).reshape((2, 2, 1))
 
-    t.eq_(buffer.current_size, 0)
+    assert buffer.current_size == 0
 
     buffer.store_transition(v1, 0, 0, False)
     buffer.store_transition(v1, 0, 0, False)
 
-    t.eq_(buffer.current_size, 2)
+    assert buffer.current_size == 2
 
     for i in range(30):
         buffer.store_transition(v1 * (i+1), 0, float(i)/2, False)
 
-    t.eq_(buffer.current_size, buffer.buffer_capacity)
+    assert buffer.current_size == buffer.buffer_capacity
 
 
 def test_get_frame_with_dones():
@@ -297,7 +297,7 @@ def test_get_frame_with_dones():
 
     nt.assert_array_equal(buffer.get_frame(9, 4).max(0).max(0), np.array([0, 0, 0, 30]))
 
-    with t.assert_raises(VelException):
+    with pytest.raises(VelException):
         buffer.get_frame(10, 4)
 
     nt.assert_array_equal(buffer.get_frame(11, 4).max(0).max(0), np.array([0, 0, 0, 12]))
@@ -316,10 +316,10 @@ def test_get_frame_future_with_dones():
 
     nt.assert_array_equal(buffer.get_frame_with_future(8, 4)[1].max(0).max(0), np.array([27, 28, 29, 0]))
 
-    with t.assert_raises(VelException):
+    with pytest.raises(VelException):
         buffer.get_frame_with_future(9, 4)
 
-    with t.assert_raises(VelException):
+    with pytest.raises(VelException):
         buffer.get_frame_with_future(10, 4)
 
     nt.assert_array_equal(buffer.get_frame_with_future(11, 4)[1].max(0).max(0), np.array([0, 0, 12, 13]))
@@ -366,7 +366,7 @@ def test_get_batch():
         [27, 28, 29, 0],
     ]))
 
-    with t.assert_raises(VelException):
+    with pytest.raises(VelException):
         buffer.get_transitions(np.array([0, 1, 2, 3, 4, 5, 6, 7, 8, 9]), history_length=4)
 
 
@@ -384,11 +384,11 @@ def test_sample_and_get_batch():
         obs_tp1 = batch['observations_next']
         dones = batch['dones']
 
-        t.eq_(obs.shape[0], 5)
-        t.eq_(act.shape[0], 5)
-        t.eq_(rew.shape[0], 5)
-        t.eq_(obs_tp1.shape[0], 5)
-        t.eq_(dones.shape[0], 5)
+        assert obs.shape[0] == 5
+        assert act.shape[0] == 5
+        assert rew.shape[0] == 5
+        assert obs_tp1.shape[0] == 5
+        assert dones.shape[0] == 5
 
 
 def test_storing_extra_info():
@@ -415,21 +415,21 @@ def test_sample_rollout_half_filled():
         rollout_idx = buffer.sample_batch_trajectories(rollout_length=5, history_length=4)
         rollout = buffer.get_trajectories(index=rollout_idx, rollout_length=5, history_length=4)
 
-        t.assert_equal(rollout['observations'].shape[0], 5)  # Rollout length
-        t.assert_equal(rollout['observations'].shape[-1], 4)  # History length
+        assert rollout['observations'].shape[0] == 5  # Rollout length
+        assert rollout['observations'].shape[-1] == 4  # History length
 
         indexes.append(rollout_idx)
 
-    t.assert_equal(np.min(indexes), 4)
-    t.assert_equal(np.max(indexes), 8)
+    assert np.min(indexes) == 4
+    assert np.max(indexes) == 8
 
-    with t.assert_raises(VelException):
+    with pytest.raises(VelException):
         buffer.sample_batch_trajectories(rollout_length=10, history_length=4)
 
     rollout_idx = buffer.sample_batch_trajectories(rollout_length=9, history_length=4)
     rollout = buffer.get_trajectories(index=rollout_idx, rollout_length=9, history_length=4)
 
-    t.assert_equal(rollout_idx, 8)
+    assert rollout_idx == 8
 
     nt.assert_array_equal(rollout['rewards'], np.array([
         0., 0.5, 1., 1.5, 2., 2.5, 3., 3.5, 4.
@@ -446,23 +446,23 @@ def test_sample_rollout_filled():
         rollout_idx = buffer.sample_batch_trajectories(rollout_length=5, history_length=4)
         rollout = buffer.get_trajectories(index=rollout_idx, rollout_length=5, history_length=4)
 
-        t.assert_equal(rollout['observations'].shape[0], 5)  # Rollout length
-        t.assert_equal(rollout['observations'].shape[-1], 4)  # History length
+        assert rollout['observations'].shape[0] == 5  # Rollout length
+        assert rollout['observations'].shape[-1] == 4  # History length
 
         indexes.append(rollout_idx)
 
-    t.assert_equal(np.min(indexes), 0)
-    t.assert_equal(np.max(indexes), 19)
+    assert np.min(indexes) == 0
+    assert np.max(indexes) == 19
 
-    with t.assert_raises(VelException):
+    with pytest.raises(VelException):
         buffer.sample_batch_trajectories(rollout_length=17, history_length=4)
 
     max_rollout = buffer.sample_batch_trajectories(rollout_length=16, history_length=4)
 
     rollout = buffer.get_trajectories(max_rollout, rollout_length=16, history_length=4)
 
-    t.assert_equal(max_rollout, 8)
-    t.assert_almost_equal(np.sum(rollout['rewards']), 164.0)
+    assert max_rollout == 8
+    assert np.sum(rollout['rewards']) == pytest.approx(164.0, 1e-5)
 
 
 def test_buffer_flexible_obs_action_sizes():
@@ -481,22 +481,22 @@ def test_buffer_flexible_obs_action_sizes():
          [[80, 100], [120, 140]]]
     ))
 
-    with t.assert_raises(AssertionError):
+    with pytest.raises(AssertionError):
         b1x1.get_frame(0, history_length=2)
 
-    with t.assert_raises(AssertionError):
+    with pytest.raises(AssertionError):
         b1x1.get_transition(0, history_length=2)
 
-    with t.assert_raises(AssertionError):
+    with pytest.raises(AssertionError):
         b2x2.get_frame(0,  history_length=2)
 
-    with t.assert_raises(AssertionError):
+    with pytest.raises(AssertionError):
         b2x2.get_transition(0, history_length=2)
 
-    with t.assert_raises(AssertionError):
+    with pytest.raises(AssertionError):
         b3x3.get_frame(0, history_length=2)
 
-    with t.assert_raises(AssertionError):
+    with pytest.raises(AssertionError):
         b3x3.get_transition(0, history_length=2)
 
 
@@ -513,7 +513,10 @@ def test_buffer_flexible_obs_action_sizes_with_history():
         [[[[20, 21], [20, 21]], [[20, 21], [20, 21]]], [[[200, 210], [200, 210]], [[200, 210], [200, 210]]]]
     ))
 
-    nt.assert_array_almost_equal(b1x1.get_transition(0, history_length=2)['observations_next'], np.array([[21, 22], [210, 220]]))
+    nt.assert_array_almost_equal(
+        b1x1.get_transition(0, history_length=2)['observations_next'], np.array([[21, 22], [210, 220]])
+    )
+
     nt.assert_array_almost_equal(b2x2.get_transition(0, history_length=2)['observations_next'], np.array(
         [[[21, 22], [21, 22]], [[210, 220], [210, 220]]]
     ))

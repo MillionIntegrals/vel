@@ -1,9 +1,9 @@
 import collections
 import gym
 import gym.spaces
-import nose.tools as t
 import numpy as np
 import numpy.testing as nt
+import pytest
 
 from vel.exceptions import VelException
 from vel.rl.buffers.backend.prioritized_vec_buffer_backend import PrioritizedCircularVecEnvBufferBackend
@@ -128,7 +128,7 @@ def test_sampling_is_correct():
 
         nt.assert_array_equal(probs, np.ones((6, 2)))
 
-    with t.assert_raises(VelException):
+    with pytest.raises(VelException):
         buffer.get_transitions(np.array([[10, 10]]))
 
 
@@ -143,7 +143,7 @@ def test_sampling_is_correct_small_buffer():
         nt.assert_array_equal(np.array(probs), np.ones((6, 2)))
         assert np.all(idxs <= 10)
 
-    with t.assert_raises(VelException):
+    with pytest.raises(VelException):
         buffer.get_transitions(np.array([[10, 10]]))
 
 
@@ -166,7 +166,7 @@ def test_prioritized_sampling_probabilities():
             counter.update(idx)
 
     # Element with the highest priority is the one that happens the most often
-    t.eq_(counter[0], max(counter.values()))
+    assert counter[0] == max(counter.values())
 
     # Make priority low now
     buffer.update_priority(zero_tree_idx, [0.01 for _ in zero_tree_idx])
@@ -180,7 +180,7 @@ def test_prioritized_sampling_probabilities():
             counter.update(idx)
 
     # At least half of the element have greater counts than zero
-    t.assert_greater(np.mean([1 if counter.get(i, 0) > counter.get(0, 0) else 0 for i in range(2000)]), 0.5)
+    assert np.mean([1 if counter.get(i, 0) > counter.get(0, 0) else 0 for i in range(2000)]) > 0.5
 
 
 def test_frame_stack_compensation_single_dim():

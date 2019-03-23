@@ -1,8 +1,8 @@
 import gym
 import gym.spaces
-import nose.tools as t
 import numpy as np
 import numpy.testing as nt
+import pytest
 
 from vel.exceptions import VelException
 from vel.rl.buffers.circular_replay_buffer import CircularVecEnvBufferBackend
@@ -290,16 +290,16 @@ def test_simple_get_frame():
     assert np.all(buffer.get_frame(1, 1).max(0).max(0) == np.array([0, 0, 2, 4]))
     assert np.all(buffer.get_frame(2, 1).max(0).max(0) == np.array([0, 2, 4, 6]))
 
-    with t.assert_raises(VelException):
+    with pytest.raises(VelException):
         buffer.get_frame(3, 0)
 
-    with t.assert_raises(VelException):
+    with pytest.raises(VelException):
         buffer.get_frame(4, 0)
 
-    with t.assert_raises(VelException):
+    with pytest.raises(VelException):
         buffer.get_frame(3, 1)
 
-    with t.assert_raises(VelException):
+    with pytest.raises(VelException):
         buffer.get_frame(4, 1)
 
 
@@ -315,22 +315,22 @@ def test_full_buffer_get_frame():
     nt.assert_array_equal(buffer.get_frame(1, 1).max(0).max(0), np.array([190, 200, 210, 220]))
     nt.assert_array_equal(buffer.get_frame(9, 1).max(0).max(0), np.array([270, 280, 290, 300]))
 
-    with t.assert_raises(VelException):
+    with pytest.raises(VelException):
         buffer.get_frame(10, 0)
 
-    with t.assert_raises(VelException):
+    with pytest.raises(VelException):
         buffer.get_frame(11, 0)
 
-    with t.assert_raises(VelException):
+    with pytest.raises(VelException):
         buffer.get_frame(12, 0)
 
-    with t.assert_raises(VelException):
+    with pytest.raises(VelException):
         buffer.get_frame(10, 1)
 
-    with t.assert_raises(VelException):
+    with pytest.raises(VelException):
         buffer.get_frame(11, 1)
 
-    with t.assert_raises(VelException):
+    with pytest.raises(VelException):
         buffer.get_frame(12, 1)
 
     nt.assert_array_equal(buffer.get_frame(13, 0).max(0).max(0), np.array([11, 12, 13, 14]))
@@ -350,28 +350,28 @@ def test_full_buffer_get_future_frame():
     nt.assert_array_equal(buffer.get_frame_with_future(0, 1)[1].max(0).max(0), np.array([190, 200, 210, 220]))
     nt.assert_array_equal(buffer.get_frame_with_future(1, 1)[1].max(0).max(0), np.array([200, 210, 220, 230]))
 
-    with t.assert_raises(VelException):
+    with pytest.raises(VelException):
         buffer.get_frame_with_future(9, 0)
 
-    with t.assert_raises(VelException):
+    with pytest.raises(VelException):
         buffer.get_frame_with_future(10, 0)
 
-    with t.assert_raises(VelException):
+    with pytest.raises(VelException):
         buffer.get_frame_with_future(11, 0)
 
-    with t.assert_raises(VelException):
+    with pytest.raises(VelException):
         buffer.get_frame_with_future(12, 0)
 
-    with t.assert_raises(VelException):
+    with pytest.raises(VelException):
         buffer.get_frame_with_future(9, 1)
 
-    with t.assert_raises(VelException):
+    with pytest.raises(VelException):
         buffer.get_frame_with_future(10, 1)
 
-    with t.assert_raises(VelException):
+    with pytest.raises(VelException):
         buffer.get_frame_with_future(11, 1)
 
-    with t.assert_raises(VelException):
+    with pytest.raises(VelException):
         buffer.get_frame_with_future(12, 1)
 
     nt.assert_array_equal(buffer.get_frame_with_future(13, 0)[1].max(0).max(0), np.array([12, 13, 14, 15]))
@@ -389,17 +389,17 @@ def test_buffer_filling_size():
 
     v1 = np.ones(8).reshape((2, 2, 2, 1))
 
-    t.eq_(buffer.current_size, 0)
+    assert buffer.current_size == 0
 
     buffer.store_transition(v1, 0, 0, False)
     buffer.store_transition(v1, 0, 0, False)
 
-    t.eq_(buffer.current_size, 2)
+    assert buffer.current_size == 2
 
     for i in range(30):
         buffer.store_transition(v1 * (i+1), 0, float(i)/2, False)
 
-    t.eq_(buffer.current_size, buffer.buffer_capacity)
+    assert buffer.current_size == buffer.buffer_capacity
 
 
 def test_get_frame_with_dones():
@@ -422,19 +422,19 @@ def test_get_frame_with_dones():
     nt.assert_array_equal(buffer.get_frame(8, 1).max(0).max(0), np.array([0, 0, 0, 290]))
     nt.assert_array_equal(buffer.get_frame(9, 1).max(0).max(0), np.array([0, 0, 290, 300]))
 
-    with t.assert_raises(VelException):
+    with pytest.raises(VelException):
         buffer.get_frame(10, 0)
 
-    with t.assert_raises(VelException):
+    with pytest.raises(VelException):
         buffer.get_frame(10, 1)
 
     nt.assert_array_equal(buffer.get_frame(11, 0).max(0).max(0), np.array([0, 0, 0, 12]))
     nt.assert_array_equal(buffer.get_frame(12, 0).max(0).max(0), np.array([0, 0, 12, 13]))
 
-    with t.assert_raises(VelException):
+    with pytest.raises(VelException):
         buffer.get_frame(11, 1)
 
-    with t.assert_raises(VelException):
+    with pytest.raises(VelException):
         buffer.get_frame(12, 1)
 
 
@@ -456,25 +456,25 @@ def test_get_frame_future_with_dones():
     nt.assert_array_equal(buffer.get_frame_with_future(3, 1)[1].max(0).max(0), np.array([0, 230, 240, 250]))
     nt.assert_array_equal(buffer.get_frame_with_future(7, 1)[1].max(0).max(0), np.array([0, 0, 0, 0]))
 
-    with t.assert_raises(VelException):
+    with pytest.raises(VelException):
         buffer.get_frame_with_future(9, 0)
 
-    with t.assert_raises(VelException):
+    with pytest.raises(VelException):
         buffer.get_frame_with_future(10, 0)
 
     nt.assert_array_equal(buffer.get_frame_with_future(11, 0)[1].max(0).max(0), np.array([0, 0, 12, 13]))
     nt.assert_array_equal(buffer.get_frame_with_future(12, 0)[1].max(0).max(0), np.array([0, 12, 13, 14]))
 
-    with t.assert_raises(VelException):
+    with pytest.raises(VelException):
         buffer.get_frame_with_future(9, 1)
 
-    with t.assert_raises(VelException):
+    with pytest.raises(VelException):
         buffer.get_frame_with_future(10, 1)
 
-    with t.assert_raises(VelException):
+    with pytest.raises(VelException):
         buffer.get_frame(11, 1)
 
-    with t.assert_raises(VelException):
+    with pytest.raises(VelException):
         buffer.get_frame(12, 1)
 
     nt.assert_array_equal(buffer.get_frame_with_future(13, 1)[1].max(0).max(0), np.array([0, 0, 140, 150]))
@@ -548,7 +548,7 @@ def test_get_batch():
         [0, 0, 290, 300],
     ]))
 
-    with t.assert_raises(VelException):
+    with pytest.raises(VelException):
         buffer.get_transitions(np.array([
             [0, 1, 2, 3, 4, 5, 6, 7, 8],
             [1, 2, 3, 4, 5, 6, 7, 8, 9]
@@ -569,14 +569,14 @@ def test_sample_and_get_batch():
         obs_tp1 = batch['observations_next']
         dones = batch['dones']
 
-        with t.assert_raises(AssertionError):
+        with pytest.raises(AssertionError):
             nt.assert_array_equal(indexes[:, 0], indexes[:, 1])
 
-        t.eq_(obs.shape[0], 5)
-        t.eq_(act.shape[0], 5)
-        t.eq_(rew.shape[0], 5)
-        t.eq_(obs_tp1.shape[0], 5)
-        t.eq_(dones.shape[0], 5)
+        assert obs.shape[0] == 5
+        assert act.shape[0] == 5
+        assert rew.shape[0] == 5
+        assert obs_tp1.shape[0] == 5
+        assert dones.shape[0] == 5
 
 
 def test_storing_extra_info():
@@ -615,15 +615,15 @@ def test_sample_rollout_half_filled():
         rollout_idx = buffer.sample_batch_trajectories(rollout_length=5)
         rollout = buffer.get_trajectories(indexes=rollout_idx, rollout_length=5)
 
-        t.assert_equal(rollout['observations'].shape[0], 5)  # Rollout length
-        t.assert_equal(rollout['observations'].shape[-1], 4)  # History length
+        assert rollout['observations'].shape[0] == 5  # Rollout length
+        assert rollout['observations'].shape[-1] == 4  # History length
 
         indexes.append(rollout_idx)
 
-    t.assert_equal(np.min(indexes), 4)
-    t.assert_equal(np.max(indexes), 8)
+    assert np.min(indexes) == 4
+    assert np.max(indexes) == 8
 
-    with t.assert_raises(VelException):
+    with pytest.raises(VelException):
         buffer.sample_batch_trajectories(rollout_length=10)
 
     rollout_idx = buffer.sample_batch_trajectories(rollout_length=9)
@@ -647,15 +647,15 @@ def test_sample_rollout_filled():
         rollout_idx = buffer.sample_batch_trajectories(rollout_length=5)
         rollout = buffer.get_trajectories(indexes=rollout_idx, rollout_length=5)
 
-        t.assert_equal(rollout['observations'].shape[0], 5)  # Rollout length
-        t.assert_equal(rollout['observations'].shape[-1], 4)  # History length
+        assert rollout['observations'].shape[0] == 5  # Rollout length
+        assert rollout['observations'].shape[-1] == 4  # History length
 
         indexes.append(rollout_idx)
 
-    t.assert_equal(np.min(indexes), 0)
-    t.assert_equal(np.max(indexes), 19)
+    assert np.min(indexes) == 0
+    assert np.max(indexes) == 19
 
-    with t.assert_raises(VelException):
+    with pytest.raises(VelException):
         buffer.sample_batch_trajectories(rollout_length=17)
 
     max_rollout = buffer.sample_batch_trajectories(rollout_length=16)
@@ -663,7 +663,7 @@ def test_sample_rollout_filled():
     rollout = buffer.get_trajectories(max_rollout, rollout_length=16)
 
     nt.assert_array_equal(max_rollout, np.array([8, 8]))
-    t.assert_almost_equal(np.sum(rollout['rewards']), 164.0 * 2)
+    assert np.sum(rollout['rewards']) == pytest.approx(164.0 * 2, 1e-5)
 
 
 def test_buffer_flexible_obs_action_sizes():
@@ -781,15 +781,15 @@ def test_get_frame_with_future_forward_steps_exceptions():
     buffer.get_frame_with_future_forward_steps(6, 0, forward_steps=2, discount_factor=0.9)
     buffer.get_frame_with_future_forward_steps(7, 0, forward_steps=2, discount_factor=0.9)
 
-    with t.assert_raises(VelException):
+    with pytest.raises(VelException):
         # No future for the frame
         buffer.get_frame_with_future_forward_steps(8, 0, forward_steps=2, discount_factor=0.9)
 
-    with t.assert_raises(VelException):
+    with pytest.raises(VelException):
         # No future for the frame
         buffer.get_frame_with_future_forward_steps(9, 0, forward_steps=2, discount_factor=0.9)
 
-    with t.assert_raises(VelException):
+    with pytest.raises(VelException):
         # No history for the frame
         buffer.get_frame_with_future_forward_steps(10, 0, forward_steps=2, discount_factor=0.9)
 
@@ -803,7 +803,7 @@ def test_get_frame_with_future_forward_steps_exceptions():
     buffer.get_frame_with_future_forward_steps(18, 0, forward_steps=2, discount_factor=0.9)
     buffer.get_frame_with_future_forward_steps(19, 0, forward_steps=2, discount_factor=0.9)
 
-    with t.assert_raises(VelException):
+    with pytest.raises(VelException):
         # Index beyond buffer size
         buffer.get_frame_with_future_forward_steps(20, 0, forward_steps=2, discount_factor=0.9)
 
@@ -841,9 +841,9 @@ def test_get_frame_with_future_forward_steps_with_dones():
         reward = result[2]
         done = result[3]
 
-        t.assert_not_equal(next_frame.max(), 0)
-        t.assert_equals(done, False)
-        t.assert_equals(reward, buffer.reward_buffer[i, 0] + 0.9 * buffer.reward_buffer[(i+1) % 20, 0])
+        assert next_frame.max() != 0
+        assert done is False
+        assert reward == buffer.reward_buffer[i, 0] + 0.9 * buffer.reward_buffer[(i+1) % 20, 0]
 
     for i in [1, 2, 7,  12, 13, 17, 18]:
         result = buffer.get_frame_with_future_forward_steps(i, 0, forward_steps=2, discount_factor=0.9)
@@ -851,18 +851,18 @@ def test_get_frame_with_future_forward_steps_with_dones():
         next_frame = result[1]
         done = result[3]
 
-        t.assert_equal(next_frame.max(), 0)
-        t.assert_equals(done, True)
+        assert next_frame.max() == 0
+        assert done is True
 
     for i in [1, 7, 12, 17]:
         result = buffer.get_frame_with_future_forward_steps(i, 0, forward_steps=2, discount_factor=0.9)
         reward = result[2]
-        t.assert_equals(reward, buffer.reward_buffer[i, 0] + 0.9 * buffer.reward_buffer[(i+1) % 20, 0])
+        assert reward == buffer.reward_buffer[i, 0] + 0.9 * buffer.reward_buffer[(i+1) % 20, 0]
 
     for i in [2, 13, 18]:
         result = buffer.get_frame_with_future_forward_steps(i, 0, forward_steps=2, discount_factor=0.9)
         reward = result[2]
-        t.assert_equals(reward, buffer.reward_buffer[i, 0])
+        assert reward == buffer.reward_buffer[i, 0]
 
 
 def test_get_frame_with_future_forward_steps_without_dones():

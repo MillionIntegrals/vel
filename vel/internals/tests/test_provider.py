@@ -1,5 +1,5 @@
-import nose.tools as t
 import os
+import pytest
 
 import vel.internals.provider as v
 import vel.internals.parser as p
@@ -16,10 +16,10 @@ def test_simple_instantiation():
         'b': 2,
     })
 
-    t.assert_equal(provider.instantiate_from_data(1), 1)
-    t.assert_equal(provider.instantiate_from_data("abc"), "abc")
-    t.assert_equal(provider.instantiate_from_data([1, 2, 3]), [1, 2, 3])
-    t.assert_equal(provider.instantiate_from_data({"a": "a", "b": "b"}), {"a": "a", "b": "b"})
+    assert provider.instantiate_from_data(1) == 1
+    assert provider.instantiate_from_data("abc") == "abc"
+    assert provider.instantiate_from_data([1, 2, 3]) == [1, 2, 3]
+    assert provider.instantiate_from_data({"a": "a", "b": "b"}) == {"a": "a", "b": "b"}
 
 
 def test_instantiate_function_call():
@@ -28,8 +28,8 @@ def test_instantiate_function_call():
         'b': 2,
     })
 
-    t.assert_equal(provider.resolve_and_call(data_function), 3)
-    t.assert_equal(provider.resolve_and_call(data_function, extra_env={'b': 4}), 5)
+    assert provider.resolve_and_call(data_function) == 3
+    assert provider.resolve_and_call(data_function, extra_env={'b': 4}) == 5
 
 
 def test_simple_injection():
@@ -54,21 +54,21 @@ def test_simple_injection():
 
     one = provider.instantiate_by_name('one')
 
-    t.assert_is_instance(one, dict)
-    t.assert_equal(one['a'], 1)
-    t.assert_equal(one['b'], 2)
+    assert isinstance(one, dict)
+    assert one['a'] == 1
+    assert one['b'] == 2
 
     two = provider.instantiate_by_name('two')
 
-    t.assert_is_instance(two, dict)
-    t.assert_equal(two['a'], 5)
-    t.assert_equal(two['b'], 6)
+    assert isinstance(two, dict)
+    assert two['a'] == 5
+    assert two['b'] == 6
 
     three = provider.instantiate_by_name('three')
-    t.assert_is_instance(three, dict)
-    t.assert_equal(id(three['one']), id(one))
-    t.assert_not_equal(id(three['one']), id(two))
-    t.assert_equal(three['d'], 'd')
+    assert isinstance(three, dict)
+    assert id(three['one']) == id(one)
+    assert id(three['one']) != id(two)
+    assert three['d'] == 'd'
 
 
 def test_parameter_resolution():
@@ -99,18 +99,18 @@ def test_parameter_resolution():
 
     one = provider.instantiate_by_name('one')
 
-    t.assert_equal(one['b'], 5)
+    assert one['b'] == 5
 
-    with t.assert_raises(e.VelException):
+    with pytest.raises(e.VelException):
         provider.instantiate_by_name('two')
 
     three = provider.instantiate_by_name('three')
 
-    t.assert_equal(three['b'], 7)
+    assert three['b'] == 7
 
     four = provider.instantiate_by_name('four')
 
-    t.assert_equal(four['b'], '10')
+    assert four['b'] == '10'
 
 
 def test_render_configuration():
@@ -141,7 +141,7 @@ def test_render_configuration():
 
     configuration = provider.render_configuration()
 
-    t.assert_equal(configuration, {
+    assert configuration == {
         'a': 1,
         'b': 5,
         'one': {
@@ -161,4 +161,4 @@ def test_render_configuration():
             'name': 'vel.internals.tests.fixture_a',
             'b': '10'
         },
-    })
+    }
