@@ -18,5 +18,8 @@ docker-run-cuda:
 docker-shell-cuda:
 	docker run --runtime=nvidia --rm -it millionintegrals/vel:$(tag) bash
 
+count-lines:
+	cloc --exclude-dir=build,data,dist,local-scripts,vel.egg-info,output .
+
 test:
 	pytest .
