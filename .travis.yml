@@ -11,3 +11,5 @@ install:
 # Command to run tests
 script:
   - make test
+  - make docker-build
+  - make docker-publish
