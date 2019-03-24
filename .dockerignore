@@ -3,6 +3,7 @@
 /.idea
 /.ipynb_checkpoints
 /.vector_cache
+/.python-version
 /data
 /dist
 /local-scripts
