@@ -3,7 +3,7 @@ Code based on:
 https://github.com/fastai/fastai/blob/master/fastai/transforms.py
 """
 import cv2
-import collections
+import collections.abc as abc
 import random
 
 import vel.api.data as data
@@ -22,7 +22,7 @@ class RandomScale(data.Augmentation):
             # Yes, do it
             min_z = 1.
             max_z = self.max_zoom
-            if isinstance(self.max_zoom, collections.Iterable):
+            if isinstance(self.max_zoom, abc.Iterable):
                 min_z, max_z = self.max_zoom
 
             mult = random.uniform(min_z, max_z)
