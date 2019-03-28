@@ -23,6 +23,9 @@ class NormalizeObservations(BackboneModel):
         self.count.fill_(self.epsilon)
 
     def forward(self, input_vector):
+        # Make sure input is float32
+        input_vector = input_vector.to(torch.float)
+
         if self.training:
             batch_mean = input_vector.mean(dim=0)
             batch_var = input_vector.var(dim=0, unbiased=False)
