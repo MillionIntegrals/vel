@@ -11,10 +11,9 @@ from vel.openai.baselines.common.atari_wrappers import (
     ScaledFloatFrame, FrameStack, FireEpisodicLifeEnv
 )
 
-from vel.util.situational import process_environment_settings
-
 from vel.rl.api import EnvFactory
 from vel.rl.env.wrappers.clip_episode_length import ClipEpisodeLengthWrapper
+from vel.util.situational import process_environment_settings
 
 
 DEFAULT_SETTINGS = {
