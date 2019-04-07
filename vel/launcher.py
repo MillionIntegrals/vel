@@ -53,6 +53,7 @@ def main():
     if args.profile:
         print("[PROFILER] Running Vel in profiling mode, output filename={}".format(args.profile))
         import cProfile
+        import pstats
         profiler = cProfile.Profile()
         profiler.enable()
         model_config.run_command(args.command, args.varargs)
@@ -60,6 +61,11 @@ def main():
 
         profiler.dump_stats(args.profile)
         profiler.print_stats(sort='tottime')
+
+        print("======================================================================")
+        pstats.Stats(profiler).strip_dirs().sort_stats('tottime').print_stats(30)
+        print("======================================================================")
+        pstats.Stats(profiler).strip_dirs().sort_stats('cumtime').print_stats(30)
     else:
         model_config.run_command(args.command, args.varargs)
 
