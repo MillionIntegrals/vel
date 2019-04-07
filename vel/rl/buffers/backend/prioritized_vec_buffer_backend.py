@@ -12,7 +12,7 @@ class PrioritizedCircularVecEnvBufferBackend:
     """
 
     def __init__(self, buffer_capacity: int, num_envs: int, observation_space: gym.Space, action_space: gym.Space,
-                 frame_stack_compensation: bool=False, frame_history: int=1):
+                 frame_stack_compensation: bool = False, frame_history: int = 1):
         self.deque = CircularVecEnvBufferBackend(
             buffer_capacity=buffer_capacity,
             num_envs=num_envs,
@@ -52,9 +52,18 @@ class PrioritizedCircularVecEnvBufferBackend:
         """ Get dictionary of transition data """
         return self.deque.get_transitions(indexes)
 
-    def sample_batch_transitions(self, batch_size):
+    def get_transitions_forward_steps(self, indexes, forward_steps, discount_factor):
+        """ Get dictionary of transition data """
+        return self.deque.get_transitions_forward_steps(indexes, forward_steps, discount_factor)
+
+    def sample_batch_transitions(self, batch_size, forward_steps=1):
         """ Return indexes of next sample"""
-        batches = [self._sample_batch_prioritized(segment_tree, batch_size, self.deque.frame_history) for segment_tree in self.segment_trees]
+        batches = [
+            self._sample_batch_prioritized(
+                segment_tree, batch_size, self.deque.frame_history, forward_steps=forward_steps
+            )
+            for segment_tree in self.segment_trees
+        ]
 
         probs, idxs, tree_idxs = zip(*batches)
 
@@ -75,17 +84,21 @@ class PrioritizedCircularVecEnvBufferBackend:
         """ Return current index """
         return self.deque.current_idx
 
-    def _sample_batch_prioritized(self, segment_tree, batch_size, history):
+    def _sample_batch_prioritized(self, segment_tree, batch_size, history, forward_steps=1):
         """ Return indexes of the next sample in from prioritized distribution """
         p_total = segment_tree.total()
         segment = p_total / batch_size
 
         # Get batch of valid samples
-        batch = [self._get_sample_from_segment(segment_tree, segment, i, history) for i in range(batch_size)]
+        batch = [
+            self._get_sample_from_segment(segment_tree, segment, i, history, forward_steps)
+            for i in range(batch_size)
+        ]
+
         probs, idxs, tree_idxs = zip(*batch)
         return np.array(probs), np.array(idxs), np.array(tree_idxs)
 
-    def _get_sample_from_segment(self, segment_tree, segment, i, history):
+    def _get_sample_from_segment(self, segment_tree, segment, i, history, forward_steps):
         valid = False
 
         prob = None
@@ -100,7 +113,7 @@ class PrioritizedCircularVecEnvBufferBackend:
             prob, idx, tree_idx = segment_tree.find(sample)
 
             # Resample if transition straddled current index or probablity 0
-            if (segment_tree.index - idx) % segment_tree.size > 1 and \
+            if (segment_tree.index - idx) % segment_tree.size > forward_steps and \
                     (idx - segment_tree.index) % segment_tree.size >= history and prob != 0:
                 valid = True  # Note that conditions are valid but extra conservative around buffer index 0
 

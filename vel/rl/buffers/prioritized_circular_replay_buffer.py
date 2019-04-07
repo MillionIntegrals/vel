@@ -17,7 +17,7 @@ class PrioritizedCircularReplayBuffer(ReplayBuffer):
 
     def __init__(self, buffer_capacity: int, buffer_initial_size: int, num_envs: int, observation_space: gym.Space,
                  action_space: gym.Space, priority_exponent: float, priority_weight: Schedule, priority_epsilon: float,
-                 frame_stack_compensation: bool=False, frame_history: int=1):
+                 frame_stack_compensation: bool = False, frame_history: int = 1):
         super().__init__()
 
         self.buffer_initial_size = buffer_initial_size
@@ -43,9 +43,12 @@ class PrioritizedCircularReplayBuffer(ReplayBuffer):
         """ Hint how much data is needed to begin sampling, required only for diagnostics """
         return self.buffer_initial_size
 
-    def _get_transitions(self, probs, indexes, tree_idxs, batch_info):
+    def _get_transitions(self, probs, indexes, tree_idxs, batch_info, forward_steps=1, discount_factor=1.0):
         """ Return batch of frames for given indexes """
-        transition_arrays = self.backend.get_transitions(indexes)
+        if forward_steps > 1:
+            transition_arrays = self.backend.get_transitions_forward_steps(indexes, forward_steps, discount_factor)
+        else:
+            transition_arrays = self.backend.get_transitions(indexes)
 
         priority_weight = self.priority_weight.value(batch_info['progress'])
 
@@ -86,7 +89,11 @@ class PrioritizedCircularReplayBuffer(ReplayBuffer):
 
         Used in a variant of Deep Q-Learning
         """
-        raise NotImplementedError
+        probs, indexes, tree_idxs = self.backend.sample_batch_transitions(batch_size, forward_steps)
+
+        return self._get_transitions(
+            probs, indexes, tree_idxs, batch_info
+        )
 
     def sample_trajectories(self, rollout_length, batch_info):
         """ Sample batch of trajectories and return them """
@@ -110,8 +117,8 @@ class PrioritizedCircularVecEnvBufferBackendFactory:
     """ Factory class for the CircularVecEnvBufferBackend """
 
     def __init__(self, buffer_capacity: int, buffer_initial_size: int, priority_exponent: float,
-                 priority_weight: Schedule, priority_epsilon: float, frame_stack_compensation: bool=False,
-                 frame_history: int=1):
+                 priority_weight: Schedule, priority_epsilon: float, frame_stack_compensation: bool = False,
+                 frame_history: int = 1):
         self.buffer_capacity = buffer_capacity
         self.buffer_initial_size = buffer_initial_size
         self.frame_stack_compensation = frame_stack_compensation
@@ -136,7 +143,7 @@ class PrioritizedCircularVecEnvBufferBackendFactory:
 
 
 def create(buffer_capacity: int, buffer_initial_size: int, priority_exponent: float, priority_weight: Schedule,
-           priority_epsilon: float, frame_stack_compensation: bool=False, frame_history: int=1):
+           priority_epsilon: float, frame_stack_compensation: bool = False, frame_history: int = 1):
     """ Vel factory function """
     return PrioritizedCircularVecEnvBufferBackendFactory(
         buffer_capacity=buffer_capacity,

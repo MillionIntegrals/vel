@@ -15,7 +15,7 @@ class CircularReplayBuffer(ReplayBuffer):
     """
 
     def __init__(self, buffer_capacity: int, buffer_initial_size: int, num_envs: int, observation_space: gym.Space,
-                 action_space: gym.Space, frame_stack_compensation: bool=False, frame_history: int=1):
+                 action_space: gym.Space, frame_stack_compensation: bool = False, frame_history: int = 1):
         super().__init__()
 
         self.buffer_initial_size = buffer_initial_size
@@ -113,7 +113,7 @@ class CircularReplayBufferFactory(ReplayBufferFactory):
     """ Factory class for the CircularReplayBuffer """
 
     def __init__(self, buffer_capacity: int, buffer_initial_size: int,
-                 frame_stack_compensation: bool=False, frame_history: int=1):
+                 frame_stack_compensation: bool = False, frame_history: int = 1):
         self.buffer_capacity = buffer_capacity
         self.buffer_initial_size = buffer_initial_size
         self.frame_stack_compensation = frame_stack_compensation
@@ -131,7 +131,8 @@ class CircularReplayBufferFactory(ReplayBufferFactory):
         )
 
 
-def create(buffer_capacity: int, buffer_initial_size: int, frame_stack_compensation: bool=False, frame_history: int=1):
+def create(buffer_capacity: int, buffer_initial_size: int, frame_stack_compensation: bool = False,
+           frame_history: int = 1):
     """ Vel factory function """
     return CircularReplayBufferFactory(
         buffer_capacity=buffer_capacity,
