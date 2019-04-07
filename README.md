@@ -312,6 +312,13 @@ Possible to be included:
 - Generative adversarial networks
 
 
+Code quality:
+- Rename models to policies
+- Force dictionary inputs and outputs for policies
+- Factor action noise back into the policy
+- Use linter as a part of the build process
+
+
 # Alternatives, similar projects
 
 - https://github.com/NervanaSystems/coach
