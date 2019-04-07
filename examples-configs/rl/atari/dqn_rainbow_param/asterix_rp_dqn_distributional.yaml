@@ -14,7 +14,7 @@ vec_env:
 
 
 model:
-  name: vel.rl.models.distributional_q_model
+  name: vel.rl.models.q_distributional_model
 
   atoms: 51  # 51 bins for Distributional DQN
   vmin: -10.0

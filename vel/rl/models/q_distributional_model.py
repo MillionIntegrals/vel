@@ -4,12 +4,12 @@ import typing
 from vel.api import LinearBackboneModel, ModelFactory, BackboneModel
 from vel.modules.input.identity import IdentityFactory
 from vel.rl.api import Rollout, RlModel, Evaluator
-from vel.rl.modules.distributional_q_head import DistributionalQHead
+from vel.rl.modules.q_distributional_head import QDistributionalHead
 
 
-class DistributionalQModelEvaluator(Evaluator):
-    """ Evaluate simple q-model """
-    def __init__(self, model: 'DistributionalQModel', rollout: Rollout):
+class QDistributionalModelEvaluator(Evaluator):
+    """ Evaluate distributional q-model """
+    def __init__(self, model: 'QDistributionalModel', rollout: Rollout):
         super().__init__(rollout)
         self.model = model
 
@@ -53,9 +53,10 @@ class DistributionalQModelEvaluator(Evaluator):
         return self.model(observations)
 
 
-class DistributionalQModel(RlModel):
+class QDistributionalModel(RlModel):
     """
-    Simple deterministic greedy action-value model.
+    A deterministic greedy action-value model that learns a value function distribution rather than
+    just an expectation.
     Supports only discrete action spaces (ones that can be enumerated)
     """
     def __init__(self, input_block: BackboneModel, backbone: LinearBackboneModel, action_space: gym.Space,
@@ -67,7 +68,7 @@ class DistributionalQModel(RlModel):
         self.input_block = input_block
         self.backbone = backbone
 
-        self.q_head = DistributionalQHead(
+        self.q_head = QDistributionalHead(
             input_dim=backbone.output_dim, action_space=action_space,
             vmin=vmin, vmax=vmax,
             atoms=atoms
@@ -102,10 +103,10 @@ class DistributionalQModel(RlModel):
 
     def evaluate(self, rollout: Rollout) -> Evaluator:
         """ Evaluate model on a rollout """
-        return DistributionalQModelEvaluator(self, rollout)
+        return QDistributionalModelEvaluator(self, rollout)
 
 
-class DistributionalQModelFactory(ModelFactory):
+class QDistributionalModelFactory(ModelFactory):
     """ Factory class for q-learning models """
     def __init__(self, input_block: ModelFactory, backbone: ModelFactory, vmin: float, vmax: float, atoms: int):
         self.input_block = input_block
@@ -119,7 +120,7 @@ class DistributionalQModelFactory(ModelFactory):
         input_block = self.input_block.instantiate()
         backbone = self.backbone.instantiate(**extra_args)
 
-        return DistributionalQModel(
+        return QDistributionalModel(
             input_block=input_block,
             backbone=backbone,
             action_space=extra_args['action_space'],
@@ -135,7 +136,7 @@ def create(backbone: ModelFactory, vmin: float, vmax: float, atoms: int,
     if input_block is None:
         input_block = IdentityFactory()
 
-    return DistributionalQModelFactory(
+    return QDistributionalModelFactory(
         input_block=input_block, backbone=backbone,
         vmin=vmin,
         vmax=vmax,

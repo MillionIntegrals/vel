@@ -6,7 +6,7 @@ import torch.nn.init as init
 import gym.spaces as spaces
 
 
-class DistributionalQHead(nn.Module):
+class QDistributionalHead(nn.Module):
     """ Network head calculating Q-function value for each (discrete) action. """
     def __init__(self, input_dim, action_space, vmin: float, vmax: float, atoms: int=1):
         super().__init__()
