@@ -180,7 +180,7 @@ class DistributionalDeepQLearning(OptimizerAlgoBase):
 
 
 def create(model: ModelFactory, discount_factor: float, target_update_frequency: int,
-           max_grad_norm: float, double_dqn: bool=False):
+           max_grad_norm: float, double_dqn: bool = False):
     """ Vel factory function """
     return DistributionalDeepQLearning(
         model_factory=model,

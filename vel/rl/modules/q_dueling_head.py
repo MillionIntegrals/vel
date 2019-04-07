@@ -1,11 +1,10 @@
-import torch
 import torch.nn as nn
 import torch.nn.init as init
 
 import gym.spaces as spaces
 
 
-class DuelingQHead(nn.Module):
+class QDuelingHead(nn.Module):
     """ Network head calculating Q-function value for each (discrete) action using two separate inputs. """
     def __init__(self, input_dim, action_space):
         super().__init__()

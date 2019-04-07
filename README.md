@@ -117,6 +117,7 @@ that are ready to run and easy to modify for other similar usecases:
     - N-Step Bellman updates
     - Distributional Q-Learning
     - Noisy Networks for Exploration
+    - Rainbow (combination of the above)
 
 
 # Examples

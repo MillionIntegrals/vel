@@ -1,12 +1,11 @@
 import torch.nn as nn
-import torch.nn.init as init
 
 import gym.spaces as spaces
 
 from vel.rl.modules.noisy_linear import NoisyLinear
 
 
-class NoisyQHead(nn.Module):
+class QNoisyHead(nn.Module):
     """ Network head calculating Q-function value for each (discrete) action. """
     def __init__(self, input_dim, action_space, initial_std_dev=0.4, factorized_noise=True):
         super().__init__()
@@ -29,4 +28,3 @@ class NoisyQHead(nn.Module):
     def sample(self, q_values):
         """ Sample from epsilon-greedy strategy with given q-values """
         return q_values.argmax(dim=1)
-

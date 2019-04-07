@@ -36,8 +36,7 @@ reinforcer:
     replay_buffer:
       name: vel.rl.buffers.circular_replay_buffer
 
-#      buffer_initial_size: 80_000 # How many samples we need in the buffer before we start using replay buffer
-      buffer_initial_size: 200_000 # How many samples we need in the buffer before we start using replay buffer
+      buffer_initial_size: 80_000 # How many samples we need in the buffer before we start using replay buffer
       buffer_capacity: 1_000_000
 
       # Because env has a framestack already built-in, save memory by encoding only last frames in the replay buffer

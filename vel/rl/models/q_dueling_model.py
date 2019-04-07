@@ -4,7 +4,7 @@ import typing
 from vel.api import LinearBackboneModel, Model, ModelFactory, BackboneModel
 from vel.modules.input.identity import IdentityFactory
 from vel.rl.api import Rollout, Evaluator
-from vel.rl.modules.dueling_q_head import DuelingQHead
+from vel.rl.modules.q_dueling_head import QDuelingHead
 from vel.rl.models.q_model import QModelEvaluator
 
 
@@ -21,7 +21,7 @@ class QDuelingModel(Model):
 
         self.input_block = input_block
         self.backbone = backbone
-        self.q_head = DuelingQHead(input_dim=backbone.output_dim, action_space=action_space)
+        self.q_head = QDuelingHead(input_dim=backbone.output_dim, action_space=action_space)
 
     def forward(self, observations):
         """ Model forward pass """

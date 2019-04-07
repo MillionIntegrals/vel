@@ -4,9 +4,8 @@ https://github.com/Kaixhin/Rainbow/blob/master/model.py
 """
 import math
 import torch
-
-from torch import nn
-from torch.nn import functional as F
+import torch.nn as nn
+import torch.nn.functional as F
 import torch.nn.init as init
 
 
@@ -33,7 +32,7 @@ def gaussian_noise(in_features, out_features, device):
 
 class NoisyLinear(nn.Module):
     """ NoisyNets noisy linear layer """
-    def __init__(self, in_features, out_features, initial_std_dev=0.4, factorized_noise=True):
+    def __init__(self, in_features, out_features, initial_std_dev: float = 0.4, factorized_noise: bool = True):
         super(NoisyLinear, self).__init__()
 
         self.in_features = in_features
@@ -56,16 +55,16 @@ class NoisyLinear(nn.Module):
         self.bias_sigma.data.fill_(self.initial_std_dev / math.sqrt(self.out_features))
 
     def forward(self, input_data):
-        if self.factorized_noise:
-            weight_epsilon, bias_epsilon = factorized_gaussian_noise(
-                self.in_features, self.out_features, device=input_data.device
-            )
-        else:
-            weight_epsilon, bias_epsilon = gaussian_noise(
-                self.in_features, self.out_features, device=input_data.device
-            )
-
         if self.training:
+            if self.factorized_noise:
+                weight_epsilon, bias_epsilon = factorized_gaussian_noise(
+                    self.in_features, self.out_features, device=input_data.device
+                )
+            else:
+                weight_epsilon, bias_epsilon = gaussian_noise(
+                    self.in_features, self.out_features, device=input_data.device
+                )
+
             return F.linear(
                 input_data,
                 self.weight_mu + self.weight_sigma * weight_epsilon,
@@ -81,4 +80,7 @@ class NoisyLinear(nn.Module):
         this method in your own modules. Both single-line and multi-line
         strings are acceptable.
         """
-        return f'{self.in_features}, {self.out_features}, initial_std_dev={self.initial_std_dev}, factorized_noise={self.factorized_noise}'
+        return (
+            f'{self.in_features}, {self.out_features}, initial_std_dev={self.initial_std_dev}, '
+            'factorized_noise={self.factorized_noise} '
+        )

@@ -5,7 +5,7 @@ from vel.api import LinearBackboneModel, ModelFactory, BackboneModel
 from vel.modules.input.identity import IdentityFactory
 from vel.rl.api import Rollout, RlModel, Evaluator
 from vel.rl.models.q_model import QModelEvaluator
-from vel.rl.modules.noisy_q_head import NoisyQHead
+from vel.rl.modules.q_noisy_head import QNoisyHead
 
 
 class NoisyQModel(RlModel):
@@ -22,7 +22,7 @@ class NoisyQModel(RlModel):
 
         self.input_block = input_block
         self.backbone = backbone
-        self.q_head = NoisyQHead(
+        self.q_head = QNoisyHead(
             input_dim=backbone.output_dim, action_space=action_space, initial_std_dev=initial_std_dev,
             factorized_noise=factorized_noise
         )

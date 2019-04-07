@@ -1,14 +1,17 @@
+import gym.spaces as spaces
+
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-import torch.nn.init as init
-
-import gym.spaces as spaces
 
 
-class QDistributionalHead(nn.Module):
+from vel.rl.modules.noisy_linear import NoisyLinear
+
+
+class QDistributionalNoisyDuelingHead(nn.Module):
     """ Network head calculating Q-function value for each (discrete) action. """
-    def __init__(self, input_dim, action_space, vmin: float, vmax: float, atoms: int = 1):
+    def __init__(self, input_dim, action_space, vmin: float, vmax: float, atoms: int = 1,
+                 initial_std_dev: float = 0.4, factorized_noise: bool = True):
         super().__init__()
 
         # Q-function requires a discrete action space
@@ -19,12 +22,18 @@ class QDistributionalHead(nn.Module):
         self.vmin = vmin
         self.vmax = vmax
 
-        self.action_space = action_space
         self.action_size = action_space.n
+        self.action_space = action_space
 
         self.atom_delta = (self.vmax - self.vmin) / (self.atoms - 1)
 
-        self.linear_layer = nn.Linear(input_dim, self.action_size * self.atoms)
+        self.linear_layer_advantage = NoisyLinear(
+            input_dim, self.action_size * self.atoms, initial_std_dev=initial_std_dev, factorized_noise=factorized_noise
+        )
+
+        self.linear_layer_value = NoisyLinear(
+            input_dim, self.atoms, initial_std_dev=initial_std_dev, factorized_noise=factorized_noise
+        )
 
         self.register_buffer('support_atoms', torch.linspace(self.vmin, self.vmax, self.atoms))
 
@@ -39,15 +48,18 @@ class QDistributionalHead(nn.Module):
         }
 
     def reset_weights(self):
-        init.orthogonal_(self.linear_layer.weight, gain=1.0)
-        init.constant_(self.linear_layer.bias, 0.0)
+        self.linear_layer_advantage.reset_weights()
+        self.linear_layer_value.reset_weights()
 
-    def forward(self, input_data):
-        histogram_logits = self.linear_layer(input_data).view(input_data.size(0), self.action_size, self.atoms)
-        histogram_log = F.log_softmax(histogram_logits, dim=2)
+    def forward(self, advantage_features, value_features):
+        adv = self.linear_layer_advantage(advantage_features).view(-1, self.action_size, self.atoms)
+        val = self.linear_layer_value(value_features).view(-1, 1, self.atoms)
 
-        # Calculate log-softmax to establish log-probability distribution
-        return histogram_log
+        # I'm quite unsure if this is the right way to combine these, but this is what paper seems to be suggesting
+        # and I don't know any better way.
+        histogram_output = val + adv - adv.mean(dim=1, keepdim=True)
+
+        return F.log_softmax(histogram_output, dim=2)
 
     def sample(self, histogram_logits):
         """ Sample from a greedy strategy with given q-value histogram """
