@@ -22,7 +22,7 @@ class DeepQLearning(OptimizerAlgoBase):
 
         self.target_model = None
 
-    def initialize(self, model, environment, device):
+    def initialize(self, training_info, model, environment, device):
         """ Initialize policy gradient from reinforcer settings """
         self.target_model = self.model_factory.instantiate(action_space=environment.action_space).to(device)
         self.target_model.load_state_dict(model.state_dict())

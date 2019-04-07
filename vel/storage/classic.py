@@ -31,19 +31,19 @@ class ClassicStorage(Storage):
         self.clean(0)
         self.backend.store_config(configuration)
 
-    def resume(self, train_info: TrainingInfo, model: Model) -> dict:
+    def load(self, train_info: TrainingInfo) -> (dict, dict):
         """
         Resume learning process and return loaded hidden state dictionary
         """
         last_epoch = train_info.start_epoch_idx
 
-        model.load_state_dict(torch.load(self.checkpoint_filename(last_epoch)))
+        model_state = torch.load(self.checkpoint_filename(last_epoch))
         hidden_state = torch.load(self.checkpoint_hidden_filename(last_epoch))
 
         self.checkpoint_strategy.restore(hidden_state)
         train_info.restore(hidden_state)
 
-        return hidden_state
+        return model_state, hidden_state
 
     def get_metrics_frame(self):
         """ Get a frame of metrics from backend """

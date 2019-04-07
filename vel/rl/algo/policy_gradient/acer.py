@@ -13,9 +13,9 @@ def select_indices(tensor, indices):
 class AcerPolicyGradient(OptimizerAlgoBase):
     """ Actor-Critic with Experience Replay - policy gradient calculations """
 
-    def __init__(self, model_factory, discount_factor, trust_region: bool=True, entropy_coefficient: float=0.01,
-                 q_coefficient: float=0.5, rho_cap: float=10.0, retrace_rho_cap: float=1.0, max_grad_norm: float=None,
-                  average_model_alpha=0.99, trust_region_delta=1.0):
+    def __init__(self, model_factory, discount_factor, trust_region: bool = True, entropy_coefficient: float = 0.01,
+                 q_coefficient: float = 0.5, rho_cap: float = 10.0, retrace_rho_cap: float = 1.0,
+                 max_grad_norm: float = None, average_model_alpha: float = 0.99, trust_region_delta: float = 1.0):
         super().__init__(max_grad_norm)
 
         self.discount_factor = discount_factor
@@ -31,25 +31,20 @@ class AcerPolicyGradient(OptimizerAlgoBase):
 
         # Trust region settings
         self.average_model = None
-        self.average_model_initialized = False
         self.average_model_alpha = average_model_alpha
         self.trust_region_delta = trust_region_delta
 
-    def initialize(self, model, environment, device):
+    def initialize(self, training_info, model, environment, device):
         """ Initialize policy gradient from reinforcer settings """
         if self.trust_region:
             self.average_model = self.model_factory.instantiate(action_space=environment.action_space).to(device)
+            self.average_model.load_state_dict(model.state_dict())
 
     def update_average_model(self, model):
         """ Update weights of the average model with new model observation """
-        if not self.average_model_initialized:
-            # Initialize average model to have the same weights as the main model
-            self.average_model.load_state_dict(model.state_dict())
-            self.average_model_initialized = True
-        else:
-            for model_param, average_param in zip(model.parameters(), self.average_model.parameters()):
-                # EWMA average model update
-                average_param.data.mul_(self.average_model_alpha).add_(model_param.data * (1 - self.average_model_alpha))
+        for model_param, average_param in zip(model.parameters(), self.average_model.parameters()):
+            # EWMA average model update
+            average_param.data.mul_(self.average_model_alpha).add_(model_param.data * (1 - self.average_model_alpha))
 
     def calculate_gradient(self, batch_info, device, model, rollout):
         """ Calculate loss of the supplied rollout """

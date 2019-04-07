@@ -133,7 +133,8 @@ class RlTrainCommand:
             training_info.initialize()
             reinforcer.initialize_training(training_info)
         else:
-            self.storage.resume(training_info, reinforcer.model)
+            model_state, hidden_state = self.storage.load(training_info)
+            reinforcer.initialize_training(training_info, model_state, hidden_state)
 
         return training_info
 

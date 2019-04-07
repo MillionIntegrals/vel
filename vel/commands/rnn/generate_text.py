@@ -32,7 +32,8 @@ class GenerateTextCommand:
             run_name=self.model_config.run_name,
         )
 
-        self.storage.resume(training_info, model)
+        model_state, hidden_state = self.storage.load(training_info)
+        model.load_state_dict(model_state)
 
         model.eval()
 

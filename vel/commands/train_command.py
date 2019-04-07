@@ -93,7 +93,8 @@ class SimpleTrainCommand:
             training_info.initialize()
             learner.initialize_training(training_info)
         else:
-            self.storage.resume(training_info, learner.model)
+            model_state, hidden_state = self.storage.load(training_info)
+            learner.initialize_training(training_info, model_state, hidden_state)
 
         return training_info
 

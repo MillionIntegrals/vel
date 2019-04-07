@@ -33,7 +33,7 @@ class EnjoyCommand:
             run_name=self.model_config.run_name
         )
 
-        self.storage.resume(training_info, model)
+        self.storage.load(training_info, model)
 
         model.eval()
 

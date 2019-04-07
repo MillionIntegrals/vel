@@ -17,7 +17,7 @@ def clip_gradients(batch_result, model, max_grad_norm):
 class AlgoBase:
     """ Base class for algo reinforcement calculations """
 
-    def initialize(self, model, environment, device):
+    def initialize(self, training_info, model, environment, device):
         """ Initialize algo from reinforcer settings """
         pass
 

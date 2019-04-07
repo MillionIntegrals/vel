@@ -9,7 +9,7 @@ class ReinforcerBase:
     Learner version for reinforcement-learning problems.
     """
 
-    def initialize_training(self, training_info: TrainingInfo):
+    def initialize_training(self, training_info: TrainingInfo, model_state=None, hidden_state=None):
         """ Run the initialization procedure """
         pass
 

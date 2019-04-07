@@ -19,10 +19,11 @@ class DeepDeterministicPolicyGradient(OptimizerAlgoBase):
 
         self.target_model = None
 
-    def initialize(self, model, environment, device):
+    def initialize(self, training_info, model, environment, device):
         """ Initialize algo from reinforcer settings """
         self.target_model = self.model_factory.instantiate(action_space=environment.action_space).to(device)
         self.target_model.load_state_dict(model.state_dict())
+        self.target_model.eval()
 
     def calculate_gradient(self, batch_info, device, model, rollout):
         """ Calculate loss of the supplied rollout """

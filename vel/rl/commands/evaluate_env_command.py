@@ -38,7 +38,8 @@ class EvaluateEnvCommand:
             start_epoch_idx=self.storage.last_epoch_idx(), run_name=self.model_config.run_name
         )
 
-        self.storage.resume(training_info, model)
+        model_state, hidden_state = self.storage.load(training_info)
+        model.load_state_dict(model_state)
 
         print("Loading model trained for {} epochs".format(training_info.start_epoch_idx))
 

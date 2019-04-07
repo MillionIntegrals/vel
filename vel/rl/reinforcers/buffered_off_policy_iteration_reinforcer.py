@@ -4,7 +4,7 @@ import tqdm
 
 import torch
 
-from vel.api import BatchInfo, EpochInfo, Model, ModelFactory
+from vel.api import TrainingInfo, EpochInfo, BatchInfo, Model, ModelFactory
 from vel.openai.baselines.common.vec_env import VecEnv
 from vel.rl.api import (
     ReinforcerBase, ReinforcerFactory, ReplayEnvRollerBase, AlgoBase, VecEnvFactory, ReplayEnvRollerFactoryBase
@@ -59,10 +59,16 @@ class BufferedOffPolicyIterationReinforcer(ReinforcerBase):
     def model(self) -> Model:
         return self._trained_model
 
-    def initialize_training(self, training_info):
+    def initialize_training(self, training_info: TrainingInfo, model_state=None, hidden_state=None):
         """ Prepare models for training """
-        self.model.reset_weights()
-        self.algo.initialize(model=self.model, environment=self.environment, device=self.device)
+        if model_state is not None:
+            self.model.load_state_dict(model_state)
+        else:
+            self.model.reset_weights()
+
+        self.algo.initialize(
+            training_info=training_info, model=self.model, environment=self.environment, device=self.device
+        )
 
     def train_epoch(self, epoch_info: EpochInfo, interactive=True) -> None:
         """ Train model for a single epoch  """

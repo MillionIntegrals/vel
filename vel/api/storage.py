@@ -8,7 +8,7 @@ class Storage:
         """ Return last checkpointed epoch idx for given configuration. Returns 0 if no results have been stored """
         raise NotImplementedError
 
-    def resume(self, train_info: TrainingInfo, model: Model) -> dict:
+    def load(self, train_info: TrainingInfo) -> (dict, dict):
         """
         Resume learning process and return loaded hidden state dictionary
         """

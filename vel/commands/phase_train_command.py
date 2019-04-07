@@ -134,7 +134,8 @@ class PhaseTrainCommand:
             learner.initialize_training(training_info)
             hidden_state = None
         else:
-            hidden_state = self.storage.resume(training_info, learner.model)
+            model_state, hidden_state = self.storage.load(training_info)
+            learner.initialize_training(training_info, model_state, hidden_state)
 
         return training_info, hidden_state
 
