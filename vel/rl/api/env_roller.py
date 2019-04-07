@@ -35,6 +35,10 @@ class ReplayEnvRollerBase(EnvRollerBase):
         """ If buffer is ready for drawing samples from it (usually checks if there is enough data) """
         raise NotImplementedError
 
+    def initial_memory_size_hint(self) -> typing.Optional[int]:
+        """ Hint how much data is needed to begin sampling, required only for diagnostics """
+        return None
+
     def update(self, rollout, batch_info):
         """ Perform update of the internal state of the buffer - e.g. for the prioritized replay weights """
         pass

@@ -17,14 +17,13 @@ def model_children(module):
 
 
 def apply_leaf(module, f):
-    c = model_children(module)
-
     if isinstance(module, nn.Module):
         f(module)
 
-    if len(c) > 0:
-        for l in c:
-            apply_leaf(l, f)
+    children = model_children(module)
+
+    for l in children:
+        apply_leaf(l, f)
 
 
 def set_train_mode(module):

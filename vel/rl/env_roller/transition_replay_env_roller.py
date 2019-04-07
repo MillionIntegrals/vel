@@ -144,6 +144,10 @@ class TransitionReplayEnvRoller(ReplayEnvRollerBase):
         """ If buffer is ready for drawing samples from it (usually checks if there is enough data) """
         return self.replay_buffer.is_ready_for_sampling()
 
+    def initial_memory_size_hint(self) -> typing.Optional[int]:
+        """ Hint how much data is needed to begin sampling, required only for diagnostics """
+        return self.replay_buffer.initial_memory_size_hint()
+
     def update(self, rollout, batch_info):
         """ Perform update of the internal state of the buffer - e.g. for the prioritized replay weights """
         self.replay_buffer.update(rollout, batch_info)

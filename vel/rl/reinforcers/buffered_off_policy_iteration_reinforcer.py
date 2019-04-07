@@ -114,11 +114,15 @@ class BufferedOffPolicyIterationReinforcer(ReinforcerBase):
             frames = 0
             episode_infos = []
 
-            while not self.env_roller.is_ready_for_sampling():
-                rollout = self.env_roller.rollout(batch_info, self.model, self.settings.rollout_steps).to_device(self.device)
+            with tqdm.tqdm(desc="Populating memory", total=self.env_roller.initial_memory_size_hint()) as pbar:
+                while not self.env_roller.is_ready_for_sampling():
+                    rollout = self.env_roller.rollout(batch_info, self.model, self.settings.rollout_steps).to_device(self.device)
 
-                frames += rollout.frames()
-                episode_infos.extend(rollout.episode_information())
+                    new_frames = rollout.frames()
+                    frames += new_frames
+                    episode_infos.extend(rollout.episode_information())
+
+                    pbar.update(new_frames)
 
             # Store some information about the rollout, no training phase
             batch_info['frames'] = frames

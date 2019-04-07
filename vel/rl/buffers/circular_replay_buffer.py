@@ -1,5 +1,6 @@
 import gym
 import torch
+import typing
 
 from vel.rl.api import ReplayBuffer, ReplayBufferFactory, Transitions, Trajectories
 from .backend.circular_vec_buffer_backend import CircularVecEnvBufferBackend
@@ -31,6 +32,10 @@ class CircularReplayBuffer(ReplayBuffer):
     def is_ready_for_sampling(self) -> bool:
         """ If buffer is ready for drawing samples from it (usually checks if there is enough data) """
         return self.buffer_initial_size <= self.backend.current_size
+
+    def initial_memory_size_hint(self) -> typing.Optional[int]:
+        """ Hint how much data is needed to begin sampling, required only for diagnostics """
+        return self.buffer_initial_size
 
     def _get_transitions(self, indexes):
         """ Return batch with given indexes """

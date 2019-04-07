@@ -1,6 +1,7 @@
 import gym
 import numpy as np
 import torch
+import typing
 
 from vel.api import Schedule
 from vel.rl.api import ReplayBuffer, Trajectories, Transitions
@@ -37,6 +38,10 @@ class PrioritizedCircularReplayBuffer(ReplayBuffer):
     def is_ready_for_sampling(self) -> bool:
         """ If buffer is ready for drawing samples from it (usually checks if there is enough data) """
         return self.buffer_initial_size <= self.backend.current_size
+
+    def initial_memory_size_hint(self) -> typing.Optional[int]:
+        """ Hint how much data is needed to begin sampling, required only for diagnostics """
+        return self.buffer_initial_size
 
     def _get_transitions(self, probs, indexes, tree_idxs, batch_info):
         """ Return batch of frames for given indexes """
