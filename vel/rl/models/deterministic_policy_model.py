@@ -1,7 +1,6 @@
 import gym
 import itertools as it
 import torch
-import torch.nn as nn
 import typing
 
 from vel.api import LinearBackboneModel, ModelFactory, BackboneModel
