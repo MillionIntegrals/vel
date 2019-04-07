@@ -289,6 +289,29 @@ If there is anything you'd like to see there, feel free to open an issue or make
 For a more or less exhaustive bibliography please refer to [Bibliography](docs/Bibliography.md).
 
 
+# Roadmap
+
+For each major version I'll try to keep master branch stable together with what's
+currently published on PyPI. At the same time I'll proceed with implementing new
+features on a release branch that will be merged after the testing is done and
+a release is ready.
+
+Below is a hypothetical set of features I somehow speculate to include in version
+0.4 of Vel:
+
+Very likely to be included:
+- Neural machine translation using RNNs and Transformer Networks
+- Soft actor-critic
+- Twin Delayed DDPG
+
+
+Possible to be included:
+- Popart reward normalization
+- Parameter Space Noise for Exploration
+- Hindsight experience replay
+- Generative adversarial networks
+
+
 # Alternatives, similar projects
 
 - https://github.com/NervanaSystems/coach
