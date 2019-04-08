@@ -28,14 +28,15 @@ setup(
     install_requires=[
         'attrs',
         'cloudpickle',
+        'matplotlib',
         'numpy',
         'opencv-python',
         'pandas',
         'pyyaml',
         'scikit-learn',
         'torch ~= 1.0',
-        'torchvision',
         'torchtext',
+        'torchvision',
         'tqdm'
     ],
     extras_require={
