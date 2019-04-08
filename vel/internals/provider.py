@@ -116,3 +116,7 @@ class Provider:
                 return instance
         else:
             return self.instances[object_name]
+
+    def get(self, name):
+        """ Get object from given provider """
+        return self.instantiate_by_name(name)
