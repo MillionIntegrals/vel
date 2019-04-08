@@ -1,0 +1,34 @@
+name: 'mnist_cnn_autoenoder'
+
+
+model:
+  name: vel.models.autoencoder.mnist_cnn_autoencoder
+  img_rows: 28
+  img_cols: 28
+  img_channels: 1
+  num_classes: 10
+
+
+source:
+  name: vel.sources.vision.mnist
+  batch_size: 128
+  normalize: False
+  num_workers: 4
+  unsupervised: true
+
+
+commands:
+  train:
+    name: vel.commands.train_command
+    epochs: 12
+    log_frequency: 100
+
+    optimizer:
+      name: vel.optimizers.adadelta
+
+    checkpoint:
+      metric: 'val:loss'
+
+
+  visdom:
+    name: vel.commands.vis_store_command

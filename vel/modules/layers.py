@@ -39,6 +39,17 @@ class Flatten(nn.Module):
         return x.view(x.size(0), -1)
 
 
+class Reshape(nn.Module):
+    """ Flatten input vector """
+    def __init__(self, *sizes):
+        super().__init__()
+
+        self.sizes = sizes
+
+    def forward(self, x):
+        return x.view(x.size(0), *self.sizes)
+
+
 class OneHotEncode(nn.Module):
     """ One-hot encoding layer """
     def __init__(self, num_classes):

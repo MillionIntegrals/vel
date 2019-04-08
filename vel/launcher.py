@@ -3,7 +3,7 @@ import argparse
 import multiprocessing
 import sys
 
-from vel.internals.model_config import ModelConfig
+from vel.api.model_config import ModelConfig
 from vel.internals.parser import Parser
 
 
