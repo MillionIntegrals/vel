@@ -4,6 +4,13 @@ Below, I present a most likely incomplete list of works I referred to when I was
 on this library:
 
 
+### Autoencoders
+
+- (Dec 2013) **Auto-Encoding Variational Bayes**
+	Diederik P Kingma, Max Welling
+	https://arxiv.org/abs/1312.6114
+
+
 ### Learning rate and optimization
 
 - (2012) **Lecture 6.5 -- RmsProp: Divide the gradient by a running average of its recent magnitude**
