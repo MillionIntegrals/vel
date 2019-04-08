@@ -26,11 +26,6 @@ class Net(SupervisedModel):
     Dense - output (softmax)
     """
 
-    @staticmethod
-    def _weight_initializer(tensor):
-        init.xavier_uniform_(tensor.weight, gain=init.calculate_gain('relu'))
-        init.constant_(tensor.bias, 0.0)
-
     def __init__(self, img_rows, img_cols, img_channels, num_classes):
         super(Net, self).__init__()
 
@@ -44,6 +39,11 @@ class Net(SupervisedModel):
         self.fc1 = nn.Linear(self.flattened_size, 128)
         self.dropout2 = nn.Dropout(p=0.5)
         self.fc2 = nn.Linear(128, num_classes)
+
+    @staticmethod
+    def _weight_initializer(tensor):
+        init.xavier_uniform_(tensor.weight, gain=init.calculate_gain('relu'))
+        init.constant_(tensor.bias, 0.0)
 
     def reset_weights(self):
         self._weight_initializer(self.conv1)
