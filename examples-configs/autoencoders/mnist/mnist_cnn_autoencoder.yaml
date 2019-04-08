@@ -17,14 +17,17 @@ source:
   unsupervised: true
 
 
+optimizer:
+  name: vel.optimizers.adam
+  lr: 1.0e-3
+
+
 commands:
   train:
     name: vel.commands.train_command
     epochs: 12
     log_frequency: 100
 
-    optimizer:
-      name: vel.optimizers.adadelta
 
     checkpoint:
       metric: 'val:loss'
