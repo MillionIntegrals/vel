@@ -22,10 +22,8 @@ class MnistCnnAutoencoder(SupervisedModel):
     Dense - output (softmax)
     """
 
-    def __init__(self, img_rows, img_cols, img_channels, num_classes):
+    def __init__(self, img_rows, img_cols, img_channels, channels=[16, 32, 32], representation_length=32):
         super(MnistCnnAutoencoder, self).__init__()
-
-        self.flattened_size = (img_rows - 4) // 2 * (img_cols - 4) // 2 * 64
 
         layer_series = [
             (3, 1, 1),
@@ -33,28 +31,30 @@ class MnistCnnAutoencoder(SupervisedModel):
             (3, 1, 2),
         ]
 
+        self.representation_length = representation_length
         self.final_width = net_util.convolutional_layer_series(img_rows, layer_series)
         self.final_height = net_util.convolutional_layer_series(img_cols, layer_series)
+        self.channels = channels
 
         self.encoder = nn.Sequential(
-            nn.Conv2d(in_channels=img_channels, out_channels=16, kernel_size=(3, 3), padding=1),
+            nn.Conv2d(in_channels=img_channels, out_channels=channels[0], kernel_size=(3, 3), padding=1),
             nn.ReLU(True),
-            nn.Conv2d(in_channels=16, out_channels=32, kernel_size=(3, 3), stride=2, padding=1),
+            nn.Conv2d(in_channels=channels[0], out_channels=channels[1], kernel_size=(3, 3), stride=2, padding=1),
             nn.ReLU(True),
-            nn.Conv2d(in_channels=32, out_channels=32, kernel_size=(3, 3), stride=2, padding=1),
+            nn.Conv2d(in_channels=channels[1], out_channels=channels[2], kernel_size=(3, 3), stride=2, padding=1),
             Flatten(),
-            nn.Linear(self.final_width * self.final_height * 32, 32)
+            nn.Linear(self.final_width * self.final_height * channels[2], representation_length)
         )
 
         self.decoder = nn.Sequential(
-            nn.Linear(32, self.final_width * self.final_height * 32),
+            nn.Linear(representation_length, self.final_width * self.final_height * channels[2]),
             nn.ReLU(True),
             Reshape(32, self.final_width, self.final_height),
-            nn.ConvTranspose2d(in_channels=32, out_channels=32, kernel_size=3, stride=2, padding=1, output_padding=1),
+            nn.ConvTranspose2d(in_channels=channels[2], out_channels=channels[1], kernel_size=3, stride=2, padding=1, output_padding=1),
             nn.ReLU(True),
-            nn.ConvTranspose2d(in_channels=32, out_channels=16, kernel_size=3, stride=2, padding=1, output_padding=1),
+            nn.ConvTranspose2d(in_channels=channels[1], out_channels=channels[0], kernel_size=3, stride=2, padding=1, output_padding=1),
             nn.ReLU(True),
-            nn.ConvTranspose2d(in_channels=16, out_channels=img_channels, kernel_size=3, padding=1),
+            nn.ConvTranspose2d(in_channels=channels[0], out_channels=img_channels, kernel_size=3, padding=1),
         )
 
     @staticmethod
@@ -63,13 +63,14 @@ class MnistCnnAutoencoder(SupervisedModel):
         init.constant_(tensor.bias, 0.0)
 
     def reset_weights(self):
-        for m in self.children():
-            if isinstance(m, nn.Conv2d):
-                self._weight_initializer(m)
-            elif isinstance(m, nn.ConvTranspose2d):
-                self._weight_initializer(m)
-            elif isinstance(m, nn.Linear):
-                self._weight_initializer(m)
+        pass
+    #     for m in children:
+    #         if isinstance(m, nn.Conv2d):
+    #             self._weight_initializer(m)
+    #         elif isinstance(m, nn.ConvTranspose2d):
+    #             self._weight_initializer(m)
+    #         elif isinstance(m, nn.Linear):
+    #             self._weight_initializer(m)
 
     def forward(self, x):
         encoding = self.encoder(x)
@@ -85,9 +86,9 @@ class MnistCnnAutoencoder(SupervisedModel):
         return [Loss()]
 
 
-def create(img_rows, img_cols, img_channels, num_classes):
+def create(img_rows, img_cols, img_channels, representation_length=32):
     """ Vel factory function """
     def instantiate(**_):
-        return MnistCnnAutoencoder(img_rows, img_cols, img_channels, num_classes)
+        return MnistCnnAutoencoder(img_rows, img_cols, img_channels, representation_length)
 
     return ModelFactory.generic(instantiate)
