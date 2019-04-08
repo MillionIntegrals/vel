@@ -24,8 +24,11 @@ class MnistCnnAutoencoder(SupervisedModel):
     Dense - output (softmax)
     """
 
-    def __init__(self, img_rows, img_cols, img_channels, channels=[16, 32, 32], representation_length=32):
+    def __init__(self, img_rows, img_cols, img_channels, channels=None, representation_length=32):
         super(MnistCnnAutoencoder, self).__init__()
+
+        if channels is None:
+            channels = [16, 32, 32]
 
         layer_series = [
             (3, 1, 1),
@@ -91,9 +94,14 @@ class MnistCnnAutoencoder(SupervisedModel):
         return [Loss()]
 
 
-def create(img_rows, img_cols, img_channels, representation_length=32):
+def create(img_rows, img_cols, img_channels, channels=None, representation_length=32):
     """ Vel factory function """
+    if channels is None:
+        channels = [16, 32, 32]
+
     def instantiate(**_):
-        return MnistCnnAutoencoder(img_rows, img_cols, img_channels, representation_length)
+        return MnistCnnAutoencoder(
+            img_rows, img_cols, img_channels, channels=channels, representation_length=representation_length
+        )
 
     return ModelFactory.generic(instantiate)
