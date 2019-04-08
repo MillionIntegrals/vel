@@ -1,3 +1,5 @@
+import itertools as it
+
 import torch.nn as nn
 import torch.nn.init as init
 import torch.nn.functional as F
@@ -50,9 +52,13 @@ class MnistCnnAutoencoder(SupervisedModel):
             nn.Linear(representation_length, self.final_width * self.final_height * channels[2]),
             nn.ReLU(True),
             Reshape(32, self.final_width, self.final_height),
-            nn.ConvTranspose2d(in_channels=channels[2], out_channels=channels[1], kernel_size=3, stride=2, padding=1, output_padding=1),
+            nn.ConvTranspose2d(
+                in_channels=channels[2], out_channels=channels[1], kernel_size=3, stride=2, padding=1, output_padding=1
+            ),
             nn.ReLU(True),
-            nn.ConvTranspose2d(in_channels=channels[1], out_channels=channels[0], kernel_size=3, stride=2, padding=1, output_padding=1),
+            nn.ConvTranspose2d(
+                in_channels=channels[1], out_channels=channels[0], kernel_size=3, stride=2, padding=1, output_padding=1
+            ),
             nn.ReLU(True),
             nn.ConvTranspose2d(in_channels=channels[0], out_channels=img_channels, kernel_size=3, padding=1),
         )
@@ -63,14 +69,13 @@ class MnistCnnAutoencoder(SupervisedModel):
         init.constant_(tensor.bias, 0.0)
 
     def reset_weights(self):
-        pass
-    #     for m in children:
-    #         if isinstance(m, nn.Conv2d):
-    #             self._weight_initializer(m)
-    #         elif isinstance(m, nn.ConvTranspose2d):
-    #             self._weight_initializer(m)
-    #         elif isinstance(m, nn.Linear):
-    #             self._weight_initializer(m)
+        for m in it.chain(self.encoder, self.decoder):
+            if isinstance(m, nn.Conv2d):
+                self._weight_initializer(m)
+            elif isinstance(m, nn.ConvTranspose2d):
+                self._weight_initializer(m)
+            elif isinstance(m, nn.Linear):
+                self._weight_initializer(m)
 
     def forward(self, x):
         encoding = self.encoder(x)
