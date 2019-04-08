@@ -11,5 +11,4 @@ from .scheduler import SchedulerFactory
 from .source import Source, TrainingData, TextData
 from .storage import Storage
 from .train_phase import TrainPhase, EmptyTrainPhase
-
-from vel.internals.model_config import ModelConfig
+from .model_config import ModelConfig

@@ -1,5 +1,6 @@
 import datetime as dtm
 import os.path
+import typing
 
 from vel.exceptions import VelInitializationException
 from vel.internals.parser import Parser
@@ -58,14 +59,29 @@ class ModelConfig:
         )
 
     @classmethod
-    def from_memory(cls, model_data: dict, run_number: int, project_dir: str,
-                    continue_training=False, seed: int = None, device: str = 'cuda', params=None):
+    def script(cls, model_name: str = 'script', configuration: typing.Optional[dict] = None, run_number: int = 1,
+               continue_training=False, seed: int = None, device: str = 'cuda', params=None):
         """ Create model config from supplied data """
+        if configuration is None:
+            configuration = {}
+
+        configuration['name'] = model_name
+
+        project_config_path = ModelConfig.find_project_directory(os.path.dirname(os.path.abspath(os.getcwd())))
+
+        with open(os.path.join(project_config_path, cls.PROJECT_FILE_NAME), 'r') as fp:
+            project_config_contents = Parser.parse(fp)
+
+        aggregate_dictionary = {
+            **project_config_contents,
+            **configuration
+        }
+
         return ModelConfig(
-            filename="[memory]",
-            configuration=model_data,
+            filename="[script]",
+            configuration=aggregate_dictionary,
             run_number=run_number,
-            project_dir=project_dir,
+            project_dir=project_config_path,
             continue_training=continue_training,
             seed=seed,
             device=device,
