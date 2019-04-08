@@ -6,6 +6,8 @@ from vel.exceptions import VelInitializationException
 from vel.internals.parser import Parser
 from vel.internals.provider import Provider
 
+from .info import TrainingInfo
+
 
 class ModelConfig:
     """
@@ -30,8 +32,12 @@ class ModelConfig:
             else:
                 return ModelConfig.find_project_directory(up_path)
 
+    @staticmethod
+    def from_project_directory(path) -> str:
+        return os.path.join(ModelConfig.find_project_directory('.'), path)
+
     @classmethod
-    def from_file(cls, filename: str, run_number: int, continue_training: bool = False, seed: int = None,
+    def from_file(cls, filename: str, run_number: int = 1, continue_training: bool = False, seed: int = None,
                   device: str = 'cuda', params=None):
         """ Create model config from file """
         with open(filename, 'r') as fp:
@@ -209,3 +215,26 @@ class ModelConfig:
     # Small UI utils
     def __repr__(self):
         return f"<ModelConfig at {self.filename}>"
+
+    ####################################################################################################################
+    # CONVENIENCE METHODS FOR SCRIPTS
+    def load_trained_model(self):
+        """ Load a latest trained model from storage """
+        model = self.provide("model").instantiate()
+        storage = self.provide("storage")
+
+        last_epoch_idx = storage.last_epoch_idx()
+
+        if last_epoch_idx == 0:
+            raise VelInitializationException("No trained model available")
+
+        training_info = TrainingInfo(
+            start_epoch_idx=last_epoch_idx,
+            run_name=self.run_name,
+        )
+
+        model_state, hidden_state = storage.load(training_info)
+
+        model.load_state_dict(model_state)
+
+        return model
