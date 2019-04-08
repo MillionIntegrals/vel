@@ -20,7 +20,7 @@ def create(model_config, batch_size, normalize=True, num_workers=0, augmentation
     augmentations = [ToArray()] + (augmentations if augmentations is not None else [])
     
     if normalize:
-        train_data = train_dataset.train_data
+        train_data = train_dataset.data
         mean_value = (train_data / 255).mean(axis=(0, 1, 2))
         std_value = (train_data / 255).std(axis=(0, 1, 2))
 

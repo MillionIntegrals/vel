@@ -18,7 +18,7 @@ def create(model_config, batch_size, normalize=True, num_workers=0, augmentation
     augmentations = [ToArray()] + (augmentations if augmentations is not None else [])
 
     if normalize:
-        train_data = train_dataset.train_data
+        train_data = train_dataset.data
         mean_value = (train_data.double() / 255).mean().item()
         std_value = (train_data.double() / 255).std().item()
 
