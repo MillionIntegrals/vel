@@ -21,5 +21,13 @@ docker-shell-cuda:
 count-lines:
 	cloc --exclude-dir=build,data,dist,local-scripts,vel.egg-info,output .
 
+publish:
+	rm -rf ./dist/
+	python setup.py sdist
+	twine upload dist/*
+
+serve-visdom:
+	python -m visdom.server
+
 test:
 	pytest .
