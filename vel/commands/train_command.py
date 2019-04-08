@@ -49,7 +49,7 @@ class SimpleTrainCommand:
             epoch_info = api.EpochInfo(
                 training_info=training_info,
                 global_epoch_idx=global_epoch_idx,
-                batches_per_epoch=self.source.train_iterations_per_epoch(),
+                batches_per_epoch=self.source.train_iterations_per_epoch,
                 optimizer=optimizer
             )
 

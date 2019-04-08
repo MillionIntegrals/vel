@@ -60,9 +60,9 @@ class Learner:
         self.train()
 
         if interactive:
-            iterator = tqdm.tqdm(source.train_loader(), desc="Training", unit="iter", file=sys.stdout)
+            iterator = tqdm.tqdm(source.train_loader, desc="Training", unit="iter", file=sys.stdout)
         else:
-            iterator = source.train_loader()
+            iterator = source.train_loader
 
         for batch_idx, (data, target) in enumerate(iterator):
             batch_info = BatchInfo(epoch_info, batch_idx)
@@ -77,7 +77,7 @@ class Learner:
         """ Run a single evaluation epoch """
         self.eval()
 
-        iterator = tqdm.tqdm(source.val_loader(), desc="Validation", unit="iter", file=sys.stdout)
+        iterator = tqdm.tqdm(source.val_loader, desc="Validation", unit="iter", file=sys.stdout)
 
         with torch.no_grad():
             for batch_idx, (data, target) in enumerate(iterator):

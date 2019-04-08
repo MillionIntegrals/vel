@@ -8,26 +8,32 @@ class Source:
     def __init__(self):
         pass
 
+    @property
     def train_loader(self):
         """ PyTorch loader of training data """
         raise NotImplementedError
 
+    @property
     def val_loader(self):
         """ PyTorch loader of validation data """
         raise NotImplementedError
 
+    @property
     def train_dataset(self):
         """ Return the training dataset """
         raise NotImplementedError
 
+    @property
     def val_dataset(self):
         """ Return the validation dataset """
         raise NotImplementedError
 
+    @property
     def train_iterations_per_epoch(self):
         """ Return number of iterations per epoch """
         raise NotImplementedError
 
+    @property
     def val_iterations_per_epoch(self):
         """ Return number of iterations per epoch - validation """
         raise NotImplementedError
@@ -45,26 +51,32 @@ class SupervisedTextData(Source):
         self.data_field = data_field
         self.target_field = target_field
 
+    @property
     def train_loader(self):
         """ PyTorch loader of training data """
         return self.train_iterator
 
+    @property
     def val_loader(self):
         """ PyTorch loader of validation data """
         return self.val_iterator
 
+    @property
     def train_dataset(self):
         """ Return the training dataset """
         return self.train_source
 
+    @property
     def val_dataset(self):
         """ Return the validation dataset """
         return self.val_source
 
+    @property
     def train_iterations_per_epoch(self):
         """ Return number of iterations per epoch """
         return len(self.train_iterator)
 
+    @property
     def val_iterations_per_epoch(self):
         """ Return number of iterations per epoch - validation """
         return len(self.val_iterator)
@@ -96,26 +108,32 @@ class SupervisedTrainingData(Source):
             self.val_ds, batch_size=batch_size, shuffle=False, num_workers=num_workers
         )
 
+    @property
     def train_loader(self):
         """ PyTorch loader of training data """
         return self._train_loader
 
+    @property
     def val_loader(self):
         """ PyTorch loader of validation data """
         return self._val_loader
 
+    @property
     def train_dataset(self):
         """ Return the training dataset """
         return self.train_ds
 
+    @property
     def val_dataset(self):
         """ Return the validation dataset """
         return self.val_ds
 
+    @property
     def train_iterations_per_epoch(self):
         """ Return number of iterations per epoch """
         return len(self._train_loader)
 
+    @property
     def val_iterations_per_epoch(self):
         """ Return number of iterations per epoch - validation """
         return len(self._val_loader)

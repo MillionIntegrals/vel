@@ -13,7 +13,7 @@ class AugmentationVisualizationCommand:
 
     def run(self):
         """ Run the visualization """
-        dataset = self.source.train_dataset()
+        dataset = self.source.train_dataset
         num_samples = len(dataset)
 
         fig, ax = plt.subplots(self.cases, self.samples+1)

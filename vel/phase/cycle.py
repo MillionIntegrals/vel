@@ -137,7 +137,7 @@ class CyclePhase(TrainPhase):
             training_info=training_info,
             global_epoch_idx=global_idx,
             local_epoch_idx=local_idx,
-            batches_per_epoch=self._source.train_iterations_per_epoch(),
+            batches_per_epoch=self._source.train_iterations_per_epoch,
             optimizer=self._optimizer_instance,
             # Add special callback for this epoch
             callbacks=[self.special_callback] + training_info.callbacks
