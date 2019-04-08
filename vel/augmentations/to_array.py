@@ -4,7 +4,7 @@ import vel.api.data as data
 
 
 class ToArray(data.Augmentation):
-    """ Convert imate to an array of floats """
+    """ Convert image to an array of floats """
     def __init__(self, mode='x', tags=None):
         super().__init__(mode, tags)
 
