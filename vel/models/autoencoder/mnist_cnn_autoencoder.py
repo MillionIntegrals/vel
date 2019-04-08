@@ -54,7 +54,7 @@ class MnistCnnAutoencoder(SupervisedModel):
         self.decoder = nn.Sequential(
             nn.Linear(representation_length, self.final_width * self.final_height * channels[2]),
             nn.ReLU(True),
-            Reshape(32, self.final_width, self.final_height),
+            Reshape(channels[2], self.final_width, self.final_height),
             nn.ConvTranspose2d(
                 in_channels=channels[2], out_channels=channels[1], kernel_size=3, stride=2, padding=1, output_padding=1
             ),
