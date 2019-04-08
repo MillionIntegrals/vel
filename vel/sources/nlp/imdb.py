@@ -7,7 +7,7 @@ import torchtext.datasets.imdb as imdb
 import torchtext.data as data
 
 
-from vel.api import TextData
+from vel.api import SupervisedTextData
 
 
 class IMDBCached(imdb.IMDB):
@@ -68,6 +68,6 @@ def create(model_config, batch_size, vectors=None):
         shuffle=True
     )
 
-    return TextData(
+    return SupervisedTextData(
         train_source, test_source, train_iterator, test_iterator, text_field, label_field
     )

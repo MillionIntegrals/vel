@@ -1,5 +1,7 @@
 import torch.utils.data as data
 
+from .data import DataFlow
+
 
 class Source:
     """ Source of data for supervised learning algorithms """
@@ -31,7 +33,7 @@ class Source:
         raise NotImplementedError
 
 
-class TextData(Source):
+class SupervisedTextData(Source):
     """ An NLP torchtext data source """
     def __init__(self, train_source, val_source, train_iterator, val_iterator, data_field, target_field):
         super().__init__()
@@ -68,10 +70,9 @@ class TextData(Source):
         return len(self.val_iterator)
 
 
-class TrainingData(Source):
+class SupervisedTrainingData(Source):
     """ Most common source of data combining a basic datasource and sampler """
     def __init__(self, train_source, val_source, num_workers, batch_size, augmentations=None):
-        import vel.api.data as vel_data
 
         super().__init__()
 
@@ -84,8 +85,8 @@ class TrainingData(Source):
         self.augmentations = augmentations
 
         # Derived values
-        self.train_ds = vel_data.DataFlow(self.train_source, augmentations, tag='train')
-        self.val_ds = vel_data.DataFlow(self.val_source, augmentations, tag='val')
+        self.train_ds = DataFlow(self.train_source, augmentations, tag='train')
+        self.val_ds = DataFlow(self.val_source, augmentations, tag='val')
 
         self._train_loader = data.DataLoader(
             self.train_ds, batch_size=batch_size, shuffle=True, num_workers=num_workers
