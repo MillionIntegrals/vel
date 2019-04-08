@@ -40,7 +40,7 @@ class Model(nn.Module):
         if input_size is None:
             print(self)
             print("-" * 120)
-            number = sum(p.numel() for p in self.model.parameters())
+            number = sum(p.numel() for p in self.parameters())
             print("Number of model parameters: {:,}".format(number))
             print("-" * 120)
         else:
