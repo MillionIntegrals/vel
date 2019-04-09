@@ -4,13 +4,13 @@ import torch
 import torch.nn.functional as F
 import torch.nn as nn
 
-from vel.api import SupervisedModel, ModelFactory, LinearBackboneModel
+from vel.api import LossFunctionModel, ModelFactory, LinearBackboneModel
 from vel.metrics.accuracy import Accuracy
 from vel.metrics.loss_metric import Loss
 from vel.modules.rnn_layer import RnnLayer
 
 
-class MultilayerRnnSequenceClassification(SupervisedModel):
+class MultilayerRnnSequenceClassification(LossFunctionModel):
     """ Multilayer GRU network for sequence modeling (n:1) """
 
     def __init__(self, input_block: LinearBackboneModel, rnn_type: str, output_dim: int,

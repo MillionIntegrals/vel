@@ -13,7 +13,7 @@ class Model(nn.Module):
 
     def metrics(self) -> list:
         """ Set of metrics for this model """
-        return [Loss()]
+        return []
 
     def train(self, mode=True):
         r"""
@@ -75,6 +75,54 @@ class Model(nn.Module):
         return False
 
 
+class SupervisedModel(Model):
+    """ Model for a supervised learning problem """
+
+    def calculate_gradient(self, x_data, y_true):
+        raise NotImplementedError
+
+
+class LossFunctionModel(SupervisedModel):
+    """ Model for a supervised learning with a simple loss function """
+
+    def metrics(self) -> list:
+        """ Set of metrics for this model """
+        return [Loss()]
+
+    def calculate_gradient(self, x_data, y_true):
+        y_pred = self(x_data)
+        loss_value = self.loss_value(x_data, y_true, y_pred)
+
+        if self.training:
+            loss_value.backward()
+
+        return {
+            'loss': loss_value.item(),
+            'data': x_data,
+            'target': y_true,
+            'output': y_pred
+        }
+
+    def loss_value(self, x_data, y_true, y_pred):
+        """ Calculate a value of loss function """
+        raise NotImplementedError
+
+
+class BackboneModel(Model):
+    """ Model that serves as a backbone network to connect your heads to """
+
+
+class LinearBackboneModel(BackboneModel):
+    """
+    Model that serves as a backbone network to connect your heads to - one that spits out a single-dimension output
+    """
+
+    @property
+    def output_dim(self) -> int:
+        """ Final dimension of model output """
+        raise NotImplementedError
+
+
 class RnnModel(Model):
     """ Class representing recurrent model """
 
@@ -91,10 +139,6 @@ class RnnModel(Model):
     def zero_state(self, batch_size):
         """ Initial state of the network """
         return torch.zeros(batch_size, self.state_dim)
-
-
-class BackboneModel(Model):
-    """ Model that serves as a backbone network to connect your heads to """
 
 
 class RnnLinearBackboneModel(BackboneModel):
@@ -121,29 +165,6 @@ class RnnLinearBackboneModel(BackboneModel):
     def zero_state(self, batch_size):
         """ Initial state of the network """
         return torch.zeros(batch_size, self.state_dim, dtype=torch.float32)
-
-
-class LinearBackboneModel(BackboneModel):
-    """
-    Model that serves as a backbone network to connect your heads to - one that spits out a single-dimension output
-    """
-
-    @property
-    def output_dim(self) -> int:
-        """ Final dimension of model output """
-        raise NotImplementedError
-
-
-class SupervisedModel(Model):
-    """ Model for a supervised learning problem """
-    def loss(self, x_data, y_true):
-        """ Forward propagate network and return a value of loss function """
-        y_pred = self(x_data)
-        return y_pred, self.loss_value(x_data, y_true, y_pred)
-
-    def loss_value(self, x_data, y_true, y_pred):
-        """ Calculate a value of loss function """
-        raise NotImplementedError
 
 
 class RnnSupervisedModel(RnnModel):

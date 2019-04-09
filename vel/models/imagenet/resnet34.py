@@ -5,14 +5,14 @@ import torch.nn.functional as F
 import vel.modules.layers as l
 import vel.util.module_util as mu
 
-from vel.api import SupervisedModel, ModelFactory
+from vel.api import LossFunctionModel, ModelFactory
 
 
 # Because of concat pooling it's 2x 512
 NET_OUTPUT = 1024
 
 
-class Resnet34(SupervisedModel):
+class Resnet34(LossFunctionModel):
     """ Resnet34 network model """
 
     def __init__(self, fc_layers=None, dropout=None, pretrained=True):

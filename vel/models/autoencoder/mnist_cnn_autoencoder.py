@@ -6,12 +6,12 @@ import torch.nn.functional as F
 
 import vel.util.network as net_util
 
-from vel.api import SupervisedModel, ModelFactory
+from vel.api import LossFunctionModel, ModelFactory
 from vel.metrics.loss_metric import Loss
 from vel.modules.layers import Flatten, Reshape
 
 
-class MnistCnnAutoencoder(SupervisedModel):
+class MnistCnnAutoencoder(LossFunctionModel):
     """
     A simple MNIST autoencoder, containing 3 convolutional layers.
     """
@@ -76,6 +76,12 @@ class MnistCnnAutoencoder(SupervisedModel):
         encoding = self.encoder(x)
         decoded = self.decoder(encoding)
         return decoded
+
+    def encode(self, sample):
+        return self.encoder(sample)
+
+    def decode(self, sample):
+        return self.decoder(sample)
 
     def loss_value(self, x_data, y_true, y_pred):
         """ Calculate a value of loss function """

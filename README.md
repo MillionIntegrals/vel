@@ -118,6 +118,10 @@ that are ready to run and easy to modify for other similar usecases:
     - Distributional Q-Learning
     - Noisy Networks for Exploration
     - Rainbow (combination of the above)
+    
+# Implemented models - Unsupervised learning
+
+- Autoencoders and Variational autoencoders with an examples on MNIST dataset.
 
 
 # Examples

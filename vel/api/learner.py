@@ -3,12 +3,13 @@ import torch
 import tqdm
 import typing
 
+from .model import SupervisedModel
 from .info import BatchInfo, EpochInfo, TrainingInfo
 
 
 class Learner:
     """ Manages training process of a single model """
-    def __init__(self, device: torch.device, model, max_grad_norm: typing.Optional[float]=None):
+    def __init__(self, device: torch.device, model: SupervisedModel, max_grad_norm: typing.Optional[float]=None):
         self.device = device
         self.model = model.to(device)
         self.max_grad_norm = max_grad_norm
@@ -90,21 +91,14 @@ class Learner:
     def feed_batch(self, batch_info, data, target):
         """ Run single batch of data """
         data, target = data.to(self.device), target.to(self.device)
-        output, loss = self.model.loss(data, target)
+        metrics = self.model.calculate_gradient(data, target)
 
-        # Store extra batch information for calculation of the statistics
-        batch_info['data'] = data
-        batch_info['target'] = target
-        batch_info['output'] = output
-        batch_info['loss'] = loss
-
-        return loss
+        batch_info.update(metrics)
 
     def train_batch(self, batch_info, data, target):
         """ Train single batch of data """
         batch_info.optimizer.zero_grad()
-        loss = self.feed_batch(batch_info, data, target)
-        loss.backward()
+        self.feed_batch(batch_info, data, target)
 
         if self.max_grad_norm is not None:
             batch_info['grad_norm'] = torch.nn.utils.clip_grad_norm_(

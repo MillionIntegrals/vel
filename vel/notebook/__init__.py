@@ -1,2 +1,2 @@
-from .loader import load
+from .loader import load_config
 from .defaults import reasonable_notbook_defaults

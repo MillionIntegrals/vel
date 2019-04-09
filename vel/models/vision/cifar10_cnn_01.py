@@ -8,12 +8,12 @@ import torch.nn as nn
 import torch.nn.init as init
 import torch.nn.functional as F
 
-from vel.api import SupervisedModel, ModelFactory
+from vel.api import LossFunctionModel, ModelFactory
 from vel.metrics.loss_metric import Loss
 from vel.metrics.accuracy import Accuracy
 
 
-class Net(SupervisedModel):
+class Net(LossFunctionModel):
     """
     A simple MNIST classification model.
 

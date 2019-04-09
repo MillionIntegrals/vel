@@ -8,4 +8,4 @@ class Loss(AveragingMetric):
 
     def _value_function(self, batch_info):
         """ Just forward a value of the loss"""
-        return batch_info['loss'].item()
+        return batch_info['loss']

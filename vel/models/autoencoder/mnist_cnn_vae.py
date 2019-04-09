@@ -1,5 +1,6 @@
 import itertools as it
 
+import torch
 import torch.nn as nn
 import torch.nn.init as init
 import torch.nn.functional as F
@@ -7,17 +8,18 @@ import torch.nn.functional as F
 import vel.util.network as net_util
 
 from vel.api import SupervisedModel, ModelFactory
+from vel.api.metrics import AveragingNamedMetric
 from vel.metrics.loss_metric import Loss
 from vel.modules.layers import Flatten, Reshape
 
 
-class MnistCnnAutoencoder(SupervisedModel):
+class MnistCnnVAE(SupervisedModel):
     """
     A simple MNIST variational autoencoder, containing 3 convolutional layers.
     """
 
     def __init__(self, img_rows, img_cols, img_channels, channels=None, representation_length=32):
-        super(MnistCnnAutoencoder, self).__init__()
+        super(MnistCnnVAE, self).__init__()
 
         assert representation_length % 2 == 0, "Representation length must be even"
 
@@ -31,6 +33,7 @@ class MnistCnnAutoencoder(SupervisedModel):
         ]
 
         self.representation_length = representation_length
+
         self.final_width = net_util.convolutional_layer_series(img_rows, layer_series)
         self.final_height = net_util.convolutional_layer_series(img_cols, layer_series)
         self.channels = channels
@@ -42,7 +45,7 @@ class MnistCnnAutoencoder(SupervisedModel):
             nn.ReLU(True),
             nn.Conv2d(in_channels=channels[1], out_channels=channels[2], kernel_size=(3, 3), stride=2, padding=1),
             Flatten(),
-            nn.Linear(self.final_width * self.final_height * channels[2], representation_length)
+            nn.Linear(self.final_width * self.final_height * channels[2], representation_length * 2)
         )
 
         self.decoder = nn.Sequential(
@@ -58,6 +61,7 @@ class MnistCnnAutoencoder(SupervisedModel):
             ),
             nn.ReLU(True),
             nn.ConvTranspose2d(in_channels=channels[0], out_channels=img_channels, kernel_size=3, padding=1),
+            nn.Sigmoid()
         )
 
     @staticmethod
@@ -74,22 +78,71 @@ class MnistCnnAutoencoder(SupervisedModel):
             elif isinstance(m, nn.Linear):
                 self._weight_initializer(m)
 
-    def forward(self, x):
-        encoding = self.encoder(x)
-        decoded = self.decoder(encoding)
+    def encode(self, sample):
+        encoding = self.encoder(sample)
+
+        mu = encoding[:, :self.representation_length]
+        # I encode std directly as a softplus, rather than exp(logstd)
+        std = F.softplus(encoding[:, self.representation_length:])
+
+        return mu + torch.randn_like(std) * std
+
+    def decode(self, sample):
+        return self.decoder(sample)
+
+    def forward(self, sample):
+        encoding = self.encoder(sample)
+
+        mu = encoding[:, :self.representation_length]
+        # I encode std directly as a softplus, rather than exp(logstd)
+        std = F.softplus(encoding[:, self.representation_length:])
+
+        z = mu + torch.randn_like(std) * std
+
+        decoded = self.decoder(z)
 
         return {
-            'result': decoded,
-            'encoding': encoding
+            'decoded': decoded,
+            'encoding': z,
+            'mu': mu,
+            'std': std
         }
 
-    def loss_value(self, x_data, y_true, y_pred):
+    def calculate_gradient(self, x_data, y_true):
         """ Calculate a value of loss function """
-        return F.mse_loss(y_pred, y_true)
+        output = self(x_data)
+
+        y_pred = output['decoded']
+
+        mu = output['mu']
+        std = output['std']
+        var = std ** 2
+
+        kl_divergence = - 0.5 * (1 + torch.log(var) - mu ** 2 - var).sum(dim=1)
+        kl_divergence = kl_divergence.mean()
+
+        # reconstruction = 0.5 * F.mse_loss(y_pred, y_true)
+
+        # We must sum over all image axis and average only on minibatch axis
+        reconstruction = F.binary_cross_entropy(y_pred, y_true, reduce=False).sum(1).sum(1).sum(1).mean()
+        loss = reconstruction + kl_divergence
+
+        if self.training:
+            loss.backward()
+
+        return {
+            'loss': loss.item(),
+            'reconstruction': reconstruction.item(),
+            'kl_divergence': kl_divergence.item()
+        }
 
     def metrics(self):
         """ Set of metrics for this model """
-        return [Loss()]
+        return [
+            Loss(),
+            AveragingNamedMetric('reconstruction'),
+            AveragingNamedMetric('kl_divergence')
+        ]
 
 
 def create(img_rows, img_cols, img_channels, channels=None, representation_length=32):
@@ -98,7 +151,7 @@ def create(img_rows, img_cols, img_channels, channels=None, representation_lengt
         channels = [16, 32, 32]
 
     def instantiate(**_):
-        return MnistCnnAutoencoder(
+        return MnistCnnVAE(
             img_rows, img_cols, img_channels, channels=channels, representation_length=representation_length
         )
 

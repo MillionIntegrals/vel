@@ -20,7 +20,7 @@ source:
 
 optimizer:
   name: vel.optimizers.adam
-  lr: 1.0e-3
+  lr: 1.0e-4
 
 
 commands:

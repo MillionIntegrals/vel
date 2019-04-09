@@ -6,14 +6,15 @@ https://github.com/fastai/fastai/blob/master/fastai/models/cifar10/resnext.py
 import torch.nn as nn
 import torch.nn.functional as F
 
-from vel.api import SupervisedModel, ModelFactory
+from vel.api import LossFunctionModel, ModelFactory
 from vel.modules.resnext import ResNeXtBottleneck
 
 
-class ResNeXt(SupervisedModel):
+class ResNeXt(LossFunctionModel):
     """ A ResNext model as defined in the literature """
 
-    def __init__(self, block, layers, inplanes, image_features, cardinality=4, divisor=4, img_channels=3, num_classes=1000):
+    def __init__(self, block, layers, inplanes, image_features, cardinality=4, divisor=4, img_channels=3,
+                 num_classes=1000):
         super().__init__()
 
         self.num_classess = num_classes
@@ -76,14 +77,6 @@ class ResNeXt(SupervisedModel):
         from vel.metrics.loss_metric import Loss
         from vel.metrics.accuracy import Accuracy
         return [Loss(), Accuracy()]
-
-    def summary(self):
-        """ Print model summary """
-        # import torchsummary
-
-        print(self)
-        # self.eval()
-        # torchsummary.summary(self, input_size=(3, 32, 32))
 
 
 def create(blocks, mode='basic', inplanes=64, cardinality=4, image_features=64, divisor=4, num_classes=1000):

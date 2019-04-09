@@ -2,7 +2,8 @@ from .callback import Callback
 from .info import BatchInfo, EpochInfo, TrainingInfo
 from .learner import Learner
 from .model import (
-    Model, BackboneModel, LinearBackboneModel, SupervisedModel, RnnLinearBackboneModel, RnnModel, RnnSupervisedModel
+    Model, SupervisedModel, LossFunctionModel,
+    BackboneModel, LinearBackboneModel, RnnLinearBackboneModel, RnnModel, RnnSupervisedModel
 )
 from .model_factory import ModelFactory
 from .optimizer import OptimizerFactory
