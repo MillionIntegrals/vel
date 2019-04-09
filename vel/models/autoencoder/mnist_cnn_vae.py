@@ -13,11 +13,13 @@ from vel.modules.layers import Flatten, Reshape
 
 class MnistCnnAutoencoder(SupervisedModel):
     """
-    A simple MNIST autoencoder, containing 3 convolutional layers.
+    A simple MNIST variational autoencoder, containing 3 convolutional layers.
     """
 
     def __init__(self, img_rows, img_cols, img_channels, channels=None, representation_length=32):
         super(MnistCnnAutoencoder, self).__init__()
+
+        assert representation_length % 2 == 0, "Representation length must be even"
 
         if channels is None:
             channels = [16, 32, 32]
@@ -75,7 +77,11 @@ class MnistCnnAutoencoder(SupervisedModel):
     def forward(self, x):
         encoding = self.encoder(x)
         decoded = self.decoder(encoding)
-        return decoded
+
+        return {
+            'result': decoded,
+            'encoding': encoding
+        }
 
     def loss_value(self, x_data, y_true, y_pred):
         """ Calculate a value of loss function """
