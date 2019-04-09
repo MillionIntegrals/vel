@@ -1,4 +1,4 @@
-# Vel 0.3
+# Vel 0.4
 
 [![Build Status](https://travis-ci.org/MillionIntegrals/vel.svg?branch=master)](https://travis-ci.org/MillionIntegrals/vel)
 [![PyPI version](https://badge.fury.io/py/vel.svg)](https://badge.fury.io/py/vel)
@@ -121,7 +121,7 @@ that are ready to run and easy to modify for other similar usecases:
     
 # Implemented models - Unsupervised learning
 
-- Autoencoders and Variational autoencoders with an examples on MNIST dataset.
+- Autoencoders and Variational autoencoders with examples on MNIST dataset.
 
 
 # Examples
