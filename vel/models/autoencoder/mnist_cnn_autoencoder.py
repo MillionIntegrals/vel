@@ -56,6 +56,7 @@ class MnistCnnAutoencoder(LossFunctionModel):
             ),
             nn.ReLU(True),
             nn.ConvTranspose2d(in_channels=channels[0], out_channels=img_channels, kernel_size=3, padding=1),
+            nn.Sigmoid()
         )
 
     @staticmethod
@@ -85,7 +86,8 @@ class MnistCnnAutoencoder(LossFunctionModel):
 
     def loss_value(self, x_data, y_true, y_pred):
         """ Calculate a value of loss function """
-        return F.mse_loss(y_pred, y_true)
+        # return F.mse_loss(y_pred, y_true)
+        return F.binary_cross_entropy(y_pred, y_true)
 
     def metrics(self):
         """ Set of metrics for this model """

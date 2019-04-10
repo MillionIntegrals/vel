@@ -13,8 +13,8 @@ model:
 source:
   name: vel.sources.vision.mnist
   batch_size: 128
-  normalize: False
   num_workers: 4
+  normalize: False
   unsupervised: true
 
 
