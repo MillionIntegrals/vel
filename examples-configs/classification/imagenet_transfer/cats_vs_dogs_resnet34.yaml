@@ -10,7 +10,8 @@ model:
 
 source:
   name: vel.sources.img_dir_source
-  # Dataset downloaded from http://files.fast.ai/data/dogscats.zip
+  url: http://files.fast.ai/data/dogscats.zip
+  extract_parent: true
   path: data/dogscats
   num_workers: 8
   batch_size: 64
