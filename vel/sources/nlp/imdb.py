@@ -45,9 +45,9 @@ class IMDBCached(imdb.IMDB):
         data.Dataset.__init__(self, examples, fields, **kwargs)
 
 
-def create(model_config, batch_size, vectors=None):
+def create(model_config, batch_size, data_dir='imdb', vectors=None):
     """ Create an IMDB dataset """
-    path = model_config.data_dir('imdb')
+    path = model_config.data_dir(data_dir)
 
     text_field = data.Field(lower=True, tokenize='spacy', batch_first=True)
     label_field = data.LabelField(is_target=True)
