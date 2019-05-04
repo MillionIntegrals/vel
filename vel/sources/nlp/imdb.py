@@ -3,14 +3,14 @@ import glob
 import io
 import pickle
 
-import torchtext.datasets.imdb as imdb
 import torchtext.data as data
+import torchtext.datasets as ds
 
 
 from vel.api import SupervisedTextData
 
 
-class IMDBCached(imdb.IMDB):
+class IMDBCached(ds.IMDB):
     """ Cached version of the IMDB dataset (to save time on tokenization) """
 
     def __init__(self, path, text_field, label_field, **kwargs):
