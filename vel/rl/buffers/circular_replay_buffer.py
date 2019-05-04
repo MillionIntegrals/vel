@@ -35,7 +35,7 @@ class CircularReplayBuffer(ReplayBuffer):
 
     def initial_memory_size_hint(self) -> typing.Optional[int]:
         """ Hint how much data is needed to begin sampling, required only for diagnostics """
-        return self.buffer_initial_size
+        return self.buffer_initial_size * self.backend.num_envs
 
     def _get_transitions(self, indexes):
         """ Return batch with given indexes """
