@@ -16,7 +16,7 @@ This repository is still in an early stage of that journey but it will grow as I
 
 setup(
     name='vel',
-    version='0.3.0',
+    version='0.4.0',
     description="Velocity in deep-learning research",
     long_description=long_description,
     url='https://github.com/MillionIntegrals/vel',
@@ -34,7 +34,7 @@ setup(
         'pandas',
         'pyyaml',
         'scikit-learn',
-        'torch ~= 1.0',
+        'torch ~= 1.1',
         'torchtext',
         'torchvision',
         'tqdm'
@@ -44,7 +44,7 @@ setup(
         'mongo': ['pymongo', 'dnspython'],
         'gym': ['gym[atari,box2d,classic_control]'],
         'mujoco': ['gym[mujoco,robotics]'],
-        'dev': ['pytest', 'ipython', 'jupyter'],
+        'dev': ['pytest', 'ipython', 'jupyter', 'pip-tools'],
         'text': ['spacy'],
         'all': ['visdom', 'pymongo', 'dnspython', 'gym[all]', 'pytest', 'spacy', 'ipython', 'jupyter']
     },

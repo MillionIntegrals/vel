@@ -31,3 +31,6 @@ serve-visdom:
 
 test:
 	pytest .
+
+requirements.txt:
+    pip-compile requirements.in
