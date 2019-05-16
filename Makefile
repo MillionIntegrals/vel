@@ -33,4 +33,4 @@ test:
 	pytest .
 
 requirements.txt:
-    pip-compile requirements.in
+	pip-compile requirements.in
