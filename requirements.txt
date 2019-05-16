@@ -10,7 +10,7 @@ attrs==19.1.0
 box2d-py==2.3.8           # via gym
 certifi==2019.3.9         # via requests
 chardet==3.0.4            # via requests
-cloudpickle==0.8.0
+cloudpickle==0.8.1
 cycler==0.10.0            # via matplotlib
 dnspython==1.16.0
 future==0.17.1            # via pyglet
