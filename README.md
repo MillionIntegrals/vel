@@ -320,6 +320,22 @@ Code quality:
 - Use linter as a part of the build process
 
 
+# Citing
+
+If you use `vel` in your research, you can cite it as follows:
+
+```
+@misc{tworek2018vel,
+  author = {Jerry Tworek},
+  title = {vel},
+  year = {2018},
+  publisher = {GitHub},
+  journal = {GitHub repository},
+  howpublished = {\url{https://github.com/MillionIntegrals/vel}},
+}
+```
+
+
 # Alternatives, similar projects
 
 - https://github.com/NervanaSystems/coach
