@@ -101,7 +101,7 @@ class StochasticPolicyRnnModel(RlRnnModel):
         return {
             'actions': actions,
             'values': value_output,
-            'logprobs': logprobs,
+            'action:logprobs': logprobs,
             'state': new_state
         }
 
