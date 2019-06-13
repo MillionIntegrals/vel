@@ -109,7 +109,7 @@ class MnistCnnVAE(SupervisedModel):
         }
 
     def calculate_gradient(self, x_data, y_true):
-        """ Calculate a value of loss function """
+        """ Calculate a gradient of loss function """
         output = self(x_data)
 
         y_pred = output['decoded']
