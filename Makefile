@@ -1,3 +1,7 @@
+.PHONY: default test requpgrade
+
+default: test;
+
 tag := $(shell git symbolic-ref -q --short HEAD)
 
 docker-build:
@@ -34,3 +38,6 @@ test:
 
 requirements.txt:
 	pip-compile requirements.in
+
+requpgrade:
+    pip-compile --upgrade
