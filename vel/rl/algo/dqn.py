@@ -3,15 +3,15 @@ import torch.nn.functional as F
 import torch.nn.utils
 
 from vel.api import ModelFactory
-from vel.api.metrics.averaging_metric import AveragingNamedMetric
+from vel.metric.averaging_metric import AveragingNamedMetric
 from vel.rl.api import OptimizerAlgoBase
 
 
 class DeepQLearning(OptimizerAlgoBase):
     """ Deep Q-Learning algorithm """
 
-    def __init__(self, model_factory: ModelFactory, discount_factor: float, double_dqn: bool, target_update_frequency: int,
-                 max_grad_norm: float):
+    def __init__(self, model_factory: ModelFactory, discount_factor: float, double_dqn: bool,
+                 target_update_frequency: int, max_grad_norm: float):
         super().__init__(max_grad_norm)
 
         self.model_factory = model_factory
@@ -91,7 +91,7 @@ class DeepQLearning(OptimizerAlgoBase):
 
 
 def create(model: ModelFactory, discount_factor: float, target_update_frequency: int,
-           max_grad_norm: float, double_dqn: bool=False):
+           max_grad_norm: float, double_dqn: bool = False):
     """ Vel factory function """
     return DeepQLearning(
         model_factory=model,

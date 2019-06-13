@@ -5,17 +5,17 @@ import torch.nn.functional as F
 import torch.nn as nn
 
 from vel.api import LossFunctionModel, ModelFactory, LinearBackboneModel
-from vel.metrics.accuracy import Accuracy
-from vel.metrics.loss_metric import Loss
-from vel.modules.rnn_layer import RnnLayer
+from vel.metric.accuracy import Accuracy
+from vel.metric.loss_metric import Loss
+from vel.module.rnn_layer import RnnLayer
 
 
 class MultilayerRnnSequenceClassification(LossFunctionModel):
     """ Multilayer GRU network for sequence modeling (n:1) """
 
     def __init__(self, input_block: LinearBackboneModel, rnn_type: str, output_dim: int,
-                 rnn_layers: typing.List[int], rnn_dropout: float=0.0, bidirectional: bool=False,
-                 linear_layers: typing.List[int]=None, linear_dropout: float=0.0):
+                 rnn_layers: typing.List[int], rnn_dropout: float = 0.0, bidirectional: bool = False,
+                 linear_layers: typing.List[int] = None, linear_dropout: float = 0.0):
         super().__init__()
 
         self.output_dim = output_dim
@@ -144,8 +144,8 @@ class MultilayerRnnSequenceClassification(LossFunctionModel):
 
 
 def create(input_block: ModelFactory, rnn_type: str, output_dim: int,
-           rnn_layers: typing.List[int], rnn_dropout: float=0.0, bidirectional: bool=False,
-           linear_layers: typing.List[int]=None, linear_dropout: float=0.0):
+           rnn_layers: typing.List[int], rnn_dropout: float = 0.0, bidirectional: bool = False,
+           linear_layers: typing.List[int] = None, linear_dropout: float = 0.0):
     """ Vel factory function """
     if linear_layers is None:
         linear_layers = []

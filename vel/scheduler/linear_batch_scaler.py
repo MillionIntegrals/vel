@@ -32,5 +32,3 @@ class LinearBatchScalerFactory(base.SchedulerFactory):
 def create():
     """ Vel factory function """
     return LinearBatchScalerFactory()
-
-

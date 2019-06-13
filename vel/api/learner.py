@@ -1,15 +1,17 @@
 import sys
 import torch
+import torch.nn
 import tqdm
 import typing
 
 from .model import SupervisedModel
 from .info import BatchInfo, EpochInfo, TrainingInfo
+from .source import Source
 
 
 class Learner:
     """ Manages training process of a single model """
-    def __init__(self, device: torch.device, model: SupervisedModel, max_grad_norm: typing.Optional[float]=None):
+    def __init__(self, device: torch.device, model: SupervisedModel, max_grad_norm: typing.Optional[float] = None):
         self.device = device
         self.model = model.to(device)
         self.max_grad_norm = max_grad_norm
@@ -41,7 +43,7 @@ class Learner:
         else:
             self.model.load_state_dict(model_state)
 
-    def run_epoch(self, epoch_info: EpochInfo, source: 'vel.api.Source'):
+    def run_epoch(self, epoch_info: EpochInfo, source: 'Source'):
         """ Run full epoch of learning """
         epoch_info.on_epoch_begin()
 
@@ -56,7 +58,7 @@ class Learner:
 
         epoch_info.on_epoch_end()
 
-    def train_epoch(self, epoch_info, source: 'vel.api.Source', interactive=True):
+    def train_epoch(self, epoch_info, source: 'Source', interactive=True):
         """ Run a single training epoch """
         self.train()
 
@@ -74,7 +76,7 @@ class Learner:
 
             iterator.set_postfix(loss=epoch_info.result_accumulator.intermediate_value('loss'))
 
-    def validation_epoch(self, epoch_info, source: 'vel.api.Source'):
+    def validation_epoch(self, epoch_info, source: 'Source'):
         """ Run a single evaluation epoch """
         self.eval()
 

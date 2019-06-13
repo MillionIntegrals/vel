@@ -38,7 +38,8 @@ def module_broadcast(m, broadcast_fn, *args, **kwargs):
 
 def set_train_mode(module):
     # Only fix ones which we don't want to "train"
-    if hasattr(module, 'running_mean') and (getattr(module, 'bn_freeze', False) or not getattr(module, 'trainable', True)):
+    if hasattr(module, 'running_mean') and (getattr(module, 'bn_freeze', False) or
+                                            not getattr(module, 'trainable', True)):
         module.eval()
     elif getattr(module, 'drop_freeze', False) and hasattr(module, 'p') and ('drop' in type(module).__name__.lower()):
         module.eval()

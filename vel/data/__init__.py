@@ -1,1 +1,1 @@
-from .image_ops import *
+from .image_op import *  # noqa

@@ -26,4 +26,3 @@ class QHead(nn.Module):
     def sample(self, q_values):
         """ Sample from epsilon-greedy strategy with given q-values """
         return q_values.argmax(dim=1)
-

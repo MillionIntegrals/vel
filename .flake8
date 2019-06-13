@@ -1,0 +1,3 @@
+[flake8]
+max-line-length = 120
+exclude = vel/openai, test, vel/api/__init__.py, vel/rl/api/__init__.py

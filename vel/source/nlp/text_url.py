@@ -18,7 +18,9 @@ class TextIterator:
         self.alphabet_size = alphabet_size
 
         self.padded_sequence = padded_sequence[:-1].reshape(self.num_batches * self.batch_size, self.sequence_length)
-        self.padded_sequence_next = padded_sequence[1:].reshape(self.num_batches * self.batch_size, self.sequence_length)
+        self.padded_sequence_next = padded_sequence[1:].reshape(
+            self.num_batches * self.batch_size, self.sequence_length
+        )
 
         self.sequence_indices = np.arange(self.num_batches * self.batch_size)
 

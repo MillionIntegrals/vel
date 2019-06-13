@@ -55,6 +55,3 @@ class RnnCell(LinearBackboneModel):
         else:
             new_hidden_state = self.rnn_cell(input_data, state)
             return new_hidden_state, new_hidden_state
-
-
-

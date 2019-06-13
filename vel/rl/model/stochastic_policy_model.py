@@ -2,10 +2,10 @@ import gym
 import typing
 
 from vel.api import LinearBackboneModel, ModelFactory, BackboneModel
-from vel.modules.input.identity import IdentityFactory
+from vel.module.input.identity import IdentityFactory
 from vel.rl.api import Rollout, Evaluator, RlModel
-from vel.rl.modules.action_head import ActionHead
-from vel.rl.modules.value_head import ValueHead
+from vel.rl.module.action_head import ActionHead
+from vel.rl.module.value_head import ValueHead
 
 
 class StochasticPolicyEvaluator(Evaluator):
@@ -115,7 +115,7 @@ class StochasticPolicyModelFactory(ModelFactory):
         return StochasticPolicyModel(input_block, backbone, extra_args['action_space'])
 
 
-def create(backbone: ModelFactory, input_block: typing.Optional[ModelFactory]=None):
+def create(backbone: ModelFactory, input_block: typing.Optional[ModelFactory] = None):
     """ Vel factory function """
     if input_block is None:
         input_block = IdentityFactory()

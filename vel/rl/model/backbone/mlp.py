@@ -17,8 +17,8 @@ from vel.api import LinearBackboneModel, ModelFactory
 
 class MLP(LinearBackboneModel):
     """ Simple Multi-Layer-Perceptron network """
-    def __init__(self, input_length: int, hidden_layers: typing.List[int], activation: str='tanh',
-                 normalization: typing.Optional[str]=None):
+    def __init__(self, input_length: int, hidden_layers: typing.List[int], activation: str = 'tanh',
+                 normalization: typing.Optional[str] = None):
         super().__init__()
 
         self.input_length = input_length

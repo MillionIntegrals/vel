@@ -40,7 +40,6 @@ class ResNeXtBottleneck(nn.Module):
         self.conv_expand = nn.Conv2d(D * C, out_channels, kernel_size=1, stride=1, padding=0, bias=False)
         self.bn_expand = nn.BatchNorm2d(out_channels)
 
-
     def forward(self, x):
         bottleneck = self.conv_reduce(x)
         bottleneck = F.relu(self.bn_reduce(bottleneck), inplace=True)

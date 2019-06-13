@@ -75,8 +75,8 @@ class NoisyQModelFactory(ModelFactory):
         )
 
 
-def create(backbone: ModelFactory, input_block: typing.Optional[ModelFactory]=None, initial_std_dev=0.4,
-           factorized_noise=True):
+def create(backbone: ModelFactory, input_block: typing.Optional[ModelFactory] = None, initial_std_dev: float = 0.4,
+           factorized_noise: bool = True):
     """ Vel factory function """
     if input_block is None:
         input_block = IdentityFactory()

@@ -3,10 +3,10 @@ import torch
 import typing
 
 from vel.api import LinearBackboneModel, Model, ModelFactory, BackboneModel
-from vel.modules.input.identity import IdentityFactory
+from vel.module.input.identity import IdentityFactory
 from vel.rl.api import Rollout, Evaluator
-from vel.rl.modules.action_head import ActionHead
-from vel.rl.modules.q_head import QHead
+from vel.rl.module.action_head import ActionHead
+from vel.rl.module.q_head import QHead
 
 
 class QStochasticPolicyEvaluator(Evaluator):
@@ -120,7 +120,7 @@ class QStochasticPolicyModelFactory(ModelFactory):
         return QStochasticPolicyModel(input_block, backbone, extra_args['action_space'])
 
 
-def create(backbone: ModelFactory, input_block: typing.Optional[ModelFactory]=None):
+def create(backbone: ModelFactory, input_block: typing.Optional[ModelFactory] = None):
     """ Vel factory function """
     if input_block is None:
         input_block = IdentityFactory()

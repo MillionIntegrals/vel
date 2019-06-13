@@ -48,4 +48,3 @@ class MongoDbBackend:
 def create(model_config, uri, database):
     """ Vel factory function """
     return MongoDbBackend(model_config, uri, database)
-

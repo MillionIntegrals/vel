@@ -4,8 +4,8 @@ import torch.autograd as autograd
 import torch.nn.functional as F
 import torch.nn.utils
 
-from vel.api.metrics.averaging_metric import AveragingNamedMetric
-from vel.math.functions import explained_variance
+from vel.metric.averaging_metric import AveragingNamedMetric
+from vel.math.function import explained_variance
 from vel.rl.api import AlgoBase, Rollout, Trajectories
 from vel.rl.discount_bootstrap import discount_bootstrap_gae
 
@@ -30,11 +30,11 @@ def conjugate_gradient_method(matrix_vector_operator, loss_gradient, nsteps, rdo
     rdotr = torch.dot(r, r)
 
     for i in range(nsteps):
-        Avp = matrix_vector_operator(p)
-        alpha = rdotr / torch.dot(p, Avp)
+        avp = matrix_vector_operator(p)
+        alpha = rdotr / torch.dot(p, avp)
 
         x += alpha * p
-        r -= alpha * Avp
+        r -= alpha * avp
 
         new_rdotr = torch.dot(r, r)
         betta = new_rdotr / rdotr
@@ -122,8 +122,10 @@ class TrpoPolicyGradient(AlgoBase):
         expected_improvement = (-policy_grad) @ full_step
         original_parameter_vec = p2v(model.policy_parameters()).detach_()
 
-        policy_optimization_success, ratio, policy_loss_improvement, new_policy_loss, kl_divergence_step = self.line_search(
-            model, rollout, policy_loss, policy_params, original_parameter_vec, full_step, expected_improvement
+        (policy_optimization_success, ratio, policy_loss_improvement, new_policy_loss, kl_divergence_step) = (
+            self.line_search(
+                model, rollout, policy_loss, policy_params, original_parameter_vec, full_step, expected_improvement
+            )
         )
 
         gradient_norms = []

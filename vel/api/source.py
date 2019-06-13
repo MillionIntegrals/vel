@@ -1,6 +1,6 @@
 import torch.utils.data as data
 
-from vel.data import DataFlow
+from .dataflow import DataFlow
 
 
 class Source:

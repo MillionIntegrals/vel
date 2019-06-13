@@ -1,6 +1,6 @@
 from vel.api import LinearBackboneModel, ModelFactory
-from vel.rl.models.backbone.nature_cnn import NatureCnn
-from vel.modules.rnn_cell import RnnCell
+from vel.rl.model.backbone.nature_cnn import NatureCnn
+from vel.module.rnn_cell import RnnCell
 
 
 class NatureCnnRnnBackbone(LinearBackboneModel):
@@ -8,8 +8,8 @@ class NatureCnnRnnBackbone(LinearBackboneModel):
     Long-Short-Term Memory rnn cell together with DeepMind-style 'Nature' cnn preprocessing
     """
 
-    def __init__(self, input_width: int, input_height: int, input_channels: int, rnn_type='lstm',
-                 cnn_output_dim: int=512, hidden_units: int=128):
+    def __init__(self, input_width: int, input_height: int, input_channels: int, rnn_type: str = 'lstm',
+                 cnn_output_dim: int = 512, hidden_units: int = 128):
         super().__init__()
 
         self.hidden_units = hidden_units

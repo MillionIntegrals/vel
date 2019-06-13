@@ -78,7 +78,9 @@ class RecordMovieCommand:
                 # End of an episode
                 break
 
-        takename = self.model_config.output_dir('videos', self.model_config.run_name, self.videoname.format(take_number))
+        takename = self.model_config.output_dir(
+            'videos', self.model_config.run_name, self.videoname.format(take_number)
+        )
         pathlib.Path(os.path.dirname(takename)).mkdir(parents=True, exist_ok=True)
 
         fourcc = cv2.VideoWriter_fourcc('M', 'J', 'P', 'G')

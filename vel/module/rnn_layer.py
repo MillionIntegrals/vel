@@ -73,6 +73,3 @@ class RnnLayer(LinearBackboneModel):
             return output, new_state
         else:
             return self.rnn_cell(input_data, state)
-
-
-

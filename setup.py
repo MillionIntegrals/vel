@@ -44,7 +44,7 @@ setup(
         'mongo': ['pymongo', 'dnspython'],
         'gym': ['gym[atari,box2d,classic_control]'],
         'mujoco': ['gym[mujoco,robotics]'],
-        'dev': ['pytest', 'ipython', 'jupyter', 'pip-tools'],
+        'dev': ['pytest', 'ipython', 'jupyter', 'pip-tools', 'flake8'],
         'text': ['spacy'],
         'all': ['visdom', 'pymongo', 'dnspython', 'gym[all]', 'pytest', 'spacy', 'ipython', 'jupyter']
     },

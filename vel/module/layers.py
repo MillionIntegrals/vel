@@ -58,4 +58,3 @@ class OneHotEncode(nn.Module):
 
     def forward(self, x):
         return one_hot_encoding(x, self.num_classes)
-

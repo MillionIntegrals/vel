@@ -2,9 +2,9 @@ from torchvision import datasets
 
 from vel.api import SupervisedTrainingData
 
-from vel.augmentations.normalize import Normalize
-from vel.augmentations.to_tensor import ToTensor
-from vel.augmentations.to_array import ToArray
+from vel.augmentation.normalize import Normalize
+from vel.augmentation.to_tensor import ToTensor
+from vel.augmentation.to_array import ToArray
 
 
 def create(model_config, batch_size, normalize=True, num_workers=0, augmentations=None):
@@ -18,7 +18,7 @@ def create(model_config, batch_size, normalize=True, num_workers=0, augmentation
     test_dataset = datasets.CIFAR10(path, train=False, download=True)
 
     augmentations = [ToArray()] + (augmentations if augmentations is not None else [])
-    
+
     if normalize:
         train_data = train_dataset.data
         mean_value = (train_data / 255).mean(axis=(0, 1, 2))

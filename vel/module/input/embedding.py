@@ -6,8 +6,8 @@ from vel.api import LinearBackboneModel, SupervisedTextData, ModelFactory
 class EmbeddingInput(LinearBackboneModel):
     """ Learnable Embedding input layer """
 
-    def __init__(self, alphabet_size: int, output_dim: int, pretrained: bool=False, frozen: bool=False,
-                 source: SupervisedTextData=None):
+    def __init__(self, alphabet_size: int, output_dim: int, pretrained: bool = False, frozen: bool = False,
+                 source: SupervisedTextData = None):
         super().__init__()
 
         self._output_dim = output_dim
@@ -34,7 +34,8 @@ class EmbeddingInput(LinearBackboneModel):
         return self.layer(input_data)
 
 
-def create(alphabet_size: int, output_dim: int, pretrained: bool=False, frozen: bool=False, source: SupervisedTextData=None):
+def create(alphabet_size: int, output_dim: int, pretrained: bool = False, frozen: bool = False,
+           source: SupervisedTextData = None):
     """ Vel factory function """
     def instantiate(**_):
         return EmbeddingInput(alphabet_size, output_dim, pretrained=pretrained, frozen=frozen, source=source)
@@ -44,4 +45,3 @@ def create(alphabet_size: int, output_dim: int, pretrained: bool=False, frozen: 
 
 # Scripting interface
 EmbeddingInputFactory = create
-

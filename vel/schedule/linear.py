@@ -18,4 +18,3 @@ class LinearSchedule(Schedule):
 def create(initial_value, final_value):
     """ Vel factory function """
     return LinearSchedule(initial_value, final_value)
-

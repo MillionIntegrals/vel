@@ -5,7 +5,7 @@ import typing
 
 import torch
 
-from vel.exceptions import VelException
+from vel.exception import VelException
 
 
 class TrainingHistory:
@@ -33,7 +33,7 @@ class TrainingInfo(abc.MutableMapping):
     Data dict is any extra information processes may want to store
     """
 
-    def __init__(self, start_epoch_idx=0, run_name: typing.Optional[str]=None, metrics=None, callbacks=None):
+    def __init__(self, start_epoch_idx=0, run_name: typing.Optional[str] = None, metrics=None, callbacks=None):
         self.data_dict = {}
 
         self.start_epoch_idx = start_epoch_idx
@@ -162,7 +162,8 @@ class EpochInfo(abc.MutableMapping):
     """
 
     def __init__(self, training_info: TrainingInfo, global_epoch_idx: int, batches_per_epoch: int,
-                 optimizer: torch.optim.Optimizer=None, local_epoch_idx: int = None, callbacks: list=None):
+                 optimizer: typing.Optional[torch.optim.Optimizer] = None, local_epoch_idx: int = None,
+                 callbacks: typing.Optional[list] = None):
         self.training_info = training_info
         self.optimizer = optimizer
         self.batches_per_epoch = batches_per_epoch
@@ -348,4 +349,4 @@ class BatchInfo(abc.MutableMapping):
         return item in self.data_dict
 
     def __repr__(self):
-        return f"[BatchInfo epoch:{self.epoch_info.global_epoch_idx} batch:{self.batch_number}/{self.batches_per_epoch}]"
+        return f"[BatchInfo epoch:{self.epoch_info.global_epoch_idx} batch:{self.batch_number}/{self.batches_per_epoch}]"  # noqa

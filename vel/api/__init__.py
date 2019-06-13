@@ -1,3 +1,5 @@
+from .augmentation import Augmentation
+from .dataflow import DataFlow
 from .callback import Callback
 from .info import BatchInfo, EpochInfo, TrainingInfo
 from .learner import Learner

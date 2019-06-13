@@ -11,7 +11,8 @@ from vel.rl.api import VecEnvFactory
 class EvaluateEnvCommand:
     """ Record environment playthrough as a game  """
     def __init__(self, model_config: ModelConfig, env_factory: VecEnvFactory, model_factory: ModelFactory,
-                 storage: Storage, parallel_envs: int, action_noise: typing.Optional[ModelFactory],  takes: int, sample_args: dict = None):
+                 storage: Storage, parallel_envs: int, action_noise: typing.Optional[ModelFactory],  takes: int,
+                 sample_args: dict = None):
         self.model_config = model_config
         self.model_factory = model_factory
         self.env_factory = env_factory
@@ -26,7 +27,9 @@ class EvaluateEnvCommand:
     def run(self):
         device = self.model_config.torch_device()
 
-        env = self.env_factory.instantiate(parallel_envs=self.parallel_envs, preset='record', seed=self.model_config.seed)
+        env = self.env_factory.instantiate(
+            parallel_envs=self.parallel_envs, preset='record', seed=self.model_config.seed
+        )
         model = self.model_factory.instantiate(action_space=env.action_space).to(device)
 
         if self.action_noise_factory is not None:

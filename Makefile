@@ -1,4 +1,4 @@
-.PHONY: default test requpgrade
+.PHONY: default test requpgrade lint
 
 default: test;
 
@@ -40,4 +40,7 @@ requirements.txt:
 	pip-compile requirements.in
 
 requpgrade:
-    pip-compile --upgrade
+	pip-compile --upgrade
+
+lint:
+	flake8 vel

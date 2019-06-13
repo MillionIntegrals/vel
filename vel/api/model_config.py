@@ -2,9 +2,9 @@ import datetime as dtm
 import os.path
 import typing
 
-from vel.exceptions import VelInitializationException
-from vel.internals.parser import Parser
-from vel.internals.provider import Provider
+from vel.exception import VelInitializationException
+from vel.internal.parser import Parser
+from vel.internal.provider import Provider
 
 from .info import TrainingInfo
 
@@ -196,8 +196,8 @@ class ModelConfig:
         device = self.torch_device()
 
         print("=" * 80)
-        print(f"Pytorch version: {torch.__version__} cuda version {torch.version.cuda} cudnn version {torch.backends.cudnn.version()}")
-        print("Running model {}, run {} -- command {} -- device {}".format(self._model_name, self.run_number, command_name, self.device))
+        print(f"Pytorch version: {torch.__version__} cuda version {torch.version.cuda} cudnn version {torch.backends.cudnn.version()}")  # noqa
+        print("Running model {}, run {} -- command {} -- device {}".format(self._model_name, self.run_number, command_name, self.device))  # noqa
         if device.type == 'cuda':
             device_idx = 0 if device.index is None else device.index
             print(f"CUDA Device name {torch.cuda.get_device_name(device_idx)}")

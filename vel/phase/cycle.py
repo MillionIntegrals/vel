@@ -57,7 +57,9 @@ class CycleCallback(Callback):
         cycle_length = self.cycle_lengths[batch_info.local_epoch_number - 1]
         cycle_start = self.cycle_starts[batch_info.local_epoch_number - 1]
 
-        numerator = (batch_info.local_epoch_number - cycle_start - 1) * batch_info.batches_per_epoch + batch_info.batch_number
+        numerator = (
+            (batch_info.local_epoch_number - cycle_start - 1) * batch_info.batches_per_epoch + batch_info.batch_number
+        )
         denominator = cycle_length * batch_info.batches_per_epoch
 
         interpolation_number = numerator / denominator
@@ -66,7 +68,10 @@ class CycleCallback(Callback):
             lr = self.init_lr
         else:
             if isinstance(self.max_lr, list):
-                lr = [interp.interpolate_single(max_lr, min_lr, interpolation_number, how=self.interpolate) for max_lr, min_lr in zip(self.max_lr, self.min_lr)]
+                lr = [
+                    interp.interpolate_single(max_lr, min_lr, interpolation_number, how=self.interpolate)
+                    for max_lr, min_lr in zip(self.max_lr, self.min_lr)
+                ]
             else:
                 lr = interp.interpolate_single(self.max_lr, self.min_lr, interpolation_number, how=self.interpolate)
 

@@ -5,8 +5,8 @@ import numpy as np
 import numpy.testing as nt
 import pytest
 
-from vel.exceptions import VelException
-from vel.rl.buffers.backend.prioritized_vec_buffer_backend import PrioritizedCircularVecEnvBufferBackend
+from vel.exception import VelException
+from vel.rl.buffer.backend.prioritized_vec_buffer_backend import PrioritizedCircularVecEnvBufferBackend
 
 
 def get_halfempty_buffer_with_dones(frame_history=1):

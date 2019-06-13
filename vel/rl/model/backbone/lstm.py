@@ -1,4 +1,4 @@
-from vel.api import LinearBackboneModel, ModelFactory
+from vel.api import LinearBackboneModel
 
 
 class LstmBackbone(LinearBackboneModel):

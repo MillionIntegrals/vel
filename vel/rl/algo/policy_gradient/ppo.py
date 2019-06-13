@@ -2,17 +2,17 @@ import torch
 
 import numbers
 
-from vel.api.metrics.averaging_metric import AveragingNamedMetric
-from vel.math.functions import explained_variance
+from vel.math.function import explained_variance
+from vel.metric.averaging_metric import AveragingNamedMetric
 from vel.rl.api import OptimizerAlgoBase, Rollout, Trajectories
 from vel.rl.discount_bootstrap import discount_bootstrap_gae
-from vel.schedules.constant import ConstantSchedule
+from vel.schedule.constant import ConstantSchedule
 
 
 class PpoPolicyGradient(OptimizerAlgoBase):
     """ Proximal Policy Optimization - https://arxiv.org/abs/1707.06347 """
     def __init__(self, entropy_coefficient, value_coefficient, cliprange, max_grad_norm, discount_factor: float,
-                 normalize_advantage: bool=True, gae_lambda: float=1.0):
+                 normalize_advantage: bool = True, gae_lambda: float = 1.0):
         super().__init__(max_grad_norm)
 
         self.entropy_coefficient = entropy_coefficient

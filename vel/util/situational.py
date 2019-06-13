@@ -1,8 +1,8 @@
 import typing
 
 
-def process_environment_settings(default_dictionary: dict, settings: typing.Optional[dict]=None,
-                                 presets: typing.Optional[dict]=None):
+def process_environment_settings(default_dictionary: dict, settings: typing.Optional[dict] = None,
+                                 presets: typing.Optional[dict] = None):
     """ Process a dictionary of env settings """
     settings = settings if settings is not None else {}
     presets = presets if presets is not None else {}
@@ -25,4 +25,3 @@ def process_environment_settings(default_dictionary: dict, settings: typing.Opti
         result_dict[key] = new_dict
 
     return result_dict
-

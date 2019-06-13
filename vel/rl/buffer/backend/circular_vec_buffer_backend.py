@@ -1,7 +1,7 @@
 import gym
 import numpy as np
 
-from vel.exceptions import VelException
+from vel.exception import VelException
 
 
 def take_along_axis(large_array, indexes):
@@ -22,7 +22,7 @@ class CircularVecEnvBufferBackend:
     """
 
     def __init__(self, buffer_capacity: int, num_envs: int, observation_space: gym.Space, action_space: gym.Space,
-                 frame_stack_compensation: bool=False, frame_history: int=1):
+                 frame_stack_compensation: bool = False, frame_history: int = 1):
         # Maximum number of items in the buffer
         self.buffer_capacity = buffer_capacity
 

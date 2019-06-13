@@ -8,7 +8,7 @@ from vel.api import OptimizerFactory, Model
 class SgdFactory(OptimizerFactory):
     """ SGD optimizer factory """
 
-    def __init__(self, lr, momentum=0, dampening=0, weight_decay=0, nesterov=False, layer_groups: bool=False):
+    def __init__(self, lr, momentum=0, dampening=0, weight_decay=0, nesterov=False, layer_groups: bool = False):
         self.lr = lr
         self.momentum = momentum
         self.dampening = dampening

@@ -2,7 +2,7 @@ import torchvision.models.resnet as m
 import torch.nn as nn
 import torch.nn.functional as F
 
-import vel.modules.layers as l
+import vel.module.layers as layers
 import vel.util.module_util as mu
 
 from vel.api import LossFunctionModel, ModelFactory
@@ -35,8 +35,8 @@ class Resnet34(LossFunctionModel):
             valid_children = list(backbone.children())[:-2]
 
             valid_children.extend([
-                l.AdaptiveConcatPool2d(),
-                l.Flatten()
+                layers.AdaptiveConcatPool2d(),
+                layers.Flatten()
             ])
 
             layer_inputs = [NET_OUTPUT] + fc_layers[:-1]
@@ -94,8 +94,8 @@ class Resnet34(LossFunctionModel):
 
     def metrics(self):
         """ Set of metrics for this model """
-        from vel.metrics.loss_metric import Loss
-        from vel.metrics.accuracy import Accuracy
+        from vel.metric.loss_metric import Loss
+        from vel.metric.accuracy import Accuracy
         return [Loss(), Accuracy()]
 
 

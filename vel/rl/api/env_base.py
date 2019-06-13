@@ -25,4 +25,3 @@ class VecEnvFactory:
     def instantiate_single(self, seed=0, preset='default') -> VecEnv:
         """ Create a new VecEnv instance - single """
         raise NotImplementedError
-

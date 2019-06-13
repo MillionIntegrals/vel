@@ -18,8 +18,9 @@ class TransitionReplayEnvRoller(ReplayEnvRollerBase):
     Samples transitions from the replay buffer (individual frame transitions)
     """
 
-    def __init__(self, environment, device, replay_buffer: ReplayBuffer, discount_factor: typing.Optional[float]=None,
-                 normalize_returns: bool=False, forward_steps: int=1, action_noise: typing.Optional[nn.Module]=None):
+    def __init__(self, environment, device, replay_buffer: ReplayBuffer, discount_factor: typing.Optional[float] = None,
+                 normalize_returns: bool = False, forward_steps: int = 1,
+                 action_noise: typing.Optional[nn.Module] = None):
         self._environment = environment
         self.device = device
         self.replay_buffer = replay_buffer
@@ -156,8 +157,9 @@ class TransitionReplayEnvRoller(ReplayEnvRollerBase):
 class TransitionReplayEnvRollerFactory(ReplayEnvRollerFactoryBase):
     """ Factory for the ReplayEnvRoller """
 
-    def __init__(self, replay_buffer_factory: ReplayBufferFactory, discount_factor: typing.Optional[float]=None,
-                 normalize_returns: bool=False, forward_steps: int=1, action_noise: typing.Optional[ModelFactory]=None):
+    def __init__(self, replay_buffer_factory: ReplayBufferFactory, discount_factor: typing.Optional[float] = None,
+                 normalize_returns: bool = False, forward_steps: int = 1,
+                 action_noise: typing.Optional[ModelFactory] = None):
         self.replay_buffer_factory = replay_buffer_factory
         self.normalize_returns = normalize_returns
         self.forward_steps = forward_steps
@@ -183,8 +185,8 @@ class TransitionReplayEnvRollerFactory(ReplayEnvRollerFactoryBase):
         )
 
 
-def create(replay_buffer, discount_factor: typing.Optional[float]=None, normalize_returns: bool=False,
-           forward_steps: int=1, action_noise: typing.Optional[ModelFactory]=None):
+def create(replay_buffer, discount_factor: typing.Optional[float] = None, normalize_returns: bool = False,
+           forward_steps: int = 1, action_noise: typing.Optional[ModelFactory] = None):
     """ Vel factory function """
     return TransitionReplayEnvRollerFactory(
         replay_buffer_factory=replay_buffer,

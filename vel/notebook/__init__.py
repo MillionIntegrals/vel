@@ -1,2 +1,2 @@
-from .loader import load_config, script
-from .defaults import reasonable_notbook_defaults
+from .loader import load_config, script  # noqa
+from .defaults import reasonable_notbook_defaults  # noqa

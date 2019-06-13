@@ -23,4 +23,3 @@ class ValueMetric(BaseMetric):
 
     def _value_function(self, batch_info):
         raise NotImplementedError
-

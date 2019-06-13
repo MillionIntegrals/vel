@@ -3,10 +3,10 @@ import torch
 import typing
 
 from vel.api import LinearBackboneModel, ModelFactory, BackboneModel
-from vel.modules.input.identity import IdentityFactory
+from vel.module.input.identity import IdentityFactory
 from vel.rl.api import Rollout, Trajectories, Evaluator, RlRnnModel
-from vel.rl.modules.action_head import ActionHead
-from vel.rl.modules.value_head import ValueHead
+from vel.rl.module.action_head import ActionHead
+from vel.rl.module.value_head import ValueHead
 
 
 class StochasticPolicyRnnEvaluator(Evaluator):
@@ -142,7 +142,7 @@ class PolicyGradientRnnModelFactory(ModelFactory):
         return StochasticPolicyRnnModel(input_block, backbone, extra_args['action_space'])
 
 
-def create(backbone: ModelFactory, input_block: typing.Optional[ModelFactory]=None):
+def create(backbone: ModelFactory, input_block: typing.Optional[ModelFactory] = None):
     """ Vel factory function """
     if input_block is None:
         input_block = IdentityFactory()

@@ -76,7 +76,7 @@ def summary(model, input_size):
                                                   '{0:,}'.format(summary[layer]['nb_params']))
         total_params += summary[layer]['nb_params']
         if 'trainable' in summary[layer]:
-            if summary[layer]['trainable'] == True:
+            if summary[layer]['trainable']:
                 trainable_params += summary[layer]['nb_params']
         print(line_new)
     print('================================================================')

@@ -70,7 +70,8 @@
 #         if self.index == (1 + self.n_augmentations):
 #             new_output = torch.mean(torch.stack(self.accumulated_output, dim=-1), dim=-1)
 #             new_context = {
-#                 k: torch.mean(torch.stack([c[k] for c in self.accumulated_context], dim=-1), dim=-1) for k in context.keys()
+#                 k: torch.mean(torch.stack([c[k] for c in self.accumulated_context], dim=-1), dim=-1)
+#                 for k in context.keys()
 #             }
 #
 #             self.metric_accumulator.calculate(self.data, self.target, new_output, new_context)

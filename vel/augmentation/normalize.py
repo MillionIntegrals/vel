@@ -1,9 +1,9 @@
 import numpy as np
 
-import vel.data as data
+import vel.api as api
 
 
-class Normalize(data.Augmentation):
+class Normalize(api.Augmentation):
     """ Normalize input mean and standard deviation """
 
     def __init__(self, mean, std, mode='x', tags=None):
@@ -22,4 +22,3 @@ class Normalize(data.Augmentation):
 def create(mean, std, mode='x', tags=None):
     """ Vel factory function """
     return Normalize(mean=mean, std=std, mode=mode, tags=tags)
-

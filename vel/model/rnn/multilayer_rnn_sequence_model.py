@@ -4,15 +4,15 @@ import torch
 import torch.nn.functional as F
 import torch.nn as nn
 
-from vel.api import RnnSupervisedModel, ModelFactory, LinearBackboneModel
-from vel.modules.rnn_layer import RnnLayer
+from vel.api import LossFunctionModel, ModelFactory, LinearBackboneModel
+from vel.module.rnn_layer import RnnLayer
 
 
-class MultilayerRnnSequenceModel(RnnSupervisedModel):
+class MultilayerRnnSequenceModel(LossFunctionModel):
     """ Multilayer GRU network for sequence modeling (n:n) """
 
     def __init__(self, input_block: LinearBackboneModel, rnn_type: str, hidden_layers: typing.List[int],
-                 output_dim: int, dropout: float=0.0):
+                 output_dim: int, dropout: float = 0.0):
         super().__init__()
 
         self.output_dim = output_dim
@@ -115,7 +115,8 @@ def create(input_block: ModelFactory, rnn_type: str, hidden_layers: typing.List[
     """ Vel factory function """
     def instantiate(**_):
         return MultilayerRnnSequenceModel(
-            input_block.instantiate(), rnn_type=rnn_type, hidden_layers=hidden_layers, output_dim=output_dim, dropout=dropout
+            input_block.instantiate(), rnn_type=rnn_type, hidden_layers=hidden_layers, output_dim=output_dim,
+            dropout=dropout
         )
 
     return ModelFactory.generic(instantiate)

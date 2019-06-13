@@ -1,9 +1,10 @@
 import random
 
+import vel.api as api
 import vel.data as data
 
 
-class RandomLighting(data.Augmentation):
+class RandomLighting(api.Augmentation):
     """ Apply a horizontal flip randomly to input images """
 
     def __init__(self, b, c, mode='x', tags=None):
@@ -14,11 +15,11 @@ class RandomLighting(data.Augmentation):
         """ Adjust lighting """
         rand_b = random.uniform(-self.b, self.b)
         rand_c = random.uniform(-self.c, self.c)
-        rand_c = -1/(rand_c-1) if rand_c<0 else rand_c+1
+        rand_c = -1/(rand_c-1) if rand_c < 0 else rand_c+1
         return data.lighting(img, rand_b, rand_c)
 
     def __repr__(self):
-        return self.__class__.__name__ + '(p={})'.format(self.p)
+        return self.__class__.__name__ + '(b={}, c={})'.format(self.b, self.c)
 
 
 def create(b, c, mode='x', tags=None):

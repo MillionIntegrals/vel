@@ -2,9 +2,9 @@ import gym
 import typing
 
 from vel.api import LinearBackboneModel, ModelFactory, BackboneModel
-from vel.modules.input.identity import IdentityFactory
+from vel.module.input.identity import IdentityFactory
 from vel.rl.api import Rollout, RlModel, Evaluator
-from vel.rl.modules.q_distributional_head import QDistributionalHead
+from vel.rl.module.q_distributional_head import QDistributionalHead
 
 
 class QDistributionalModelEvaluator(Evaluator):
@@ -60,7 +60,7 @@ class QDistributionalModel(RlModel):
     Supports only discrete action spaces (ones that can be enumerated)
     """
     def __init__(self, input_block: BackboneModel, backbone: LinearBackboneModel, action_space: gym.Space,
-                 vmin: float, vmax: float, atoms: int=1):
+                 vmin: float, vmax: float, atoms: int = 1):
         super().__init__()
 
         self.action_space = action_space
@@ -131,7 +131,7 @@ class QDistributionalModelFactory(ModelFactory):
 
 
 def create(backbone: ModelFactory, vmin: float, vmax: float, atoms: int,
-           input_block: typing.Optional[ModelFactory]=None):
+           input_block: typing.Optional[ModelFactory] = None):
     """ Vel factory function """
     if input_block is None:
         input_block = IdentityFactory()

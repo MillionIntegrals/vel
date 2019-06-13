@@ -190,7 +190,7 @@ class BufferedOffPolicyIterationReinforcerFactory(ReinforcerFactory):
 
 
 def create(model_config, vec_env, model, algo, env_roller, parallel_envs: int,
-           rollout_steps: int, training_steps: int, training_rounds: int=1):
+           rollout_steps: int, training_steps: int, training_rounds: int = 1):
     """ Vel factory function """
     settings = BufferedOffPolicyIterationReinforcerSettings(
         rollout_steps=rollout_steps,

@@ -1,4 +1,3 @@
-import torch
 import numpy as np
 import bisect
 import typing

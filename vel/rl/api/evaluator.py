@@ -108,6 +108,7 @@ class Evaluator(metaclass=EvaluatorMeta):
             return True
         elif name.startswith('rollout:'):
             rollout_name = name[8:]
+            return self.is_provided(rollout_name)
         else:
             return False
 

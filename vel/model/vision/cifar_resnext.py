@@ -7,7 +7,7 @@ import torch.nn as nn
 import torch.nn.functional as F
 
 from vel.api import LossFunctionModel, ModelFactory
-from vel.modules.resnext import ResNeXtBottleneck
+from vel.module.resnext import ResNeXtBottleneck
 
 
 class ResNeXt(LossFunctionModel):
@@ -44,8 +44,7 @@ class ResNeXt(LossFunctionModel):
                 nn.init.constant_(m.bias, 0.0)
 
     def _make_layer(self, block, in_channels, out_channels, blocks, stride=1):
-        layers = []
-        layers.append(block(in_channels, out_channels, self.cardinality, self.divisor, stride=stride))
+        layers = [block(in_channels, out_channels, self.cardinality, self.divisor, stride=stride)]
 
         for i in range(1, blocks):
             layers.append(block(out_channels, out_channels, self.cardinality, self.divisor, stride=1))
@@ -74,8 +73,8 @@ class ResNeXt(LossFunctionModel):
 
     def metrics(self):
         """ Set of metrics for this model """
-        from vel.metrics.loss_metric import Loss
-        from vel.metrics.accuracy import Accuracy
+        from vel.metric.loss_metric import Loss
+        from vel.metric.accuracy import Accuracy
         return [Loss(), Accuracy()]
 
 
@@ -87,6 +86,9 @@ def create(blocks, mode='basic', inplanes=64, cardinality=4, image_features=64, 
     }
 
     def instantiate(**_):
-        return ResNeXt(block_dict[mode], blocks, inplanes=inplanes, image_features=image_features, cardinality=cardinality, divisor=divisor, num_classes=num_classes)
+        return ResNeXt(
+            block_dict[mode], blocks, inplanes=inplanes, image_features=image_features,
+            cardinality=cardinality, divisor=divisor, num_classes=num_classes
+        )
 
     return ModelFactory.generic(instantiate)

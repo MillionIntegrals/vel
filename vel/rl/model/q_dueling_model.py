@@ -2,10 +2,10 @@ import gym
 import typing
 
 from vel.api import LinearBackboneModel, Model, ModelFactory, BackboneModel
-from vel.modules.input.identity import IdentityFactory
+from vel.module.input.identity import IdentityFactory
 from vel.rl.api import Rollout, Evaluator
-from vel.rl.modules.q_dueling_head import QDuelingHead
-from vel.rl.models.q_model import QModelEvaluator
+from vel.rl.module.q_dueling_head import QDuelingHead
+from vel.rl.model.q_model import QModelEvaluator
 
 
 class QDuelingModel(Model):
@@ -65,7 +65,7 @@ class QDuelingModelFactory(ModelFactory):
         return QDuelingModel(input_block, backbone, extra_args['action_space'])
 
 
-def create(backbone: ModelFactory, input_block: typing.Optional[ModelFactory]=None):
+def create(backbone: ModelFactory, input_block: typing.Optional[ModelFactory] = None):
     """ Vel factory function """
     if input_block is None:
         input_block = IdentityFactory()

@@ -2,9 +2,9 @@ import gym
 import typing
 
 from vel.api import LinearBackboneModel, ModelFactory, BackboneModel
-from vel.modules.input.identity import IdentityFactory
+from vel.module.input.identity import IdentityFactory
 from vel.rl.api import Rollout, RlModel, Evaluator
-from vel.rl.modules.q_head import QHead
+from vel.rl.module.q_head import QHead
 
 
 class QModelEvaluator(Evaluator):
@@ -89,7 +89,7 @@ class QModelFactory(ModelFactory):
         return QModel(input_block, backbone, extra_args['action_space'])
 
 
-def create(backbone: ModelFactory, input_block: typing.Optional[ModelFactory]=None):
+def create(backbone: ModelFactory, input_block: typing.Optional[ModelFactory] = None):
     """ Vel factory function """
     if input_block is None:
         input_block = IdentityFactory()

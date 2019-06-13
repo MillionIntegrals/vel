@@ -17,7 +17,8 @@ def center_crop(im, min_sz=None):
     """ Returns a center crop of an image"""
     # return F.center_crop(im, min_sz)
     r, c, *_ = im.shape
-    if min_sz is None: min_sz = min(r, c)
+    if min_sz is None:
+        min_sz = min(r, c)
     start_r = math.ceil((r - min_sz) / 2)
     start_c = math.ceil((c - min_sz) / 2)
     return crop_square(im, start_r, start_c, min_sz)
@@ -78,6 +79,7 @@ def mode_to_cv2(mode='constant'):
 
 def lighting(im, b, c):
     """ Adjusts image's balance and contrast. """
-    if b == 0 and c == 1: return im
+    if b == 0 and c == 1:
+        return im
     mu = np.average(im)
     return np.clip((im - mu) * c + mu + b, 0., 1.).astype(np.float32)

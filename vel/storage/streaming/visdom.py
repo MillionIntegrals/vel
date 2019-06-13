@@ -36,7 +36,7 @@ class VisdomStreaming(Callback):
                     float(batch_info.epoch_number) +
                     float(batch_info.batch_number) / batch_info.batches_per_epoch
             )
-            
+
             lr = batch_info.optimizer.param_groups[-1]['lr']
 
             metrics_df = pd.DataFrame([lr], index=[iteration_idx], columns=['lr'])

@@ -4,10 +4,10 @@ import torch
 import typing
 
 from vel.api import LinearBackboneModel, ModelFactory, BackboneModel
-from vel.modules.input.identity import IdentityFactory
+from vel.module.input.identity import IdentityFactory
 from vel.rl.api import Rollout, Evaluator, RlModel
-from vel.rl.modules.deterministic_action_head import DeterministicActionHead
-from vel.rl.modules.deterministic_critic_head import DeterministicCriticHead
+from vel.rl.module.deterministic_action_head import DeterministicActionHead
+from vel.rl.module.deterministic_critic_head import DeterministicCriticHead
 
 
 class DeterministicPolicyEvaluator(Evaluator):
@@ -154,7 +154,7 @@ class DeterministicPolicyModelFactory(ModelFactory):
 
 
 def create(policy_backbone: ModelFactory, value_backbone: ModelFactory,
-           input_block: typing.Optional[ModelFactory]=None):
+           input_block: typing.Optional[ModelFactory] = None):
     """ Vel factory function """
     if input_block is None:
         input_block = IdentityFactory()

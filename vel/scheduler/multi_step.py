@@ -1,5 +1,4 @@
-import torch.optim.lr_scheduler as scheduler
-
+# import torch.optim.lr_scheduler as scheduler
 
 # class MultiStepScheduler:
 #     def __init__(self, optimizer, milestones, gamma, last_epoch):
