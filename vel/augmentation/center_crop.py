@@ -3,7 +3,7 @@ Code based on:
 https://github.com/fastai/fastai/blob/master/fastai/transforms.py
 """
 
-import vel.api.data as data
+import vel.data as data
 
 
 class CenterCrop(data.Augmentation):

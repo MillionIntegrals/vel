@@ -4,7 +4,7 @@ https://github.com/fastai/fastai/blob/master/fastai/transforms.py
 """
 import PIL.Image as Image
 
-import vel.api.data as data
+import vel.data as data
 
 
 class ScaleMinSize(data.Augmentation):

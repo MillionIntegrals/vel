@@ -5,7 +5,7 @@ https://github.com/fastai/fastai/blob/master/fastai/transforms.py
 import cv2
 import random
 
-import vel.api.data as data
+import vel.data as data
 
 
 class RandomRotate(data.Augmentation):

@@ -1,6 +1,6 @@
 import numpy as np
 
-import vel.api.data as data
+import vel.data as data
 
 
 class Normalize(data.Augmentation):

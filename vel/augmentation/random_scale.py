@@ -6,7 +6,7 @@ import cv2
 import collections.abc as abc
 import random
 
-import vel.api.data as data
+import vel.data as data
 
 
 class RandomScale(data.Augmentation):

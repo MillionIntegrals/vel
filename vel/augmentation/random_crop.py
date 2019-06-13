@@ -6,7 +6,7 @@ https://github.com/pytorch/vision/blob/master/torchvision/transforms/transforms.
 import numbers
 import random
 
-import vel.api.data as data
+import vel.data as data
 
 
 class RandomCrop(data.Augmentation):

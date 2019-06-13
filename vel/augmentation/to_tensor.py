@@ -2,7 +2,7 @@ import numpy as np
 
 import torchvision.transforms.functional as F
 
-import vel.api.data as data
+import vel.data as data
 
 
 class ToTensor(data.Augmentation):
