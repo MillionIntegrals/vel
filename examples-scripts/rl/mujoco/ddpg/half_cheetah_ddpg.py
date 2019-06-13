@@ -2,22 +2,22 @@ import torch
 import torch.optim
 
 from vel.api import TrainingInfo, EpochInfo
-from vel.modules.input.normalize_observations import NormalizeObservationsFactory
-from vel.rl.buffers.circular_replay_buffer import CircularReplayBuffer
+from vel.module.input.normalize_observations import NormalizeObservationsFactory
+from vel.rl.buffer.circular_replay_buffer import CircularReplayBuffer
 from vel.rl.env_roller.transition_replay_env_roller import TransitionReplayEnvRoller
 from vel.rl.metrics import EpisodeRewardMetric
-from vel.rl.modules.noise.ou_noise import OuNoise
+from vel.rl.module.noise.ou_noise import OuNoise
 from vel.storage.streaming.stdout import StdoutStreaming
 from vel.util.random import set_seed
 from vel.rl.env.mujoco import MujocoEnv
-from vel.rl.models.deterministic_policy_model import DeterministicPolicyModelFactory
-from vel.rl.models.backbone.mlp import MLPFactory
-from vel.rl.reinforcers.buffered_off_policy_iteration_reinforcer import (
+from vel.rl.model.deterministic_policy_model import DeterministicPolicyModelFactory
+from vel.rl.model.backbone.mlp import MLPFactory
+from vel.rl.reinforcer.buffered_off_policy_iteration_reinforcer import (
     BufferedOffPolicyIterationReinforcer, BufferedOffPolicyIterationReinforcerSettings
 )
 from vel.rl.algo.policy_gradient.ddpg import DeepDeterministicPolicyGradient
 from vel.rl.vecenv.dummy import DummyVecEnvWrapper
-from vel.optimizers.adam import AdamFactory
+from vel.optimizer.adam import AdamFactory
 
 
 def half_cheetah_ddpg():

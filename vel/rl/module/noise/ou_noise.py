@@ -2,8 +2,8 @@ import torch
 import numpy as np
 import torch.nn as nn
 
-from vel.math.processes import OrnsteinUhlenbeckNoiseProcess
-from vel.internals.generic_factory import GenericFactory
+from vel.math.process import OrnsteinUhlenbeckNoiseProcess
+from vel.internal.generic_factory import GenericFactory
 
 
 class OuNoise(nn.Module):

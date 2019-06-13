@@ -2,7 +2,7 @@ import typing
 
 import vel.api as api
 
-from vel.callbacks.time_tracker import TimeTracker
+from vel.callback.time_tracker import TimeTracker
 
 
 class SimpleTrainCommand:

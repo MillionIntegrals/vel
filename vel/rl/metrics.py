@@ -4,7 +4,7 @@ import numpy as np
 import torch
 
 from vel.api import BatchInfo
-from vel.api.metrics import BaseMetric, AveragingMetric, ValueMetric
+from vel.metric import BaseMetric, AveragingMetric, ValueMetric
 
 
 class FramesMetric(ValueMetric):

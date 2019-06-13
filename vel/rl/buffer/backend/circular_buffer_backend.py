@@ -1,7 +1,7 @@
 import gym
 import numpy as np
 
-from vel.exceptions import VelException
+from vel.exception import VelException
 
 
 class CircularBufferBackend:

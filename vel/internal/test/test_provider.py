@@ -1,9 +1,9 @@
 import os
 import pytest
 
-import vel.internals.provider as v
-import vel.internals.parser as p
-import vel.exceptions as e
+import vel.internal.provider as v
+import vel.internal.parser as p
+import vel.exception as e
 
 
 def data_function(a, b):
@@ -37,17 +37,17 @@ def test_simple_injection():
         'a': 1,
         'b': 2,
         'one': {
-            'name': 'vel.internals.tests.fixture_a'
+            'name': 'vel.internal.test.fixture_a'
         },
 
         'two': {
-            'name': 'vel.internals.tests.fixture_a',
+            'name': 'vel.internal.test.fixture_a',
             'a': 5,
             'b': 6
         },
 
         'three': {
-            'name': 'vel.internals.tests.fixture_b',
+            'name': 'vel.internal.test.fixture_b',
             'd': 'd'
         }
     })
@@ -78,20 +78,20 @@ def test_parameter_resolution():
         'a': 1,
         'b': p.Parameter("xxx"),
         'one': {
-            'name': 'vel.internals.tests.fixture_a'
+            'name': 'vel.internal.test.fixture_a'
         },
         'two': {
-            'name': 'vel.internals.tests.fixture_a',
+            'name': 'vel.internal.test.fixture_a',
             'b': p.Parameter('yyy')
         },
 
         'three': {
-            'name': 'vel.internals.tests.fixture_a',
+            'name': 'vel.internal.test.fixture_a',
             'b': p.Parameter('yyy', 7)
         },
 
         'four': {
-            'name': 'vel.internals.tests.fixture_a',
+            'name': 'vel.internal.test.fixture_a',
             'b': p.EnvironmentVariable('TEST_VAR')
         },
 
@@ -120,20 +120,20 @@ def test_render_configuration():
         'a': 1,
         'b': p.Parameter("xxx"),
         'one': {
-            'name': 'vel.internals.tests.fixture_a'
+            'name': 'vel.internal.test.fixture_a'
         },
         'two': {
-            'name': 'vel.internals.tests.fixture_a',
+            'name': 'vel.internal.test.fixture_a',
             'b': p.Parameter('yyy', 5)
         },
 
         'three': {
-            'name': 'vel.internals.tests.fixture_a',
+            'name': 'vel.internal.test.fixture_a',
             'b': p.Parameter('yyy', 7)
         },
 
         'four': {
-            'name': 'vel.internals.tests.fixture_a',
+            'name': 'vel.internal.test.fixture_a',
             'b': p.EnvironmentVariable('TEST_VAR')
         },
 
@@ -145,20 +145,20 @@ def test_render_configuration():
         'a': 1,
         'b': 5,
         'one': {
-            'name': 'vel.internals.tests.fixture_a'
+            'name': 'vel.internal.test.fixture_a'
         },
         'two': {
-            'name': 'vel.internals.tests.fixture_a',
+            'name': 'vel.internal.test.fixture_a',
             'b': 5
         },
 
         'three': {
-            'name': 'vel.internals.tests.fixture_a',
+            'name': 'vel.internal.test.fixture_a',
             'b': 7
         },
 
         'four': {
-            'name': 'vel.internals.tests.fixture_a',
+            'name': 'vel.internal.test.fixture_a',
             'b': '10'
         },
     }

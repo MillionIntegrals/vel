@@ -1,4 +1,4 @@
-.PHONY: default test requpgrade lint
+.PHONY: default test partest requpgrade lint
 
 default: test;
 
@@ -35,6 +35,9 @@ serve-visdom:
 
 test:
 	pytest .
+
+partestc:
+	pytest -n 4 .
 
 requirements.txt:
 	pip-compile requirements.in

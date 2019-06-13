@@ -4,8 +4,8 @@ import numpy as np
 import numpy.testing as nt
 import pytest
 
-from vel.exceptions import VelException
-from vel.rl.buffers.backend.circular_buffer_backend import CircularBufferBackend
+from vel.exception import VelException
+from vel.rl.buffer.backend.circular_buffer_backend import CircularBufferBackend
 
 
 def get_half_filled_buffer():

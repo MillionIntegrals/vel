@@ -1,6 +1,6 @@
 import numpy as np
 
-import vel.util.intepolate as interp
+import vel.util.interpolate as interp
 
 from vel.api import BatchInfo, EpochInfo, TrainingInfo, Callback, TrainPhase
 

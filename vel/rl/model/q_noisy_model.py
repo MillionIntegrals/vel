@@ -2,10 +2,10 @@ import gym
 import typing
 
 from vel.api import LinearBackboneModel, ModelFactory, BackboneModel
-from vel.modules.input.identity import IdentityFactory
+from vel.module.input.identity import IdentityFactory
 from vel.rl.api import Rollout, RlModel, Evaluator
-from vel.rl.models.q_model import QModelEvaluator
-from vel.rl.modules.q_noisy_head import QNoisyHead
+from vel.rl.model.q_model import QModelEvaluator
+from vel.rl.module.q_noisy_head import QNoisyHead
 
 
 class NoisyQModel(RlModel):

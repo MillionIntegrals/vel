@@ -1,7 +1,7 @@
 import torch
 import torch.nn.functional as F
 
-from vel.api.metrics.averaging_metric import AveragingNamedMetric
+from vel.metric.averaging_metric import AveragingNamedMetric
 from vel.rl.api import Trajectories, OptimizerAlgoBase
 
 

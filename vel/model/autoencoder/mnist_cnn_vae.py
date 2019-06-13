@@ -8,9 +8,9 @@ import torch.nn.functional as F
 import vel.util.network as net_util
 
 from vel.api import SupervisedModel, ModelFactory
-from vel.api.metrics import AveragingNamedMetric
-from vel.metrics.loss_metric import Loss
-from vel.modules.layers import Flatten, Reshape
+from vel.metric.averaging_metric import AveragingNamedMetric
+from vel.metric.loss_metric import Loss
+from vel.module.layers import Flatten, Reshape
 
 
 class MnistCnnVAE(SupervisedModel):

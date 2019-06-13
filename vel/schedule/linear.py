@@ -1,4 +1,4 @@
-import vel.util.intepolate as interpolate
+import vel.util.interpolate as interpolate
 
 from vel.api import Schedule
 

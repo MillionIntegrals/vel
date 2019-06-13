@@ -1,7 +1,7 @@
 import os
 import yaml
 
-from vel.exceptions import VelException
+from vel.exception import VelException
 
 
 class Dummy:

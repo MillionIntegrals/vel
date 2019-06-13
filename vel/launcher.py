@@ -4,7 +4,7 @@ import multiprocessing
 import sys
 
 from vel.api.model_config import ModelConfig
-from vel.internals.parser import Parser
+from vel.internal.parser import Parser
 
 
 def main():

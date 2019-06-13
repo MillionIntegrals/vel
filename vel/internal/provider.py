@@ -1,8 +1,8 @@
 import importlib
 import inspect
 
-from vel.internals.parser import Variable
-from vel.internals.generic_factory import GenericFactory
+from vel.internal.parser import Variable
+from vel.internal.generic_factory import GenericFactory
 
 
 class Provider:

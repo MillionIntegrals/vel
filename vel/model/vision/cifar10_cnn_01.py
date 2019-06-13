@@ -9,8 +9,8 @@ import torch.nn.init as init
 import torch.nn.functional as F
 
 from vel.api import LossFunctionModel, ModelFactory
-from vel.metrics.loss_metric import Loss
-from vel.metrics.accuracy import Accuracy
+from vel.metric.loss_metric import Loss
+from vel.metric.accuracy import Accuracy
 
 
 class Net(LossFunctionModel):

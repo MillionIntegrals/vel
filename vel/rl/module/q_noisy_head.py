@@ -2,7 +2,7 @@ import torch.nn as nn
 
 import gym.spaces as spaces
 
-from vel.rl.modules.noisy_linear import NoisyLinear
+from vel.rl.module.noisy_linear import NoisyLinear
 
 
 class QNoisyHead(nn.Module):

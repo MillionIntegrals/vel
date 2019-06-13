@@ -3,11 +3,11 @@ import itertools as it
 import typing
 
 from vel.api import LinearBackboneModel, ModelFactory, BackboneModel
-from vel.modules.input.identity import IdentityFactory
+from vel.module.input.identity import IdentityFactory
 from vel.rl.api import Rollout, RlModel, Evaluator
-from vel.rl.modules.action_head import ActionHead
-from vel.rl.modules.value_head import ValueHead
-from vel.rl.models.stochastic_policy_model import StochasticPolicyEvaluator
+from vel.rl.module.action_head import ActionHead
+from vel.rl.module.value_head import ValueHead
+from vel.rl.model.stochastic_policy_model import StochasticPolicyEvaluator
 
 
 class StochasticPolicyModelSeparate(RlModel):

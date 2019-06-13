@@ -13,7 +13,7 @@ import torch.nn.functional as F
 import vel.util.network as net_util
 
 from vel.api import LinearBackboneModel, ModelFactory
-from vel.rl.modules.noisy_linear import NoisyLinear
+from vel.rl.module.noisy_linear import NoisyLinear
 
 
 class NoisyNatureCnn(LinearBackboneModel):

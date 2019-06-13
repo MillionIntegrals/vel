@@ -2,10 +2,10 @@ import gym
 import typing
 
 from vel.api import LinearBackboneModel, Model, ModelFactory, BackboneModel
-from vel.modules.input.identity import IdentityFactory
+from vel.module.input.identity import IdentityFactory
 from vel.rl.api import Rollout, Evaluator
-from vel.rl.models.q_distributional_model import QDistributionalModelEvaluator
-from vel.rl.modules.q_distributional_noisy_dueling_head import QDistributionalNoisyDuelingHead
+from vel.rl.model.q_distributional_model import QDistributionalModelEvaluator
+from vel.rl.module.q_distributional_noisy_dueling_head import QDistributionalNoisyDuelingHead
 
 
 class QRainbowModel(Model):

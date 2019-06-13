@@ -7,8 +7,8 @@ import torch.nn.functional as F
 import vel.util.network as net_util
 
 from vel.api import LossFunctionModel, ModelFactory
-from vel.metrics.loss_metric import Loss
-from vel.modules.layers import Flatten, Reshape
+from vel.metric.loss_metric import Loss
+from vel.module.layers import Flatten, Reshape
 
 
 class MnistCnnAutoencoder(LossFunctionModel):

@@ -5,7 +5,7 @@ import torch.nn as nn
 import torch.nn.functional as F
 
 
-from vel.rl.modules.noisy_linear import NoisyLinear
+from vel.rl.module.noisy_linear import NoisyLinear
 
 
 class QDistributionalNoisyDuelingHead(nn.Module):

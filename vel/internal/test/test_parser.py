@@ -1,6 +1,6 @@
 import pytest
 
-import vel.internals.parser as v
+import vel.internal.parser as v
 
 
 @pytest.fixture

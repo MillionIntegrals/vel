@@ -1,5 +1,5 @@
 from .model import Model
-from vel.internals.generic_factory import GenericFactory
+from vel.internal.generic_factory import GenericFactory
 
 
 class ModelFactory:

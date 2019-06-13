@@ -74,8 +74,8 @@ class ResNetV1(LossFunctionModel):
 
     def metrics(self):
         """ Set of metrics for this model """
-        from vel.metrics.loss_metric import Loss
-        from vel.metrics.accuracy import Accuracy
+        from vel.metric.loss_metric import Loss
+        from vel.metric.accuracy import Accuracy
         return [Loss(), Accuracy()]
 
 

@@ -3,7 +3,7 @@ import torch.nn as nn
 
 import vel.util.module_util as mu
 
-from vel.metrics.loss_metric import Loss
+from vel.metric.loss_metric import Loss
 from vel.util.summary import summary
 
 

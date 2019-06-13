@@ -4,8 +4,8 @@ import torch
 import torch.nn as nn
 
 from vel.api import Schedule
-from vel.internals.generic_factory import GenericFactory
-from vel.schedules.constant import ConstantSchedule
+from vel.internal.generic_factory import GenericFactory
+from vel.schedule.constant import ConstantSchedule
 
 
 class EpsGreedy(nn.Module):

@@ -2,7 +2,7 @@ import typing
 
 from vel.api import ModelConfig, EpochInfo, TrainingInfo, BatchInfo, OptimizerFactory, Storage, Callback
 from vel.rl.api import ReinforcerFactory
-from vel.callbacks.time_tracker import TimeTracker
+from vel.callback.time_tracker import TimeTracker
 
 import vel.openai.baselines.logger as openai_logger
 

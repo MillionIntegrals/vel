@@ -7,7 +7,7 @@ import torch
 import torch.nn.functional as F
 import torch.distributions as d
 
-from vel.rl.modules.action_head import DiagGaussianActionHead, CategoricalActionHead
+from vel.rl.module.action_head import DiagGaussianActionHead, CategoricalActionHead
 
 
 def test_sample_diag_gaussian():

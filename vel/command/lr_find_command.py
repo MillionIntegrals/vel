@@ -6,10 +6,10 @@ import matplotlib.pyplot as plt
 import numpy as np
 import tqdm
 
-import vel.util.intepolate as interp
+import vel.util.interpolate as interp
 
 from vel.api import Learner, TrainingInfo, EpochInfo, BatchInfo
-from vel.api.metrics.averaging_metric import AveragingNamedMetric
+from vel.metric.averaging_metric import AveragingNamedMetric
 
 
 class LrFindCommand:

@@ -1,19 +1,19 @@
 import torch
 import torch.optim as optim
 
-from vel.modules.input.image_to_tensor import ImageToTensorFactory
-from vel.modules.input.normalize_observations import NormalizeObservationsFactory
-from vel.rl.buffers.circular_replay_buffer import CircularReplayBuffer
-from vel.rl.buffers.prioritized_circular_replay_buffer import PrioritizedCircularReplayBuffer
-from vel.rl.commands.rl_train_command import FrameTracker
+from vel.module.input.image_to_tensor import ImageToTensorFactory
+from vel.module.input.normalize_observations import NormalizeObservationsFactory
+from vel.rl.buffer.circular_replay_buffer import CircularReplayBuffer
+from vel.rl.buffer.prioritized_circular_replay_buffer import PrioritizedCircularReplayBuffer
+from vel.rl.command.rl_train_command import FrameTracker
 from vel.rl.env_roller.step_env_roller import StepEnvRoller
 from vel.rl.env_roller.trajectory_replay_env_roller import TrajectoryReplayEnvRoller
 from vel.rl.env_roller.transition_replay_env_roller import TransitionReplayEnvRoller
 from vel.rl.metrics import EpisodeRewardMetric
-from vel.rl.modules.noise.eps_greedy import EpsGreedy
-from vel.rl.modules.noise.ou_noise import OuNoise
-from vel.schedules.linear import LinearSchedule
-from vel.schedules.linear_and_constant import LinearAndConstantSchedule
+from vel.rl.module.noise.eps_greedy import EpsGreedy
+from vel.rl.module.noise.ou_noise import OuNoise
+from vel.schedule.linear import LinearSchedule
+from vel.schedule.linear_and_constant import LinearAndConstantSchedule
 from vel.util.random import set_seed
 
 from vel.rl.env.classic_atari import ClassicAtariEnv
@@ -21,24 +21,24 @@ from vel.rl.env.mujoco import MujocoEnv
 from vel.rl.vecenv.subproc import SubprocVecEnvWrapper
 from vel.rl.vecenv.dummy import DummyVecEnvWrapper
 
-from vel.rl.models.stochastic_policy_model import StochasticPolicyModelFactory
-from vel.rl.models.q_stochastic_policy_model import QStochasticPolicyModelFactory
-from vel.rl.models.q_model import QModelFactory
-from vel.rl.models.deterministic_policy_model import DeterministicPolicyModelFactory
-from vel.rl.models.stochastic_policy_model_separate import StochasticPolicyModelSeparateFactory
+from vel.rl.model.stochastic_policy_model import StochasticPolicyModelFactory
+from vel.rl.model.q_stochastic_policy_model import QStochasticPolicyModelFactory
+from vel.rl.model.q_model import QModelFactory
+from vel.rl.model.deterministic_policy_model import DeterministicPolicyModelFactory
+from vel.rl.model.stochastic_policy_model_separate import StochasticPolicyModelSeparateFactory
 
-from vel.rl.models.backbone.nature_cnn import NatureCnnFactory
-from vel.rl.models.backbone.mlp import MLPFactory
+from vel.rl.model.backbone.nature_cnn import NatureCnnFactory
+from vel.rl.model.backbone.mlp import MLPFactory
 
-from vel.rl.reinforcers.on_policy_iteration_reinforcer import (
+from vel.rl.reinforcer.on_policy_iteration_reinforcer import (
     OnPolicyIterationReinforcer, OnPolicyIterationReinforcerSettings
 )
 
-from vel.rl.reinforcers.buffered_off_policy_iteration_reinforcer import (
+from vel.rl.reinforcer.buffered_off_policy_iteration_reinforcer import (
     BufferedOffPolicyIterationReinforcer, BufferedOffPolicyIterationReinforcerSettings
 )
 
-from vel.rl.reinforcers.buffered_mixed_policy_iteration_reinforcer import (
+from vel.rl.reinforcer.buffered_mixed_policy_iteration_reinforcer import (
     BufferedMixedPolicyIterationReinforcer, BufferedMixedPolicyIterationReinforcerSettings
 )
 

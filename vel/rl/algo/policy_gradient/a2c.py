@@ -1,8 +1,8 @@
 import torch
 import torch.nn.functional as F
 
-from vel.api.metrics.averaging_metric import AveragingNamedMetric
-from vel.math.functions import explained_variance
+from vel.metric.averaging_metric import AveragingNamedMetric
+from vel.math.function import explained_variance
 from vel.rl.api import OptimizerAlgoBase, Rollout, Trajectories
 from vel.rl.discount_bootstrap import discount_bootstrap_gae
 

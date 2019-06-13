@@ -76,15 +76,9 @@ class ResNetV2(LossFunctionModel):
 
     def metrics(self):
         """ Set of metrics for this model """
-        from vel.metrics.loss_metric import Loss
-        from vel.metrics.accuracy import Accuracy
+        from vel.metric.loss_metric import Loss
+        from vel.metric.accuracy import Accuracy
         return [Loss(), Accuracy()]
-
-    def summary(self):
-        """ Print model summary """
-        # import torchsummary
-        # torchsummary.summary(self, input_size=(3, 32, 32))
-        print(self)
 
 
 def create(blocks, mode='basic', inplanes=16, divisor=4, num_classes=1000):
