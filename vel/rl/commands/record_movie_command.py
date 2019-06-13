@@ -50,7 +50,7 @@ class RecordMovieCommand:
 
         observation = env_instance.reset()
 
-        if model.is_recurrent:
+        if model.is_stateful:
             hidden_state = model.zero_state(1).to(device)
 
         frames.append(env_instance.render('rgb_array'))
@@ -61,7 +61,7 @@ class RecordMovieCommand:
             observation_array = np.expand_dims(np.array(observation), axis=0)
             observation_tensor = torch.from_numpy(observation_array).to(device)
 
-            if model.is_recurrent:
+            if model.is_stateful:
                 output = model.step(observation_tensor, hidden_state, **self.sample_args)
                 hidden_state = output['state']
                 actions = output['actions']

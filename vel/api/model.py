@@ -1,4 +1,3 @@
-import hashlib
 import torch
 import torch.nn as nn
 
@@ -34,7 +33,7 @@ class Model(nn.Module):
 
         return self
 
-    def summary(self, input_size=None, hashsummary=False):
+    def summary(self, input_size=None):
         """ Print a model summary """
 
         if input_size is None:
@@ -46,23 +45,8 @@ class Model(nn.Module):
         else:
             summary(self, input_size)
 
-        if hashsummary:
-            for idx, hashvalue in enumerate(self.hashsummary()):
-                print(f"{idx}: {hashvalue}")
-
-    def hashsummary(self):
-        """ Print a model summary - checksums of each layer parameters """
-        children = list(self.children())
-
-        result = []
-
-        for child in children:
-            result.extend(hashlib.sha256(x.detach().cpu().numpy().tobytes()).hexdigest() for x in child.parameters())
-
-        return result
-
     def get_layer_groups(self):
-        """ Return layers grouped """
+        """ Return layers grouped for optimization purposes """
         return [self]
 
     def reset_weights(self):
@@ -70,15 +54,19 @@ class Model(nn.Module):
         pass
 
     @property
-    def is_recurrent(self) -> bool:
-        """ If the network is recurrent and needs to be fed state as well as the observations """
+    def is_stateful(self) -> bool:
+        """ If the model has a state that needs to be fed between individual observations """
         return False
 
 
 class SupervisedModel(Model):
     """ Model for a supervised learning problem """
 
-    def calculate_gradient(self, x_data, y_true):
+    def calculate_gradient(self, x_data, y_true) -> dict:
+        """
+        Calculate gradient for given batch of supervised learning.
+        Returns a dictionary of metrics
+        """
         raise NotImplementedError
 
 
@@ -89,7 +77,7 @@ class LossFunctionModel(SupervisedModel):
         """ Set of metrics for this model """
         return [Loss()]
 
-    def calculate_gradient(self, x_data, y_true):
+    def calculate_gradient(self, x_data, y_true) -> dict:
         y_pred = self(x_data)
         loss_value = self.loss_value(x_data, y_true, y_pred)
 
@@ -103,7 +91,7 @@ class LossFunctionModel(SupervisedModel):
             'output': y_pred
         }
 
-    def loss_value(self, x_data, y_true, y_pred):
+    def loss_value(self, x_data, y_true, y_pred) -> torch.tensor:
         """ Calculate a value of loss function """
         raise NotImplementedError
 
@@ -114,67 +102,11 @@ class BackboneModel(Model):
 
 class LinearBackboneModel(BackboneModel):
     """
-    Model that serves as a backbone network to connect your heads to - one that spits out a single-dimension output
+    Model that serves as a backbone network to connect your heads to.
+    Has a final output of a single-dimensional linear layer.
     """
 
     @property
     def output_dim(self) -> int:
         """ Final dimension of model output """
-        raise NotImplementedError
-
-
-class RnnModel(Model):
-    """ Class representing recurrent model """
-
-    @property
-    def is_recurrent(self) -> bool:
-        """ If the network is recurrent and needs to be fed previous state """
-        return True
-
-    @property
-    def state_dim(self) -> int:
-        """ Dimension of model state """
-        raise NotImplementedError
-
-    def zero_state(self, batch_size):
-        """ Initial state of the network """
-        return torch.zeros(batch_size, self.state_dim)
-
-
-class RnnLinearBackboneModel(BackboneModel):
-    """
-    Model that serves as a backbone network to connect your heads to -
-    one that spits out a single-dimension output and is a recurrent neural network
-    """
-
-    @property
-    def is_recurrent(self) -> bool:
-        """ If the network is recurrent and needs to be fed previous state """
-        return True
-
-    @property
-    def output_dim(self) -> int:
-        """ Final dimension of model output """
-        raise NotImplementedError
-
-    @property
-    def state_dim(self) -> int:
-        """ Dimension of model state """
-        raise NotImplementedError
-
-    def zero_state(self, batch_size):
-        """ Initial state of the network """
-        return torch.zeros(batch_size, self.state_dim, dtype=torch.float32)
-
-
-class RnnSupervisedModel(RnnModel):
-    """ Model for a supervised learning problem """
-
-    def loss(self, x_data, y_true):
-        """ Forward propagate network and return a value of loss function """
-        y_pred = self(x_data)
-        return y_pred, self.loss_value(x_data, y_true, y_pred)
-
-    def loss_value(self, x_data, y_true, y_pred):
-        """ Calculate a value of loss function """
         raise NotImplementedError

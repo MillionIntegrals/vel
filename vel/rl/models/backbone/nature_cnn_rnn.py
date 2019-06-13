@@ -1,9 +1,9 @@
-from vel.api import RnnLinearBackboneModel, ModelFactory
+from vel.api import LinearBackboneModel, ModelFactory
 from vel.rl.models.backbone.nature_cnn import NatureCnn
 from vel.modules.rnn_cell import RnnCell
 
 
-class NatureCnnRnnBackbone(RnnLinearBackboneModel):
+class NatureCnnRnnBackbone(LinearBackboneModel):
     """
     Long-Short-Term Memory rnn cell together with DeepMind-style 'Nature' cnn preprocessing
     """

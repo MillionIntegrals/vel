@@ -2,7 +2,7 @@ import gym
 import torch
 import typing
 
-from vel.api import RnnLinearBackboneModel, ModelFactory, BackboneModel
+from vel.api import LinearBackboneModel, ModelFactory, BackboneModel
 from vel.modules.input.identity import IdentityFactory
 from vel.rl.api import Rollout, Trajectories, Evaluator, RlRnnModel
 from vel.rl.modules.action_head import ActionHead
@@ -54,7 +54,8 @@ class StochasticPolicyRnnModel(RlRnnModel):
     RNN version
     """
 
-    def __init__(self, input_block: BackboneModel, backbone: RnnLinearBackboneModel, action_space: gym.Space):
+    def __init__(self, input_block: BackboneModel, backbone: LinearBackboneModel,
+                 action_space: gym.Space):
         super().__init__()
 
         self.input_block = input_block
@@ -66,7 +67,7 @@ class StochasticPolicyRnnModel(RlRnnModel):
         )
         self.value_head = ValueHead(input_dim=self.backbone.output_dim)
 
-        assert self.backbone.is_recurrent, "Backbone must be a recurrent model"
+        assert self.backbone.is_stateful, "Backbone must be a recurrent model"
 
     @property
     def state_dim(self) -> int:

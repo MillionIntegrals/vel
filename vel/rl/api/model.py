@@ -25,7 +25,7 @@ class RlRnnModel(Model):
     """ Reinforcement learning recurrent model """
 
     @property
-    def is_recurrent(self) -> bool:
+    def is_stateful(self) -> bool:
         """ If the network is recurrent and needs to be fed previous state """
         return True
 

@@ -3,10 +3,10 @@ import torch.nn as nn
 import torch.nn.init as init
 
 
-from vel.api import RnnLinearBackboneModel
+from vel.api import LinearBackboneModel
 
 
-class RnnCell(RnnLinearBackboneModel):
+class RnnCell(LinearBackboneModel):
     """ Generalization of RNN cell (Simple RNN, LSTM or GRU) """
 
     def __init__(self, input_size, hidden_size, rnn_type, bias=True, nonlinearity='tanh'):

@@ -51,12 +51,12 @@ class EvaluateEnvCommand:
         observations = env.reset()
         observations_tensor = torch.from_numpy(observations).to(device)
 
-        if model.is_recurrent:
+        if model.is_stateful:
             hidden_state = model.zero_state(observations.shape[0]).to(device)
 
         with tqdm.tqdm(total=self.takes) as progress_bar:
             while len(episode_rewards) < self.takes:
-                if model.is_recurrent:
+                if model.is_stateful:
                     output = model.step(observations_tensor, hidden_state, **self.sample_args)
                     hidden_state = output['state']
                     actions = output['actions']
@@ -75,7 +75,7 @@ class EvaluateEnvCommand:
                         episode_lengths.append(info['episode']['l'])
                         progress_bar.update(1)
 
-                if model.is_recurrent:
+                if model.is_stateful:
                     # Zero state belongiong to finished episodes
                     dones_tensor = torch.from_numpy(dones.astype(np.float32)).to(device)
                     hidden_state = hidden_state * (1.0 - dones_tensor.unsqueeze(-1))

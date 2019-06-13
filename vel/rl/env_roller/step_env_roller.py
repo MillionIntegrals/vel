@@ -32,14 +32,14 @@ class StepEnvRoller(EnvRollerBase):
         accumulator = TensorAccumulator()
         episode_information = []  # List of dictionaries with episode information
 
-        if self.hidden_state is None and model.is_recurrent:
+        if self.hidden_state is None and model.is_stateful:
             self.hidden_state = model.zero_state(self.last_observation.size(0)).to(self.device)
 
         # Remember rollout initial state, we'll use that for training as well
         initial_hidden_state = self.hidden_state
 
         for step_idx in range(number_of_steps):
-            if model.is_recurrent:
+            if model.is_stateful:
                 step = model.step(self.last_observation.to(self.device), state=self.hidden_state)
                 self.hidden_state = step['state']
             else:
@@ -61,7 +61,7 @@ class StepEnvRoller(EnvRollerBase):
 
             self.last_observation = torch.from_numpy(new_obs).clone()
 
-            if model.is_recurrent:
+            if model.is_stateful:
                 # Zero out state in environments that have finished
                 self.hidden_state = self.hidden_state * (1.0 - dones_tensor.unsqueeze(-1)).to(self.device)
 
@@ -69,7 +69,7 @@ class StepEnvRoller(EnvRollerBase):
 
             episode_information.append(new_infos)
 
-        if model.is_recurrent:
+        if model.is_stateful:
             final_values = model.value(self.last_observation.to(self.device), state=self.hidden_state).cpu()
         else:
             final_values = model.value(self.last_observation.to(self.device)).cpu()

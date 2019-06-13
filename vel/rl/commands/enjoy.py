@@ -46,14 +46,14 @@ class EnjoyCommand:
 
         seconds_per_frame = 1.0 / self.fps
 
-        if model.is_recurrent:
+        if model.is_stateful:
             hidden_state = model.zero_state(1).to(device)
 
         while True:
             observation_array = np.expand_dims(np.array(observation), axis=0)
             observation_tensor = torch.from_numpy(observation_array).to(device)
 
-            if model.is_recurrent:
+            if model.is_stateful:
                 output = model.step(observation_tensor, hidden_state, **self.sample_args)
                 hidden_state = output['state']
                 actions = output['actions']

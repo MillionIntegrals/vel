@@ -1,7 +1,7 @@
-from vel.api import RnnLinearBackboneModel, ModelFactory
+from vel.api import LinearBackboneModel, ModelFactory
 
 
-class LstmBackbone(RnnLinearBackboneModel):
+class LstmBackbone(LinearBackboneModel):
     """
     Simple 'LSTM' model backbone
     """

@@ -54,7 +54,7 @@ class TransitionReplayEnvRoller(ReplayEnvRollerBase):
     @torch.no_grad()
     def rollout(self, batch_info: BatchInfo, model: RlModel, number_of_steps: int) -> Rollout:
         """ Calculate env rollout """
-        assert not model.is_recurrent, "Replay env roller does not support recurrent models"
+        assert not model.is_stateful, "Replay env roller does not support stateful models"
 
         accumulator = TensorAccumulator()
         episode_information = []  # List of dictionaries with episode information
