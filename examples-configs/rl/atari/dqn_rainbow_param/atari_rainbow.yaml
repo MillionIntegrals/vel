@@ -93,7 +93,7 @@ commands:
   record:
     name: vel.rl.commands.record_movie_command
     takes: 10
-    videoname: 'breakout_rainbow_vid_{:04}.avi'
+    videoname: 'atari_rainbow_vid_{:04}.avi'
     fps: 15
 
   evaluate:

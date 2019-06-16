@@ -78,7 +78,7 @@ commands:
   record:
     name: vel.rl.commands.record_movie_command
     takes: 10
-    videoname: 'breakout_trpo_vid_{:04}.avi'
+    videoname: 'atari_trpo_vid_{:04}.avi'
     frame_history: 4
     sample_args:
       argmax_sampling: true

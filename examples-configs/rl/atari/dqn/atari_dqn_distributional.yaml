@@ -83,7 +83,7 @@ commands:
   record:
     name: vel.rl.commands.record_movie_command
     takes: 10
-    videoname: 'breakout_vid_{:04}.avi'
+    videoname: 'atari_vid_{:04}.avi'
 
   evaluate:
     name: vel.rl.commands.evaluate_env_command

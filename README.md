@@ -34,7 +34,7 @@ into a structure that is designed to be reused rather than copied over.
 As a goal, it should be enough to write a config file that
 wires existing components together and defines their hyperparameters
 for most common applications.
-If that's not the case few bits of custom glue code should do the job.
+If that's not the case few bits of custom glue code should do the jobatari.
 
 
 This repository is still in an early stage of that journey but it will grow
@@ -55,16 +55,14 @@ pip install -e .
 ```
 from the repository root directory.
 
-This project requires Python at least 3.6 and PyTorch 1.0.
+This project requires Python at least 3.6 and PyTorch 1.1.
 If you want to run YAML config examples, you'll also need a **project configuration file**
 `.velproject.yaml`. An example is included in this repository.
 
-Default project configuration writes
-metrics to MongoDB instance open on localhost port 27017 and Visdom instance 
-on localhost port 8097. 
+Default project configuration writes logs to the tensorboard directory `output/tensorboard`
+under the main directory. Outputs to visdom and mongodb are also implemented.
 
-If you don't want to run these services, there is included
-another example file `.velproject.dummy.yaml`
+If you don't want any logging, there is included another example file `.velproject.dummy.yaml`
 that writes training progress to the standard output only.
 To use it, just rename it to `.velproject.yaml`.
 

@@ -84,7 +84,7 @@ commands:
     name: vel.rl.commands.record_movie_command
     takes: 10
     fps: 15
-    videoname: 'asterix_vid_{:04}.avi'
+    videoname: 'atari_vid_{:04}.avi'
 
   evaluate:
     name: vel.rl.commands.evaluate_env_command
