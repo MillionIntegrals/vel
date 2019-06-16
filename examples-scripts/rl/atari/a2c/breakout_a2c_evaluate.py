@@ -51,7 +51,7 @@ def record_take(model, env_instance, device):
     while True:
         observation_array = np.expand_dims(np.array(observation), axis=0)
         observation_tensor = torch.from_numpy(observation_array).to(device)
-        actions = model.step(observation_tensor, argmax_sampling=True)['actions']
+        actions = model.step(observation_tensor, deterministic=True)['actions']
 
         observation, reward, done, epinfo = env_instance.step(actions.item())
 

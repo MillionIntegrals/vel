@@ -84,7 +84,7 @@ class TrpoPolicyGradient(AlgoBase):
 
         return rollout
 
-    def optimizer_step(self, batch_info, device, model, rollout):
+    def optimize(self, batch_info, device, model, rollout):
         """ Single optimization step for a model """
         rollout = rollout.to_transitions()
 

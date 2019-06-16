@@ -1,0 +1,70 @@
+name: 'atari_a2c'
+
+
+env:
+  name: vel.rl.env.classic_atari
+  game: !param game = 'BreakoutNoFrameskip-v4'
+
+
+vec_env:
+  name: vel.rl.vecenv.shared_mem
+  frame_history: 4  # How many stacked frames go into a single observation
+
+
+model:
+  name: vel.rl.policy.stochastic_policy
+
+  input_block:
+    name: vel.module.input.image_to_tensor
+
+  backbone:
+    name: vel.rl.backbone.nature_cnn
+
+    input_width: 84
+    input_height: 84
+    input_channels: 4  # The same as frame_history
+
+
+reinforcer:
+  name: vel.rl.reinforcer.on_policy_iteration_reinforcer
+
+  algo:
+    name: vel.rl.algo.policy_gradient.a2c
+    entropy_coefficient: 0.01
+    value_coefficient: 0.5
+    max_grad_norm: 0.5
+    discount_factor: 0.99
+
+  env_roller:
+    name: vel.rl.env_roller.step_env_roller
+
+  number_of_steps: 5 # How many environment steps go into a single batch
+  parallel_envs: 16 # How many environments to run in parallel
+
+
+optimizer:
+  name: vel.optimizer.rmsprop
+  lr: 7.0e-4
+  alpha: 0.99
+  epsilon: 1.0e-3
+
+
+commands:
+  train:
+    name: vel.rl.command.rl_train_command
+    total_frames: 1.1e7
+    batches_per_epoch: 100
+
+  record:
+    name: vel.rl.command.record_movie_command
+    takes: 10
+    videoname: 'atari_vid_{:04}.avi'
+
+  evaluate:
+    name: vel.rl.command.evaluate_env_command
+    parallel_envs: 16 # How many environments to run in parallel
+
+    takes: 20
+
+  visdom:
+    name: vel.command.vis_store_command

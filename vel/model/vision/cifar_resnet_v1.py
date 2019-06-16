@@ -7,7 +7,7 @@ import torch.nn as nn
 import torch.nn.functional as F
 
 from vel.api import LossFunctionModel, ModelFactory
-from vel.modules.resnet_v1 import Bottleneck, BasicBlock
+from vel.module.resnet_v1 import Bottleneck, BasicBlock
 
 
 class ResNetV1(LossFunctionModel):

@@ -146,7 +146,7 @@ class BufferedOffPolicyIterationReinforcer(ReinforcerBase):
         for i in range(self.settings.training_rounds):
             sampled_rollout = self.env_roller.sample(batch_info, self.model, self.settings.training_steps)
 
-            batch_result = self.algo.optimizer_step(
+            batch_result = self.algo.optimize(
                 batch_info=batch_info,
                 device=self.device,
                 model=self.model,

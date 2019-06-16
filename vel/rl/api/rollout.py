@@ -176,7 +176,7 @@ class Trajectories(Rollout):
         """ Number of frames in rollout """
         return self.num_steps * self.num_envs
 
-    def to_device(self, device, non_blocking=True):
+    def to_device(self, device, non_blocking=False):
         """ Move a rollout to a selected device """
         return Trajectories(
             num_steps=self.num_steps,

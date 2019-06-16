@@ -46,6 +46,10 @@ class RnnCell(LinearBackboneModel):
         else:
             return self.hidden_size
 
+    def zero_state(self, batch_size):
+        """ Potential state for the model """
+        return torch.zeros(batch_size, self.state_dim)
+
     def forward(self, input_data, state):
         if self.rnn_type == 'lstm':
             hidden_state, cell_state = torch.split(state, self.hidden_size, 1)

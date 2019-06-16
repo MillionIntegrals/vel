@@ -27,8 +27,8 @@ from vel.rl.model.q_model import QModelFactory
 from vel.rl.model.deterministic_policy_model import DeterministicPolicyModelFactory
 from vel.rl.model.stochastic_policy_model_separate import StochasticPolicyModelSeparateFactory
 
-from vel.rl.model.backbone.nature_cnn import NatureCnnFactory
-from vel.rl.model.backbone.mlp import MLPFactory
+from vel.rl.backbone.nature_cnn import NatureCnnFactory
+from vel.rl.backbone.mlp import MLPFactory
 
 from vel.rl.reinforcer.on_policy_iteration_reinforcer import (
     OnPolicyIterationReinforcer, OnPolicyIterationReinforcerSettings

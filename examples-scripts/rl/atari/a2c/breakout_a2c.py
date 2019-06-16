@@ -8,12 +8,12 @@ from vel.util.random import set_seed
 from vel.rl.env.classic_atari import ClassicAtariEnv
 from vel.rl.vecenv.subproc import SubprocVecEnvWrapper
 
-from vel.modules.input.image_to_tensor import ImageToTensorFactory
-from vel.rl.models.stochastic_policy_model import StochasticPolicyModelFactory
-from vel.rl.models.backbone.nature_cnn import NatureCnnFactory
+from vel.module.input.image_to_tensor import ImageToTensorFactory
+from vel.rl.policy.stochastic_policy import StochasticPolicy
+from vel.rl.backbone.nature_cnn import NatureCnnFactory
 
 
-from vel.rl.reinforcers.on_policy_iteration_reinforcer import (
+from vel.rl.reinforcer.on_policy_iteration_reinforcer import (
     OnPolicyIterationReinforcer, OnPolicyIterationReinforcerSettings
 )
 
@@ -39,7 +39,7 @@ def breakout_a2c():
     # Again, use a helper to create a model
     # But because model is owned by the reinforcer, model should not be accessed using this variable
     # but from reinforcer.model property
-    model = StochasticPolicyModelFactory(
+    model = StochasticPolicy(
         input_block=ImageToTensorFactory(),
         backbone=NatureCnnFactory(input_width=84, input_height=84, input_channels=4)
     ).instantiate(action_space=vec_env.action_space)

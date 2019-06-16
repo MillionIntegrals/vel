@@ -2,12 +2,16 @@ storage:
   name: vel.storage.classic
 
   backend:
-    name: vel.storage.backend.mongodb
-    uri: 'mongodb://localhost:27017/'
-    database: deep_learning
+    name: vel.storage.backend.dummy
+
+#    Other potential setting
+#    name: vel.storage.backend.mongodb
+#    uri: 'mongodb://localhost:27017/'
+#    database: deep_learning
 
   streaming:
-    - name: vel.storage.streaming.visdom
+    - name: vel.storage.streaming.tensorboard
+#    - name: vel.storage.streaming.visdom
     - name: vel.storage.streaming.stdout
 
 

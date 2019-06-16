@@ -1,5 +1,5 @@
 from vel.api import LinearBackboneModel, ModelFactory
-from vel.modules.layers import OneHotEncode
+from vel.module.layers import OneHotEncode
 
 
 class OneHotEncodingInput(LinearBackboneModel):

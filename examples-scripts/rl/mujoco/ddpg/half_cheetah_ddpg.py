@@ -11,7 +11,7 @@ from vel.storage.streaming.stdout import StdoutStreaming
 from vel.util.random import set_seed
 from vel.rl.env.mujoco import MujocoEnv
 from vel.rl.model.deterministic_policy_model import DeterministicPolicyModelFactory
-from vel.rl.model.backbone.mlp import MLPFactory
+from vel.rl.backbone.mlp import MLPFactory
 from vel.rl.reinforcer.buffered_off_policy_iteration_reinforcer import (
     BufferedOffPolicyIterationReinforcer, BufferedOffPolicyIterationReinforcerSettings
 )

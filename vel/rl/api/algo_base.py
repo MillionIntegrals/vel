@@ -25,7 +25,7 @@ class AlgoBase:
         """ Process rollout for ALGO before any chunking/shuffling  """
         return rollout
 
-    def optimizer_step(self, batch_info, device, model, rollout):
+    def optimize(self, batch_info, device, model, rollout):
         """ Single optimization step for a model """
         raise NotImplementedError
 
@@ -48,7 +48,7 @@ class OptimizerAlgoBase(AlgoBase):
         """ Steps to take after optimization has been done"""
         pass
 
-    def optimizer_step(self, batch_info, device, model, rollout):
+    def optimize(self, batch_info, device, model, rollout):
         """ Single optimization step for a model """
         batch_info.optimizer.zero_grad()
 

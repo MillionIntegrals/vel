@@ -5,7 +5,10 @@ import torch
 import tqdm
 
 from vel.api import Model, ModelFactory, TrainingInfo, EpochInfo, BatchInfo
-from vel.rl.api import ReinforcerBase, ReinforcerFactory, VecEnvFactory, EnvRollerFactoryBase, EnvRollerBase, AlgoBase
+from vel.rl.api import (
+    ReinforcerBase, ReinforcerFactory, VecEnvFactory, EnvRollerFactoryBase, EnvRollerBase, AlgoBase,
+    Policy
+)
 from vel.rl.metrics import (
     FPSMetric, EpisodeLengthMetric, EpisodeRewardMetricQuantile,
     EpisodeRewardMetric, FramesMetric
@@ -32,15 +35,15 @@ class OnPolicyIterationReinforcer(ReinforcerBase):
     A reinforcer that calculates on-policy environment rollouts and uses them to train policy directly.
     May split the sample into multiple batches and may replay batches a few times.
     """
-    def __init__(self, device: torch.device, settings: OnPolicyIterationReinforcerSettings, model: Model,
+    def __init__(self, device: torch.device, settings: OnPolicyIterationReinforcerSettings, policy: Policy,
                  algo: AlgoBase, env_roller: EnvRollerBase) -> None:
         self.device = device
         self.settings = settings
 
-        self._trained_model = model.to(self.device)
-
         self.env_roller = env_roller
         self.algo = algo
+
+        self._trained_model = policy.to(self.device)
 
     def metrics(self) -> list:
         """ List of metrics to track for this learning process """
@@ -53,7 +56,7 @@ class OnPolicyIterationReinforcer(ReinforcerBase):
             EpisodeLengthMetric("episode_length"),
         ]
 
-        return my_metrics + self.algo.metrics() + self.env_roller.metrics()
+        return my_metrics + self.algo.metrics() + self.env_roller.metrics() + self.model.metrics()
 
     @property
     def model(self) -> Model:
@@ -102,7 +105,7 @@ class OnPolicyIterationReinforcer(ReinforcerBase):
         # Calculate environment rollout on the evaluation version of the model
         self.model.train()
 
-        rollout = self.env_roller.rollout(batch_info, self.model, self.settings.number_of_steps)
+        rollout = self.env_roller.rollout(batch_info, self.settings.number_of_steps)
 
         # Process rollout by the 'algo' (e.g. perform the advantage estimation)
         rollout = self.algo.process_rollout(batch_info, rollout)
@@ -124,7 +127,7 @@ class OnPolicyIterationReinforcer(ReinforcerBase):
         for i in range(experience_replay_count):
             # We may potentially need to split rollout into multiple batches
             if self.settings.batch_size >= rollout.frames():
-                batch_result = self.algo.optimizer_step(
+                batch_result = self.algo.optimize(
                     batch_info=batch_info,
                     device=self.device,
                     model=self.model,
@@ -135,7 +138,7 @@ class OnPolicyIterationReinforcer(ReinforcerBase):
             else:
                 # Rollout too big, need to split in batches
                 for batch_rollout in rollout.shuffled_batches(self.settings.batch_size):
-                    batch_result = self.algo.optimizer_step(
+                    batch_result = self.algo.optimize(
                         batch_info=batch_info,
                         device=self.device,
                         model=self.model,
@@ -166,10 +169,9 @@ class OnPolicyIterationReinforcerFactory(ReinforcerFactory):
 
     def instantiate(self, device: torch.device) -> ReinforcerBase:
         env = self.env_factory.instantiate(parallel_envs=self.parallel_envs, seed=self.seed)
-        env_roller = self.env_roller_factory.instantiate(environment=env, device=device)
-        model = self.model_factory.instantiate(action_space=env.action_space)
-
-        return OnPolicyIterationReinforcer(device, self.settings, model, self.algo, env_roller)
+        policy = self.model_factory.instantiate(action_space=env.action_space)
+        env_roller = self.env_roller_factory.instantiate(environment=env, policy=policy, device=device)
+        return OnPolicyIterationReinforcer(device, self.settings, policy, self.algo, env_roller)
 
 
 def create(model_config, model, vec_env, algo, env_roller, parallel_envs, number_of_steps,

@@ -16,3 +16,17 @@ def merge_first_two_dims(tensor):
     batch_size = shape[0] * shape[1]
     new_shape = tuple([batch_size] + list(shape[2:]))
     return tensor.view(new_shape)
+
+
+def to_device(tensor, device: torch.device):
+    """ Convert tensor-like object to given PyTorch device """
+    if tensor is None:
+        return tensor
+    elif isinstance(tensor, torch.Tensor):
+        return tensor.to(device)
+    elif isinstance(tensor, dict):
+        return {k: to_device(v, device) for k, v in tensor.items()}
+    elif isinstance(tensor, list):
+        return [to_device(v, device) for v in tensor]
+    else:
+        raise NotImplementedError

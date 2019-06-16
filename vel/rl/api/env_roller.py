@@ -1,20 +1,19 @@
 import typing
-import gym
 
-from vel.rl.api.rollout import Rollout
-from vel.api import BatchInfo, Model
+from vel.api import BatchInfo
 from vel.openai.baselines.common.vec_env import VecEnv
+from vel.rl.api.rollout import Rollout
 
 
 class EnvRollerBase:
     """ Class generating environment rollouts """
 
     @property
-    def environment(self) -> typing.Union[gym.Env, VecEnv]:
+    def environment(self) -> VecEnv:
         """ Reference to environment being evaluated """
         raise NotImplementedError
 
-    def rollout(self, batch_info: BatchInfo, model: Model, number_of_steps: int) -> Rollout:
+    def rollout(self, batch_info: BatchInfo, number_of_steps: int) -> Rollout:
         """ Roll-out the environment and return it """
         raise NotImplementedError
 
@@ -27,7 +26,7 @@ class EnvRollerBase:
 class ReplayEnvRollerBase(EnvRollerBase):
     """ Class generating environment rollouts with experience replay """
 
-    def sample(self, batch_info: BatchInfo, model: Model, number_of_steps: int) -> Rollout:
+    def sample(self, batch_info: BatchInfo, number_of_steps: int) -> Rollout:
         """ Sample experience from replay buffer and return a batch """
         raise NotImplementedError
 
@@ -47,7 +46,7 @@ class ReplayEnvRollerBase(EnvRollerBase):
 class EnvRollerFactoryBase:
     """ Factory for env rollers """
 
-    def instantiate(self, environment, device) -> EnvRollerBase:
+    def instantiate(self, environment, policy, device) -> EnvRollerBase:
         """ Instantiate env roller """
         raise NotImplementedError
 
@@ -55,6 +54,6 @@ class EnvRollerFactoryBase:
 class ReplayEnvRollerFactoryBase(EnvRollerFactoryBase):
     """ Factory for env rollers """
 
-    def instantiate(self, environment, device) -> ReplayEnvRollerBase:
+    def instantiate(self, environment, policy, device) -> ReplayEnvRollerBase:
         """ Instantiate env roller """
         raise NotImplementedError

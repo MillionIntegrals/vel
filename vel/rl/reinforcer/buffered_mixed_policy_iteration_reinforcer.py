@@ -115,7 +115,7 @@ class BufferedMixedPolicyIterationReinforcer(ReinforcerBase):
 
         rollout = self.env_roller.rollout(batch_info, self.model, self.settings.number_of_steps).to_device(self.device)
 
-        batch_result = self.algo.optimizer_step(
+        batch_result = self.algo.optimize(
             batch_info=batch_info,
             device=self.device,
             model=self.model,
@@ -132,7 +132,7 @@ class BufferedMixedPolicyIterationReinforcer(ReinforcerBase):
 
         rollout = self.env_roller.sample(batch_info, self.model, self.settings.number_of_steps).to_device(self.device)
 
-        batch_result = self.algo.optimizer_step(
+        batch_result = self.algo.optimize(
             batch_info=batch_info,
             device=self.device,
             model=self.model,

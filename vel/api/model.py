@@ -58,6 +58,10 @@ class Model(nn.Module):
         """ If the model has a state that needs to be fed between individual observations """
         return False
 
+    def zero_state(self, batch_size):
+        """ Potential state for the model """
+        return None
+
 
 class SupervisedModel(Model):
     """ Model for a supervised learning problem """
