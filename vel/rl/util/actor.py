@@ -9,7 +9,7 @@ class PolicyActor:
 
     def __init__(self, num_envs: int, policy: Policy, device: torch.device):
         self.num_envs = num_envs
-        self.policy = policy
+        self.policy = policy.to(device)
         self.device = device
         self.state = to_device(self.policy.zero_state(num_envs), self.device)
 
