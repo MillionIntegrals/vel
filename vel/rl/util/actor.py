@@ -34,3 +34,8 @@ class PolicyActor:
     def value(self, observation):
         """ Return value for provided observations """
         return self.policy.value(observation, state=self.state)
+
+    @property
+    def is_stateful(self) -> bool:
+        """ If the model has a state that needs to be fed between individual observations """
+        return self.policy.is_stateful
