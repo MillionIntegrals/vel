@@ -112,6 +112,12 @@ class ModelConfig:
             del self.contents['commands']
 
         self.provider = Provider(self._prepare_environment(), {'model_config': self}, parameters=parameters)
+
+        if self.provider.has_name('output_directory'):
+            self.output_directory_name = self.provider.get("output_directory")
+        else:
+            self.output_directory_name = 'output'
+
         self._model_name = self.provider.get("name")
 
     def _prepare_environment(self) -> dict:
@@ -153,7 +159,7 @@ class ModelConfig:
 
     def output_dir(self, *args) -> str:
         """ Directory where to store output """
-        return os.path.join(self.project_dir, 'output', *args)
+        return os.path.join(self.project_dir, self.output_directory_name, *args)
 
     def project_top_dir(self, *args) -> str:
         """ Project top-level directory """
