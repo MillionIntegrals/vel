@@ -24,5 +24,3 @@ def create():
 
 # Scripting interface
 FlattenInputFactory = create
-
-
