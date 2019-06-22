@@ -41,12 +41,16 @@ setup(
     ],
     extras_require={
         'visdom': ['visdom'],
+        'tensorboard': ['tb-nightly'],
         'mongo': ['pymongo', 'dnspython'],
         'gym': ['gym[atari,box2d,classic_control]'],
         'mujoco': ['gym[mujoco,robotics]'],
         'dev': ['pytest', 'ipython', 'jupyter', 'pip-tools', 'flake8', 'pytest-xdist'],
         'text': ['spacy'],
-        'all': ['visdom', 'pymongo', 'dnspython', 'gym[all]', 'pytest', 'spacy', 'ipython', 'jupyter']
+        'all': [
+            'visdom', 'pymongo', 'dnspython', 'gym[all]', 'pytest', 'spacy', 'ipython', 'jupyter',
+            'pip-tools', 'flake8', 'pytest-xdist', 'tb-nightly'
+        ]
     },
     tests_require=[
         'pytest'
