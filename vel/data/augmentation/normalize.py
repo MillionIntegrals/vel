@@ -3,7 +3,7 @@ import numpy as np
 import vel.api as api
 
 
-class Normalize(api.Augmentation):
+class Normalize(api.Transformation):
     """ Normalize input mean and standard deviation """
 
     def __init__(self, mean, std, mode='x', tags=None):

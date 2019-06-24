@@ -63,10 +63,10 @@ class Model(nn.Module):
         return None
 
 
-class SupervisedModel(Model):
+class GradientModel(Model):
     """ Model for a supervised learning problem """
 
-    def calculate_gradient(self, x_data, y_true) -> dict:
+    def calculate_gradient(self, data: dict) -> dict:
         """
         Calculate gradient for given batch of supervised learning.
         Returns a dictionary of metrics
@@ -74,25 +74,25 @@ class SupervisedModel(Model):
         raise NotImplementedError
 
 
-class LossFunctionModel(SupervisedModel):
+class LossFunctionModel(GradientModel):
     """ Model for a supervised learning with a simple loss function """
 
     def metrics(self) -> list:
         """ Set of metrics for this model """
         return [Loss()]
 
-    def calculate_gradient(self, x_data, y_true) -> dict:
-        y_pred = self(x_data)
-        loss_value = self.loss_value(x_data, y_true, y_pred)
+    def calculate_gradient(self, data: dict) -> dict:
+        y_hat = self(data['x'])
+        loss_value = self.loss_value(data['x'], data['y'], y_hat)
 
         if self.training:
             loss_value.backward()
 
         return {
             'loss': loss_value.item(),
-            'data': x_data,
-            'target': y_true,
-            'output': y_pred
+            'data': data['x'],
+            'target': data['y'],
+            'output': y_hat
         }
 
     def loss_value(self, x_data, y_true, y_pred) -> torch.tensor:

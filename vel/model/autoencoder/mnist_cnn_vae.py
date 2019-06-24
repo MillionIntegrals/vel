@@ -7,13 +7,13 @@ import torch.nn.functional as F
 
 import vel.util.network as net_util
 
-from vel.api import SupervisedModel, ModelFactory
+from vel.api import GradientModel, ModelFactory
 from vel.metric.averaging_metric import AveragingNamedMetric
 from vel.metric.loss_metric import Loss
 from vel.module.layers import Flatten, Reshape
 
 
-class MnistCnnVAE(SupervisedModel):
+class MnistCnnVAE(GradientModel):
     """
     A simple MNIST variational autoencoder, containing 3 convolutional layers.
     """

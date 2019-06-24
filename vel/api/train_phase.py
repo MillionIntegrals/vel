@@ -1,6 +1,7 @@
 from torch.optim import Optimizer
 
-from vel.api import TrainingInfo, EpochInfo, Learner, Model, Source
+from vel.api import TrainingInfo, EpochInfo, Model, Source
+from vel.train import Trainer
 
 
 class TrainPhase:
@@ -25,7 +26,7 @@ class TrainPhase:
         """ Create Epoch info """
         raise NotImplementedError
 
-    def execute_epoch(self, epoch_info: EpochInfo, learner: Learner):
+    def execute_epoch(self, epoch_info: EpochInfo, trainer: Trainer):
         """
         Execute epoch training.
         """

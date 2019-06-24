@@ -4,14 +4,16 @@ import torch.nn
 import tqdm
 import typing
 
-from .model import SupervisedModel
-from .info import BatchInfo, EpochInfo, TrainingInfo
-from .source import Source
+from vel.api import GradientModel, TrainingInfo, EpochInfo, BatchInfo
+from vel.data import Loader
+
+from vel.util.tensor_util import to_device
 
 
-class Learner:
+class Trainer:
     """ Manages training process of a single model """
-    def __init__(self, device: torch.device, model: SupervisedModel, max_grad_norm: typing.Optional[float] = None):
+
+    def __init__(self, device: torch.device, model: GradientModel, max_grad_norm: typing.Optional[float] = None):
         self.device = device
         self.model = model.to(device)
         self.max_grad_norm = max_grad_norm
@@ -43,64 +45,67 @@ class Learner:
         else:
             self.model.load_state_dict(model_state)
 
-    def run_epoch(self, epoch_info: EpochInfo, source: 'Source'):
+    def run_epoch(self, epoch_info: EpochInfo, loader: Loader):
         """ Run full epoch of learning """
         epoch_info.on_epoch_begin()
 
         lr = epoch_info.optimizer.param_groups[-1]['lr']
         print("|-------- Epoch {:06} Lr={:.6f} ----------|".format(epoch_info.global_epoch_idx, lr))
 
-        self.train_epoch(epoch_info, source)
+        self.train_epoch(epoch_info, loader)
         epoch_info.result_accumulator.freeze_results('train')
 
-        self.validation_epoch(epoch_info, source)
+        self.validation_epoch(epoch_info, loader)
         epoch_info.result_accumulator.freeze_results('val')
 
         epoch_info.on_epoch_end()
 
-    def train_epoch(self, epoch_info, source: 'Source', interactive=True):
+    def train_epoch(self, epoch_info, loader: Loader, interactive=True):
         """ Run a single training epoch """
         self.train()
 
         if interactive:
-            iterator = tqdm.tqdm(source.train_loader, desc="Training", unit="iter", file=sys.stdout)
+            iterator = tqdm.tqdm(loader['train'], desc="Training", unit="iter", file=sys.stdout)
         else:
-            iterator = source.train_loader
+            iterator = loader['train']
 
-        for batch_idx, (data, target) in enumerate(iterator):
+        for batch_idx, data in enumerate(iterator):
             batch_info = BatchInfo(epoch_info, batch_idx)
 
             batch_info.on_batch_begin()
-            self.train_batch(batch_info, data, target)
+            self.train_batch(batch_info, data)
             batch_info.on_batch_end()
 
             iterator.set_postfix(loss=epoch_info.result_accumulator.intermediate_value('loss'))
 
-    def validation_epoch(self, epoch_info, source: 'Source'):
+    def validation_epoch(self, epoch_info, loader: Loader, interactive=True):
         """ Run a single evaluation epoch """
         self.eval()
 
-        iterator = tqdm.tqdm(source.val_loader, desc="Validation", unit="iter", file=sys.stdout)
+        if interactive:
+            iterator = tqdm.tqdm(loader['val'], desc="Training", unit="iter", file=sys.stdout)
+        else:
+            iterator = loader['val']
 
         with torch.no_grad():
-            for batch_idx, (data, target) in enumerate(iterator):
+            for batch_idx, data in enumerate(iterator):
                 batch_info = BatchInfo(epoch_info, batch_idx)
 
                 batch_info.on_validation_batch_begin()
-                self.feed_batch(batch_info, data, target)
+                self.feed_batch(batch_info, data)
                 batch_info.on_validation_batch_end()
 
-    def feed_batch(self, batch_info, data, target):
+    def feed_batch(self, batch_info, data):
         """ Run single batch of data """
-        data, target = data.to(self.device), target.to(self.device)
-        metrics = self.model.calculate_gradient(data, target)
+        data = to_device(data, self.device)  # Move a data batch into the right device
+        metrics = self.model.calculate_gradient(data)
 
         batch_info.update(metrics)
 
-    def train_batch(self, batch_info, data, target):
+    def train_batch(self, batch_info, data):
         """ Train single batch of data """
         batch_info.optimizer.zero_grad()
-        self.feed_batch(batch_info, data, target)
+        self.feed_batch(batch_info, data)
 
         if self.max_grad_norm is not None:
             batch_info['grad_norm'] = torch.nn.utils.clip_grad_norm_(

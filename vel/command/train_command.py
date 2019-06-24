@@ -1,6 +1,8 @@
 import typing
 
 import vel.api as api
+import vel.data as data
+import vel.train as train
 
 from vel.callback.time_tracker import TimeTracker
 
@@ -10,7 +12,7 @@ class SimpleTrainCommand:
 
     def __init__(self, epochs: int, model_config: api.ModelConfig, model_factory: api.ModelFactory,
                  optimizer_factory: api.OptimizerFactory, scheduler_factory: typing.Optional[api.SchedulerFactory],
-                 source: api.Source, storage: api.Storage, callbacks: typing.Optional[typing.List[api.Callback]],
+                 loader: data.Loader, storage: api.Storage, callbacks: typing.Optional[typing.List[api.Callback]],
                  max_grad_norm: typing.Optional[float]):
         self.epochs = epochs
         self.model_config = model_config
@@ -19,7 +21,7 @@ class SimpleTrainCommand:
         self.optimizer_factory = optimizer_factory
         self.scheduler_factory = scheduler_factory
 
-        self.source = source
+        self.loader = loader
         self.storage = storage
         self.callbacks = callbacks if callbacks is not None else []
         self.max_grad_norm = max_grad_norm
@@ -28,7 +30,7 @@ class SimpleTrainCommand:
         """ Run the command with supplied configuration """
         device = self.model_config.torch_device()
 
-        learner = api.Learner(device, self.model_factory.instantiate(), self.max_grad_norm)
+        learner = train.Trainer(device, self.model_factory.instantiate(), self.max_grad_norm)
         optimizer = self.optimizer_factory.instantiate(learner.model)
 
         # All callbacks used for learning
@@ -49,12 +51,12 @@ class SimpleTrainCommand:
             epoch_info = api.EpochInfo(
                 training_info=training_info,
                 global_epoch_idx=global_epoch_idx,
-                batches_per_epoch=self.source.train_iterations_per_epoch,
+                batches_per_epoch=self.loader.size['train'],
                 optimizer=optimizer
             )
 
             # Execute learning
-            learner.run_epoch(epoch_info, self.source)
+            learner.run_epoch(epoch_info, self.loader)
 
             self.storage.checkpoint(epoch_info, learner.model)
 
@@ -99,7 +101,7 @@ class SimpleTrainCommand:
         return training_info
 
 
-def create(model_config, epochs, optimizer, model, source, storage, scheduler=None, callbacks=None, max_grad_norm=None):
+def create(model_config, epochs, optimizer, model, loader, storage, scheduler=None, callbacks=None, max_grad_norm=None):
     """ Vel factory function """
     return SimpleTrainCommand(
         epochs=epochs,
@@ -107,7 +109,7 @@ def create(model_config, epochs, optimizer, model, source, storage, scheduler=No
         model_factory=model,
         optimizer_factory=optimizer,
         scheduler_factory=scheduler,
-        source=source,
+        loader=loader,
         storage=storage,
         callbacks=callbacks,
         max_grad_norm=max_grad_norm

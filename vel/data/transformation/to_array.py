@@ -1,15 +1,13 @@
 import numpy as np
 
-import vel.data as data
+from vel.api.transformation import ScopedTransformation
 
 
-class ToArray(data.Augmentation):
+class ToArray(ScopedTransformation):
     """ Convert image to an array of floats """
-    def __init__(self, mode='x', tags=None):
-        super().__init__(mode, tags)
 
-    def __call__(self, x_data):
-        array = np.array(x_data)
+    def transform(self, value):
+        array = np.array(value)
 
         if array.dtype == np.uint8:
             return array.astype(np.float32) / 255.0

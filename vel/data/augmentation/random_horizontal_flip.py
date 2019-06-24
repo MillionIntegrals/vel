@@ -4,7 +4,7 @@ import numpy as np
 import vel.api as api
 
 
-class RandomHorizontalFlip(api.Augmentation):
+class RandomHorizontalFlip(api.Transformation):
     """ Apply a horizontal flip randomly to input images """
 
     def __init__(self, p=0.5, mode='x', tags=None):

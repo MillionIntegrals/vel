@@ -4,7 +4,7 @@ import vel.api as api
 import vel.data as data
 
 
-class RandomLighting(api.Augmentation):
+class RandomLighting(api.Transformation):
     """ Apply a horizontal flip randomly to input images """
 
     def __init__(self, b, c, mode='x', tags=None):
