@@ -3,8 +3,8 @@ from .base_metric import BaseMetric
 
 class SummingMetric(BaseMetric):
     """ Base class for metrics that simply calculate the sum over the epoch """
-    def __init__(self, name, reset_value=True):
-        super().__init__(name)
+    def __init__(self, name, scope="general", reset_value=True):
+        super().__init__(name, scope=scope)
 
         self.reset_value = reset_value
         self.buffer = 0

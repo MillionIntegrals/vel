@@ -116,34 +116,28 @@ class EpochResultAccumulator:
         for m in self.metrics:
             m.reset()
 
-    def value(self):
-        """ Return current value of the metrics """
-        return {m.name: m.value() for m in self.metrics}
+    def value(self, dataset=None):
+        """ Return current dictionary value of the metrics """
+        from vel.metric import MetricKey
+        return {MetricKey(dataset, m.name, m.scope): m.value() for m in self.metrics}
 
     def intermediate_value(self, metric):
         """ Return an intermediate (inter-epoch) value of a metric """
         if ':' in metric:
+            # TODO(jerry) There's got to be a better way to do it
             metric_name = metric.split(':')[-1]
         else:
             metric_name = metric
 
         return self.metrics_by_name[metric_name].value()
 
-    def freeze_results(self, name=None):
-        new_results = self.value()
-
-        if name is None:
-            for key, value in new_results.items():
-                self.frozen_results[key] = value
-        else:
-            for key, value in new_results.items():
-                self.frozen_results[f'{name}:{key}'] = value
-
+    def freeze_results(self, dataset=None):
+        self.frozen_results.update(self.value(dataset))
         self._reset_metrics()
 
     def result(self):
         """ Return the epoch result """
-        final_result = {'epoch_idx': self.global_epoch_idx}
+        final_result = {}
 
         for key, value in self.frozen_results.items():
             final_result[key] = value

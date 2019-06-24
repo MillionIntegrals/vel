@@ -1,7 +1,7 @@
 import os
 import shutil
 
-from vel.api import ModelConfig, Callback, TrainingInfo
+from vel.api import ModelConfig, Callback, TrainingInfo, EpochInfo
 from torch.utils.tensorboard import SummaryWriter
 
 
@@ -18,21 +18,27 @@ class TensorboardStreaming(Callback):
             if os.path.exists(self.logdir):
                 shutil.rmtree(self.logdir)
 
-    def on_epoch_end(self, epoch_info):
+    def on_epoch_end(self, epoch_info: EpochInfo):
         """ Push data to tensorboard on push """
-        summary_writer = SummaryWriter(log_dir=self.logdir)
+        head_set = sorted({x.dataset for x in epoch_info.result.keys()})
 
-        for key, value in epoch_info.result.items():
-            if key == 'epoch_idx':
-                continue
+        for head in head_set:
+            if head is None:
+                summary_writer = SummaryWriter(log_dir=os.path.join(self.logdir, "generic"))
+            else:
+                summary_writer = SummaryWriter(log_dir=os.path.join(self.logdir, head))
 
-            summary_writer.add_scalar(
-                tag=key,
-                scalar_value=value,
-                global_step=epoch_info.global_epoch_idx,
-            )
+            for key, value in epoch_info.result.items():
+                if key.dataset == head:
+                    tag = '{}/{}'.format(key.scope, key.name)
 
-        summary_writer.close()
+                    summary_writer.add_scalar(
+                        tag=tag,
+                        scalar_value=value,
+                        global_step=epoch_info.global_epoch_idx,
+                    )
+
+            summary_writer.close()
 
 
 def create(model_config):

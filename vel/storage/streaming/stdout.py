@@ -9,33 +9,32 @@ class StdoutStreaming(Callback):
         else:
             print(f"=>>>>>>>>>> EPOCH {epoch_info.global_epoch_idx}")
 
-        if any(':' not in x for x in epoch_info.result.keys()):
-            self._print_metrics_line(epoch_info.result, head=None)
+        if any(x.dataset is None for x in epoch_info.result.keys()):
+            self._print_metrics_line(epoch_info.result, dataset=None)
 
-        head_set = sorted({x.split(':')[0] + ':' for x in epoch_info.result.keys() if ':' in x})
+        head_set = sorted({x.dataset for x in epoch_info.result.keys() if x.dataset is not None})
 
         for head in head_set:
-            if any(x.startswith(head) for x in epoch_info.result.keys()):
-                self._print_metrics_line(epoch_info.result, head)
+            self._print_metrics_line(epoch_info.result, head)
 
         print(f"=>>>>>>>>>> DONE")
 
     @staticmethod
-    def _print_metrics_line(metrics, head=None):
-        if head is None:
-            head = 'Metrics:'
+    def _print_metrics_line(metrics, dataset=None):
+        if dataset is None:
+            dataset = 'Metrics:'
 
             metrics_list = [
-                "{} {:.06f}".format(k, metrics[k])
-                for k in sorted([k for k in metrics.keys() if ':' not in k])
+                "{}/{} {:.06f}".format(k.scope, k.name, metrics[k])
+                for k in sorted([k for k in metrics.keys() if k.dataset is None])
             ]
         else:
             metrics_list = [
-                "{} {:.06f}".format(k.split(':')[1], metrics[k])
-                for k in sorted([k for k in metrics.keys() if k.startswith(head)])
+                "{}/{} {:.06f}".format(k.scope, k.name, metrics[k])
+                for k in sorted([k for k in metrics.keys() if k.dataset == dataset])
             ]
 
-        print('{0: <10}'.format(head.capitalize()), " ".join(metrics_list))
+        print('{0: <10}'.format(dataset.capitalize()), " ".join(metrics_list))
 
 
 def create():

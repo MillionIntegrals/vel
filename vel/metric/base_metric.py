@@ -1,11 +1,17 @@
+import collections
+
 from vel.api import TrainingInfo
+
+
+MetricKey = collections.namedtuple('MetricKey', ['dataset', 'name', 'scope'])
 
 
 class BaseMetric:
     """ Base class for all the metrics """
 
-    def __init__(self, name):
+    def __init__(self, name, scope="general"):
         self.name = name
+        self.scope = scope
 
     def calculate(self, batch_info):
         """ Calculate value of a metric based on supplied data """

@@ -4,8 +4,8 @@ from .base_metric import BaseMetric
 class ValueMetric(BaseMetric):
     """ Base class for metrics that don't have state and just calculate a simple value """
 
-    def __init__(self, name):
-        super().__init__(name)
+    def __init__(self, name, scope="general"):
+        super().__init__(name, scope=scope)
 
         self._metric_value = None
 

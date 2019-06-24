@@ -5,8 +5,8 @@ from .base_metric import BaseMetric
 
 class AveragingMetric(BaseMetric):
     """ Base class for metrics that simply calculate the average over the epoch """
-    def __init__(self, name):
-        super().__init__(name)
+    def __init__(self, name, scope="general"):
+        super().__init__(name, scope=scope)
 
         self.storage = []
 
@@ -29,8 +29,8 @@ class AveragingMetric(BaseMetric):
 
 class AveragingNamedMetric(AveragingMetric):
     """ Super simple averaging metric that just takes a value from dictionary and averages it over samples """
-    def __init__(self, name):
-        super().__init__(name)
+    def __init__(self, name, scope="general"):
+        super().__init__(name, scope=scope)
 
     def _value_function(self, batch_info):
         return batch_info[self.name]
@@ -38,8 +38,8 @@ class AveragingNamedMetric(AveragingMetric):
 
 class AveragingSupervisedMetric(BaseMetric):
     """ Base class for metrics that simply calculate the average over the epoch """
-    def __init__(self, name):
-        super().__init__(name)
+    def __init__(self, name, scope="general"):
+        super().__init__(name, scope=scope)
 
         self.storage = []
 
