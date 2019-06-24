@@ -34,6 +34,7 @@ class ModelConfig:
 
     @staticmethod
     def from_project_directory(path) -> str:
+        """ Locate given path relative to project directory """
         return os.path.join(ModelConfig.find_project_directory('.'), path)
 
     @classmethod
