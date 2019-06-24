@@ -140,8 +140,8 @@ class MnistCnnVAE(GradientModel):
         """ Set of metrics for this model """
         return [
             Loss(),
-            AveragingNamedMetric('reconstruction'),
-            AveragingNamedMetric('kl_divergence')
+            AveragingNamedMetric('reconstruction', scope="train"),
+            AveragingNamedMetric('kl_divergence', scope="train")
         ]
 
 
