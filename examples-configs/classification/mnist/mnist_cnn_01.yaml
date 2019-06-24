@@ -22,14 +22,15 @@ loader:
     - name: vel.data.transformation.image_to_tensor
 
 
+optimizer:
+  name: vel.optimizer.adadelta
+
+
 commands:
   train:
     name: vel.command.train_command
     epochs: 12
     log_frequency: 100
-
-    optimizer:
-      name: vel.optimizer.adadelta
 
     checkpoint:
       metric: 'val:loss'

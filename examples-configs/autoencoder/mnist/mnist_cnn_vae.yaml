@@ -2,7 +2,7 @@ name: 'mnist_cnn_autoenoder'
 
 
 model:
-  name: vel.models.autoencoder.mnist_cnn_vae
+  name: vel.model.autoencoder.mnist_cnn_vae
   img_rows: 28
   img_cols: 28
   img_channels: 1
@@ -11,28 +11,28 @@ model:
 
 
 source:
-  name: vel.sources.vision.mnist
+  name: vel.data.source.vision.mnist
+
+loader:
+  name: vel.data.loader
   batch_size: 128
-  normalize: False
   num_workers: 4
-  unsupervised: true
+
+  transformations:
+    - name: vel.data.transformation.image_to_tensor
+    - name: vel.data.transformation.unsupervised
 
 
 optimizer:
-  name: vel.optimizers.adam
+  name: vel.optimizer.adam
   lr: 1.0e-3
 
 
 commands:
   train:
-    name: vel.commands.train_command
+    name: vel.command.train_command
     epochs: 12
     log_frequency: 100
 
-
     checkpoint:
       metric: 'val:loss'
-
-
-  visdom:
-    name: vel.commands.vis_store_command

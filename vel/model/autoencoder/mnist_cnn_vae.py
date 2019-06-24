@@ -108,9 +108,9 @@ class MnistCnnVAE(GradientModel):
             'std': std
         }
 
-    def calculate_gradient(self, x_data, y_true):
+    def calculate_gradient(self, data):
         """ Calculate a gradient of loss function """
-        output = self(x_data)
+        output = self(data['x'])
 
         y_pred = output['decoded']
 
@@ -124,7 +124,7 @@ class MnistCnnVAE(GradientModel):
         # reconstruction = 0.5 * F.mse_loss(y_pred, y_true)
 
         # We must sum over all image axis and average only on minibatch axis
-        reconstruction = F.binary_cross_entropy(y_pred, y_true, reduce=False).sum(1).sum(1).sum(1).mean()
+        reconstruction = F.binary_cross_entropy(y_pred, data['y'], reduce=False).sum(1).sum(1).sum(1).mean()
         loss = reconstruction + kl_divergence
 
         if self.training:
