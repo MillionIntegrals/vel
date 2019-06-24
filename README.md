@@ -3,7 +3,6 @@
 [![Build Status](https://travis-ci.org/MillionIntegrals/vel.svg?branch=master)](https://travis-ci.org/MillionIntegrals/vel)
 [![PyPI version](https://badge.fury.io/py/vel.svg)](https://badge.fury.io/py/vel)
 [![GitHub](https://img.shields.io/github/license/mashape/apistatus.svg)](https://github.com/MillionIntegrals/vel/blob/master/LICENSE)
-[![Gitter chat](https://badges.gitter.im/MillionIngegrals/vel.png)](https://gitter.im/deep-learning-vel)
 
 
 Bring **velocity** to deep-learning research.
@@ -130,14 +129,14 @@ Most of the examples for this framework are defined using config files in the
 For example, to run the A2C algorithm on a Breakout atari environment, simply invoke:
 
 ```
-python -m vel.launcher examples-configs/rl/atari/a2c/breakout_a2c.yaml train
+python -m vel.launcher examples-configs/rl/atari/atari_a2c.yaml train
 ```
 
 If you install the library locally, you'll have a special wrapper created
 that will invoke the launcher for you. Then, above becomes:
 
 ```
-vel examples-configs/rl/atari/a2c/breakout_a2c.yaml train
+vel examples-configs/rl/atari/atari_a2c.yaml train
 ```
 
 General command line interface of the launcher is:
@@ -153,112 +152,6 @@ If you prefer to use the library from inside your scripts, take a look at the
 `examples-scripts` directory. From time to time I'll be putting some examples in there as
 well. Scripts generally don't require any MongoDB or Visdom setup, so they can be run straight
 away in any setup, but their output will be less rich and less informative.
-
-Here is an example script running the same setup as a config file from above:
-
-```python
-import torch
-import torch.optim as optim
-
-from vel.rl.metrics import EpisodeRewardMetric
-from vel.storage.streaming.stdout import StdoutStreaming
-from vel.util.random import set_seed
-
-from vel.rl.env.classic_atari import ClassicAtariEnv
-from vel.rl.vecenv.subproc import SubprocVecEnvWrapper
-
-from vel.modules.input.image_to_tensor import ImageToTensorFactory
-from vel.rl.models.stochastic_policy_model import StochasticPolicyModelFactory
-from vel.rl.models.backbone.nature_cnn import NatureCnnFactory
-
-
-from vel.rl.reinforcers.on_policy_iteration_reinforcer import (
-    OnPolicyIterationReinforcer, OnPolicyIterationReinforcerSettings
-)
-
-from vel.rl.algo.policy_gradient.a2c import A2CPolicyGradient
-from vel.rl.env_roller.step_env_roller import StepEnvRoller
-
-from vel.api.info import TrainingInfo, EpochInfo
-
-
-def breakout_a2c():
-    device = torch.device('cuda:0')
-    seed = 1001
-
-    # Set random seed in python std lib, numpy and pytorch
-    set_seed(seed)
-
-    # Create 16 environments evaluated in parallel in sub processess with all usual DeepMind wrappers
-    # These are just helper functions for that
-    vec_env = SubprocVecEnvWrapper(
-        ClassicAtariEnv('BreakoutNoFrameskip-v4'), frame_history=4
-    ).instantiate(parallel_envs=16, seed=seed)
-
-    # Again, use a helper to create a model
-    # But because model is owned by the reinforcer, model should not be accessed using this variable
-    # but from reinforcer.model property
-    model = StochasticPolicyModelFactory(
-        input_block=ImageToTensorFactory(),
-        backbone=NatureCnnFactory(input_width=84, input_height=84, input_channels=4)
-    ).instantiate(action_space=vec_env.action_space)
-
-    # Reinforcer - an object managing the learning process
-    reinforcer = OnPolicyIterationReinforcer(
-        device=device,
-        settings=OnPolicyIterationReinforcerSettings(
-            batch_size=256,
-            number_of_steps=5,
-        ),
-        model=model,
-        algo=A2CPolicyGradient(
-            entropy_coefficient=0.01,
-            value_coefficient=0.5,
-            max_grad_norm=0.5,
-            discount_factor=0.99,
-        ),
-        env_roller=StepEnvRoller(
-            environment=vec_env,
-            device=device,
-        )
-    )
-
-    # Model optimizer
-    optimizer = optim.RMSprop(reinforcer.model.parameters(), lr=7.0e-4, eps=1e-3)
-
-    # Overall information store for training information
-    training_info = TrainingInfo(
-        metrics=[
-            EpisodeRewardMetric('episode_rewards'),  # Calculate average reward from episode
-        ],
-        callbacks=[StdoutStreaming()]  # Print live metrics every epoch to standard output
-    )
-
-    # A bit of training initialization bookkeeping...
-    training_info.initialize()
-    reinforcer.initialize_training(training_info)
-    training_info.on_train_begin()
-
-    # Let's make 100 batches per epoch to average metrics nicely
-    num_epochs = int(1.1e7 / (5 * 16) / 100)
-
-    # Normal handrolled training loop
-    for i in range(1, num_epochs+1):
-        epoch_info = EpochInfo(
-            training_info=training_info,
-            global_epoch_idx=i,
-            batches_per_epoch=100,
-            optimizer=optimizer
-        )
-
-        reinforcer.train_epoch(epoch_info)
-
-    training_info.on_train_end()
-
-
-if __name__ == '__main__':
-    breakout_a2c()
-```
 
 # Docker
 
@@ -316,10 +209,7 @@ Possible to be included:
 
 
 Code quality:
-- Rename models to policies
-- Force dictionary inputs and outputs for policies
 - Factor action noise back into the policy
-- Use linter as a part of the build process
 
 
 # Citing
