@@ -11,6 +11,11 @@ class ImageToTensor(ScopedTransformation):
         # First let's make sure it's actually a numpy array
         value = np.asarray(value)
 
+        if value.dtype == np.uint8:
+            value = value.astype(np.float32) / 255.0
+
+        value = value.astype(np.float32)
+
         if len(value.shape) == 2:
             # If the image has only one channel, it still needs to be specified
             value = value.reshape(value.shape[0], value.shape[1], 1)

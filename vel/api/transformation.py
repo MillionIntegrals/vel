@@ -3,6 +3,10 @@ class Transformation:
     def __init__(self, tags=None):
         self.tags = ['train', 'val', 'test'] if tags is None else tags
 
+    def initialize(self, source):
+        """ Initialize transformation from source """
+        pass
+
     def __call__(self, datapoint):
         """ Do the transformation """
         raise NotImplementedError
@@ -19,6 +23,10 @@ class ScopedTransformation(Transformation):
         super().__init__(tags)
 
         self.scope = ['x'] if scope is None else scope
+
+        # If there is only one, we wrap it as a list
+        if isinstance(self.scope, str):
+            self.scope = [self.scope]
 
     def transform(self, value):
         """ Actual transformation code """

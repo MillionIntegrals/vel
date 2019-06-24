@@ -6,10 +6,11 @@ https://github.com/pytorch/vision/blob/master/torchvision/transforms/transforms.
 import numbers
 import random
 
-import vel.data as data
+import vel.api as api
+import vel.data.operation.image_op as image_op
 
 
-class RandomCrop(data.Augmentation):
+class RandomCrop(api.ScopedTransformation):
     """Crop the given PIL Image at a random location.
 
     Args:
@@ -24,8 +25,8 @@ class RandomCrop(data.Augmentation):
             desired size to avoid raising an exception.
     """
 
-    def __init__(self, size, padding=0, padding_mode='constant', pad_if_needed=False, mode='x', tags=None):
-        super().__init__(mode, tags)
+    def __init__(self, size, padding=0, padding_mode='constant', pad_if_needed=False, scope='x', tags=None):
+        super().__init__(scope, tags)
 
         if isinstance(size, numbers.Number):
             self.size = (int(size), int(size))
@@ -34,7 +35,7 @@ class RandomCrop(data.Augmentation):
 
         self.padding = padding
         self.padding_mode = padding_mode
-        self.padding_mode_cv = data.mode_to_cv2(self.padding_mode)
+        self.padding_mode_cv = image_op.mode_to_cv2(self.padding_mode)
         self.pad_if_needed = pad_if_needed
 
     @staticmethod
@@ -58,7 +59,7 @@ class RandomCrop(data.Augmentation):
         j = random.randint(0, w - tw)
         return i, j, th, tw
 
-    def __call__(self, img):
+    def transform(self, img):
         """
         Args:
             img (PIL Image): Image to be cropped.
@@ -67,24 +68,24 @@ class RandomCrop(data.Augmentation):
             PIL Image: Cropped image.
         """
         if self.padding > 0:
-            img = data.pad(img, self.padding, mode=self.padding_mode_cv)
+            img = image_op.pad(img, self.padding, mode=self.padding_mode_cv)
 
         # pad the width if needed
         if self.pad_if_needed and img.size[0] < self.size[1]:
-            img = data.pad(img, (int((1 + self.size[1] - img.size[0]) / 2), 0), mode=self.padding_mode_cv)
+            img = image_op.pad(img, (int((1 + self.size[1] - img.size[0]) / 2), 0), mode=self.padding_mode_cv)
 
         # pad the height if needed
         if self.pad_if_needed and img.size[1] < self.size[0]:
-            img = data.pad(img, (0, int((1 + self.size[0] - img.size[1]) / 2)), mode=self.padding_mode_cv)
+            img = image_op.pad(img, (0, int((1 + self.size[0] - img.size[1]) / 2)), mode=self.padding_mode_cv)
 
         i, j, h, w = self.get_params(img, self.size)
 
-        return data.crop(img, j, i, w, h)
+        return image_op.crop(img, j, i, w, h)
 
     def __repr__(self):
         return self.__class__.__name__ + '(size={0}, padding={1})'.format(self.size, self.padding)
 
 
-def create(width, height, padding=0, padding_mode='constant', mode='x', tags=None):
+def create(width, height, padding=0, padding_mode='constant', scope='x', tags=None):
     """ Vel factory function """
-    return RandomCrop(size=(width, height), padding=padding, padding_mode=padding_mode, mode=mode, tags=tags)
+    return RandomCrop(size=(width, height), padding=padding, padding_mode=padding_mode, scope=scope, tags=tags)

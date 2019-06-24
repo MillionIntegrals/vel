@@ -2,36 +2,46 @@ name: 'cifar10_cnn_01'
 
 
 model:
-  name: vel.models.vision.cifar10_cnn_01
+  name: vel.model.vision.cifar10_cnn_01
   img_rows: 32
   img_cols: 32
   img_channels: 3
   num_classes: 10
 
+
 source:
-  name: vel.sources.vision.cifar10
-#  batch_size: 128
-  batch_size: 32
+  name: vel.data.source.vision.cifar10
+
+
+loader:
+  name: vel.data.loader
+  batch_size: 128
   num_workers: 4
-  normalize: True
 
-  augmentations:
-  - name: vel.augmentations.random_crop
-    mode: x
-    tags: ["train"]
-    width: 32
-    height: 32
-    padding: 4
-    padding_mode: 'reflect'
+  transformations:
+    - name: vel.data.transformation.to_array
+    - name: vel.data.transformation.normalize
+    - name: vel.data.augmentation.random_crop
+      tags: ["train"]
+      width: 32
+      height: 32
+      padding: 4
+      padding_mode: 'reflect'
+    - name: vel.data.augmentation.random_horizontal_flip
+      tags: ["train"]
+    - name: vel.data.transformation.image_to_tensor
 
-  - name: vel.augmentations.random_horizontal_flip
-    mode: x
-    tags: ["train"]
+
+optimizer:
+  name: vel.optimizer.adadelta
+
 
 commands:
   train:
-    name: vel.commands.train_command
+    name: vel.command.train_command
     epochs: 12
-    log_frequency: 20
-    optimizer:
-      name: vel.optimizers.adadelta
+
+  augvis:
+    name: vel.command.augvis_command
+    samples: 3
+    cases: 3

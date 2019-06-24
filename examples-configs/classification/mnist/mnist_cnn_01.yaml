@@ -30,10 +30,7 @@ commands:
   train:
     name: vel.command.train_command
     epochs: 12
-    log_frequency: 100
 
-    checkpoint:
-      metric: 'val:loss'
 
   augvis:
     name: vel.command.augvis_command

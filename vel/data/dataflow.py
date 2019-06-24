@@ -17,6 +17,10 @@ class DataFlow(data.Dataset):
     @staticmethod
     def transform(source: Source, transformations: typing.List[Transformation]) -> Source:
         """ Transform supplied source with a list of given transformations """
+        # Initialize transformations from source
+        for t in transformations:
+            t.initialize(source)
+
         return Source(
             train=DataFlow(source.train, transformations, 'train'),
             validation=DataFlow(source.validation, transformations, 'val'),
@@ -25,18 +29,19 @@ class DataFlow(data.Dataset):
 
     def __init__(self, dataset, transformations, tag):
         self.dataset = dataset
+        self.tag = tag
 
         if transformations is None:
             self.transformations = []
         else:
             self.transformations = [t for t in transformations if tag in t.tags]
 
-        self.tag = tag
-
     def get_raw(self, index):
+        """ Get raw data point """
         return pre_map(self.dataset[index])
 
     def __getitem__(self, index):
+        """ Get data point from the dataset """
         datapoint = self.get_raw(index)
 
         for t in self.transformations:
@@ -52,4 +57,5 @@ class DataFlow(data.Dataset):
         return datapoint
 
     def __len__(self):
+        """ Length of the dataset """
         return len(self.dataset)

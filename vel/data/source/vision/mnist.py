@@ -3,7 +3,6 @@ from torchvision import datasets
 from vel.api import Source
 
 
-
 def create(model_config):
     """ Create a MNIST dataset, normalized """
     path = model_config.data_dir('mnist')
@@ -23,29 +22,3 @@ def create(model_config):
             'train_std': std_value
         }
     )
-
-# from vel.api import SupervisedTrainingData
-#
-# from vel.augmentations.normalize import Normalize
-# from vel.augmentations.to_tensor import ToTensor
-# from vel.augmentations.to_array import ToArray
-# from vel.augmentations.unsupervised import Unsupervised
-
-    # augmentations = [ToArray()] + (augmentations if augmentations is not None else [])
-    #
-    # if normalize:
-    #
-    #     augmentations.append(Normalize(mean=mean_value, std=std_value, tags=['train', 'val']))
-    #
-    # augmentations.append(ToTensor())
-    #
-    # if unsupervised:
-    #     augmentations.append(Unsupervised())
-    #
-    # return SupervisedTrainingData(
-    #     train_dataset,
-    #     test_dataset,
-    #     num_workers=num_workers,
-    #     batch_size=batch_size,
-    #     augmentations=augmentations
-    # )

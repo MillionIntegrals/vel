@@ -2,7 +2,7 @@ name: 'cifar10_resnetv2_110'
 
 
 model:
-  name: vel.models.vision.cifar_resnet_v2
+  name: vel.model.vision.cifar_resnet_v2
   img_channels: 3
   num_classes: 10
 
@@ -10,63 +10,51 @@ model:
   blocks: [18, 18, 18] # ResNet110
 
 source:
-  name: vel.sources.vision.cifar10
-  batch_size: 128
-#  batch_size: 32
-  num_workers: 4
-  normalize: True
+  name: vel.data.source.vision.cifar10
 
-  augmentations:
-  - name: vel.augmentations.random_horizontal_flip
-    mode: x
-    tags: ["train"]
-  - name: vel.augmentations.random_crop
-    mode: x
-    tags: ["train"]
-    width: 32
-    height: 32
-    padding: 4
-    padding_mode: 'reflect'
+
+loader:
+  name: vel.data.loader
+  batch_size: 128
+  num_workers: 4
+
+  transformations:
+    - name: vel.data.transformation.to_array
+    - name: vel.data.transformation.normalize
+    - name: vel.data.augmentation.random_crop
+      tags: ["train"]
+      width: 32
+      height: 32
+      padding: 4
+      padding_mode: 'reflect'
+    - name: vel.data.augmentation.random_horizontal_flip
+      tags: ["train"]
+    - name: vel.data.transformation.image_to_tensor
+
+
+optimizer:
+  name: vel.optimizer.sgd
+  lr: 0.1
+  weight_decay: 0.0001
+  momentum: 0.9
+
+
+scheduler:
+  name: vel.scheduler.ladder
+  ladder:
+    - [5, 0.1]  # Special iteration to kickstart convergence
+    - [75, 1.0]
+    - [40, 0.1]
+    - [80, 0.01]
 
 
 commands:
   train:
-    name: vel.commands.train_command
+    name: vel.command.train_command
     epochs: 200
-    log_frequency: 100
 
-    optimizer:
-      name: vel.optimizers.sgd
-      lr: 0.1
-      weight_decay: 0.0001
-      momentum: 0.9
-
-#    optimizer:
-#      name: vel.optimizers.adam
-#      lr: 0.001
-#      weight_decay: 0.001
-
-#    scheduler:
-#      name: vel.scheduler.multi_step
-#      milestones: [20, 50, 100, 150]
-#      gamma: 0.33
-
-    scheduler:
-      name: vel.scheduler.ladder
-      ladder:
-      - [5, 0.1]  # Special iteration to kickstart convergence
-      - [75, 1.0]
-      - [40, 0.1]
-      - [80, 0.01]
-
-#    scheduler:
-#      name: vel.scheduler.reduce_lr_on_plateau
-#      metric_name: val:accuracy
-#      factor: 0.33
-#      patience: 15
-#      cooldown: 20
-#      min_lr: 0.5e-6
 
   augvis:
-    name: vel.commands.augvis_command
+    name: vel.command.augvis_command
     samples: 5
+    cases: 3

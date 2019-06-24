@@ -54,14 +54,16 @@ class Loader:
 
     @property
     def loader(self):
+        """ Get a dict of loaders """
         return self._loaders
 
     @property
     def size(self):
+        """ Get a dict of sizes of each loader """
         return self._loader_sizes
 
 
-def create(source: Source, batch_size: int, num_workers: int=0, transformations: typing.Optional[list] = None):
+def create(source: Source, batch_size: int, num_workers: int = 0, transformations: typing.Optional[list] = None):
     """ Vel factory function """
     return Loader(
         source=source,
