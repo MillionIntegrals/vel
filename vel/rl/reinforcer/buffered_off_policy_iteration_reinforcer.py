@@ -82,9 +82,9 @@ class BufferedOffPolicyIterationReinforcer(ReinforcerBase):
         for batch_idx in iterator:
             batch_info = BatchInfo(epoch_info, batch_idx)
 
-            batch_info.on_batch_begin()
+            batch_info.on_batch_begin('train')
             self.train_batch(batch_info)
-            batch_info.on_batch_end()
+            batch_info.on_batch_end('train')
 
         epoch_info.result_accumulator.freeze_results()
         epoch_info.on_epoch_end()

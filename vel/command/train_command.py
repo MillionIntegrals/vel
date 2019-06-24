@@ -4,7 +4,9 @@ import vel.api as api
 import vel.data as data
 import vel.train as train
 
+from vel.metric.samples_per_sec import SamplesPerSec
 from vel.callback.time_tracker import TimeTracker
+from vel.callback.sample_tracker import SampleTracker
 
 
 class SimpleTrainCommand:
@@ -37,7 +39,7 @@ class SimpleTrainCommand:
         callbacks = self.gather_callbacks(optimizer)
 
         # Metrics to track through this training
-        metrics = learner.metrics()
+        metrics = learner.metrics() + [SamplesPerSec()]
 
         # Check if training was already started and potentially continue where we left off
         training_info = self.resume_training(learner, callbacks, metrics)
@@ -66,7 +68,7 @@ class SimpleTrainCommand:
 
     def gather_callbacks(self, optimizer) -> list:
         """ Gather all the callbacks to be used in this training run """
-        callbacks = [TimeTracker()]
+        callbacks = [TimeTracker(), SampleTracker()]
 
         if self.scheduler_factory is not None:
             callbacks.append(self.scheduler_factory.instantiate(optimizer))

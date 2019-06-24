@@ -69,12 +69,13 @@ class Trainer:
         else:
             iterator = loader['train']
 
-        for batch_idx, data in enumerate(iterator):
+        for batch_idx, datapoint in enumerate(iterator):
             batch_info = BatchInfo(epoch_info, batch_idx)
+            batch_info['datapoint'] = datapoint
 
-            batch_info.on_batch_begin()
-            self.train_batch(batch_info, data)
-            batch_info.on_batch_end()
+            batch_info.on_batch_begin('train')
+            self.train_batch(batch_info, datapoint)
+            batch_info.on_batch_end('train')
 
             iterator.set_postfix(loss=epoch_info.result_accumulator.intermediate_value('loss'))
 
@@ -88,16 +89,18 @@ class Trainer:
             iterator = loader['val']
 
         with torch.no_grad():
-            for batch_idx, data in enumerate(iterator):
+            for batch_idx, datapoint in enumerate(iterator):
                 batch_info = BatchInfo(epoch_info, batch_idx)
+                batch_info['datapoint'] = datapoint
 
-                batch_info.on_validation_batch_begin()
-                self.feed_batch(batch_info, data)
-                batch_info.on_validation_batch_end()
+                batch_info.on_batch_begin('val')
+                self.feed_batch(batch_info, datapoint)
+                batch_info.on_batch_end('val')
 
     def feed_batch(self, batch_info, data):
         """ Run single batch of data """
         data = to_device(data, self.device)  # Move a data batch into the right device
+
         metrics = self.model.calculate_gradient(data)
 
         batch_info.update(metrics)

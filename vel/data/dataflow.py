@@ -8,6 +8,10 @@ def pre_map(datapoint):
     """ Map datapoint from a list into the dictionary """
     if isinstance(datapoint, (list, tuple)):
         return dict(zip("xyzw", datapoint))
+
+    if 'x' in datapoint:
+        datapoint['size'] = datapoint['x'].shape[0]
+
     return datapoint
 
 

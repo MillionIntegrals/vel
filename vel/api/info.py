@@ -254,28 +254,15 @@ class BatchInfo(abc.MutableMapping):
         self.batch_number = batch_number
         self.data_dict = {}
 
-    def on_batch_begin(self):
+    def on_batch_begin(self, dataset=None):
         """ Initialize batch processing """
         for callback in self.callbacks:
-            callback.on_batch_begin(self)
+            callback.on_batch_begin(self, dataset)
 
-    def on_batch_end(self):
+    def on_batch_end(self, dataset=None):
         """ Finalize batch processing """
         for callback in self.callbacks:
-            callback.on_batch_end(self)
-
-        # Even with all the experience replay, we count the single rollout as a single batch
-        self.epoch_info.result_accumulator.calculate(self)
-
-    def on_validation_batch_begin(self):
-        """ Initialize batch processing """
-        for callback in self.callbacks:
-            callback.on_validation_batch_begin(self)
-
-    def on_validation_batch_end(self):
-        """ Finalize batch processing """
-        for callback in self.callbacks:
-            callback.on_validation_batch_end(self)
+            callback.on_batch_end(self, dataset)
 
         # Even with all the experience replay, we count the single rollout as a single batch
         self.epoch_info.result_accumulator.calculate(self)

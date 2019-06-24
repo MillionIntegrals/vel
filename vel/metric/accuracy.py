@@ -1,4 +1,4 @@
-from vel.metric.averaging_metric import AveragingSupervisedMetric
+from vel.metric.base.averaging_metric import AveragingSupervisedMetric
 
 
 class Accuracy(AveragingSupervisedMetric):

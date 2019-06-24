@@ -29,7 +29,7 @@ class VisdomStreaming(Callback):
             first_epoch=epoch_info.global_epoch_idx == 1
         )
 
-    def on_batch_end(self, batch_info):
+    def on_batch_end(self, batch_info, dataset=None):
         """ Stream LR to visdom """
         if self.settings.stream_lr:
             iteration_idx = (
