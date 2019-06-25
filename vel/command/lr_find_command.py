@@ -8,8 +8,9 @@ import tqdm
 
 import vel.util.interpolate as interp
 
-from vel.api import Learner, TrainingInfo, EpochInfo, BatchInfo
-from vel.metric.averaging_metric import AveragingNamedMetric
+from vel.api import TrainingInfo, EpochInfo, BatchInfo
+from vel.metric.base.averaging_metric import AveragingNamedMetric
+from vel.train import Trainer
 
 
 class LrFindCommand:
@@ -45,11 +46,11 @@ class LrFindCommand:
         http://arxiv.org/abs/1506.01186
 
     """
-    def __init__(self, model_config, model, source, optimizer_factory, start_lr=1e-5, end_lr=10, num_it=100,
+    def __init__(self, model_config, model, loader, optimizer_factory, start_lr=1e-5, end_lr=10, num_it=100,
                  interpolation='logscale', freeze=False, stop_dv=True, divergence_threshold=4.0, metric='loss'):
         # Mandatory pieces
         self.model = model
-        self.source = source
+        self.loader = loader
         self.optimizer_factory = optimizer_factory
         self.model_config = model_config
         # Settings
@@ -65,7 +66,7 @@ class LrFindCommand:
     def run(self):
         """ Run the command with supplied configuration """
         device = self.model_config.torch_device()
-        learner = Learner(device, self.model.instantiate())
+        learner = Trainer(device, self.model.instantiate())
 
         lr_schedule = interp.interpolate_series(self.start_lr, self.end_lr, self.num_it, self.interpolation)
 
@@ -75,7 +76,7 @@ class LrFindCommand:
         # Optimizer shoudl be created after freeze
         optimizer = self.optimizer_factory.instantiate(learner.model)
 
-        iterator = iter(self.source.train_loader)
+        iterator = iter(self.loader['train'])
 
         # Metrics to track through this training
         metrics = learner.metrics() + [AveragingNamedMetric("lr")]
@@ -99,12 +100,12 @@ class LrFindCommand:
                 param_group['lr'] = lr
 
             try:
-                data, target = next(iterator)
+                datapoint = next(iterator)
             except StopIteration:
-                iterator = iter(self.source.train_loader)
-                data, target = next(iterator)
+                iterator = iter(self.loader['train'])
+                datapoint = next(iterator)
 
-            learner.train_batch(batch_info, data, target)
+            learner.train_batch(batch_info, datapoint)
 
             batch_info['lr'] = lr
 
@@ -149,13 +150,13 @@ class LrFindCommand:
         plt.show()
 
 
-def create(model_config, model, source, optimizer, start_lr=1e-5, end_lr=10, iterations=100, freeze=False,
+def create(model_config, model, loader, optimizer, start_lr=1e-5, end_lr=10, iterations=100, freeze=False,
            interpolation='logscale', stop_dv=True, divergence_threshold=4.0, metric='loss'):
     """ Vel factory function """
     return LrFindCommand(
         model_config=model_config,
         model=model,
-        source=source,
+        loader=loader,
         optimizer_factory=optimizer,
         start_lr=start_lr,
         end_lr=end_lr,
