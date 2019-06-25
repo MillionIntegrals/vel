@@ -29,7 +29,7 @@ class AugmentationVisualizationCommand:
             for j in range(self.samples):
                 augmented_datapoint = dataset[selected_sample[i]]
                 denormalized_datapoint = dataset.denormalize(augmented_datapoint)
-                ax[i, j+1].imshow(denormalized_datapoint['x'])
+                ax[i, j+1].imshow(np.clip(denormalized_datapoint['x'], 0.0, 1.0))
 
         plt.show()
 

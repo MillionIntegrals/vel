@@ -4,7 +4,7 @@ import zipfile
 import torchvision.datasets as ds
 import torchvision.datasets.utils as ds_util
 
-from vel.api import SupervisedTrainingData
+from vel.api import Source
 
 
 class ImageDirSource(ds.ImageFolder):
@@ -12,8 +12,7 @@ class ImageDirSource(ds.ImageFolder):
     pass
 
 
-def create(model_config, path, num_workers, batch_size, augmentations=None, tta=None, url=None,
-           extract_parent=False):
+def create(model_config, path, url=None, extract_parent=False):
     """ Create an ImageDirSource with supplied arguments """
     if not os.path.isabs(path):
         path = model_config.project_top_dir(path)
@@ -43,11 +42,7 @@ def create(model_config, path, num_workers, batch_size, augmentations=None, tta=
     train_ds = ImageDirSource(train_path)
     val_ds = ImageDirSource(valid_path)
 
-    return SupervisedTrainingData(
+    return Source(
         train_ds,
         val_ds,
-        num_workers=num_workers,
-        batch_size=batch_size,
-        augmentations=augmentations,
-        # test_time_augmentation=tta
     )

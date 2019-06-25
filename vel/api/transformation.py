@@ -3,6 +3,9 @@ class Transformation:
     def __init__(self, tags=None):
         self.tags = ['train', 'val', 'test'] if tags is None else tags
 
+        if isinstance(self.tags, str):
+            self.tags = [self.tags]
+
     def initialize(self, source):
         """ Initialize transformation from source """
         pass

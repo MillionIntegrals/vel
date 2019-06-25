@@ -4,19 +4,20 @@ https://github.com/fastai/fastai/blob/master/fastai/transforms.py
 """
 import PIL.Image as Image
 
-import vel.data as data
+import vel.api as api
+import vel.data.operation.image_op as op
 
 
-class ScaleMinSize(data.Augmentation):
+class ScaleMinSize(api.ScopedTransformation):
     """ Scales the image so that the smallest axis is of 'size'. """
-    def __init__(self, size, mode='x', tags=None):
-        super().__init__(mode, tags)
+    def __init__(self, size, scope='x', tags=None):
+        super().__init__(scope, tags)
         self.size = size
 
-    def __call__(self, x_data):
-        return data.scale_min(x_data, self.size, Image.BILINEAR)
+    def transform(self, x_data):
+        return op.scale_min(x_data, self.size, Image.BILINEAR)
 
 
-def create(size, mode='x', tags=None):
+def create(size, scope='x', tags=None):
     """ Vel factory function """
-    return ScaleMinSize(size, mode, tags)
+    return ScaleMinSize(size, scope, tags)

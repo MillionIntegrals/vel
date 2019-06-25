@@ -6,18 +6,19 @@ import cv2
 import collections.abc as abc
 import random
 
-import vel.data as data
+import vel.api as api
+import vel.data.operation.image_op as op
 
 
-class RandomScale(data.Augmentation):
+class RandomScale(api.ScopedTransformation):
     """ Scales the image so that the smallest axis is of 'size' times a random number between 1.0 and max_zoom. """
-    def __init__(self, size, max_zoom, p=0.75, mode='x', tags=None):
-        super().__init__(mode, tags)
+    def __init__(self, size, max_zoom, p=0.75, scope='x', tags=None):
+        super().__init__(scope, tags)
         self.size = size
         self.max_zoom = max_zoom
         self.p = p
 
-    def __call__(self, x_data):
+    def transform(self, x_data):
         if random.random() < self.p:
             # Yes, do it
             min_z = 1.
@@ -30,8 +31,9 @@ class RandomScale(data.Augmentation):
             # No, don't do it
             mult = 1.0
 
-        return data.scale_min(x_data, int(self.size * mult), cv2.INTER_AREA)
+        return op.scale_min(x_data, int(self.size * mult), cv2.INTER_AREA)
 
 
-def create(size, max_zoom, p=0.75, mode='x', tags=None):
-    return RandomScale(size, max_zoom, p, mode, tags)
+def create(size, max_zoom, p=0.75, scope='x', tags=None):
+    """ Vel factory function """
+    return RandomScale(size, max_zoom, p, scope, tags)

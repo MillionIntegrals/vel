@@ -22,13 +22,13 @@ loader:
     - name: vel.data.transformation.to_array
     - name: vel.data.transformation.normalize
     - name: vel.data.augmentation.random_crop
-      tags: ["train"]
+      tags: train
       width: 32
       height: 32
       padding: 4
       padding_mode: 'reflect'
     - name: vel.data.augmentation.random_horizontal_flip
-      tags: ["train"]
+      tags: train
     - name: vel.data.transformation.image_to_tensor
 
 
