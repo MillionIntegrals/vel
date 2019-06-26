@@ -1,10 +1,10 @@
-import vel.api as api
+import vel.train as train
 
 
-class FreezePhase(api.EmptyTrainPhase):
+class FreezePhase(train.EmptyTrainPhase):
     """ Freeze the model """
 
-    def set_up_phase(self, training_info, model, source):
+    def set_up_phase(self, training_info, model, loader):
         """ Freeze the model """
         model.freeze()
 

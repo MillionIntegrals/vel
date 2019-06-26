@@ -1,7 +1,9 @@
 from torch.optim import Optimizer
 
-from vel.api import TrainingInfo, EpochInfo, Model, Source
-from vel.train import Trainer
+from vel.api import TrainingInfo, EpochInfo, Model
+from vel.data import Loader
+
+from .trainer import Trainer
 
 
 class TrainPhase:
@@ -12,7 +14,7 @@ class TrainPhase:
         """ How many epochs does this phase take """
         raise NotImplementedError
 
-    def set_up_phase(self, training_info: TrainingInfo, model: Model, source: Source) -> Optimizer:
+    def set_up_phase(self, training_info: TrainingInfo, model: Model, loader: Loader) -> Optimizer:
         """ Prepare the phase for learning, returns phase optimizer """
         pass
 

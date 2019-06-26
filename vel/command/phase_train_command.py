@@ -2,17 +2,24 @@ import numpy as np
 import bisect
 import typing
 
-from vel.api import Learner, TrainingInfo, ModelConfig, TrainPhase
+import vel.api as api
+import vel.data as data
+import vel.train as train
+
+from vel.metric.samples_per_sec import SamplesPerSec
+from vel.callback.time_tracker import TimeTracker
+from vel.callback.sample_tracker import SampleTracker
 
 
 class PhaseTrainCommand:
     """ Training  command - learn according to a set of phases """
 
-    def __init__(self, model_config: ModelConfig, model_factory, source, storage, phases: typing.List[TrainPhase],
+    def __init__(self, model_config: api.ModelConfig, model_factory: api.ModelFactory, loader: data.Loader,
+                 storage: api.Storage, phases: typing.List[train.TrainPhase],
                  callbacks=None, restart=True):
         self.model_config = model_config
         self.model_factory = model_factory
-        self.source = source
+        self.loader = loader
         self.storage = storage
         self.phases = phases
         self.ladder = self._build_phase_ladder(phases)
@@ -49,13 +56,13 @@ class PhaseTrainCommand:
     def run(self):
         """ Run the command with supplied configuration """
         device = self.model_config.torch_device()
-        learner = Learner(device, self.model_factory.instantiate())
+        learner = train.Trainer(device, self.model_factory.instantiate())
 
         # All callbacks useful for learning
         callbacks = self.gather_callbacks()
 
         # Metrics to track through this training
-        metrics = learner.metrics()
+        metrics = learner.metrics() + [SamplesPerSec()]
 
         # Check if training was already started and potentially continue where we left off
         training_info, hidden_state = self.resume_training(learner, callbacks, metrics)
@@ -65,7 +72,7 @@ class PhaseTrainCommand:
         current_phase = self.phases[current_phase_idx]
         local_idx = training_info.start_epoch_idx - self.ladder[current_phase_idx]
 
-        current_phase.set_up_phase(training_info, learner.model, self.source)
+        current_phase.set_up_phase(training_info, learner.model, self.loader)
         print(current_phase.banner())
 
         if training_info.start_epoch_idx > 0:
@@ -84,7 +91,7 @@ class PhaseTrainCommand:
                 current_phase_idx += 1
                 current_phase = self.phases[current_phase_idx]
 
-                current_phase.set_up_phase(training_info, learner.model, self.source)
+                current_phase.set_up_phase(training_info, learner.model, self.loader)
                 print(current_phase.banner())
 
             # Create epoch info
@@ -106,21 +113,21 @@ class PhaseTrainCommand:
 
     def gather_callbacks(self) -> list:
         """ Gather all the callbacks to be used in this training run """
-        callbacks = []
+        callbacks = [TimeTracker(), SampleTracker()]
 
         callbacks.extend(self.callbacks)
         callbacks.extend(self.storage.streaming_callbacks())
 
         return callbacks
 
-    def resume_training(self, learner, callbacks, metrics) -> (TrainingInfo, dict):
+    def resume_training(self, learner, callbacks, metrics) -> (api.TrainingInfo, dict):
         """ Possibly resume training from a saved state from the storage """
         if self.model_config.continue_training:
             start_epoch = self.storage.last_epoch_idx()
         else:
             start_epoch = 0
 
-        training_info = TrainingInfo(
+        training_info = api.TrainingInfo(
             start_epoch_idx=start_epoch,
             run_name=self.model_config.run_name,
             metrics=metrics,
@@ -139,12 +146,12 @@ class PhaseTrainCommand:
         return training_info, hidden_state
 
 
-def create(model_config, model, source, storage, phases, callbacks=None, restart=True):
+def create(model_config, model, loader, storage, phases, callbacks=None, restart=True):
     """ Vel factory function """
     return PhaseTrainCommand(
         model_config=model_config,
         model_factory=model,
-        source=source,
+        loader=loader,
         storage=storage,
         phases=phases,
         callbacks=callbacks,

@@ -1,4 +1,6 @@
-from vel.api import TrainingInfo, EpochInfo, TrainPhase, Source
+from vel.api import TrainingInfo, EpochInfo
+from vel.data import Loader
+from vel.train import TrainPhase
 
 
 class GenericPhase(TrainPhase):
@@ -10,16 +12,16 @@ class GenericPhase(TrainPhase):
         self.optimizer_factory = optimizer_factory
 
         self._optimizer_instance = None
-        self._source = None
+        self._loader = None
 
     @property
     def number_of_epochs(self) -> int:
         return self.epochs
 
-    def set_up_phase(self, training_info, model, source: Source):
+    def set_up_phase(self, training_info, model, loader: Loader):
         """ Prepare the phase for learning """
         self._optimizer_instance = self.optimizer_factory.instantiate(model)
-        self._source = source
+        self._loader = loader
 
     def epoch_info(self, training_info: TrainingInfo, global_idx: int, local_idx: int) -> EpochInfo:
         """ Create Epoch info """
@@ -27,7 +29,7 @@ class GenericPhase(TrainPhase):
             training_info=training_info,
             global_epoch_idx=global_idx,
             local_epoch_idx=local_idx,
-            batches_per_epoch=self._source.train_iterations_per_epoch,
+            batches_per_epoch=self._loader.size['train'],
             optimizer=self._optimizer_instance
         )
 
@@ -36,7 +38,7 @@ class GenericPhase(TrainPhase):
         for param_group in epoch_info.optimizer.param_groups:
             param_group['lr'] = self.lr
 
-        epoch_result = learner.run_epoch(epoch_info, self._source)
+        epoch_result = learner.run_epoch(epoch_info, self._loader)
 
         return epoch_result
 

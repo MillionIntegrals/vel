@@ -67,8 +67,8 @@ commands:
   train:
     name: vel.command.phase_train_command
     phases:
-    - name: vel.phase.freeze
-    - name: vel.phase.cycle
+    - name: vel.train.phase.freeze
+    - name: vel.train.phase.cycle
       init_lr: 0.001
       init_iter: 20
       max_lr: 0.01
@@ -76,8 +76,8 @@ commands:
       interpolate: 'cosine'
       cycles: 3
       cycle_len: 1
-    - name: vel.phase.unfreeze
-    - name: vel.phase.cycle
+    - name: vel.train.phase.unfreeze
+    - name: vel.train.phase.cycle
       init_lr: 0.001
       init_iter: 20
 

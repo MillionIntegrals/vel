@@ -1,8 +1,10 @@
+import typing
 import numpy as np
 
 import vel.util.interpolate as interp
 
-from vel.api import BatchInfo, EpochInfo, TrainingInfo, Callback, TrainPhase
+from vel.api import BatchInfo, EpochInfo, TrainingInfo, Callback
+from vel.train import TrainPhase
 
 
 class CycleCallback(Callback):
@@ -52,7 +54,7 @@ class CycleCallback(Callback):
 
         return dict_arr, length_arr, start_arr
 
-    def on_batch_begin(self, batch_info: BatchInfo):
+    def on_batch_begin(self, batch_info: BatchInfo, dataset: typing.Optional[str] = None):
         """ Set proper learning rate """
         cycle_length = self.cycle_lengths[batch_info.local_epoch_number - 1]
         cycle_start = self.cycle_starts[batch_info.local_epoch_number - 1]
@@ -113,7 +115,7 @@ class CyclePhase(TrainPhase):
         self.freeze = freeze
 
         self._optimizer_instance = None
-        self._source = None
+        self._loader = None
 
         self.special_callback = None
 
@@ -121,11 +123,11 @@ class CyclePhase(TrainPhase):
     def number_of_epochs(self) -> int:
         return self.epochs
 
-    def set_up_phase(self, training_info, model, source):
+    def set_up_phase(self, training_info, model, loader):
         """ Prepare the phase for learning """
         # To parameter groups handles properly filtering parameters that don't require gradient
         self._optimizer_instance = self.optimizer_factory.instantiate(model)
-        self._source = source
+        self._loader = loader
 
         self.special_callback = CycleCallback(
             self._optimizer_instance,
@@ -142,7 +144,7 @@ class CyclePhase(TrainPhase):
             training_info=training_info,
             global_epoch_idx=global_idx,
             local_epoch_idx=local_idx,
-            batches_per_epoch=self._source.train_iterations_per_epoch,
+            batches_per_epoch=self._loader.size['train'],
             optimizer=self._optimizer_instance,
             # Add special callback for this epoch
             callbacks=[self.special_callback] + training_info.callbacks
@@ -150,7 +152,7 @@ class CyclePhase(TrainPhase):
 
     def execute_epoch(self, epoch_info, learner):
         """ Prepare the phase for learning """
-        learner.run_epoch(epoch_info, self._source)
+        learner.run_epoch(epoch_info, self._loader)
 
 
 def create(optimizer, max_lr, min_lr, cycles, cycle_len=1, cycle_mult=1, interpolate='linear', init_lr=0, init_iter=0):
