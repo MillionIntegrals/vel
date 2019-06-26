@@ -1,5 +1,5 @@
 from vel.api import TrainingInfo, EpochInfo
-from vel.data import Loader
+from vel.data import DatasetLoader
 from vel.train import TrainPhase
 
 
@@ -18,7 +18,7 @@ class GenericPhase(TrainPhase):
     def number_of_epochs(self) -> int:
         return self.epochs
 
-    def set_up_phase(self, training_info, model, loader: Loader):
+    def set_up_phase(self, training_info, model, loader: DatasetLoader):
         """ Prepare the phase for learning """
         self._optimizer_instance = self.optimizer_factory.instantiate(model)
         self._loader = loader

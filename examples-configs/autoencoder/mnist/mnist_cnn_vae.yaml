@@ -14,7 +14,7 @@ source:
   name: vel.data.source.vision.mnist
 
 loader:
-  name: vel.data.loader
+  name: vel.data.dataset_loader
   batch_size: 128
   num_workers: 4
 

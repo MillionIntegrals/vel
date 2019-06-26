@@ -6,7 +6,7 @@ from vel.api import Source
 from .dataflow import DataFlow
 
 
-class Loader:
+class DatasetLoader:
     """ Loads data from a data source to serve it to the model """
 
     def __init__(self, source: Source, batch_size: int, num_workers: int,
@@ -65,7 +65,7 @@ class Loader:
 
 def create(source: Source, batch_size: int, num_workers: int = 0, transformations: typing.Optional[list] = None):
     """ Vel factory function """
-    return Loader(
+    return DatasetLoader(
         source=source,
         batch_size=batch_size,
         num_workers=num_workers,

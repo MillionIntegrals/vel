@@ -14,7 +14,7 @@ class SimpleTrainCommand:
 
     def __init__(self, epochs: int, model_config: api.ModelConfig, model_factory: api.ModelFactory,
                  optimizer_factory: api.OptimizerFactory, scheduler_factory: typing.Optional[api.SchedulerFactory],
-                 loader: data.Loader, storage: api.Storage, callbacks: typing.Optional[typing.List[api.Callback]],
+                 loader: data.DatasetLoader, storage: api.Storage, callbacks: typing.Optional[typing.List[api.Callback]],
                  max_grad_norm: typing.Optional[float]):
         self.epochs = epochs
         self.model_config = model_config

@@ -1,12 +1,12 @@
 import matplotlib.pyplot as plt
 import numpy as np
 
-from vel.data import Loader
+from vel.data import DatasetLoader
 
 
 class AugmentationVisualizationCommand:
     """ Visualize augmentations """
-    def __init__(self, loader: Loader, samples, cases):
+    def __init__(self, loader: DatasetLoader, samples, cases):
         self.loader = loader
         self.samples = samples
         self.cases = cases
@@ -34,6 +34,6 @@ class AugmentationVisualizationCommand:
         plt.show()
 
 
-def create(loader: Loader, samples: int, cases: int):
+def create(loader: DatasetLoader, samples: int, cases: int):
     """ Vel factory function """
     return AugmentationVisualizationCommand(loader, samples, cases)

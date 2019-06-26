@@ -5,7 +5,7 @@ import tqdm
 import typing
 
 from vel.api import GradientModel, TrainingInfo, EpochInfo, BatchInfo
-from vel.data import Loader
+from vel.data import DatasetLoader
 
 from vel.util.tensor_util import to_device
 
@@ -45,7 +45,7 @@ class Trainer:
         else:
             self.model.load_state_dict(model_state)
 
-    def run_epoch(self, epoch_info: EpochInfo, loader: Loader):
+    def run_epoch(self, epoch_info: EpochInfo, loader: DatasetLoader):
         """ Run full epoch of learning """
         epoch_info.on_epoch_begin()
 
@@ -60,7 +60,7 @@ class Trainer:
 
         epoch_info.on_epoch_end()
 
-    def train_epoch(self, epoch_info, loader: Loader, interactive=True):
+    def train_epoch(self, epoch_info, loader: DatasetLoader, interactive=True):
         """ Run a single training epoch """
         self.train()
 
@@ -79,7 +79,7 @@ class Trainer:
 
             iterator.set_postfix(loss=epoch_info.result_accumulator.intermediate_value('loss'))
 
-    def validation_epoch(self, epoch_info, loader: Loader, interactive=True):
+    def validation_epoch(self, epoch_info, loader: DatasetLoader, interactive=True):
         """ Run a single evaluation epoch """
         self.eval()
 
