@@ -2,19 +2,23 @@ name: 'gen_shakespeare_gru_embedding'
 
 
 source:
-  name: vel.sources.nlp.text_url
+  name: vel.data.source.nlp.text_url
   # Andrej Karpathy built a small (4.4mb) file with combined all works of Shakespeare
   url: 'https://cs.stanford.edu/people/karpathy/char-rnn/shakespeare_input.txt'
   local_dir: './rnn_shakespeare'
+
+
+loader:
+  name: vel.data.text_character_loader
   sequence_length: 128
   batch_size: 64
 
 
 model:
-  name: vel.models.rnn.multilayer_rnn_sequence_model
+  name: vel.model.rnn.multilayer_rnn_sequence_model
 
   input_block:
-    name: vel.modules.input.embedding
+    name: vel.module.input.embedding
     alphabet_size: 68  # Size of the alphabet + 1
     output_dim: 512 # Embedding dimension
 
@@ -25,19 +29,19 @@ model:
 
 
 optimizer:
-  name: vel.optimizers.adam
+  name: vel.optimizer.adam
   lr: 1.0e-3
   epsilon: 1.0e-5
 
 
 commands:
   train:
-    name: vel.commands.train_command
+    name: vel.command.train_command
     max_grad_norm: 0.5
     epochs: 20
 
   generate:
-    name: vel.commands.rnn.generate_text
+    name: vel.command.rnn.generate_text
     start_letter: !param start_letter = 'A'
     length: !param length = 500
     temperature: !param temperature = 0.8

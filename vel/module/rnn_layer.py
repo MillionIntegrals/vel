@@ -57,6 +57,10 @@ class RnnLayer(LinearBackboneModel):
         else:
             return self.hidden_size
 
+    def zero_state(self, batch_size):
+        """ State for the model """
+        return torch.zeros(batch_size, self.state_dim)
+
     def forward(self, input_data, state=None):
         if state is None:
             if self.bidirectional:

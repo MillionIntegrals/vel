@@ -37,11 +37,11 @@ class TextIterator:
 
             self.batch_idx += 1
 
-            return input_data.to(torch.long), target_data.to(torch.long)
+            return {'x': input_data.to(torch.long), 'y': target_data.to(torch.long)}
 
 
 class TextLoader:
-    """ Loader of sequential text data """
+    """ Creates iterators over a sequential block of text """
     def __init__(self, sequence, sequence_length, batch_size, alphabet_size):
         self.sequence = sequence
         self.sequence_length = sequence_length
@@ -62,9 +62,9 @@ class TextLoader:
     def __iter__(self):
         initial_offset = np.random.randint(self.sequence_length)
         relevant_subsequence = self.sequence[
-                               # 1 is for the last element as the target needs to be shifted by 1
-                               initial_offset:self.num_batches * self.sequence_length * self.batch_size + initial_offset + 1
-                               ]
+            # 1 is for the last element as the target needs to be shifted by 1
+            initial_offset:self.num_batches * self.sequence_length * self.batch_size + initial_offset + 1
+        ]
 
         return TextIterator(
             relevant_subsequence, self.sequence_length, self.batch_size,
@@ -86,9 +86,38 @@ class TextCharacterLoader:
         self.batch_size = batch_size
         self.alphabet = self.source.metadata['alphabet']
 
+        self.train_loader = TextLoader(self.source.train, self.sequence_length, self.batch_size, len(self.alphabet))
+        self.val_loader = TextLoader(self.source.validation, self.sequence_length, self.batch_size, len(self.alphabet))
+
+        if self.source.test is None:
+            self.test_loader = None
+        else:
+            self.test_loader = TextLoader(self.source.test, self.sequence_length, self.batch_size, len(self.alphabet))
+
         self._loaders = {
-            'train': TextLoader(self.source.train, self.sequence_length, self.batch_size, len(self.alphabet))
+            'train': self.train_loader,
+            'val': self.val_loader,
+            'test': self.test_loader
         }
+
+        self._loader_sizes = {
+            'train': len(self.train_loader),
+            'val': len(self.val_loader),
+            'test': 0 if self.test_loader is None else len(self.test_loader)
+        }
+
+    def __getitem__(self, item):
+        return self._loaders[item]
+
+    @property
+    def loader(self):
+        """ Get a dict of loaders """
+        return self._loaders
+
+    @property
+    def size(self):
+        """ Get a dict of sizes of each loader """
+        return self._loader_sizes
 
 
 def create(source: Source, sequence_length: int = 64, batch_size: int = 64):
