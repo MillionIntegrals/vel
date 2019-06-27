@@ -4,7 +4,7 @@ import torch.autograd
 import torch.nn.functional as F
 
 from vel.rl.api import OptimizerAlgoBase
-from vel.metric.averaging_metric import AveragingNamedMetric
+from vel.metric.base import AveragingNamedMetric
 
 
 class DeepDeterministicPolicyGradient(OptimizerAlgoBase):

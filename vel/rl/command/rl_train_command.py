@@ -18,14 +18,14 @@ class FrameTracker(Callback):
 
         training_info['frames'] = 0
 
-    def on_batch_begin(self, batch_info: BatchInfo):
+    def on_batch_begin(self, batch_info: BatchInfo, dataset: typing.Optional[str] = None):
         if 'total_frames' in batch_info.training_info:
             # Track progress during learning
             batch_info['progress'] = (
                 float(batch_info.training_info['frames']) / batch_info.training_info['total_frames']
             )
 
-    def on_batch_end(self, batch_info: BatchInfo):
+    def on_batch_end(self, batch_info: BatchInfo, dataset: typing.Optional[str] = None):
         batch_info.training_info['frames'] += batch_info['frames']
 
     def write_state_dict(self, training_info: TrainingInfo, hidden_state_dict: dict):

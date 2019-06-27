@@ -2,11 +2,11 @@ import torch
 
 import numbers
 
-from vel.math.function import explained_variance
-from vel.metric.averaging_metric import AveragingNamedMetric
+from vel.calc.function import explained_variance
+from vel.function.constant import ConstantSchedule
+from vel.metric.base import AveragingNamedMetric
 from vel.rl.api import OptimizerAlgoBase, Rollout, Trajectories
 from vel.rl.discount_bootstrap import discount_bootstrap_gae
-from vel.schedule.constant import ConstantSchedule
 
 
 class PpoPolicyGradient(OptimizerAlgoBase):

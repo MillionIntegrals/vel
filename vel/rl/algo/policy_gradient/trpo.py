@@ -4,8 +4,8 @@ import torch.autograd as autograd
 import torch.nn.functional as F
 import torch.nn.utils
 
-from vel.metric.averaging_metric import AveragingNamedMetric
-from vel.math.function import explained_variance
+from vel.calc.function import explained_variance
+from vel.metric.base import AveragingNamedMetric
 from vel.rl.api import AlgoBase, Rollout, Trajectories
 from vel.rl.discount_bootstrap import discount_bootstrap_gae
 

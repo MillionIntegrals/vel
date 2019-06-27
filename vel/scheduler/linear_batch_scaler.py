@@ -1,3 +1,5 @@
+import typing
+
 import vel.api as base
 
 from vel.api import BatchInfo, TrainingInfo
@@ -18,7 +20,7 @@ class LinearBatchScaler(base.Callback):
     def load_state_dict(self, training_info: TrainingInfo, hidden_state_dict: dict):
         self.starting_lr = hidden_state_dict['linear_batch_scaler/starting_lr']
 
-    def on_batch_begin(self, batch_info: BatchInfo):
+    def on_batch_begin(self, batch_info: BatchInfo, dataset: typing.Optional[str] = None):
         for starting_lr, param_group in zip(self.starting_lr, self.optimizer.param_groups):
             param_group['lr'] = starting_lr * (1.0 - batch_info['progress'])
 
