@@ -2,7 +2,7 @@ import torch
 import torch.nn.utils
 
 from vel.api import ModelFactory
-from vel.metric.averaging_metric import AveragingNamedMetric
+from vel.metric import AveragingNamedMetric
 from vel.rl.api import OptimizerAlgoBase
 
 

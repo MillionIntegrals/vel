@@ -5,7 +5,7 @@ import torch.nn as nn
 
 from vel.api import Schedule
 from vel.internal.generic_factory import GenericFactory
-from vel.schedule.constant import ConstantSchedule
+from vel.function.constant import ConstantSchedule
 
 
 class EpsGreedy(nn.Module):

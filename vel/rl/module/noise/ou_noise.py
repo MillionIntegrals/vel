@@ -2,7 +2,7 @@ import torch
 import numpy as np
 import torch.nn as nn
 
-from vel.math.process import OrnsteinUhlenbeckNoiseProcess
+from vel.calc.process import OrnsteinUhlenbeckNoiseProcess
 from vel.internal.generic_factory import GenericFactory
 
 

@@ -41,7 +41,7 @@ reinforcer:
     max_grad_norm: 0.5 # Gradient clipping parameter
 
     cliprange:
-      name: vel.schedule.linear
+      name: vel.function.linear
       initial_value: 0.1
       final_value: 0.0
 

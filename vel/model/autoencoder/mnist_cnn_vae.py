@@ -8,7 +8,7 @@ import torch.nn.functional as F
 import vel.util.network as net_util
 
 from vel.api import GradientModel, ModelFactory
-from vel.metric.averaging_metric import AveragingNamedMetric
+from vel.metric import AveragingNamedMetric
 from vel.metric.loss_metric import Loss
 from vel.module.layers import Flatten, Reshape
 

@@ -12,8 +12,8 @@ from vel.rl.env_roller.transition_replay_env_roller import TransitionReplayEnvRo
 from vel.rl.metrics import EpisodeRewardMetric
 from vel.rl.module.noise.eps_greedy import EpsGreedy
 from vel.rl.module.noise.ou_noise import OuNoise
-from vel.schedule.linear import LinearSchedule
-from vel.schedule.linear_and_constant import LinearAndConstantSchedule
+from vel.function.linear import LinearSchedule
+from vel.function.linear_and_constant import LinearAndConstantSchedule
 from vel.util.random import set_seed
 
 from vel.rl.env.classic_atari import ClassicAtariEnv
