@@ -39,7 +39,7 @@ test:
 partestc:
 	pytest -n 4 .
 
-requirements.txt:
+requirements.txt: requirements.in
 	pip-compile requirements.in
 
 requpgrade:
