@@ -36,9 +36,6 @@ serve-visdom:
 test:
 	pytest .
 
-partestc:
-	pytest -n 4 .
-
 requirements.txt: requirements.in
 	pip-compile requirements.in
 

@@ -49,7 +49,7 @@ setup(
         'text': ['spacy'],
         'all': [
             'visdom', 'pymongo', 'dnspython', 'gym[all]', 'pytest', 'spacy', 'ipython', 'jupyter',
-            'pip-tools', 'flake8', 'pytest-xdist', 'tb-nightly'
+            'pip-tools', 'flake8', 'tb-nightly'
         ]
     },
     tests_require=[
