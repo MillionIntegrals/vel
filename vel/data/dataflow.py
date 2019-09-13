@@ -60,6 +60,13 @@ class DataFlow(data.Dataset):
 
         return datapoint
 
+    def denormalize_item(self, datapoint_item, coordinate):
+        """ Perform a reverse normalization of a single item (for viewing) """
+        for t in self.transformations[::-1]:
+            datapoint_item = t.denormalize_item(datapoint_item, coordinate)
+
+        return datapoint_item
+
     def __len__(self):
         """ Length of the dataset """
         return len(self.dataset)

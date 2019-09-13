@@ -18,6 +18,10 @@ class Transformation:
         """ Operation reverse to normalization """
         return datapoint
 
+    def denormalize_item(self, datapoint_item, coordinate):
+        """ Denormalize only a single item of the datapoint """
+        return datapoint_item
+
 
 class ScopedTransformation(Transformation):
     """ Transformation applied only to certain keys of the datapoint """
@@ -52,3 +56,10 @@ class ScopedTransformation(Transformation):
             datapoint[name] = self.denormalization_transform(datapoint[name])
 
         return datapoint
+
+    def denormalize_item(self, datapoint_item, coordinate):
+        """ Denormalize only a single item of the datapoint """
+        if coordinate in self.scope:
+            return self.denormalization_transform(datapoint_item)
+        else:
+            return datapoint_item
