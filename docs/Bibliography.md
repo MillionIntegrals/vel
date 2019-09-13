@@ -16,10 +16,26 @@ on this library:
 - (2012) **Lecture 6.5 -- RmsProp: Divide the gradient by a running average of its recent magnitude**
   Geoff Hinton
   http://www.cs.toronto.edu/~tijmen/csc321/slides/lecture_slides_lec6.pdf
+  
+- (Dec 2012) **ADADELTA: An Adaptive Learning Rate Method**
+  Matthew D. Zeiler
+  https://arxiv.org/abs/1212.5701
+  
+- (Dec 2014) **Adam: A Method for Stochastic Optimization**
+  Diederik P. Kingma, Jimmy Ba
+  https://arxiv.org/abs/1412.6980
 
 - (Jun 2015) **Cyclical Learning Rates for Training Neural Networks**
   Leslie N. Smith
   https://arxiv.org/abs/1506.01186
+  
+- (Jul 2019) **Lookahead Optimizer: k steps forward, 1 step back**
+  Michael R. Zhang, James Lucas, Geoffrey Hinton, Jimmy Ba
+  https://arxiv.org/abs/1907.08610
+  
+- (Aug 2019) **On the Variance of the Adaptive Learning Rate and Beyond**
+  Liu, Liyuan and Jiang, Haoming and He, Pengcheng and Chen, Weizhu and Liu, Xiaodong and Gao, Jianfeng and Han, Jiawei
+  https://arxiv.org/abs/1908.03265
 
 ### Residual Networks
 
