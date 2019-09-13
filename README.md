@@ -118,7 +118,7 @@ that are ready to run and easy to modify for other similar usecases:
     
 # Implemented models - Unsupervised learning
 
-- Autoencoders and Variational autoencoders with examples on MNIST dataset.
+- AutoEncoders (AE) and Variational AutoEncoders (VAE) with examples on MNIST dataset.
 
 
 # Examples
