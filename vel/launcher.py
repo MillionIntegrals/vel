@@ -17,6 +17,7 @@ def main():
     parser.add_argument('-r', '--run_number', type=int, default=0, help="A run number")
     parser.add_argument('-d', '--device', default='cuda', help="A device to run the model on")
     parser.add_argument('-s', '--seed', type=int, default=None, help="Random seed for the project")
+    parser.add_argument('--werr', action='store_true', default=False, help="Convert warnings to errors")
     parser.add_argument(
         '-p', '--param', type=str, metavar='NAME=VALUE', action='append', default=[],
         help="Configuration parameters"
@@ -29,6 +30,11 @@ def main():
     )
 
     args = parser.parse_args()
+
+    if args.werr:
+        import warnings
+        warnings.filterwarnings('error', module='vel.*')
+        warnings.filterwarnings('error', module='torch\\..*')
 
     model_config = ModelConfig.from_file(
         args.config, args.run_number, continue_training=getattr(args, 'continue'), device=args.device, seed=args.seed,
