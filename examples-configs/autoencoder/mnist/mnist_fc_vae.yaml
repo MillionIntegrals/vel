@@ -1,13 +1,13 @@
-name: 'mnist_cnn_vae'
+name: 'mnist_fc_vae'
 
 
 model:
-  name: vel.model.autoencoder.mnist_cnn_vae
+  name: vel.model.autoencoder.mnist_fc_vae
   img_rows: 28
   img_cols: 28
   img_channels: 1
-  channels: [64, 128, 256]
-  representation_length: 20
+  layers: [512, 256]
+  representation_length: 16
 
 
 source:
@@ -25,11 +25,11 @@ loader:
 
 optimizer:
   name: vel.optimizer.radam
-  lr: 1.0e-4
+  lr: 1.0e-3
 
 
 commands:
   train:
     name: vel.command.train_command
-    epochs: 200
+    epochs: 100
 

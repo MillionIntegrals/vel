@@ -5,8 +5,6 @@ import torch.nn as nn
 import torch.nn.init as init
 import torch.nn.functional as F
 
-import vel.util.network as net_util
-
 from vel.api import GradientModel, ModelFactory
 from vel.metric import AveragingNamedMetric
 from vel.metric.loss_metric import Loss
@@ -18,47 +16,36 @@ class MnistCnnVAE(GradientModel):
     A simple MNIST variational autoencoder, containing 3 convolutional layers.
     """
 
-    def __init__(self, img_rows, img_cols, img_channels, channels=None, representation_length=32):
+    def __init__(self, img_rows, img_cols, img_channels, layers=None, representation_length=32):
         super(MnistCnnVAE, self).__init__()
 
-        if channels is None:
-            channels = [16, 32, 32]
-
-        layer_series = [
-            (3, 1, 1),
-            (3, 1, 2),
-            (3, 1, 2),
-        ]
+        if layers is None:
+            layers = [512, 256]
 
         self.representation_length = representation_length
 
-        self.final_width = net_util.convolutional_layer_series(img_rows, layer_series)
-        self.final_height = net_util.convolutional_layer_series(img_cols, layer_series)
-        self.channels = channels
+        # self.final_width = net_util.convolutional_layer_series(img_rows, layer_series)
+        # self.final_height = net_util.convolutional_layer_series(img_cols, layer_series)
+        self.layers = layers
+
+        input_length = img_rows * img_cols * img_channels
 
         self.encoder = nn.Sequential(
-            nn.Conv2d(in_channels=img_channels, out_channels=channels[0], kernel_size=(3, 3), padding=1),
-            nn.ReLU(True),
-            nn.Conv2d(in_channels=channels[0], out_channels=channels[1], kernel_size=(3, 3), stride=2, padding=1),
-            nn.ReLU(True),
-            nn.Conv2d(in_channels=channels[1], out_channels=channels[2], kernel_size=(3, 3), stride=2, padding=1),
             Flatten(),
-            nn.Linear(self.final_width * self.final_height * channels[2], representation_length * 2)
+            nn.Linear(in_features=input_length, out_features=self.layers[0]),
+            nn.ReLU(True),
+            nn.Linear(in_features=self.layers[0], out_features=self.layers[1]),
+            nn.ReLU(True),
+            nn.Linear(self.layers[1], representation_length * 2)
         )
 
         self.decoder = nn.Sequential(
-            nn.Linear(representation_length, self.final_width * self.final_height * channels[2]),
+            nn.Linear(representation_length, self.layers[1]),
             nn.ReLU(True),
-            Reshape(channels[2], self.final_width, self.final_height),
-            nn.ConvTranspose2d(
-                in_channels=channels[2], out_channels=channels[1], kernel_size=3, stride=2, padding=1, output_padding=1
-            ),
+            nn.Linear(self.layers[1], self.layers[0]),
             nn.ReLU(True),
-            nn.ConvTranspose2d(
-                in_channels=channels[1], out_channels=channels[0], kernel_size=3, stride=2, padding=1, output_padding=1
-            ),
-            nn.ReLU(True),
-            nn.ConvTranspose2d(in_channels=channels[0], out_channels=img_channels, kernel_size=3, padding=1),
+            nn.Linear(self.layers[0], input_length),
+            Reshape(img_channels, img_rows, img_cols),
             nn.Sigmoid()
         )
 
@@ -143,14 +130,14 @@ class MnistCnnVAE(GradientModel):
         ]
 
 
-def create(img_rows, img_cols, img_channels, channels=None, representation_length=32):
+def create(img_rows, img_cols, img_channels, layers=None, representation_length=32):
     """ Vel factory function """
-    if channels is None:
-        channels = [16, 32, 32]
+    if layers is None:
+        layers = [512, 256]
 
     def instantiate(**_):
         return MnistCnnVAE(
-            img_rows, img_cols, img_channels, channels=channels, representation_length=representation_length
+            img_rows, img_cols, img_channels, layers=layers, representation_length=representation_length
         )
 
     return ModelFactory.generic(instantiate)
