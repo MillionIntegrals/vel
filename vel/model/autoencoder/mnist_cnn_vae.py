@@ -122,7 +122,7 @@ class MnistCnnVAE(GradientModel):
         # reconstruction = 0.5 * F.mse_loss(y_pred, y_true)
 
         # We must sum over all image axis and average only on minibatch axis
-        reconstruction = F.binary_cross_entropy(y_pred, data['y'], reduce=False).sum(1).sum(1).sum(1).mean()
+        reconstruction = F.binary_cross_entropy(y_pred, data['y'], reduction='none').sum(1).sum(1).sum(1).mean()
         loss = reconstruction + kl_divergence
 
         if self.training:
