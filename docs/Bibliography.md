@@ -4,11 +4,16 @@ Below, I present a most likely incomplete list of works I referred to when I was
 on this library:
 
 
-### Autoencoders
+### Latent variable models
 
 - (Dec 2013) **Auto-Encoding Variational Bayes**
 	Diederik P Kingma, Max Welling
 	https://arxiv.org/abs/1312.6114
+
+
+- (Sep 2015) **Importance Weighted Autoencoders**
+    Yuri Burda, Roger Grosse, Ruslan Salakhutdinov
+    https://arxiv.org/abs/1509.00519
 
 
 ### Learning rate and optimization
@@ -143,11 +148,13 @@ on this library:
 ### Open source repositories
 
 This repository contains various parts of functionality derived from open source code
-in the following repositories:
+in the following repositories (in alphabetical order):
 
-- https://github.com/fastai/fastai
-- https://github.com/pytorch/pytorch
-- https://github.com/openai/baselines
-- https://github.com/tensorflow/tensorflow
 - https://github.com/Kaixhin/Rainbow
 - https://github.com/Khrylx/PyTorch-RL
+- https://github.com/LiyuanLucasLiu/RAdam
+- https://github.com/fastai/fastai
+- https://github.com/lessw2020/Ranger-Deep-Learning-Optimizer
+- https://github.com/openai/baselines
+- https://github.com/pytorch/pytorch
+- https://github.com/tensorflow/tensorflow
