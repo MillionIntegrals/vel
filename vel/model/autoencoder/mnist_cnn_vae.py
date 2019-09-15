@@ -76,27 +76,28 @@ class MnistCnnVAE(GradientModel):
             elif isinstance(m, nn.Linear):
                 self._weight_initializer(m)
 
-    def encode(self, sample):
+    def encoder_distribution(self, sample):
         encoding = self.encoder(sample)
-
         mu = encoding[:, :self.representation_length]
         # I encode std directly as a softplus, rather than exp(logstd)
         std = F.softplus(encoding[:, self.representation_length:])
 
+        return mu, std
+
+    def encode(self, sample):
+        mu, std = self.encoder_distribution(sample)
+        # Sample z
         return mu + torch.randn_like(std) * std
 
     def decode(self, sample):
+        # We don't sample here, because decoder is so weak it doesn't make sense
         return self.decoder(sample)
 
     def forward(self, sample):
-        encoding = self.encoder(sample)
+        mu, std = self.encoder_distribution(sample)
 
-        mu = encoding[:, :self.representation_length]
-        # I encode std directly as a softplus, rather than exp(logstd)
-        std = F.softplus(encoding[:, self.representation_length:])
-
+        # Sample z
         z = mu + torch.randn_like(std) * std
-
         decoded = self.decoder(z)
 
         return {
@@ -110,29 +111,82 @@ class MnistCnnVAE(GradientModel):
         """ Calculate a gradient of loss function """
         output = self(data['x'])
 
+        # ELBO is E_q log p(x, z) / q(z | x)
+        # Which can be expressed in many equivalent forms:
+        # (1) E_q log p(x | z) + log p(z) - log q(z | x)
+        # (2) E_q log p(x | z) - D_KL(p(z) || q(z | x))
+        # (3) E_q log p(x) - D_KL(p(z | x) || q(z | x)Biblio)
+
+        # Form 3 is interesting from a theoretical standpoint, but is intractable to compute directly
+        # While forms (1) and (2) can be computed directly.
+        # Positive aspect of form (2) is that KL divergence can be calculated analytically
+        # further reducing the variance of the gradient
+
         y_pred = output['decoded']
 
         mu = output['mu']
         std = output['std']
         var = std ** 2
 
+        # Analytical solution of KL divergence
         kl_divergence = - 0.5 * (1 + torch.log(var) - mu ** 2 - var).sum(dim=1)
         kl_divergence = kl_divergence.mean()
 
-        # reconstruction = 0.5 * F.mse_loss(y_pred, y_true)
+        # Diag-gaussian likelihood
+        # likelihood = 0.5 * F.mse_loss(y_pred, y_true)
 
         # We must sum over all image axis and average only on minibatch axis
-        reconstruction = F.binary_cross_entropy(y_pred, data['y'], reduction='none').sum(1).sum(1).sum(1).mean()
-        loss = reconstruction + kl_divergence
+        # Log prob p(x | z) in the case where the output distribution is Bernoulli(p)
+        likelihood = F.binary_cross_entropy(y_pred, data['y'], reduction='none').sum((1, 2, 3)).mean()
+
+        elbo = likelihood + kl_divergence
+
+        nll = self.nll(data['x'], num_posterior_samples=5)
 
         if self.training:
-            loss.backward()
+            elbo.backward()
 
         return {
-            'loss': loss.item(),
-            'reconstruction': reconstruction.item(),
+            'loss': elbo.item(),
+            'nll': nll.mean().item(),
+            'reconstruction': likelihood.item(),
             'kl_divergence': kl_divergence.item()
         }
+
+    def logmeanexp(self, inputs, dim=1):
+        if inputs.size(dim) == 1:
+            return inputs
+        else:
+            input_max = inputs.max(dim, keepdim=True)[0]
+            return (inputs - input_max).exp().mean(dim).log() + input_max.squeeze(dim=dim)
+
+    @torch.no_grad()
+    def nll(self, data_sample, num_posterior_samples: int = 1):
+        """
+        Upper bound on negative log-likelihood of supplied data.
+        If num samples goes to infinity, the nll of data should
+        approach true value
+        """
+        assert num_posterior_samples >= 1, "Need at least one posterior sample"
+
+        buffer = []
+
+        mu, std = self.encoder_distribution(data_sample)
+        var = std ** 2
+
+        kl_divergence = - 0.5 * (1 + torch.log(var) - mu ** 2 - var).sum(dim=1)
+
+        for i in range(num_posterior_samples):
+            z = mu + torch.randn_like(std) * std
+            y_pred = self.decoder(z)
+
+            likelihood = F.binary_cross_entropy(y_pred, data_sample, reduction='none').sum((1, 2, 3))
+            elbo = likelihood + kl_divergence
+
+            buffer.append(-elbo)
+
+        averaged = self.logmeanexp(torch.stack(buffer, dim=-1), dim=-1)
+        return -averaged
 
     def metrics(self):
         """ Set of metrics for this model """
