@@ -1,5 +1,7 @@
-import typing
+import collections
+import torch
 import torch.utils.data as data
+import typing
 
 from vel.api import Source, Transformation
 
@@ -43,6 +45,32 @@ class DataFlow(data.Dataset):
     def get_raw(self, index):
         """ Get raw data point """
         return pre_map(self.dataset[index])
+
+    def get_batch(self, batch_idx, batch_size):
+        """
+        Simple method to get a batch of data, mainly for interactive purposes.
+        For training, a DataLoader should be used.
+        """
+
+        start_idx = batch_idx * batch_size
+        end_idx = min(start_idx + batch_size, len(self))
+
+        buffer = collections.defaultdict(list)
+
+        for i in range(start_idx, end_idx):
+            datapoint = self[i]
+
+            for k, v in datapoint.items():
+                buffer[k].append(v)
+
+        return {
+            k: torch.stack(v, dim=0) for k, v in buffer.items()
+        }
+
+    def num_batches(self, batch_size):
+        """ Number of batches of given batch size """
+        length = len(self)
+        return (length + (batch_size - 1)) // batch_size
 
     def __getitem__(self, index):
         """ Get data point from the dataset """
