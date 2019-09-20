@@ -2,7 +2,7 @@ name: 'mnist_cnn_ae'
 
 
 model:
-  name: vel.model.autoencoder.mnist_cnn_autoencoder
+  name: vel.model.autoencoder.cnn_autoencoder
   img_rows: 28
   img_cols: 28
   img_channels: 1

@@ -71,6 +71,16 @@ class VaeBase(GradientModel):
         kl_divergence = self.kl_divergence(z, z_dist, prior).mean()
         reconstruction = x_dist.log_prob(data['y']).mean()
 
+        # ELBO is E_q log p(x, z) / q(z | x)
+        # Which can be expressed in many equivalent forms:
+        # (1) E_q log p(x | z) + log p(z) - log q(z | x)
+        # (2) E_q log p(x | z) - D_KL(p(z) || q(z | x))
+        # (3) E_q log p(x) - D_KL(p(z | x) || q(z | x)Biblio)
+
+        # Form 3 is interesting from a theoretical standpoint, but is intractable to compute directly
+        # While forms (1) and (2) can be computed directly.
+        # Positive aspect of form (2) is that KL divergence can be calculated analytically
+        # further reducing the variance of the gradient
         elbo = reconstruction - kl_divergence
 
         loss = -elbo

@@ -2,34 +2,64 @@ name: 'mnist_cnn_vae'
 
 
 model:
-  name: vel.model.autoencoder.mnist_cnn_vae
+  name: vel.model.autoencoder.cnn_vae
   img_rows: 28
   img_cols: 28
   img_channels: 1
   channels: [64, 128, 256]
-  representation_length: 20
+  representation_length: 50
+  max_grad_norm: 1.0
+  analytical_kl_div: true
 
 
 source:
   name: vel.data.source.vision.mnist
 
+
 loader:
   name: vel.data.dataset_loader
   batch_size: 256
   num_workers: 4
+  pin_memory: true
 
   transformations:
+    - name: vel.data.transformation.to_array
+#    - name: vel.data.augmentation.random_scale
+#      tags: train
+#      size: 28
+#      max_zoom: 1.1
+#    - name: vel.data.augmentation.random_rotate
+#      tags: train
+#      deg: 15.0
+#    - name: vel.data.augmentation.random_crop
+#      tags: train
+#      width: 28
+#      height: 28
+#      padding: 3
+#      padding_mode: 'constant'
+    - name: vel.data.transformation.binarize_image
     - name: vel.data.transformation.image_to_tensor
     - name: vel.data.transformation.unsupervised
 
 
 optimizer:
   name: vel.optimizer.radam
-  lr: 1.0e-4
+  lr: 1.0e-3
+  eps: 1.0e-4
+
+
+scheduler:
+  name: vel.scheduler.multi_step
+  gamma: 0.71968  # 10 * (-1/7)
+  milestones: [   1,    4,   13,   40,  121,  364, 1093, 3280]
 
 
 commands:
+  augvis:
+    name: vel.command.augvis_command
+    samples: 10
+    cases: 5
+
   train:
     name: vel.command.train_command
-    epochs: 200
-
+    epochs: 3280
