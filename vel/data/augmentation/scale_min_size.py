@@ -15,7 +15,7 @@ class ScaleMinSize(api.ScopedTransformation):
         self.size = size
 
     def transform(self, x_data):
-        return op.scale_min(x_data, self.size, Image.BILINEAR)
+        return op.scale_min(x_data, self.size)
 
 
 def create(size, scope='x', tags=None):

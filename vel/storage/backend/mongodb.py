@@ -34,7 +34,7 @@ class MongoDbBackend:
             return pd.DataFrame(metric_items).drop(['_id', 'model_name'], axis=1).set_index('epoch_idx')
 
     def store(self, metrics):
-        augmented_metrics = metrics.copy()
+        augmented_metrics = {'{}/{}/{}'.format(k.scope, k.dataset, k.name): v for k, v in metrics.items()}
 
         model_name = self.model_config.name
         run_name = self.model_config.run_name

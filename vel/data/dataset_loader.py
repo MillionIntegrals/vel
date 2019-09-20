@@ -10,11 +10,12 @@ class DatasetLoader:
     """ Loads data from a data source to serve it to the model """
 
     def __init__(self, source: Source, batch_size: int, num_workers: int,
-                 transformations: typing.Optional[list] = None):
+                 transformations: typing.Optional[list] = None, pin_memory=False):
         self.source = source
         self.batch_size = batch_size
         self.num_workers = num_workers
         self.transformations = transformations
+        self.pin_memory = pin_memory
 
         if transformations is not None:
             self.transformed_source = DataFlow.transform(self.source, transformations)
@@ -23,11 +24,12 @@ class DatasetLoader:
 
         self.train_loader = data.DataLoader(
             self.transformed_source.train, batch_size=batch_size, shuffle=True, num_workers=num_workers,
-            drop_last=True
+            pin_memory=pin_memory, drop_last=True
         )
 
         self.val_loader = data.DataLoader(
             self.transformed_source.validation, batch_size=batch_size, shuffle=False, num_workers=num_workers,
+            pin_memory=pin_memory
         )
 
         if self.transformed_source.test is not None:
@@ -63,11 +65,13 @@ class DatasetLoader:
         return self._loader_sizes
 
 
-def create(source: Source, batch_size: int, num_workers: int = 0, transformations: typing.Optional[list] = None):
+def create(source: Source, batch_size: int, num_workers: int = 0, transformations: typing.Optional[list] = None,
+           pin_memory=False):
     """ Vel factory function """
     return DatasetLoader(
         source=source,
         batch_size=batch_size,
+        pin_memory=pin_memory,
         num_workers=num_workers,
         transformations=transformations
     )
