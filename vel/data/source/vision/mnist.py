@@ -4,7 +4,7 @@ from vel.api import Source
 
 
 def create(model_config):
-    """ Create a MNIST dataset, normalized """
+    """ Create a MNIST dataset """
     path = model_config.data_dir('mnist')
 
     train_dataset = datasets.MNIST(path, train=True, download=True)
