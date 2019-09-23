@@ -41,13 +41,18 @@ class Flatten(nn.Module):
 
 class Reshape(nn.Module):
     """ Flatten input vector """
-    def __init__(self, *sizes):
+    def __init__(self, *sizes, batch_dims=1):
         super().__init__()
 
         self.sizes = sizes
+        self.batch_dims = batch_dims
 
     def forward(self, x):
-        return x.view(x.size(0), *self.sizes)
+        return x.view(x.shape[:self.batch_dims] + self.sizes)
+
+    def extra_repr(self) -> str:
+        """ Extra representation of this module """
+        return f"sizes={self.sizes}, batch_dims={self.batch_dims}"
 
 
 class OneHotEncode(nn.Module):
