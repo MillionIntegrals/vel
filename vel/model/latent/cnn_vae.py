@@ -10,7 +10,7 @@ import vel.util.network as net_util
 
 from vel.api import ModelFactory
 from vel.module.layers import Flatten, Reshape
-from vel.model.autoencoder.vae_base import VaeBase
+from vel.model.latent.vae_base import VaeBase
 
 
 class CnnVAE(VaeBase):
@@ -142,7 +142,7 @@ class CnnVAE(VaeBase):
 
     def decoder_sample(self, decoded: torch.Tensor) -> torch.Tensor:
         """ Sample from a decoder distribution - we ignore that since it's so weak in this case """
-        return self.decoder_network(decoded)
+        return decoded
 
 
 def create(img_rows, img_cols, img_channels, channels=None, representation_length=32):

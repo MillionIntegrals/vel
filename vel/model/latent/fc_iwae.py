@@ -7,17 +7,17 @@ import torch.nn.init as init
 from vel.api import ModelFactory
 from vel.module.layers import Flatten, Reshape
 
-from vel.model.latent.vae_base import VaeBase
+from vel.model.latent.iwae import IWAE
 
 
-class FcVae(VaeBase):
+class FcIwae(IWAE):
     """
-    A simple variational autoencoder, containing 2 fully connected layers.
+    A simple IWAE, containing 2 fully connected layers.
     """
 
-    def __init__(self, img_rows, img_cols, img_channels, layers=None, representation_length=32,
+    def __init__(self, img_rows, img_cols, img_channels, k=5, layers=None, representation_length=32,
                  analytical_kl_div=False, max_grad_norm=None):
-        super().__init__(analytical_kl_div=analytical_kl_div, max_grad_norm=max_grad_norm)
+        super().__init__(k=k, analytical_kl_div=analytical_kl_div, max_grad_norm=max_grad_norm)
 
         if layers is None:
             layers = [512, 256]
@@ -91,15 +91,15 @@ class FcVae(VaeBase):
 #                 self._weight_initializer(m)
 
 
-def create(img_rows, img_cols, img_channels, layers=None, representation_length=32, max_grad_norm=None,
+def create(img_rows, img_cols, img_channels, k=5, layers=None, representation_length=32, max_grad_norm=None,
            analytical_kl_div=True):
     """ Vel factory function """
     if layers is None:
         layers = [512, 256]
 
     def instantiate(**_):
-        return FcVae(
-            img_rows, img_cols, img_channels, layers=layers, representation_length=representation_length,
+        return FcIwae(
+            img_rows, img_cols, img_channels, k=k, layers=layers, representation_length=representation_length,
             max_grad_norm=max_grad_norm, analytical_kl_div=analytical_kl_div
         )
 

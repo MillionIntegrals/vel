@@ -118,7 +118,10 @@ that are ready to run and easy to modify for other similar usecases:
     
 # Implemented models - Unsupervised learning
 
-- AutoEncoders (AE) and Variational AutoEncoders (VAE) with examples on MNIST dataset.
+- A simple AutoEncoder (AE) with example on MNIST dataset.
+- Latent variable models:
+    - Variational AutoEncoders (VAE)
+    - Importance Weighted AutoEncoder (IWAE)
 
 
 # Examples
