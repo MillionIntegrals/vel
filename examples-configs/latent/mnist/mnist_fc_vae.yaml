@@ -2,7 +2,7 @@ name: 'mnist_fc_vae'
 
 
 model:
-  name: vel.model.autoencoder.fc_vae
+  name: vel.model.latent.fc_vae
   img_rows: 28
   img_cols: 28
   img_channels: 1
