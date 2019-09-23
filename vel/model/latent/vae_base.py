@@ -38,11 +38,6 @@ class VaeBase(GradientModel):
 
     ####################################################################################################################
     # Other useful methods
-    def encode(self, sample: torch.Tensor) -> torch.Tensor:
-        """ Encode incoming data into a latent representation """
-        encoded = self.encoder_network(sample)
-        return self.encoder_rsample(encoded)
-
     def encoder_rsample(self, encoded: torch.Tensor) -> torch.Tensor:
         """ Sample with "reparametrization trick" encoder sample """
         return self.encoder_distribution(encoded).rsample()
@@ -51,11 +46,23 @@ class VaeBase(GradientModel):
         """ Sample from a decoder distribution """
         return self.decoder_distribution(decoded).sample()
 
+    def encode(self, sample: torch.Tensor) -> torch.Tensor:
+        """ Encode incoming data into a latent representation """
+        encoded = self.encoder_network(sample)
+        return self.encoder_rsample(encoded)
+
+    def decode(self, z: torch.Tensor) -> torch.Tensor:
+        """
+        Decode latent representation back into data domain.
+        Sample from p(x | z)
+        """
+        decoded = self.decoder_network(z)
+        return self.decoder_sample(decoded)
+
     def forward(self, sample: torch.Tensor) -> torch.Tensor:
         """ Simple forward pass through the module """
-        encoded = self.encoder_network(sample)
-        z = self.encoder_rsample(encoded)
-        decoded = self.decoder_sample(z)
+        z = self.encode(sample)
+        decoded = self.decode(z)
         return decoded
 
     def calculate_gradient(self, data: dict) -> dict:
