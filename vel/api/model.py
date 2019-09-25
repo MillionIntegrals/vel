@@ -15,7 +15,7 @@ class Model(nn.Module):
         return []
 
     def train(self, mode=True):
-        r"""
+        """
         Sets the module in training mode.
 
         This has any effect only on certain modules. See documentations of
@@ -68,8 +68,8 @@ class GradientModel(Model):
 
     def calculate_gradient(self, data: dict) -> dict:
         """
-        Calculate gradient for given batch of supervised learning.
-        Returns a dictionary of metrics
+        Calculate gradient for given batch of training data.
+        Returns a dictionary of metrics.
         """
         raise NotImplementedError
 

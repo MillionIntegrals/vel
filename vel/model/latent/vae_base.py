@@ -8,6 +8,7 @@ from vel.metric.loss_metric import Loss
 
 class VaeBase(GradientModel):
     """ Base module for variational auto-encoder implementations """
+
     def __init__(self, analytical_kl_div=True, max_grad_norm=1.0):
         super().__init__()
 
