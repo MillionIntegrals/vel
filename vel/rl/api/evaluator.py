@@ -2,14 +2,19 @@ class EvaluatorMeta(type):
     """ Metaclass for Evaluator - gathers all provider methods in a class attribute """
     def __new__(mcs, name, bases, attributes):
         providers = {}
+        use_cache = {}
 
         for name, attr in attributes.items():
             if callable(attr):
                 proper_name = getattr(attr, '_vel_evaluator_provides', None)
-
                 if proper_name is not None:
                     providers[proper_name] = attr
+                
+                cache = getattr(attr, '_vel_use_cache', None)
+                if cache is not None:
+                    use_cache[proper_name] = cache
 
+        attributes['_use_cache'] = use_cache
         attributes['_providers'] = providers
 
         return super().__new__(mcs, name, bases, attributes)
@@ -88,10 +93,12 @@ class Evaluator(metaclass=EvaluatorMeta):
     """
 
     @staticmethod
-    def provides(name):
+    def provides(name, cache=True):
         """ Function decorator - value provided by the evaluator """
         def decorator(func):
             func._vel_evaluator_provides = name
+            func._vel_use_cache = cache
+
             return func
 
         return decorator
@@ -112,7 +119,7 @@ class Evaluator(metaclass=EvaluatorMeta):
         else:
             return False
 
-    def get(self, name):
+    def get(self, name, cache=True):
         """
         Return a value from this evaluator.
 
@@ -120,18 +127,27 @@ class Evaluator(metaclass=EvaluatorMeta):
         with and without no_grad() context.
 
         It is advised in such cases to not use no_grad and stick to .detach()
+
+        If you want to disable the cache you can pass 'cache=False' to the decorator to disable it  
+        for the attribute or to the get() function to disable it just for that call
         """
-        if name in self._storage:
-            return self._storage[name]
+        if name in self._use_cache and not self._use_cache[name]:
+            cache = False
+        
+        if name in self._storage and cache:
+            value = self._storage[name]
         elif name in self._providers:
-            value = self._storage[name] = self._providers[name](self)
-            return value
+            value = self._providers[name](self)
         elif name.startswith('rollout:'):
             rollout_name = name[8:]
-            value = self._storage[name] = self.rollout.batch_tensor(rollout_name)
-            return value
+            value = self.rollout.batch_tensor(rollout_name)
         else:
             raise RuntimeError(f"Key {name} is not provided by this evaluator")
+       
+        if cache:
+            self._storage[name] = value
+        
+        return value
 
     def provide(self, name, value):
         """ Provide given value under specified name """
