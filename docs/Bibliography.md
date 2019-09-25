@@ -157,4 +157,5 @@ in the following repositories (in alphabetical order):
 - https://github.com/lessw2020/Ranger-Deep-Learning-Optimizer
 - https://github.com/openai/baselines
 - https://github.com/pytorch/pytorch
+- https://github.com/ritheshkumar95/pytorch-vqvae/
 - https://github.com/tensorflow/tensorflow
