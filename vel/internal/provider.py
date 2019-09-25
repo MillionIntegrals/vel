@@ -1,5 +1,6 @@
 import importlib
 import inspect
+import typing
 
 from vel.internal.parser import Variable
 from vel.internal.generic_factory import GenericFactory
@@ -7,7 +8,7 @@ from vel.internal.generic_factory import GenericFactory
 
 class Provider:
     """ Dependency injection resolver for the configuration file """
-    def __init__(self, environment, instances=None, parameters=None):
+    def __init__(self, environment: dict, instances: typing.Optional[dict] = None, parameters: typing.Optional[dict] = None):
         self.environment = environment
 
         self.parameters = parameters if parameters is not None else {}

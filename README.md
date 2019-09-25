@@ -9,8 +9,7 @@ Bring **velocity** to deep-learning research.
 
 
 This project hosts a collection of **highly modular** deep learning components that are tested to be working well together.
-A simple yaml-based system ties these modules together declaratively using configuration files,
-but everything that can be defined using config files can be coded directly in the python script as well.
+A simple yaml-based system ties these modules together declaratively using configuration files.
 
 
 This is still an early version and a hobby project so documentation is unfortunately nonexistent. I've tried to make the
@@ -33,7 +32,7 @@ into a structure that is designed to be reused rather than copied over.
 As a goal, it should be enough to write a config file that
 wires existing components together and defines their hyperparameters
 for most common applications.
-If that's not the case few bits of custom glue code should do the jobatari.
+If that's not the case few bits of custom glue code should do the job.
 
 
 This repository is still in an early stage of that journey but it will grow
@@ -54,7 +53,7 @@ pip install -e .
 ```
 from the repository root directory.
 
-This project requires Python at least 3.6 and PyTorch 1.1.
+This project requires Python at least 3.6 and PyTorch 1.2.
 If you want to run YAML config examples, you'll also need a **project configuration file**
 `.velproject.yaml`. An example is included in this repository.
 
@@ -86,7 +85,7 @@ To use it, just rename it to `.velproject.yaml`.
 Several models are already implemented in the framework and have example config files
 that are ready to run and easy to modify for other similar usecases:
 
-- State-of-the art results on Cifar10 dataset using residual networks
+- Residual networks (resnets) trained on Cifar10 dataset replicating published performance
 - Cats vs dogs classification using transfer learning from a resnet34 model pretrained on 
   ImageNet
   
@@ -99,8 +98,8 @@ that are ready to run and easy to modify for other similar usecases:
 # Implemented models - Reinforcement learning
 
 - Continuous and discrete action spaces
-- Basic support for LSTM policies for A2C and PPO
-- Following published policy gradient reinforcement learning algorithms:
+- Basic support for recurrent policies for A2C and PPO
+- Following policy gradient reinforcement learning algorithms:
     - Advantage Actor-Critic (A2C)
     - Deep Deterministic Policy Gradient (DDPG)
     - Proximal Policy Optimization (PPO)
@@ -122,6 +121,7 @@ that are ready to run and easy to modify for other similar usecases:
 - Latent variable models:
     - Variational AutoEncoders (VAE)
     - Importance Weighted AutoEncoder (IWAE)
+    - Vector-Quantised Variational AutoEncoder (VQ-VAE)
 
 
 # Examples

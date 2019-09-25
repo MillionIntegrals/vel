@@ -80,7 +80,7 @@ class TextUrlSource(Source):
 def create(model_config, url, local_dir, train_val_split=0.8):
     """ Vel factory function """
     if not os.path.isabs(local_dir):
-        local_dir = model_config.project_data_dir(local_dir)
+        local_dir = model_config.data_dir(local_dir)
 
     return TextUrlSource(
         url,

@@ -1,13 +1,17 @@
-from vel.api import EpochInfo, Callback
+from vel.api import EpochInfo, Callback, ModelConfig
 
 
 class StdoutStreaming(Callback):
     """ Stream results to stdout """
+    def __init__(self, model_config: ModelConfig):
+        self.model_config = model_config
+
     def on_epoch_end(self, epoch_info: EpochInfo):
-        if epoch_info.training_info.run_name:
-            print(f"=>>>>>>>>>> EPOCH {epoch_info.global_epoch_idx} [{epoch_info.training_info.run_name}]")
+        if self.model_config.tag:
+            tag = self.model_config.tag
+            print(f"=>>>>>>>>>> EPOCH {epoch_info.global_epoch_idx} [{self.model_config.run_name} - {tag}]")
         else:
-            print(f"=>>>>>>>>>> EPOCH {epoch_info.global_epoch_idx}")
+            print(f"=>>>>>>>>>> EPOCH {epoch_info.global_epoch_idx} [{self.model_config.run_name}]")
 
         if any(x.dataset is None for x in epoch_info.result.keys()):
             self._print_metrics_line(epoch_info.result, dataset=None)
@@ -37,6 +41,6 @@ class StdoutStreaming(Callback):
         print('{0: <10}'.format(dataset.capitalize()), " ".join(metrics_list))
 
 
-def create():
+def create(model_config):
     """ Vel factory function """
-    return StdoutStreaming()
+    return StdoutStreaming(model_config)

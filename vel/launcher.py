@@ -17,6 +17,7 @@ def main():
     parser.add_argument('-r', '--run_number', type=int, default=0, help="A run number")
     parser.add_argument('-d', '--device', default='cuda', help="A device to run the model on")
     parser.add_argument('-s', '--seed', type=int, default=None, help="Random seed for the project")
+    parser.add_argument('-t', '--tag', type=str, default=None, help="String tag for a given run")
     parser.add_argument('--werr', action='store_true', default=False, help="Convert warnings to errors")
     parser.add_argument(
         '-p', '--param', type=str, metavar='NAME=VALUE', action='append', default=[],
@@ -38,7 +39,7 @@ def main():
 
     model_config = ModelConfig.from_file(
         args.config, args.run_number, continue_training=getattr(args, 'continue'), device=args.device, seed=args.seed,
-        params={k: v for (k, v) in (Parser.parse_equality(eq) for eq in args.param)}
+        parameters={k: v for (k, v) in (Parser.parse_equality(eq) for eq in args.param)}
     )
 
     if model_config.project_dir not in sys.path:

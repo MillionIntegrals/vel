@@ -29,8 +29,7 @@ class EnjoyCommand:
         model = self.model_factory.instantiate(action_space=env.action_space).to(device)
 
         training_info = TrainingInfo(
-            start_epoch_idx=self.storage.last_epoch_idx(),
-            run_name=self.model_config.run_name
+            start_epoch_idx=self.storage.last_epoch_idx()
         )
 
         self.storage.load(training_info, model)

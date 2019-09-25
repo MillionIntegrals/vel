@@ -33,13 +33,12 @@ class TrainingInfo(abc.MutableMapping):
     Data dict is any extra information processes may want to store
     """
 
-    def __init__(self, start_epoch_idx=0, run_name: typing.Optional[str] = None, metrics=None, callbacks=None):
+    def __init__(self, start_epoch_idx=0, metrics=None, callbacks=None):
         self.data_dict = {}
 
         self.start_epoch_idx = start_epoch_idx
         self.metrics = metrics if metrics is not None else []
         self.callbacks = callbacks if callbacks is not None else []
-        self.run_name = run_name
         self.history = TrainingHistory()
 
         self.optimizer_initial_state = None

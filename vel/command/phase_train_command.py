@@ -129,7 +129,6 @@ class PhaseTrainCommand:
 
         training_info = api.TrainingInfo(
             start_epoch_idx=start_epoch,
-            run_name=self.model_config.run_name,
             metrics=metrics,
             callbacks=callbacks
         )

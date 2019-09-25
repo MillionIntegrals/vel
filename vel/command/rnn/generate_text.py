@@ -28,8 +28,7 @@ class GenerateTextCommand:
         start_epoch = self.storage.last_epoch_idx()
 
         training_info = TrainingInfo(
-            start_epoch_idx=start_epoch,
-            run_name=self.model_config.run_name,
+            start_epoch_idx=start_epoch
         )
 
         model_state, hidden_state = self.storage.load(training_info)

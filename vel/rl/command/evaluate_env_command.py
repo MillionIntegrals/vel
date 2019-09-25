@@ -38,7 +38,7 @@ class EvaluateEnvCommand:
             action_noise = None
 
         training_info = TrainingInfo(
-            start_epoch_idx=self.storage.last_epoch_idx(), run_name=self.model_config.run_name
+            start_epoch_idx=self.storage.last_epoch_idx()
         )
 
         model_state, hidden_state = self.storage.load(training_info)

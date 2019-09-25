@@ -1,5 +1,7 @@
 import datetime as dtm
+import json
 import os.path
+import pathlib
 import typing
 
 from vel.exception import VelInitializationException
@@ -16,6 +18,7 @@ class ModelConfig:
     """
 
     PROJECT_FILE_NAME = '.velproject.yaml'
+    META_FILE_NAME = 'meta.json'
 
     @staticmethod
     def find_project_directory(start_path) -> str:
@@ -39,7 +42,7 @@ class ModelConfig:
 
     @classmethod
     def from_file(cls, filename: str, run_number: int = 1, continue_training: bool = False, seed: int = None,
-                  device: str = 'cuda', params=None):
+                  device: str = 'cuda', parameters: typing.Optional[dict] = None, tag: typing.Optional[str] = None):
         """ Create model config from file """
         with open(filename, 'r') as fp:
             model_config_contents = Parser.parse(fp)
@@ -62,12 +65,14 @@ class ModelConfig:
             continue_training=continue_training,
             seed=seed,
             device=device,
-            parameters=params
+            parameters=parameters,
+            tag=tag
         )
 
     @classmethod
     def script(cls, model_name: str = 'script', configuration: typing.Optional[dict] = None, run_number: int = 1,
-               continue_training=False, seed: int = None, device: str = 'cuda', params=None):
+               continue_training=False, seed: int = None, device: str = 'cuda',
+               parameters: typing.Optional[dict] = None, tag: typing.Optional[str] = None):
         """ Create model config from supplied data """
         if configuration is None:
             configuration = {}
@@ -92,11 +97,13 @@ class ModelConfig:
             continue_training=continue_training,
             seed=seed,
             device=device,
-            parameters=params
+            parameters=parameters,
+            tag=tag
         )
 
     def __init__(self, filename: str, configuration: dict, run_number: int, project_dir: str,
-                 continue_training=False, seed: int = None, device: str = 'cuda', parameters=None):
+                 continue_training=False, seed: int = None, device: str = 'cuda',
+                 parameters: typing.Optional[dict] = None, tag: typing.Optional[str] = None):
         self.filename = filename
         self.device = device
         self.continue_training = continue_training
@@ -121,13 +128,48 @@ class ModelConfig:
 
         self._model_name = self.provider.get("name")
 
+        if continue_training:
+            self._meta = self._load_meta()
+
+            if tag is None:
+                self._tag = self._meta['tag']
+            else:
+                if self._tag != self._meta['tag']:
+                    raise VelInitializationException("Model tag mismatch")
+        else:
+            self._tag = tag
+            self._meta = self._create_meta()
+            self._write_meta()
+
+    ####################################################################################################################
+    # INTERNAL FUNCTIONS
     def _prepare_environment(self) -> dict:
         """ Return full environment for dependency injection """
         return {**self.contents, 'run_number': self.run_number}
 
-    def render_configuration(self) -> dict:
-        """ Return a nice and picklable run configuration """
-        return self.provider.render_configuration()
+    def _load_meta(self) -> dict:
+        """ Load previously written metadata about the project """
+        if not os.path.exists(self.meta_dir(self.META_FILE_NAME)):
+            raise VelInitializationException("Previous run does not exist")
+
+        with open(self.meta_dir(self.META_FILE_NAME), 'rt') as fp:
+            return json.load(fp)
+
+    def _write_meta(self) -> None:
+        """ Write metadata to a file """
+        pathlib.Path(self.meta_dir()).mkdir(parents=True, exist_ok=True)
+
+        with open(self.meta_dir(self.META_FILE_NAME), 'wt') as fp:
+            return json.dump(self.meta, fp)
+
+    def _create_meta(self) -> dict:
+        """ Metadata for this model/config """
+        return {
+            'run_name': self.run_name,
+            'tag': self.tag,
+            'created': dtm.datetime.now().strftime("%Y/%m/%d - %H:%M:%S"),
+            'config': self.render_configuration()
+        }
 
     ####################################################################################################################
     # COMMAND UTILITIES
@@ -142,29 +184,29 @@ class ModelConfig:
 
     ####################################################################################################################
     # MODEL DIRECTORIES
-    def checkpoint_dir(self, *args) -> str:
-        """ Return checkpoint directory for this model """
-        return self.output_dir('checkpoints', self.run_name, *args)
-
-    def data_dir(self, *args) -> str:
-        """ Return data directory for given dataset """
-        return self.project_data_dir(*args)
-
-    def openai_dir(self) -> str:
-        """ Return directory for openai output files for this model """
-        return self.output_dir('openai', self.run_name)
-
-    def project_data_dir(self, *args) -> str:
-        """ Directory where to store data """
-        return os.path.normpath(os.path.join(self.project_dir, 'data', *args))
+    def project_top_dir(self, *args) -> str:
+        """ Project top-level directory """
+        return os.path.join(self.project_dir, *args)
 
     def output_dir(self, *args) -> str:
         """ Directory where to store output """
         return os.path.join(self.project_dir, self.output_directory_name, *args)
 
-    def project_top_dir(self, *args) -> str:
-        """ Project top-level directory """
-        return os.path.join(self.project_dir, *args)
+    def meta_dir(self, *args) -> str:
+        """ Return directory for openai output files for this model """
+        return self.output_dir('meta', self.run_name, *args)
+
+    def data_dir(self, *args) -> str:
+        """ Directory where to store data """
+        return os.path.normpath(os.path.join(self.project_dir, 'data', *args))
+
+    def checkpoint_dir(self, *args) -> str:
+        """ Return checkpoint directory for this model """
+        return self.output_dir('checkpoints', self.run_name, *args)
+
+    def openai_dir(self, *args) -> str:
+        """ Return directory for openai output files for this model """
+        return self.output_dir('openai', self.run_name, *args)
 
     ####################################################################################################################
     # NAME UTILITIES
@@ -178,12 +220,26 @@ class ModelConfig:
         """ Return name of the model """
         return self._model_name
 
+    @property
+    def meta(self) -> dict:
+        """ Return name of the model """
+        return self._meta
+
+    @property
+    def tag(self) -> typing.Optional[str]:
+        """ Tag for this model/run number """
+        return self._tag
+
     ####################################################################################################################
     # MISC GETTERS
     def torch_device(self):
         """ Return torch device object """
         import torch
         return torch.device(self.device)
+
+    def render_configuration(self) -> dict:
+        """ Return a nice and picklable run configuration """
+        return self.provider.render_configuration()
 
     ####################################################################################################################
     # PROVIDER API
@@ -204,7 +260,16 @@ class ModelConfig:
 
         print("=" * 80)
         print(f"Pytorch version: {torch.__version__} cuda version {torch.version.cuda} cudnn version {torch.backends.cudnn.version()}")  # noqa
-        print("Running model {}, run {} -- command {} -- device {}".format(self._model_name, self.run_number, command_name, self.device))  # noqa
+
+        if self.tag:
+            print("Running model {}, run {} ({}) -- command {} -- device {}".format(
+                self._model_name, self.run_number, self.tag, command_name, self.device)
+            )
+        else:
+            print("Running model {}, run {} -- command {} -- device {}".format(
+                self._model_name, self.run_number, command_name, self.device)
+            )
+
         if device.type == 'cuda':
             device_idx = 0 if device.index is None else device.index
             print(f"CUDA Device name {torch.cuda.get_device_name(device_idx)}")
@@ -237,7 +302,6 @@ class ModelConfig:
 
         training_info = TrainingInfo(
             start_epoch_idx=last_epoch_idx,
-            run_name=self.run_name,
         )
 
         model_state, hidden_state = storage.load(training_info)
