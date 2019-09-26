@@ -24,3 +24,9 @@ visdom_settings:
   server: 'http://localhost'
   port: 8097
 
+
+# List of commands that are shared among all models in this project
+global_commands:
+  list:
+    name: vel.command.list_command
+
