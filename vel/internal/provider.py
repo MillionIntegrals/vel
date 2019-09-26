@@ -77,11 +77,12 @@ class Provider:
         else:
             return object_data
 
-    def render_configuration(self, configuration=None):
-        """ Render variables in configuration object but don't instantiate anything """
-        if configuration is None:
-            configuration = self.environment
+    def render_environment(self):
+        """ Render variables in current environment """
+        return self.render_configuration(self.environment)
 
+    def render_configuration(self, configuration):
+        """ Render variables in configuration object but don't instantiate anything """
         if isinstance(configuration, dict):
             return {k: self.render_configuration(v) for k, v in configuration.items()}
         elif isinstance(configuration, list):

@@ -10,7 +10,7 @@ class DistributionalDeepQLearning(OptimizerAlgoBase):
     """ Deep Q-Learning algorithm """
 
     def __init__(self, model_factory: ModelFactory, discount_factor: float, double_dqn: bool,
-                 target_update_frequency: int, max_grad_norm: float):
+                 target_update_frequency: int):
         super().__init__(max_grad_norm)
 
         self.model_factory = model_factory

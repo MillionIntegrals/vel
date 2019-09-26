@@ -2,9 +2,8 @@ import sys
 import torch
 import torch.nn
 import tqdm
-import typing
 
-from vel.api import GradientModel, TrainingInfo, EpochInfo, BatchInfo
+from vel.api import OptimizedModel, TrainingInfo, EpochInfo, BatchInfo
 from vel.data import DatasetLoader
 
 from vel.util.tensor_util import to_device
@@ -13,18 +12,13 @@ from vel.util.tensor_util import to_device
 class Trainer:
     """ Manages training process of a single model """
 
-    def __init__(self, device: torch.device, model: GradientModel, max_grad_norm: typing.Optional[float] = None):
+    def __init__(self, device: torch.device, model: OptimizedModel):
         self.device = device
-        self.model = model.to(device)
-        self.max_grad_norm = max_grad_norm
+        self.model: OptimizedModel = model.to(device)
 
     def metrics(self):
         """ Return metrics for given learner/model """
         return self.model.metrics()
-
-    def summary(self):
-        """ Print summary for given learner/model """
-        return self.model.summary()
 
     def train(self):
         """ Set model in the training mode """
@@ -49,7 +43,7 @@ class Trainer:
         """ Run full epoch of learning """
         epoch_info.on_epoch_begin()
 
-        lr = epoch_info.optimizer.param_groups[-1]['lr']
+        lr = epoch_info.optimizer.get_lr()
         print("|-------- Epoch {:06} Lr={:.6f} ----------|".format(epoch_info.global_epoch_idx, lr))
 
         self.train_epoch(epoch_info, loader)
@@ -74,7 +68,9 @@ class Trainer:
             batch_info['datapoint'] = datapoint
 
             batch_info.on_batch_begin('train')
-            self.train_batch(batch_info, datapoint)
+            datapoint = to_device(datapoint, self.device)  # Move a data batch into the right device
+            metrics = self.model.optimize(datapoint, batch_info.optimizer)
+            batch_info.update(metrics)
             batch_info.on_batch_end('train')
 
             iterator.set_postfix(loss=epoch_info.result_accumulator.intermediate_value('loss'))
@@ -94,26 +90,9 @@ class Trainer:
                 batch_info['datapoint'] = datapoint
 
                 batch_info.on_batch_begin('val')
-                self.feed_batch(batch_info, datapoint)
+
+                datapoint = to_device(datapoint, self.device)  # Move a data batch into the right device
+                metrics = self.model.validate(datapoint)
+                batch_info.update(metrics)
+
                 batch_info.on_batch_end('val')
-
-    def feed_batch(self, batch_info, data):
-        """ Run single batch of data """
-        data = to_device(data, self.device)  # Move a data batch into the right device
-
-        metrics = self.model.calculate_gradient(data)
-
-        batch_info.update(metrics)
-
-    def train_batch(self, batch_info, data):
-        """ Train single batch of data """
-        batch_info.optimizer.zero_grad()
-        self.feed_batch(batch_info, data)
-
-        if self.max_grad_norm is not None:
-            batch_info['grad_norm'] = torch.nn.utils.clip_grad_norm_(
-                filter(lambda p: p.requires_grad, self.model.parameters()),
-                max_norm=self.max_grad_norm
-            )
-
-        batch_info.optimizer.step()

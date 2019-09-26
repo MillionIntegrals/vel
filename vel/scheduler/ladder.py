@@ -2,7 +2,7 @@ import torch.optim.lr_scheduler as scheduler
 import numpy as np
 
 
-from vel.api import Callback, SchedulerFactory
+from vel.api import Callback, SchedulerFactory, EpochInfo
 
 
 class LadderScheduler(Callback):
@@ -16,7 +16,7 @@ class LadderScheduler(Callback):
         idx = np.minimum(np.searchsorted(self.schedule_limits, epoch_idx), len(self.schedule_limits) - 1)
         return self.schedule_numbers[idx]
 
-    def on_epoch_begin(self, epoch_info):
+    def on_epoch_end(self, epoch_info: EpochInfo) -> None:
         self.scheduler.step(epoch=epoch_info.global_epoch_idx)
 
 

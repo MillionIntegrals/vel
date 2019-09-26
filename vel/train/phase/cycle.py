@@ -3,7 +3,7 @@ import numpy as np
 
 import vel.util.interpolate as interp
 
-from vel.api import BatchInfo, EpochInfo, TrainingInfo, Callback
+from vel.api import BatchInfo, EpochInfo, TrainingInfo, Callback, OptimizedModel
 from vel.train import TrainPhase
 
 
@@ -77,16 +77,7 @@ class CycleCallback(Callback):
             else:
                 lr = interp.interpolate_single(self.max_lr, self.min_lr, interpolation_number, how=self.interpolate)
 
-        self.set_lr(lr)
-
-    def set_lr(self, lr):
-        """ Set a learning rate for the optimizer """
-        if isinstance(lr, list):
-            for group_lr, param_group in zip(lr, self.optimizer.param_groups):
-                param_group['lr'] = group_lr
-        else:
-            for param_group in self.optimizer.param_groups:
-                param_group['lr'] = lr
+        self.optimizer.set_lr(lr)
 
 
 class CyclePhase(TrainPhase):
@@ -123,10 +114,10 @@ class CyclePhase(TrainPhase):
     def number_of_epochs(self) -> int:
         return self.epochs
 
-    def set_up_phase(self, training_info, model, loader):
+    def set_up_phase(self, training_info, model: OptimizedModel, loader):
         """ Prepare the phase for learning """
         # To parameter groups handles properly filtering parameters that don't require gradient
-        self._optimizer_instance = self.optimizer_factory.instantiate(model)
+        self._optimizer_instance = model.create_optimizer(self.optimizer_factory)
         self._loader = loader
 
         self.special_callback = CycleCallback(

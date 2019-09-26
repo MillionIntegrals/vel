@@ -1,13 +1,13 @@
 import torch.nn as nn
 
-from vel.api import LinearBackboneModel, SupervisedTextData, ModelFactory
+from vel.api import LinearBackboneModel, ModelFactory, LanguageSource
 
 
 class EmbeddingInput(LinearBackboneModel):
     """ Learnable Embedding input layer """
 
     def __init__(self, alphabet_size: int, output_dim: int, pretrained: bool = False, frozen: bool = False,
-                 source: SupervisedTextData = None):
+                 source: LanguageSource = None):
         super().__init__()
 
         self._output_dim = output_dim
@@ -20,7 +20,7 @@ class EmbeddingInput(LinearBackboneModel):
 
     def reset_weights(self):
         if self._pretrained:
-            self.layer.weight.data.copy_(self._source.data_field.vocab.vectors)
+            self.layer.weight.data.copy_(self._source.fields['text'].vocab.vectors)
 
         if self._frozen:
             self.layer.weight.requires_grad = False
@@ -35,7 +35,7 @@ class EmbeddingInput(LinearBackboneModel):
 
 
 def create(alphabet_size: int, output_dim: int, pretrained: bool = False, frozen: bool = False,
-           source: SupervisedTextData = None):
+           source: LanguageSource = None):
     """ Vel factory function """
     def instantiate(**_):
         return EmbeddingInput(alphabet_size, output_dim, pretrained=pretrained, frozen=frozen, source=source)

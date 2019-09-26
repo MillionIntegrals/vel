@@ -41,15 +41,10 @@ class TrainingInfo(abc.MutableMapping):
         self.callbacks = callbacks if callbacks is not None else []
         self.history = TrainingHistory()
 
-        self.optimizer_initial_state = None
-
     def restore(self, hidden_state):
         """ Restore any state from checkpoint - currently not implemented but possible to do so in the future """
         for callback in self.callbacks:
             callback.load_state_dict(self, hidden_state)
-
-        if 'optimizer' in hidden_state:
-            self.optimizer_initial_state = hidden_state['optimizer']
 
     def initialize(self):
         """

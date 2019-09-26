@@ -41,7 +41,7 @@ class ModelConfig:
         return os.path.join(ModelConfig.find_project_directory('.'), path)
 
     @classmethod
-    def from_file(cls, filename: str, run_number: int = 1, continue_training: bool = False, seed: int = None,
+    def from_file(cls, filename: str, run_number: int = 1, resume_training: bool = False, seed: int = None,
                   device: str = 'cuda', parameters: typing.Optional[dict] = None, tag: typing.Optional[str] = None):
         """ Create model config from file """
         with open(filename, 'r') as fp:
@@ -62,7 +62,7 @@ class ModelConfig:
             configuration=aggregate_dictionary,
             run_number=run_number,
             project_dir=project_config_path,
-            continue_training=continue_training,
+            resume_training=resume_training,
             seed=seed,
             device=device,
             parameters=parameters,
@@ -71,7 +71,7 @@ class ModelConfig:
 
     @classmethod
     def script(cls, model_name: str = 'script', configuration: typing.Optional[dict] = None, run_number: int = 1,
-               continue_training=False, seed: int = None, device: str = 'cuda',
+               resume_training=False, seed: int = None, device: str = 'cuda',
                parameters: typing.Optional[dict] = None, tag: typing.Optional[str] = None):
         """ Create model config from supplied data """
         if configuration is None:
@@ -94,7 +94,7 @@ class ModelConfig:
             configuration=aggregate_dictionary,
             run_number=run_number,
             project_dir=project_config_path,
-            continue_training=continue_training,
+            resume_training=resume_training,
             seed=seed,
             device=device,
             parameters=parameters,
@@ -102,22 +102,28 @@ class ModelConfig:
         )
 
     def __init__(self, filename: str, configuration: dict, run_number: int, project_dir: str,
-                 continue_training=False, seed: int = None, device: str = 'cuda',
+                 resume_training=False, seed: int = None, device: str = 'cuda',
                  parameters: typing.Optional[dict] = None, tag: typing.Optional[str] = None):
         self.filename = filename
         self.device = device
-        self.continue_training = continue_training
+        self.resume_training = resume_training
         self.run_number = run_number
         self.seed = seed if seed is not None else (dtm.date.today().year + self.run_number)
 
         self.contents = configuration
         self.project_dir = os.path.normpath(project_dir)
 
-        self.command_descriptors = self.contents.get('commands', [])
+        self.command_descriptors = {
+            **self.contents.get('global_commands', {}),
+            **self.contents.get('commands', {})
+        }
 
         # This one is special and needs to get removed
         if 'commands' in self.contents:
             del self.contents['commands']
+
+        if 'global_commands' in self.contents:
+            del self.contents['global_commands']
 
         self.provider = Provider(self._prepare_environment(), {'model_config': self}, parameters=parameters)
 
@@ -128,18 +134,19 @@ class ModelConfig:
 
         self._model_name = self.provider.get("name")
 
-        if continue_training:
+        if self.meta_exists():
             self._meta = self._load_meta()
 
-            if tag is None:
-                self._tag = self._meta['tag']
-            else:
-                if self._tag != self._meta['tag']:
+            if resume_training:
+                if (tag is not None) and (tag != self._meta['tag']):
                     raise VelInitializationException("Model tag mismatch")
+                else:
+                    self._tag = self._meta['tag']
+            else:
+                self._tag = tag
         else:
             self._tag = tag
-            self._meta = self._create_meta()
-            self._write_meta()
+            self._meta = None
 
     ####################################################################################################################
     # INTERNAL FUNCTIONS
@@ -149,18 +156,11 @@ class ModelConfig:
 
     def _load_meta(self) -> dict:
         """ Load previously written metadata about the project """
-        if not os.path.exists(self.meta_dir(self.META_FILE_NAME)):
+        if not self.meta_exists():
             raise VelInitializationException("Previous run does not exist")
 
         with open(self.meta_dir(self.META_FILE_NAME), 'rt') as fp:
             return json.load(fp)
-
-    def _write_meta(self) -> None:
-        """ Write metadata to a file """
-        pathlib.Path(self.meta_dir()).mkdir(parents=True, exist_ok=True)
-
-        with open(self.meta_dir(self.META_FILE_NAME), 'wt') as fp:
-            return json.dump(self.meta, fp)
 
     def _create_meta(self) -> dict:
         """ Metadata for this model/config """
@@ -170,6 +170,26 @@ class ModelConfig:
             'created': dtm.datetime.now().strftime("%Y/%m/%d - %H:%M:%S"),
             'config': self.render_configuration()
         }
+
+    ####################################################################################################################
+    # Metadata handling
+    def meta_exists(self):
+        """ If metadata file exists for this config """
+        return os.path.exists(self.meta_dir(self.META_FILE_NAME))
+
+    def enforce_meta(self):
+        """ Make sure metadata exists for this config """
+        if self._meta is None:
+            raise VelInitializationException("Given model has not been initialized")
+
+    def write_meta(self) -> None:
+        """ Write metadata to a file """
+        self._meta = self._create_meta()
+
+        pathlib.Path(self.meta_dir()).mkdir(parents=True, exist_ok=True)
+
+        with open(self.meta_dir(self.META_FILE_NAME), 'wt') as fp:
+            return json.dump(self.meta, fp)
 
     ####################################################################################################################
     # COMMAND UTILITIES
@@ -223,6 +243,7 @@ class ModelConfig:
     @property
     def meta(self) -> dict:
         """ Return name of the model """
+        self.enforce_meta()
         return self._meta
 
     @property
@@ -239,7 +260,7 @@ class ModelConfig:
 
     def render_configuration(self) -> dict:
         """ Return a nice and picklable run configuration """
-        return self.provider.render_configuration()
+        return self.provider.render_environment()
 
     ####################################################################################################################
     # PROVIDER API
@@ -300,9 +321,7 @@ class ModelConfig:
         if last_epoch_idx == 0:
             raise VelInitializationException("No trained model available")
 
-        training_info = TrainingInfo(
-            start_epoch_idx=last_epoch_idx,
-        )
+        training_info = TrainingInfo(start_epoch_idx=last_epoch_idx)
 
         model_state, hidden_state = storage.load(training_info)
 

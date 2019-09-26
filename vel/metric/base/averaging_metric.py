@@ -36,6 +36,19 @@ class AveragingNamedMetric(AveragingMetric):
         return batch_info[self.name]
 
 
+class DefaultAveragingNamedMetric(AveragingNamedMetric):
+    """ AveragingNamedMetric that has a default value in case a metric is not found in the batch """
+    def __init__(self, name, scope="general", defaut_value=0.0):
+        super().__init__(name, scope=scope)
+        self.default_value = defaut_value
+
+    def _value_function(self, batch_info):
+        if self.name not in batch_info:
+            return self.default_value
+        else:
+            return batch_info[self.name]
+
+
 class AveragingSupervisedMetric(BaseMetric):
     """ Base class for metrics that simply calculate the average over the epoch """
     def __init__(self, name, scope="general"):

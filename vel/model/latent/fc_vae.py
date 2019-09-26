@@ -16,8 +16,8 @@ class FcVae(VaeBase):
     """
 
     def __init__(self, img_rows, img_cols, img_channels, layers=None, representation_length=32,
-                 analytical_kl_div=False, max_grad_norm=None):
-        super().__init__(analytical_kl_div=analytical_kl_div, max_grad_norm=max_grad_norm)
+                 analytical_kl_div=False):
+        super().__init__(analytical_kl_div=analytical_kl_div)
 
         if layers is None:
             layers = [512, 256]
@@ -91,7 +91,7 @@ class FcVae(VaeBase):
 #                 self._weight_initializer(m)
 
 
-def create(img_rows, img_cols, img_channels, layers=None, representation_length=32, max_grad_norm=None,
+def create(img_rows, img_cols, img_channels, layers=None, representation_length=32,
            analytical_kl_div=True):
     """ Vel factory function """
     if layers is None:
@@ -100,7 +100,7 @@ def create(img_rows, img_cols, img_channels, layers=None, representation_length=
     def instantiate(**_):
         return FcVae(
             img_rows, img_cols, img_channels, layers=layers, representation_length=representation_length,
-            max_grad_norm=max_grad_norm, analytical_kl_div=analytical_kl_div
+            analytical_kl_div=analytical_kl_div
         )
 
     return ModelFactory.generic(instantiate)

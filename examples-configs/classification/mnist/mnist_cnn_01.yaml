@@ -16,7 +16,7 @@ source:
 loader:
   name: vel.data.dataset_loader
   batch_size: 128
-  num_workers: 4
+#  num_workers: 4
 
   transformations:
     - name: vel.data.transformation.image_to_tensor
@@ -24,6 +24,7 @@ loader:
 
 optimizer:
   name: vel.optimizer.adadelta
+  max_grad_norm: 1.0
 
 
 commands:

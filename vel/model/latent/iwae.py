@@ -8,8 +8,8 @@ class IWAE(VaeBase):
     Importance-Weighted Auto-Encoder https://arxiv.org/abs/1509.00519
     """
 
-    def __init__(self, k: int = 5, analytical_kl_div=True, max_grad_norm=1.0):
-        super().__init__(analytical_kl_div=analytical_kl_div, max_grad_norm=max_grad_norm)
+    def __init__(self, k: int = 5, analytical_kl_div=True):
+        super().__init__(analytical_kl_div=analytical_kl_div)
 
         self.k = k
 
@@ -53,21 +53,9 @@ class IWAE(VaeBase):
         if self.training:
             loss.backward()
 
-            if self.max_grad_norm is not None:
-                grad_norm = torch.nn.utils.clip_grad_norm_(
-                    filter(lambda p: p.requires_grad, self.parameters()),
-                    max_norm=self.max_grad_norm
-                )
-            else:
-                grad_norm = 0.0
-        else:
-            grad_norm = 0.0
-
         with torch.no_grad():
             return {
                 'loss': loss.item(),
-
-                'grad_norm': grad_norm,
                 'reconstruction': -reconstruction.mean().item(),
                 'kl_divergence': kl_divergence.mean().item()
             }

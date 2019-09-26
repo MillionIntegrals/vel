@@ -117,7 +117,7 @@ class RlTrainCommand:
 
     def resume_training(self, reinforcer, callbacks, metrics) -> TrainingInfo:
         """ Possibly resume training from a saved state from the storage """
-        if self.model_config.continue_training:
+        if self.model_config.resume_training:
             start_epoch = self.storage.last_epoch_idx()
         else:
             start_epoch = 0

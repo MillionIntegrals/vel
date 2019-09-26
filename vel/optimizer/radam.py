@@ -1,16 +1,19 @@
 """
 RAdam implementation from: https://github.com/LiyuanLucasLiu/RAdam/blob/master/cifar_imagenet/utils/radam.py
 """
-import math
 import collections
-import torch.optim
+import math
+import torch
+import typing
+
+from torch.optim.optimizer import Optimizer
 
 import vel.util.module_util as mu
 
-from vel.api import OptimizerFactory, Model
+from vel.api import OptimizerFactory, VelOptimizer, VelOptimizerProxy
 
 
-class RAdam(torch.optim.Optimizer):
+class RAdam(Optimizer):
     def __init__(self, params, lr=1e-3, betas=(0.9, 0.999), eps=1e-8, weight_decay=0):
         defaults = dict(lr=lr, betas=betas, eps=eps, weight_decay=weight_decay)
         self.buffer = [[None, None, None] for ind in range(10)]
@@ -86,48 +89,35 @@ class RAdam(torch.optim.Optimizer):
 
 
 class RAdamFactory(OptimizerFactory):
-    """ RAdam optimizer factory """
+    """ Adam optimizer factory """
 
-    def __init__(self, lr=1e-3, betas=(0.9, 0.999), eps=1e-8, weight_decay=0, layer_groups=False):
+    def __init__(self, lr=1e-3, betas=(0.9, 0.999), eps=1e-8, weight_decay=0,
+                 max_grad_norm: typing.Optional[float] = None):
         self.lr = lr
         self.betas = betas
         self.eps = eps
         self.weight_decay = weight_decay
-        self.layer_groups = layer_groups
+        self.max_grad_norm = max_grad_norm
 
-    def instantiate(self, model: Model) -> RAdam:
-        if self.layer_groups:
-            parameters = mu.to_parameter_groups(model.get_layer_groups())
+    def instantiate(self, parameters) -> VelOptimizer:
+        return VelOptimizerProxy(RAdam(
+            parameters,
+            lr=self.lr, betas=self.betas, eps=self.eps, weight_decay=self.weight_decay
+        ), self.max_grad_norm)
 
-            if isinstance(self.lr, collections.Sequence):
-                for idx, lr in enumerate(self.lr):
-                    parameters[idx]['lr'] = lr
+    def instantiate_parameter_groups(self, out_parameters) -> VelOptimizer:
+        settings_dict = {
+            'lr': self.lr,
+            'eps': self.eps,
+            'weight_decay': self.weight_decay
+        }
 
-                default_lr = self.lr[0]
-            else:
-                default_lr = float(self.lr)
+        out_parameters = out_parameters.copy()
+        out_settings_dict = mu.optimizer_parameter_helper(out_parameters, settings_dict)
 
-            if isinstance(self.weight_decay, collections.Sequence):
-                for idx, weight_decay in enumerate(self.weight_decay):
-                    parameters[idx]['weight_decay'] = weight_decay
-
-                default_weight_decay = self.weight_decay[0]
-            else:
-                default_weight_decay = self.weight_decay
-
-            return RAdam(
-                parameters,
-                lr=default_lr, betas=self.betas, eps=self.eps, weight_decay=default_weight_decay,
-            )
-        else:
-            parameters = filter(lambda p: p.requires_grad, model.parameters())
-
-            return RAdam(
-                parameters,
-                lr=self.lr, betas=self.betas, eps=self.eps, weight_decay=self.weight_decay,
-            )
+        return VelOptimizerProxy(RAdam(out_parameters, betas=self.betas, **out_settings_dict), self.max_grad_norm)
 
 
-def create(lr, betas=(0.9, 0.999), weight_decay=0, epsilon=1e-8, layer_groups=False):
+def create(lr, betas=(0.9, 0.999), weight_decay=0, epsilon=1e-8, max_grad_norm=None):
     """ Vel factory function """
-    return RAdamFactory(lr=lr, betas=betas, weight_decay=weight_decay, eps=epsilon, layer_groups=layer_groups)
+    return RAdamFactory(lr=lr, betas=betas, weight_decay=weight_decay, eps=epsilon, max_grad_norm=max_grad_norm)

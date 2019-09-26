@@ -29,12 +29,12 @@ class StdoutStreaming(Callback):
             dataset = 'Metrics:'
 
             metrics_list = [
-                "{}/{} {:.06f}".format(k.scope, k.name, metrics[k])
+                "{}/{} {:.04f}".format(k.scope, k.name, metrics[k])
                 for k in sorted([k for k in metrics.keys() if k.dataset is None])
             ]
         else:
             metrics_list = [
-                "{}/{} {:.06f}".format(k.scope, k.name, metrics[k])
+                "{}/{} {:.04f}".format(k.scope, k.name, metrics[k])
                 for k in sorted([k for k in metrics.keys() if k.dataset == dataset])
             ]
 

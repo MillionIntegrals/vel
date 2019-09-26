@@ -1,9 +1,11 @@
-import torch.optim
+from torch.optim.optimizer import Optimizer
 
-from vel.api import OptimizerFactory, Model
+import vel.util.module_util as mu
+
+from vel.api import OptimizerFactory, VelOptimizer, VelOptimizerProxy
 
 
-class RMSpropTF(torch.optim.Optimizer):
+class RMSpropTF(Optimizer):
     """Implements RMSprop algorithm. A TensorFlow version with epsilon under the square root
 
     Proposed by G. Hinton in his
@@ -113,22 +115,42 @@ class RMSpropTF(torch.optim.Optimizer):
 class RMSpropTFFactory(OptimizerFactory):
     """ RMSprop optimizer factory - A Tensorflow version with epsilon under square root """
 
-    def __init__(self, lr=1e-2, alpha=0.99, eps=1e-8, weight_decay=0, momentum=0, centered=False):
+    def __init__(self, lr=1e-2, alpha=0.99, eps=1e-8, weight_decay=0, momentum=0, centered=False,
+                 max_grad_norm: typing.Optional[float] = None):
         self.lr = lr
         self.alpha = alpha
         self.eps = eps
         self.weight_decay = weight_decay
         self.momentum = momentum
         self.centered = centered
+        self.max_grad_norm = max_grad_norm
 
-    def instantiate(self, model: Model) -> RMSpropTF:
-        return RMSpropTF(
-            filter(lambda p: p.requires_grad, model.parameters()),
+    def instantiate(self, parameters) -> VelOptimizer:
+        return VelOptimizerProxy(RMSpropTF(
+            parameters,
             lr=self.lr, alpha=self.alpha, eps=self.eps,
             weight_decay=self.weight_decay, momentum=self.momentum, centered=self.centered
-        )
+        ), self.max_grad_norm)
+
+    def instantiate_parameter_groups(self, out_parameters) -> VelOptimizer:
+        settings_dict = {
+            'lr': self.lr,
+            'alpha': self.alpha,
+            'eps': self.eps,
+            'weight_decay': self.weight_decay,
+            'momentum': self.momentum,
+            'centered': self.centered
+        }
+
+        out_parameters = out_parameters.copy()
+        out_settings_dict = mu.optimizer_parameter_helper(out_parameters, settings_dict)
+
+        return VelOptimizerProxy(RMSpropTF(out_parameters, **out_settings_dict), self.max_grad_norm)
 
 
-def create(lr, alpha, momentum=0, weight_decay=0, epsilon=1e-8):
+def create(lr, alpha, momentum=0, weight_decay=0, epsilon=1e-8, max_grad_norm=None):
     """ Vel factory function """
-    return RMSpropTFFactory(lr=lr, alpha=alpha, momentum=momentum, weight_decay=weight_decay, eps=float(epsilon))
+    return RMSpropTFFactory(
+        lr=lr, alpha=alpha, momentum=momentum, weight_decay=weight_decay, eps=float(epsilon),
+        max_grad_norm=max_grad_norm
+    )

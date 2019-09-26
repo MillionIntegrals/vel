@@ -16,8 +16,8 @@ class FcIwae(IWAE):
     """
 
     def __init__(self, img_rows, img_cols, img_channels, k=5, layers=None, representation_length=32,
-                 analytical_kl_div=False, max_grad_norm=None):
-        super().__init__(k=k, analytical_kl_div=analytical_kl_div, max_grad_norm=max_grad_norm)
+                 analytical_kl_div=False):
+        super().__init__(k=k, analytical_kl_div=analytical_kl_div)
 
         if layers is None:
             layers = [512, 256]
@@ -91,8 +91,7 @@ class FcIwae(IWAE):
 #                 self._weight_initializer(m)
 
 
-def create(img_rows, img_cols, img_channels, k=5, layers=None, representation_length=32, max_grad_norm=None,
-           analytical_kl_div=True):
+def create(img_rows, img_cols, img_channels, k=5, layers=None, representation_length=32, analytical_kl_div=True):
     """ Vel factory function """
     if layers is None:
         layers = [512, 256]
@@ -100,7 +99,7 @@ def create(img_rows, img_cols, img_channels, k=5, layers=None, representation_le
     def instantiate(**_):
         return FcIwae(
             img_rows, img_cols, img_channels, k=k, layers=layers, representation_length=representation_length,
-            max_grad_norm=max_grad_norm, analytical_kl_div=analytical_kl_div
+            analytical_kl_div=analytical_kl_div
         )
 
     return ModelFactory.generic(instantiate)

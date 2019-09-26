@@ -19,8 +19,8 @@ class CnnIWAE(IWAE):
     """
 
     def __init__(self, img_rows, img_cols, img_channels, k=5, channels=None, representation_length=32,
-                 analytical_kl_div=True, max_grad_norm=0.5):
-        super().__init__(k=k, analytical_kl_div=analytical_kl_div, max_grad_norm=max_grad_norm)
+                 analytical_kl_div=True):
+        super().__init__(k=k, analytical_kl_div=analytical_kl_div)
 
         if channels is None:
             channels = [16, 32, 32]

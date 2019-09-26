@@ -9,11 +9,10 @@ from vel.metric.loss_metric import Loss
 class VaeBase(GradientModel):
     """ Base module for variational auto-encoder implementations """
 
-    def __init__(self, analytical_kl_div=True, max_grad_norm=1.0):
+    def __init__(self, analytical_kl_div=True):
         super().__init__()
 
         self.analytical_kl_div = analytical_kl_div
-        self.max_grad_norm = max_grad_norm
 
     ####################################################################################################################
     # Interface methods
@@ -96,20 +95,8 @@ class VaeBase(GradientModel):
         if self.training:
             loss.backward()
 
-            if self.max_grad_norm is not None:
-                grad_norm = torch.nn.utils.clip_grad_norm_(
-                    filter(lambda p: p.requires_grad, self.parameters()),
-                    max_norm=self.max_grad_norm
-                )
-            else:
-                grad_norm = 0.0
-        else:
-            grad_norm = 0.0
-
         return {
             'loss': loss.item(),
-
-            'grad_norm': grad_norm,
             'reconstruction': -reconstruction.item(),
             'kl_divergence': kl_divergence.item()
         }
@@ -131,7 +118,6 @@ class VaeBase(GradientModel):
             Loss(),
             AveragingNamedMetric('reconstruction', scope="train"),
             AveragingNamedMetric('kl_divergence', scope="train"),
-            AveragingNamedMetric('grad_norm', scope="train")
         ]
 
     @torch.no_grad()

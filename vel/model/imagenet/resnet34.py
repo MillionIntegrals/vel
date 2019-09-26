@@ -5,7 +5,7 @@ import torch.nn.functional as F
 import vel.module.layers as layers
 import vel.util.module_util as mu
 
-from vel.api import LossFunctionModel, ModelFactory
+from vel.api import LossFunctionModel, ModelFactory, OptimizerFactory, VelOptimizer
 
 
 # Because of concat pooling it's 2x 512
@@ -83,6 +83,10 @@ class Resnet34(LossFunctionModel):
         g2 = list(self.model[self.group_cut_layers[0]:self.group_cut_layers[1]])
         g3 = list(self.model[self.group_cut_layers[1]:])
         return [g1, g2, g3]
+
+    def create_optimizer(self, optimizer_factory: OptimizerFactory) -> VelOptimizer:
+        parameters = mu.to_parameter_groups(self.get_layer_groups())
+        return optimizer_factory.instantiate_parameter_groups(parameters)
 
     def forward(self, x):
         """ Calculate model value """

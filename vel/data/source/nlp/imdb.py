@@ -7,7 +7,7 @@ import torchtext.data as data
 import torchtext.datasets as ds
 
 
-from vel.api import SupervisedTextData
+from vel.api import LanguageSource
 
 
 class IMDBCached(ds.IMDB):
@@ -45,7 +45,7 @@ class IMDBCached(ds.IMDB):
         data.Dataset.__init__(self, examples, fields, **kwargs)
 
 
-def create(model_config, batch_size, data_dir='imdb', vectors=None):
+def create(model_config, data_dir='imdb', vectors=None):
     """ Create an IMDB dataset """
     path = model_config.data_dir(data_dir)
 
@@ -61,13 +61,23 @@ def create(model_config, batch_size, data_dir='imdb', vectors=None):
     text_field.build_vocab(train_source, max_size=25_000, vectors=vectors)
     label_field.build_vocab(train_source)
 
-    train_iterator, test_iterator = data.BucketIterator.splits(
-        (train_source, test_source),
-        batch_size=batch_size,
-        device=model_config.torch_device(),
-        shuffle=True
+    return LanguageSource(
+        train_source,
+        test_source,
+        fields=train_source.fields,
+        mapping={
+            'x': 'text',
+            'y': 'label'
+        }
     )
 
-    return SupervisedTextData(
-        train_source, test_source, train_iterator, test_iterator, text_field, label_field
-    )
+    # train_iterator, test_iterator = data.BucketIterator.splits(
+    #     (train_source, test_source),
+    #     batch_size=batch_size,
+    #     device=model_config.torch_device(),
+    #     shuffle=True
+    # )
+
+    # return SupervisedTextData(
+    #     train_source, test_source, train_iterator, test_iterator, text_field, label_field
+    # )

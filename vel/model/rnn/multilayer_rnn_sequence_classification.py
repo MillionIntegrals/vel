@@ -4,7 +4,9 @@ import torch
 import torch.nn.functional as F
 import torch.nn as nn
 
-from vel.api import LossFunctionModel, ModelFactory, LinearBackboneModel
+import vel.util.module_util as mu
+
+from vel.api import LossFunctionModel, ModelFactory, LinearBackboneModel, OptimizerFactory, VelOptimizer
 from vel.metric.accuracy import Accuracy
 from vel.metric.loss_metric import Loss
 from vel.module.rnn_layer import RnnLayer
@@ -128,6 +130,11 @@ class MultilayerRnnSequenceClassification(LossFunctionModel):
             self.linear_layers,
             self.output_layer
         ]
+
+    def create_optimizer(self, optimizer_factory: OptimizerFactory) -> VelOptimizer:
+        """ Create optimizer for the purpose of optimizing this model """
+        parameters = mu.to_parameter_groups(self.get_layer_groups())
+        return optimizer_factory.instantiate_parameter_groups(parameters)
 
     @property
     def state_dim(self) -> int:

@@ -56,27 +56,21 @@ class PhaseTrainCommand:
     def run(self):
         """ Run the command with supplied configuration """
         device = self.model_config.torch_device()
-        learner = train.Trainer(device, self.model_factory.instantiate())
-
-        # All callbacks useful for learning
-        callbacks = self.gather_callbacks()
-
-        # Metrics to track through this training
-        metrics = learner.metrics() + [SamplesPerSec()]
+        trainer = train.Trainer(device, self.model_factory.instantiate())
 
         # Check if training was already started and potentially continue where we left off
-        training_info, hidden_state = self.resume_training(learner, callbacks, metrics)
+        training_info, hidden_state = self.start_training(trainer)
 
         # Prepare current training phase
         current_phase_idx = self._select_phase_left_bound(training_info.start_epoch_idx)
         current_phase = self.phases[current_phase_idx]
         local_idx = training_info.start_epoch_idx - self.ladder[current_phase_idx]
 
-        current_phase.set_up_phase(training_info, learner.model, self.loader)
+        current_phase.set_up_phase(training_info, trainer.model, self.loader)
         print(current_phase.banner())
 
         if training_info.start_epoch_idx > 0:
-            current_phase.restore(training_info, local_idx, learner.model, hidden_state)
+            current_phase.restore(training_info, local_idx, trainer.model, hidden_state)
 
         training_info.on_train_begin()
 
@@ -86,46 +80,46 @@ class PhaseTrainCommand:
 
             # Phase preparations
             while current_phase_idx != iteration_phase_idx:
-                current_phase.tear_down_phase(training_info, learner.model)
+                current_phase.tear_down_phase(training_info, trainer.model)
 
                 current_phase_idx += 1
                 current_phase = self.phases[current_phase_idx]
 
-                current_phase.set_up_phase(training_info, learner.model, self.loader)
+                current_phase.set_up_phase(training_info, trainer.model, self.loader)
                 print(current_phase.banner())
 
             # Create epoch info
             epoch_info = current_phase.epoch_info(training_info, global_epoch_idx, local_idx)
 
             # Execute learning
-            current_phase.execute_epoch(epoch_info, learner)
+            current_phase.execute_epoch(epoch_info, trainer)
 
             # Epoch checkpoint
-            self.storage.checkpoint(epoch_info, learner.model)
+            self.storage.checkpoint(epoch_info, trainer.model)
 
         # Tear down the last phase
         if current_phase is not None:
-            current_phase.tear_down_phase(training_info, learner.model)
+            current_phase.tear_down_phase(training_info, trainer.model)
 
         training_info.on_train_end()
 
         return training_info
 
-    def gather_callbacks(self) -> list:
-        """ Gather all the callbacks to be used in this training run """
+    def start_training(self, trainer) -> (api.TrainingInfo, dict):
+        """ Possibly resume training from a saved state from the storage """
+        if self.model_config.resume_training:
+            start_epoch = self.storage.last_epoch_idx()
+        else:
+            start_epoch = 0
+
+        # Initial set of callbacks, always useful
         callbacks = [TimeTracker(), SampleTracker()]
 
         callbacks.extend(self.callbacks)
         callbacks.extend(self.storage.streaming_callbacks())
 
-        return callbacks
-
-    def resume_training(self, learner, callbacks, metrics) -> (api.TrainingInfo, dict):
-        """ Possibly resume training from a saved state from the storage """
-        if self.model_config.continue_training:
-            start_epoch = self.storage.last_epoch_idx()
-        else:
-            start_epoch = 0
+        # Metrics to track through this training
+        metrics = trainer.metrics() + [SamplesPerSec()]
 
         training_info = api.TrainingInfo(
             start_epoch_idx=start_epoch,
@@ -134,13 +128,16 @@ class PhaseTrainCommand:
         )
 
         if start_epoch == 0:
+            self.model_config.write_meta()
             self.storage.reset(self.model_config.render_configuration())
             training_info.initialize()
-            learner.initialize_training(training_info)
+            trainer.initialize_training(training_info)
             hidden_state = None
         else:
             model_state, hidden_state = self.storage.load(training_info)
-            learner.initialize_training(training_info, model_state, hidden_state)
+            training_info.restore(hidden_state)
+
+            trainer.initialize_training(training_info, model_state, hidden_state)
 
         return training_info, hidden_state
 

@@ -2,16 +2,21 @@ name: 'imdb_sentiment_gru'
 
 
 source:
-  name: vel.sources.nlp.imdb
+  name: vel.data.source.nlp.imdb
   vectors: "glove.6B.100d"  # precomputed 100-dimensional embeddings
+
+
+loader:
+  name: vel.data.bucket_loader
   batch_size: 32
 
 
+
 model:
-  name: vel.models.rnn.multilayer_rnn_sequence_classification
+  name: vel.model.rnn.multilayer_rnn_sequence_classification
 
   input_block:
-    name: vel.modules.input.embedding
+    name: vel.module.input.embedding
     alphabet_size: 25_002  # Size of the alphabet
 
     output_dim: 100 # Embedding dimension
@@ -31,7 +36,7 @@ model:
 
 
 optimizer:
-  name: vel.optimizers.adam
+  name: vel.optimizer.adam
   lr: [1.0e-4, 1.0e-3, 1.0e-2, 1.0e-2]
   weight_decay: [0.0, 0.0001, 0.001, 0.001]
   epsilon: 1.0e-5
@@ -41,6 +46,6 @@ optimizer:
 
 commands:
   train:
-    name: vel.commands.train_command
+    name: vel.command.train_command
     max_grad_norm: 5.0
     epochs: 10

@@ -3,6 +3,9 @@ import torch.nn as nn
 
 import vel.util.module_util as mu
 
+from vel.api.optimizer import VelOptimizer, OptimizerFactory
+from vel.api.scheduler import SchedulerFactory
+from vel.api.callback import Callback
 from vel.metric.loss_metric import Loss
 from vel.util.summary import summary
 
@@ -45,10 +48,6 @@ class Model(nn.Module):
         else:
             summary(self, input_size)
 
-    def get_layer_groups(self):
-        """ Return layers grouped for optimization purposes """
-        return [self]
-
     def reset_weights(self):
         """ Call proper initializers for the weights """
         pass
@@ -63,13 +62,60 @@ class Model(nn.Module):
         return None
 
 
-class GradientModel(Model):
-    """ Model for a supervised learning problem """
+class OptimizedModel(Model):
+    """ Model that is being optimized by an 'optimizer' """
+
+    def create_optimizer(self, optimizer_factory: OptimizerFactory) -> VelOptimizer:
+        """ Create optimizer for the purpose of optimizing this model """
+        parameters = filter(lambda p: p.requires_grad, self.parameters())
+        return optimizer_factory.instantiate(parameters)
+
+    def optimize(self, data: dict, optimizer: VelOptimizer) -> dict:
+        """
+        Perform one step of optimization of the model
+        :returns a dictionary of metrics
+        """
+        raise NotImplementedError
+
+    def validate(self, data: dict) -> dict:
+        """
+        Perform one step of model inference without optimization
+        :returns a dictionary of metrics
+        """
+        raise NotImplementedError
+
+
+class GradientModel(OptimizedModel):
+    """ Model that calculates a single gradient and optimizes it """
+
+    def optimize(self, data: dict, optimizer: VelOptimizer) -> dict:
+        """
+        Perform one step of optimization of the model
+        :returns a dictionary of metrics
+        """
+        optimizer.zero_grad()
+
+        metrics = self.calculate_gradient(data)
+
+        opt_metrics = optimizer.step()
+
+        for key, value in opt_metrics.items():
+            metrics[key] = value
+
+        return metrics
+
+    @torch.no_grad()
+    def validate(self, data: dict) -> dict:
+        """
+        Perform one step of model inference without optimization
+        :returns a dictionary of metrics
+        """
+        return self.calculate_gradient(data)
 
     def calculate_gradient(self, data: dict) -> dict:
         """
         Calculate gradient for given batch of training data.
-        Returns a dictionary of metrics.
+        :returns a dictionary of metrics
         """
         raise NotImplementedError
 

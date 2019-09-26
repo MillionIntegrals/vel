@@ -24,7 +24,7 @@ def main():
         help="Configuration parameters"
     )
     parser.add_argument(
-        '--continue', action='store_true', default=False, help="Continue previously started learning process"
+        '--resume', action='store_true', default=False, help="Resume previously started learning process"
     )
     parser.add_argument(
         '--profile', type=str, default=None, help="Profiler output"
@@ -38,8 +38,8 @@ def main():
         warnings.filterwarnings('error', module='torch\\..*')
 
     model_config = ModelConfig.from_file(
-        args.config, args.run_number, continue_training=getattr(args, 'continue'), device=args.device, seed=args.seed,
-        parameters={k: v for (k, v) in (Parser.parse_equality(eq) for eq in args.param)}
+        args.config, args.run_number, resume_training=args.resume, device=args.device, seed=args.seed,
+        parameters={k: v for (k, v) in (Parser.parse_equality(eq) for eq in args.param)}, tag=args.tag
     )
 
     if model_config.project_dir not in sys.path:

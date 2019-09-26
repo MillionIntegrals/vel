@@ -36,6 +36,12 @@ class TextUrlSource(Source):
             }
         )
 
+    def encode_character(self, char):
+        return self.data_dict['character_to_index'][char]
+
+    def decode_character(self, index):
+        return self.data_dict['index_to_character'][index]
+
     def download(self) -> dict:
         """ Make sure data file is downloaded and stored properly """
         if not os.path.exists(self.data_path):
@@ -86,4 +92,4 @@ def create(model_config, url, local_dir, train_val_split=0.8):
         url,
         absolute_data_path=local_dir,
         train_val_split=train_val_split,
-)
+    )

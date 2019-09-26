@@ -81,3 +81,19 @@ def chain_params(p):
 def to_parameter_groups(layer_groups):
     """ Convert from list of layer groups into list of parameter settings for an optimizer """
     return [{'params': chain_params(x)} for x in layer_groups]
+
+
+def optimizer_parameter_helper(parameters, parameter_dict):
+    """ Helper function for creating layer group optimizer instances """
+    out_dict = parameter_dict.copy()
+
+    for parameter, value in parameter_dict.items():
+        if isinstance(value, collections.Sequence):
+            for idx, this_value in enumerate(value):
+                parameters[idx][parameter] = this_value
+
+            out_dict[parameter] = value[0]
+
+    return out_dict
+
+
