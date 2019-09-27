@@ -9,7 +9,7 @@ from vel.rl.api import RlPolicy, Rollout, Trajectories
 from vel.rl.discount_bootstrap import discount_bootstrap_gae
 
 
-class A2C(RlPolicy):
+class A2CRnn(RlPolicy):
     """ Simplest policy gradient - calculate loss as an advantage of an actor versus value function """
     def __init__(self, policy: BackboneModel, entropy_coefficient, value_coefficient, discount_factor: float,
                  gae_lambda=1.0):
@@ -21,7 +21,7 @@ class A2C(RlPolicy):
 
         self.policy = policy
 
-        assert not self.policy.is_stateful, "For stateful policies, try A2CRnn"
+        assert self.policy.is_stateful, "Policy must be stateful"
 
     def reset_weights(self):
         """ Initialize properly model weights """
@@ -31,9 +31,18 @@ class A2C(RlPolicy):
         """ Calculate model outputs """
         return self.policy(observation, state=state)
 
+    def is_stateful(self) -> bool:
+        return self.policy.is_stateful
+
+    def zero_state(self, batch_size):
+        return self.policy.zero_state(batch_size)
+
+    def reset_state(self, state, dones):
+        return self.policy.reset_state(state, dones)
+
     def act(self, observation, state=None, deterministic=False):
         """ Select actions based on model's output """
-        action_pd_params, value_output = self(observation, state=state)
+        action_pd_params, value_output, next_state = self(observation, state=state)
 
         actions = self.policy.action_head.sample(action_pd_params, deterministic=deterministic)
 
@@ -42,6 +51,7 @@ class A2C(RlPolicy):
 
         return {
             'actions': actions,
+            'state': next_state,
             'values': value_output,
             'action:logprobs': logprobs
         }
@@ -69,14 +79,32 @@ class A2C(RlPolicy):
 
     def calculate_gradient(self, batch_info: BatchInfo, rollout: Rollout) -> dict:
         """ Calculate loss of the supplied rollout """
-        observations = rollout.batch_tensor('observations')
+        assert isinstance(rollout, Trajectories), "For an RNN model, we must evaluate trajectories"
 
+        # rollout values
         actions = rollout.batch_tensor('actions')
         advantages = rollout.batch_tensor('advantages')
         returns = rollout.batch_tensor('returns')
         rollout_values = rollout.batch_tensor('values')
 
-        pd_params, model_values = self(observations)
+        # Let's evaluate the model
+        observations = rollout.transition_tensors['observations']
+        hidden_state = rollout.transition_tensors['state'][0]  # Initial hidden state
+        dones = rollout.transition_tensors['dones']
+
+        action_accumulator = []
+        value_accumulator = []
+
+        # Evaluate recurrent network step by step
+        for i in range(observations.size(0)):
+            action_output, value_output, hidden_state = self(observations[i], hidden_state)
+            hidden_state = self.reset_state(hidden_state, dones[i])
+
+            action_accumulator.append(action_output)
+            value_accumulator.append(value_output)
+
+        pd_params = torch.cat(action_accumulator, dim=0)
+        model_values = torch.cat(value_accumulator, dim=0)
 
         log_probs = self.policy.action_head.logprob(actions, pd_params)
         entropy = self.policy.action_head.entropy(pd_params)
@@ -111,7 +139,7 @@ class A2C(RlPolicy):
         ]
 
 
-class A2CFactory(ModelFactory):
+class A2CRnnFactory(ModelFactory):
     """ Factory class for policy gradient models """
     def __init__(self, policy, entropy_coefficient, value_coefficient, discount_factor, gae_lambda=1.0):
         self.policy = policy
@@ -125,7 +153,7 @@ class A2CFactory(ModelFactory):
         # action_space = extra_args.pop('action_space')
         policy = self.policy.instantiate(**extra_args)
 
-        return A2C(
+        return A2CRnn(
             policy=policy,
             entropy_coefficient=self.entropy_coefficient,
             value_coefficient=self.value_coefficient,
@@ -136,7 +164,7 @@ class A2CFactory(ModelFactory):
 
 def create(policy: BackboneModel, entropy_coefficient, value_coefficient, discount_factor, gae_lambda=1.0):
     """ Vel factory function """
-    return A2CFactory(
+    return A2CRnnFactory(
         policy=policy,
         entropy_coefficient=entropy_coefficient,
         value_coefficient=value_coefficient,

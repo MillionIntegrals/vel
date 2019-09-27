@@ -12,28 +12,28 @@ vec_env:
 
 
 model:
-  name: vel.rl.models.stochastic_policy_rnn_model
+  name: vel.rl.algo.a2c_rnn
 
-  input_block:
-    name: vel.modules.input.image_to_tensor
+  entropy_coefficient: 0.01
+  value_coefficient: 0.5
+  discount_factor: 0.99
 
-  backbone:
-    name: vel.rl.models.backbone.nature_cnn_rnn
-    input_width: 84
-    input_height: 84
-    input_channels: 1  # The same as frame_history
-    rnn_type: 'lstm'
+  policy:
+    name: vel.rl.policy.stochastic_rnn_policy
+
+    input_block:
+      name: vel.module.input.image_to_tensor
+
+    backbone:
+      name: vel.rl.backbone.nature_cnn_rnn
+      input_width: 84
+      input_height: 84
+      input_channels: 1  # The same as frame_history
+      rnn_type: 'lstm'
 
 
 reinforcer:
-  name: vel.rl.reinforcers.on_policy_iteration_reinforcer
-
-  algo:
-    name: vel.rl.algo.policy_gradient.a2c
-    entropy_coefficient: 0.01
-    value_coefficient: 0.5
-    max_grad_norm: 0.5
-    discount_factor: 0.99
+  name: vel.rl.reinforcer.on_policy_iteration_reinforcer
 
   env_roller:
     name: vel.rl.env_roller.step_env_roller
@@ -45,28 +45,29 @@ reinforcer:
 
 
 optimizer:
-  name: vel.optimizers.rmsprop
+  name: vel.optimizer.rmsprop
   lr: 7.0e-4
   alpha: 0.99
   epsilon: 1.0e-3
+  max_grad_norm: 0.5
 
 
 commands:
   train:
-    name: vel.rl.commands.rl_train_command
+    name: vel.rl.command.rl_train_command
     total_frames: 1.1e7
     batches_per_epoch: 100
 
   record:
-    name: vel.rl.commands.record_movie_command
+    name: vel.rl.command.record_movie_command
     takes: 10
     videoname: 'atari_vid_{:04}.avi'
 
   evaluate:
-    name: vel.rl.commands.evaluate_env_command
+    name: vel.rl.command.evaluate_env_command
     parallel_envs: 16 # How many environments to run in parallel
 
     takes: 20
 
   visdom:
-    name: vel.commands.vis_store_command
+    name: vel.command.vis_store_command

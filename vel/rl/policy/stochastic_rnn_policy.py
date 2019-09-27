@@ -1,54 +1,13 @@
 import gym
-import torch
 import typing
 
 from vel.api import LinearBackboneModel, ModelFactory, BackboneModel
 from vel.module.input.identity import IdentityFactory
-from vel.rl.api import Rollout, Trajectories, Evaluator, RlPolicy
 from vel.rl.module.stochastic_action_head import StochasticActionHead
 from vel.rl.module.value_head import ValueHead
 
 
-class StochasticPolicyRnnEvaluator(Evaluator):
-    """ Evaluate recurrent model from initial state """
-
-    def __init__(self, model: 'StochasticRnnPolicy', rollout: Rollout):
-        assert isinstance(rollout, Trajectories), "For an RNN model, we must evaluate trajectories"
-        super().__init__(rollout)
-
-        self.model = model
-
-        observation_trajectories = rollout.transition_tensors['observations']
-        hidden_state = rollout.transition_tensors['state'][0]  # Initial hidden state
-
-        action_accumulator = []
-        value_accumulator = []
-
-        # Evaluate recurrent network step by step
-        for i in range(observation_trajectories.size(0)):
-            action_output, value_output, hidden_state = model(observation_trajectories[i], hidden_state)
-            action_accumulator.append(action_output)
-            value_accumulator.append(value_output)
-
-        policy_params = torch.cat(action_accumulator, dim=0)
-        estimated_values = torch.cat(value_accumulator, dim=0)
-
-        self.provide('model:policy_params', policy_params)
-        self.provide('model:values', estimated_values)
-
-    @Evaluator.provides('model:action:logprobs')
-    def model_action_logprobs(self):
-        actions = self.get('rollout:actions')
-        policy_params = self.get('model:policy_params')
-        return self.model.action_head.logprob(actions, policy_params)
-
-    @Evaluator.provides('model:entropy')
-    def model_entropy(self):
-        policy_params = self.get('model:policy_params')
-        return self.model.action_head.entropy(policy_params)
-
-
-class StochasticRnnPolicy(RlPolicy):
+class StochasticRnnPolicy(BackboneModel):
     """
     Most generic policy gradient model class with a set of common actor-critic heads that share a single backbone
     RNN version
@@ -76,6 +35,9 @@ class StochasticRnnPolicy(RlPolicy):
         """ If the model has a state that needs to be fed between individual observations """
         return True
 
+    def zero_state(self, batch_size):
+        return self.backbone.zero_state(batch_size)
+
     def reset_weights(self):
         """ Initialize properly model weights """
         self.input_block.reset_weights()
@@ -92,25 +54,6 @@ class StochasticRnnPolicy(RlPolicy):
         value_output = self.value_head(base_output)
 
         return action_output, value_output, new_state
-
-    def act(self, observation, state=None, deterministic=False) -> dict:
-        """ Select actions based on model's output """
-        action_pd_params, value_output, new_state = self(observation, state)
-        actions = self.action_head.sample(action_pd_params, deterministic=deterministic)
-
-        # log likelihood of selected action
-        logprobs = self.action_head.logprob(actions, action_pd_params)
-
-        return {
-            'actions': actions,
-            'values': value_output,
-            'action:logprobs': logprobs,
-            'state': new_state
-        }
-
-    def evaluate(self, rollout: Rollout) -> Evaluator:
-        """ Evaluate model on a rollout """
-        return StochasticPolicyRnnEvaluator(self, rollout)
 
     def value(self, observation, state=None):
         """ Calculate only value head for given state """
