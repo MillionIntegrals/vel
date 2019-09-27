@@ -100,7 +100,7 @@ def test_a2c_breakout():
     )
 
     # Model optimizer
-    optimizer = optim.RMSprop(reinforcer.model.parameters(), lr=7.0e-4, eps=1e-3)
+    optimizer = optim.RMSprop(reinforcer.policy.parameters(), lr=7.0e-4, eps=1e-3)
 
     # Overall information store for training information
     training_info = TrainingInfo(
@@ -182,7 +182,7 @@ def test_ppo_breakout():
 
     # Model optimizer
     # optimizer = optim.RMSprop(reinforcer.model.parameters(), lr=7.0e-4, eps=1e-3)
-    optimizer = optim.Adam(reinforcer.model.parameters(), lr=2.5e-4, eps=1e-5)
+    optimizer = optim.Adam(reinforcer.policy.parameters(), lr=2.5e-4, eps=1e-5)
 
     # Overall information store for training information
     training_info = TrainingInfo(

@@ -1,13 +1,13 @@
 import torch
 
-from vel.rl.api import Policy
+from vel.rl.api import RlPolicy
 from vel.util.tensor_util import to_device
 
 
 class PolicyActor:
     """ Evaluates policy on a fixed set of environments. Additionally tracks the state """
 
-    def __init__(self, num_envs: int, policy: Policy, device: torch.device):
+    def __init__(self, num_envs: int, policy: RlPolicy, device: torch.device):
         self.num_envs = num_envs
         self.policy = policy.to(device)
         self.device = device

@@ -7,7 +7,7 @@ import tqdm
 from vel.api import TrainingInfo, EpochInfo, BatchInfo, Model, ModelFactory
 from vel.openai.baselines.common.vec_env import VecEnv
 from vel.rl.api import (
-    ReinforcerBase, ReinforcerFactory, VecEnvFactory, ReplayEnvRollerBase, AlgoBase, ReplayEnvRollerFactoryBase
+    Reinforcer, ReinforcerFactory, VecEnvFactory, ReplayEnvRollerBase, AlgoBase, ReplayEnvRollerFactoryBase
 )
 from vel.rl.metrics import (
     FPSMetric, EpisodeLengthMetric, EpisodeRewardMetricQuantile, EpisodeRewardMetric, FramesMetric
@@ -22,7 +22,7 @@ class BufferedMixedPolicyIterationReinforcerSettings:
     stochastic_experience_replay: bool = True
 
 
-class BufferedMixedPolicyIterationReinforcer(ReinforcerBase):
+class BufferedMixedPolicyIterationReinforcer(Reinforcer):
     """
     A 'mixed' reinforcer that does both, on-policy learning from environment rollouts and off-policy learning
     from a replay buffer.
@@ -57,19 +57,19 @@ class BufferedMixedPolicyIterationReinforcer(ReinforcerBase):
         return my_metrics + self.algo.metrics() + self.env_roller.metrics()
 
     @property
-    def model(self) -> Model:
+    def policy(self) -> Model:
         """ Model trained by this reinforcer """
         return self._trained_model
 
     def initialize_training(self, training_info: TrainingInfo, model_state=None, hidden_state=None):
         """ Prepare models for training """
         if model_state is not None:
-            self.model.load_state_dict(model_state)
+            self.policy.load_state_dict(model_state)
         else:
-            self.model.reset_weights()
+            self.policy.reset_weights()
 
         self.algo.initialize(
-            training_info=training_info, model=self.model, environment=self.environment, device=self.device
+            training_info=training_info, model=self.policy, environment=self.environment, device=self.device
         )
 
     def train_epoch(self, epoch_info: EpochInfo, interactive=True):
@@ -111,14 +111,14 @@ class BufferedMixedPolicyIterationReinforcer(ReinforcerBase):
 
     def on_policy_train_batch(self, batch_info: BatchInfo):
         """ Perform an 'on-policy' training step of evaluating an env and a single backpropagation step """
-        self.model.train()
+        self.policy.train()
 
-        rollout = self.env_roller.rollout(batch_info, self.model, self.settings.number_of_steps).to_device(self.device)
+        rollout = self.env_roller.rollout(batch_info, self.policy, self.settings.number_of_steps).to_device(self.device)
 
         batch_result = self.algo.optimize(
             batch_info=batch_info,
             device=self.device,
-            model=self.model,
+            model=self.policy,
             rollout=rollout
         )
 
@@ -128,14 +128,14 @@ class BufferedMixedPolicyIterationReinforcer(ReinforcerBase):
 
     def off_policy_train_batch(self, batch_info: BatchInfo):
         """ Perform an 'off-policy' training step of sampling the replay buffer and gradient descent """
-        self.model.train()
+        self.policy.train()
 
-        rollout = self.env_roller.sample(batch_info, self.model, self.settings.number_of_steps).to_device(self.device)
+        rollout = self.env_roller.sample(batch_info, self.policy, self.settings.number_of_steps).to_device(self.device)
 
         batch_result = self.algo.optimize(
             batch_info=batch_info,
             device=self.device,
-            model=self.model,
+            model=self.policy,
             rollout=rollout
         )
 
@@ -155,7 +155,7 @@ class BufferedMixedPolicyIterationReinforcerFactory(ReinforcerFactory):
         self.algo = algo
         self.seed = seed
 
-    def instantiate(self, device: torch.device) -> ReinforcerBase:
+    def instantiate(self, device: torch.device) -> Reinforcer:
         env = self.env_factory.instantiate(parallel_envs=self.parallel_envs, seed=self.seed)
         model = self.model_factory.instantiate(action_space=env.action_space)
         env_roller = self.env_roller_factory.instantiate(env, device)

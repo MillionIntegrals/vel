@@ -5,7 +5,7 @@ import typing
 
 from vel.api import LinearBackboneModel, ModelFactory, BackboneModel
 from vel.module.input.identity import IdentityFactory
-from vel.rl.api import Rollout, Evaluator, RlModel
+from vel.rl.api import Rollout, Evaluator, RlPolicy
 from vel.rl.module.deterministic_action_head import DeterministicActionHead
 from vel.rl.module.deterministic_critic_head import DeterministicCriticHead
 
@@ -45,7 +45,7 @@ class DeterministicPolicyEvaluator(Evaluator):
         return self.model.value(observations, rollout_actions)
 
 
-class DeterministicPolicyModel(RlModel):
+class DeterministicPolicyModel(RlPolicy):
     """ Deterministic Policy Gradient - model """
 
     def __init__(self, input_block: BackboneModel, policy_backbone: LinearBackboneModel,

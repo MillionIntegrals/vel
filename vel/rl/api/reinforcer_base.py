@@ -1,9 +1,10 @@
 import torch
 
-from vel.api import TrainingInfo, EpochInfo, BatchInfo, Model
+from vel.api import TrainingInfo, EpochInfo, BatchInfo
+from vel.rl.api import RlPolicy
 
 
-class ReinforcerBase:
+class Reinforcer:
     """
     Manages training process of a single model.
     Learner version for reinforcement-learning problems.
@@ -26,13 +27,13 @@ class ReinforcerBase:
         raise NotImplementedError
 
     @property
-    def model(self) -> Model:
+    def policy(self) -> RlPolicy:
         """ Model trained by this reinforcer """
         raise NotImplementedError
 
 
 class ReinforcerFactory:
     """ A reinforcer factory """
-    def instantiate(self, device: torch.device) -> ReinforcerBase:
+    def instantiate(self, device: torch.device) -> Reinforcer:
         """ Create new reinforcer instance """
         raise NotImplementedError

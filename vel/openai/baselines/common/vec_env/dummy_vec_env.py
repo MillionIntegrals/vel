@@ -1,7 +1,7 @@
 import numpy as np
-from gym import spaces
 from . import VecEnv
 from .util import copy_obs_dict, dict_to_obs, obs_space_info
+
 
 class DummyVecEnv(VecEnv):
     """
@@ -13,6 +13,7 @@ class DummyVecEnv(VecEnv):
     def __init__(self, env_fns):
         """
         Arguments:
+
         env_fns: iterable of callables      functions that build environments
         """
         self.envs = [fn() for fn in env_fns]
@@ -26,7 +27,7 @@ class DummyVecEnv(VecEnv):
         self.buf_rews  = np.zeros((self.num_envs,), dtype=np.float32)
         self.buf_infos = [{} for _ in range(self.num_envs)]
         self.actions = None
-        self.specs = [e.spec for e in self.envs]
+        self.spec = self.envs[0].spec
 
     def step_async(self, actions):
         listify = True
@@ -45,8 +46,8 @@ class DummyVecEnv(VecEnv):
     def step_wait(self):
         for e in range(self.num_envs):
             action = self.actions[e]
-            if isinstance(self.envs[e].action_space, spaces.Discrete):
-                action = int(action)
+            # if isinstance(self.envs[e].action_space, spaces.Discrete):
+            #    action = int(action)
 
             obs, self.buf_rews[e], self.buf_dones[e], self.buf_infos[e] = self.envs[e].step(action)
             if self.buf_dones[e]:

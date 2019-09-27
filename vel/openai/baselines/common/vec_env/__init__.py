@@ -1,4 +1,7 @@
+import contextlib
+import os
 from abc import ABC, abstractmethod
+
 from vel.openai.baselines.common.tile_images import tile_images
 
 
@@ -135,7 +138,6 @@ class VecEnv(ABC):
             self.viewer = rendering.SimpleImageViewer()
         return self.viewer
 
-
 class VecEnvWrapper(VecEnv):
     """
     An environment wrapper that applies to an entire batch
@@ -144,8 +146,7 @@ class VecEnvWrapper(VecEnv):
 
     def __init__(self, venv, observation_space=None, action_space=None):
         self.venv = venv
-        VecEnv.__init__(self,
-                        num_envs=venv.num_envs,
+        super().__init__(num_envs=venv.num_envs,
                         observation_space=observation_space or venv.observation_space,
                         action_space=action_space or venv.action_space)
 
@@ -169,6 +170,25 @@ class VecEnvWrapper(VecEnv):
     def get_images(self):
         return self.venv.get_images()
 
+    def __getattr__(self, name):
+        if name.startswith('_'):
+            raise AttributeError("attempted to get missing private attribute '{}'".format(name))
+        return getattr(self.venv, name)
+
+
+class VecEnvObservationWrapper(VecEnvWrapper):
+    @abstractmethod
+    def process(self, obs):
+        pass
+
+    def reset(self):
+        obs = self.venv.reset()
+        return self.process(obs)
+
+    def step_wait(self):
+        obs, rews, dones, infos = self.venv.step_wait()
+        return self.process(obs), rews, dones, infos
+
 
 class CloudpickleWrapper(object):
     """
@@ -185,3 +205,22 @@ class CloudpickleWrapper(object):
     def __setstate__(self, ob):
         import pickle
         self.x = pickle.loads(ob)
+
+
+@contextlib.contextmanager
+def clear_mpi_env_vars():
+    """
+    from mpi4py import MPI will call MPI_Init by default.  If the child process has MPI environment variables, MPI will think that the child process is an MPI process just like the parent and do bad things such as hang.
+    This context manager is a hacky way to clear those environment variables temporarily such as when we are starting multiprocessing
+    Processes.
+    """
+    removed_environment = {}
+    for k, v in list(os.environ.items()):
+        for prefix in ['OMPI_', 'PMI_']:
+            if k.startswith(prefix):
+                removed_environment[k] = v
+                del os.environ[k]
+    try:
+        yield
+    finally:
+        os.environ.update(removed_environment)

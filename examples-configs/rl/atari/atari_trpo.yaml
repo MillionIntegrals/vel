@@ -12,40 +12,37 @@ vec_env:
 
 
 model:
-  name: vel.rl.models.stochastic_policy_model_separate
+  name: vel.rl.algo.trpo
+
+  max_kl: 0.001
+  cg_iters: 10
+  line_search_iters: 10
+  improvement_acceptance_ratio: 0.1
+  cg_damping: 0.001
+  vf_iters: 3
+  entropy_coefficient: 0.1
+  discount_factor: 0.99
+
+  gae_lambda: 1.00 # Generalized Advantage Estimator Lambda parameter
 
   input_block:
-    name: vel.modules.input.image_to_tensor
+    name: vel.module.input.image_to_tensor
 
   policy_backbone:
-    name: vel.rl.models.backbone.nature_cnn_small
+    name: vel.rl.backbone.nature_cnn_small
     input_width: 84
     input_height: 84
     input_channels: 4  # The same as frame_history
 
   value_backbone:
-    name: vel.rl.models.backbone.nature_cnn_small
+    name: vel.rl.backbone.nature_cnn_small
     input_width: 84
     input_height: 84
     input_channels: 4  # The same as frame_history
 
 
 reinforcer:
-  name: vel.rl.reinforcers.on_policy_iteration_reinforcer
-
-  algo:
-    name: vel.rl.algo.policy_gradient.trpo
-    max_kl: 0.001
-    cg_iters: 10
-    line_search_iters: 10
-    improvement_acceptance_ratio: 0.1
-    cg_damping: 0.001
-    vf_iters: 3
-    entropy_coef: 0.1
-    discount_factor: 0.99
-
-#    max_grad_norm: 0.5
-    gae_lambda: 1.00 # Generalized Advantage Estimator Lambda parameter
+  name: vel.rl.reinforcer.on_policy_iteration_reinforcer
 
   env_roller:
     name: vel.rl.env_roller.step_env_roller
@@ -58,25 +55,20 @@ reinforcer:
 
 
 optimizer:
-#  name: vel.optimizers.rmsprop
-#  lr: 7.0e-4
-#  alpha: 0.99
-##  epsilon: 1.0e-5
-#  epsilon: 1.0e-3
-
-  name: vel.optimizers.adam
+  name: vel.optimizer.adam
   lr: 1.0e-4
   epsilon: 1.0e-3
+#    max_grad_norm: 0.5
 
 
 commands:
   train:
-    name: vel.rl.commands.rl_train_command
+    name: vel.rl.command.rl_train_command
     total_frames: 1.1e7
     batches_per_epoch: 16
 
   record:
-    name: vel.rl.commands.record_movie_command
+    name: vel.rl.command.record_movie_command
     takes: 10
     videoname: 'atari_trpo_vid_{:04}.avi'
     frame_history: 4
@@ -84,7 +76,7 @@ commands:
       argmax_sampling: true
 
   evaluate:
-    name: vel.rl.commands.evaluate_env_command
+    name: vel.rl.command.evaluate_env_command
     takes: 100
     frame_history: 4
     sample_args:

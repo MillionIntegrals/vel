@@ -3,7 +3,7 @@ import typing
 
 from vel.api import LinearBackboneModel, ModelFactory, BackboneModel
 from vel.module.input.identity import IdentityFactory
-from vel.rl.api import Rollout, RlModel, Evaluator
+from vel.rl.api import Rollout, RlPolicy, Evaluator
 from vel.rl.module.q_distributional_head import QDistributionalHead
 
 
@@ -53,7 +53,7 @@ class QDistributionalModelEvaluator(Evaluator):
         return self.model(observations)
 
 
-class QDistributionalModel(RlModel):
+class QDistributionalModel(RlPolicy):
     """
     A deterministic greedy action-value model that learns a value function distribution rather than
     just an expectation.

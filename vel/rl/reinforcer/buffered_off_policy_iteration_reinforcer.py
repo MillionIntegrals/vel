@@ -7,7 +7,7 @@ import torch
 from vel.api import TrainingInfo, EpochInfo, BatchInfo, Model, ModelFactory
 from vel.openai.baselines.common.vec_env import VecEnv
 from vel.rl.api import (
-    ReinforcerBase, ReinforcerFactory, ReplayEnvRollerBase, AlgoBase, VecEnvFactory, ReplayEnvRollerFactoryBase
+    Reinforcer, ReinforcerFactory, ReplayEnvRollerBase, AlgoBase, VecEnvFactory, ReplayEnvRollerFactoryBase
 )
 from vel.rl.metrics import (
     FPSMetric, EpisodeLengthMetric, EpisodeRewardMetricQuantile, EpisodeRewardMetric, FramesMetric,
@@ -26,7 +26,7 @@ class BufferedOffPolicyIterationReinforcerSettings:
     training_rounds: int = 1
 
 
-class BufferedOffPolicyIterationReinforcer(ReinforcerBase):
+class BufferedOffPolicyIterationReinforcer(Reinforcer):
     """
     An off-policy reinforcer that rolls out environment and stores transitions in a buffer.
     Afterwards, it samples experience batches from this buffer to train the policy.
@@ -56,18 +56,18 @@ class BufferedOffPolicyIterationReinforcer(ReinforcerBase):
         return my_metrics + self.algo.metrics() + self.env_roller.metrics()
 
     @property
-    def model(self) -> Model:
+    def policy(self) -> Model:
         return self._trained_model
 
     def initialize_training(self, training_info: TrainingInfo, model_state=None, hidden_state=None):
         """ Prepare models for training """
         if model_state is not None:
-            self.model.load_state_dict(model_state)
+            self.policy.load_state_dict(model_state)
         else:
-            self.model.reset_weights()
+            self.policy.reset_weights()
 
         self.algo.initialize(
-            training_info=training_info, model=self.model, environment=self.environment, device=self.device
+            training_info=training_info, model=self.policy, environment=self.environment, device=self.device
         )
 
     def train_epoch(self, epoch_info: EpochInfo, interactive=True) -> None:
@@ -108,10 +108,10 @@ class BufferedOffPolicyIterationReinforcer(ReinforcerBase):
 
     def roll_out_and_store(self, batch_info):
         """ Roll out environment and store result in the replay buffer """
-        self.model.train()
+        self.policy.train()
 
         if self.env_roller.is_ready_for_sampling():
-            rollout = self.env_roller.rollout(batch_info, self.model, self.settings.rollout_steps)
+            rollout = self.env_roller.rollout(batch_info, self.policy, self.settings.rollout_steps)
             rollout = rollout.to_device(self.device)
 
             # Store some information about the rollout, no training phase
@@ -123,7 +123,7 @@ class BufferedOffPolicyIterationReinforcer(ReinforcerBase):
 
             with tqdm.tqdm(desc="Populating memory", total=self.env_roller.initial_memory_size_hint()) as pbar:
                 while not self.env_roller.is_ready_for_sampling():
-                    rollout = self.env_roller.rollout(batch_info, self.model, self.settings.rollout_steps)
+                    rollout = self.env_roller.rollout(batch_info, self.policy, self.settings.rollout_steps)
                     rollout = rollout.to_device(self.device)
 
                     new_frames = rollout.frames()
@@ -138,18 +138,18 @@ class BufferedOffPolicyIterationReinforcer(ReinforcerBase):
 
     def train_on_replay_memory(self, batch_info):
         """ Train agent on a memory gotten from replay buffer """
-        self.model.train()
+        self.policy.train()
 
         # Algo will aggregate data into this list:
         batch_info['sub_batch_data'] = []
 
         for i in range(self.settings.training_rounds):
-            sampled_rollout = self.env_roller.sample(batch_info, self.model, self.settings.training_steps)
+            sampled_rollout = self.env_roller.sample(batch_info, self.policy, self.settings.training_steps)
 
             batch_result = self.algo.optimize(
                 batch_info=batch_info,
                 device=self.device,
-                model=self.model,
+                model=self.policy,
                 rollout=sampled_rollout.to_device(self.device)
             )
 

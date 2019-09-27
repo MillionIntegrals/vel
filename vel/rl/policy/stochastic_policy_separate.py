@@ -1,16 +1,13 @@
 import gym
-import itertools as it
 import typing
 
 from vel.api import LinearBackboneModel, ModelFactory, BackboneModel
 from vel.module.input.identity import IdentityFactory
-from vel.rl.api import Rollout, RlModel, Evaluator
-from vel.rl.module.action_head import StochasticActionHead
+from vel.rl.module.stochastic_action_head import StochasticActionHead
 from vel.rl.module.value_head import ValueHead
-from vel.rl.model.stochastic_policy_model import StochasticPolicyEvaluator
 
 
-class StochasticPolicyModelSeparate(RlModel):
+class StochasticPolicyModelSeparate(BackboneModel):
     """
     Policy gradient model class with an actor and critic heads that don't share a backbone
     """
@@ -53,29 +50,7 @@ class StochasticPolicyModelSeparate(RlModel):
 
         return action_output, value_output
 
-    def step(self, observation, deterministic=False):
-        """ Select actions based on model's output """
-        policy_params, values = self(observation)
-        actions = self.action_head.sample(policy_params, deterministic=deterministic)
-
-        # log likelihood of selected action
-        logprobs = self.action_head.logprob(actions, policy_params)
-
-        return {
-            'actions': actions,
-            'values': values,
-            'action:logprobs': logprobs
-        }
-
-    def policy_parameters(self):
-        """ Parameters of policy """
-        return it.chain(self.policy_backbone.parameters(), self.action_head.parameters())
-
-    def logprob(self, action_sample, policy_params):
-        """ Calculate - log(prob) of selected actions """
-        return self.action_head.logprob(action_sample, policy_params)
-
-    def value(self, observations):
+    def value(self, observations, state=None):
         """ Calculate only value head for given state """
         input_data = self.input_block(observations)
         base_output = self.value_backbone(input_data)
@@ -88,18 +63,6 @@ class StochasticPolicyModelSeparate(RlModel):
         policy_base_output = self.policy_backbone(input_data)
         policy_params = self.action_head(policy_base_output)
         return policy_params
-
-    def evaluate(self, rollout: Rollout) -> Evaluator:
-        """ Evaluate model on a rollout """
-        return StochasticPolicyEvaluator(self, rollout)
-
-    def entropy(self, policy_params):
-        """ Entropy of a probability distribution """
-        return self.action_head.entropy(policy_params)
-
-    def kl_divergence(self, pd_q, pd_p):
-        """ Calculate KL-divergence between two probability distributions """
-        return self.action_head.kl_divergence(pd_q, pd_p)
 
 
 class StochasticPolicyModelSeparateFactory(ModelFactory):

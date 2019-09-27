@@ -4,22 +4,22 @@ import typing
 
 from vel.api import LinearBackboneModel, ModelFactory, BackboneModel
 from vel.module.input.identity import IdentityFactory
-from vel.rl.api import Rollout, Trajectories, Evaluator, RlRnnModel
-from vel.rl.module.action_head import StochasticActionHead
+from vel.rl.api import Rollout, Trajectories, Evaluator, RlPolicy
+from vel.rl.module.stochastic_action_head import StochasticActionHead
 from vel.rl.module.value_head import ValueHead
 
 
 class StochasticPolicyRnnEvaluator(Evaluator):
     """ Evaluate recurrent model from initial state """
 
-    def __init__(self, model: 'StochasticPolicyRnnModel', rollout: Rollout):
+    def __init__(self, model: 'StochasticRnnPolicy', rollout: Rollout):
         assert isinstance(rollout, Trajectories), "For an RNN model, we must evaluate trajectories"
         super().__init__(rollout)
 
         self.model = model
 
         observation_trajectories = rollout.transition_tensors['observations']
-        hidden_state = rollout.rollout_tensors['initial_hidden_state']
+        hidden_state = rollout.transition_tensors['state'][0]  # Initial hidden state
 
         action_accumulator = []
         value_accumulator = []
@@ -45,10 +45,10 @@ class StochasticPolicyRnnEvaluator(Evaluator):
     @Evaluator.provides('model:entropy')
     def model_entropy(self):
         policy_params = self.get('model:policy_params')
-        return self.model.entropy(policy_params)
+        return self.model.action_head.entropy(policy_params)
 
 
-class StochasticPolicyRnnModel(RlRnnModel):
+class StochasticRnnPolicy(RlPolicy):
     """
     Most generic policy gradient model class with a set of common actor-critic heads that share a single backbone
     RNN version
@@ -61,6 +61,8 @@ class StochasticPolicyRnnModel(RlRnnModel):
         self.input_block = input_block
         self.backbone = backbone
 
+        assert self.backbone.is_stateful, "Must have a stateful backbone"
+
         self.action_head = StochasticActionHead(
             action_space=action_space,
             input_dim=self.backbone.output_dim
@@ -70,9 +72,9 @@ class StochasticPolicyRnnModel(RlRnnModel):
         assert self.backbone.is_stateful, "Backbone must be a recurrent model"
 
     @property
-    def state_dim(self) -> int:
-        """ Dimension of model state """
-        return self.backbone.state_dim
+    def is_stateful(self) -> bool:
+        """ If the model has a state that needs to be fed between individual observations """
+        return True
 
     def reset_weights(self):
         """ Initialize properly model weights """
@@ -91,9 +93,9 @@ class StochasticPolicyRnnModel(RlRnnModel):
 
         return action_output, value_output, new_state
 
-    def step(self, observations, state, deterministic=False):
+    def act(self, observation, state=None, deterministic=False) -> dict:
         """ Select actions based on model's output """
-        action_pd_params, value_output, new_state = self(observations, state)
+        action_pd_params, value_output, new_state = self(observation, state)
         actions = self.action_head.sample(action_pd_params, deterministic=deterministic)
 
         # log likelihood of selected action
@@ -110,25 +112,26 @@ class StochasticPolicyRnnModel(RlRnnModel):
         """ Evaluate model on a rollout """
         return StochasticPolicyRnnEvaluator(self, rollout)
 
-    def logprob(self, action_sample, policy_params):
-        """ Calculate - log(prob) of selected actions """
-        return self.action_head.logprob(action_sample, policy_params)
-
-    def value(self, observations, state):
+    def value(self, observation, state=None):
         """ Calculate only value head for given state """
-        input_data = self.input_block(observations)
+        input_data = self.input_block(observation)
 
         base_output, new_state = self.backbone(input_data, state)
         value_output = self.value_head(base_output)
 
         return value_output
 
-    def entropy(self, action_pd_params):
-        """ Entropy of a probability distribution """
-        return self.action_head.entropy(action_pd_params)
+    def reset_state(self, state, dones):
+        """ Reset the state after the episode has been terminated """
+        if (dones > 0).any().item():
+            zero_state = self.backbone.zero_state(dones.shape[0]).to(state.device)
+            dones_expanded = dones.unsqueeze(-1)
+            return state * (1 - dones_expanded) + zero_state * dones_expanded
+        else:
+            return state
 
 
-class PolicyGradientRnnModelFactory(ModelFactory):
+class StochasticRnnPolicyFactory(ModelFactory):
     """ Factory class for policy gradient models """
     def __init__(self, input_block: ModelFactory, backbone: ModelFactory):
         self.input_block = input_block
@@ -139,7 +142,7 @@ class PolicyGradientRnnModelFactory(ModelFactory):
         input_block = self.input_block.instantiate()
         backbone = self.backbone.instantiate(**extra_args)
 
-        return StochasticPolicyRnnModel(input_block, backbone, extra_args['action_space'])
+        return StochasticRnnPolicy(input_block, backbone, extra_args['action_space'])
 
 
 def create(backbone: ModelFactory, input_block: typing.Optional[ModelFactory] = None):
@@ -147,7 +150,7 @@ def create(backbone: ModelFactory, input_block: typing.Optional[ModelFactory] = 
     if input_block is None:
         input_block = IdentityFactory()
 
-    return PolicyGradientRnnModelFactory(
+    return StochasticRnnPolicyFactory(
         input_block=input_block,
         backbone=backbone
     )

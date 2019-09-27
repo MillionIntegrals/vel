@@ -3,7 +3,7 @@ import numpy as np
 
 from vel.api import BatchInfo
 from vel.openai.baselines.common.vec_env import VecEnv
-from vel.rl.api import Trajectories, Rollout, EnvRollerBase, EnvRollerFactoryBase, Policy
+from vel.rl.api import Trajectories, Rollout, EnvRollerBase, EnvRollerFactoryBase, RlPolicy
 from vel.rl.util.actor import PolicyActor
 from vel.util.tensor_accumulator import TensorAccumulator
 
@@ -13,7 +13,7 @@ class StepEnvRoller(EnvRollerBase):
     Class calculating env rollouts.
     """
 
-    def __init__(self, environment: VecEnv, policy: Policy, device: torch.device):
+    def __init__(self, environment: VecEnv, policy: RlPolicy, device: torch.device):
         self._environment = environment
         self.device = device
 

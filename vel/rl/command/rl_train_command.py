@@ -1,8 +1,9 @@
 import typing
 
-from vel.api import ModelConfig, EpochInfo, TrainingInfo, BatchInfo, OptimizerFactory, Storage, Callback
-from vel.rl.api import ReinforcerFactory
+from vel.api import ModelConfig, EpochInfo, TrainingInfo, BatchInfo, OptimizerFactory, Storage, Callback, VelOptimizer
 from vel.callback.time_tracker import TimeTracker
+from vel.metric.samples_per_sec import SamplesPerSec
+from vel.rl.api import ReinforcerFactory, Reinforcer
 
 import vel.openai.baselines.logger as openai_logger
 
@@ -65,20 +66,12 @@ class RlTrainCommand:
 
         # Reinforcer is the learner for the reinforcement learning model
         reinforcer = self.reinforcer.instantiate(device)
-        optimizer = self.optimizer_factory.instantiate(reinforcer.model)
+        optimizer = reinforcer.policy.create_optimizer(self.optimizer_factory)
 
-        # All callbacks used for learning
-        callbacks = self.gather_callbacks(optimizer)
-        # Metrics to track through this training
-        metrics = reinforcer.metrics()
-
-        training_info = self.resume_training(reinforcer, callbacks, metrics)
+        training_info = self.start_training(reinforcer, optimizer)
 
         reinforcer.initialize_training(training_info)
         training_info.on_train_begin()
-
-        if training_info.optimizer_initial_state:
-            optimizer.load_state_dict(training_info.optimizer_initial_state)
 
         global_epoch_idx = training_info.start_epoch_idx + 1
 
@@ -95,7 +88,7 @@ class RlTrainCommand:
             if self.openai_logging:
                 self._openai_logging(epoch_info.result)
 
-            self.storage.checkpoint(epoch_info, reinforcer.model)
+            self.storage.checkpoint(epoch_info, reinforcer.policy)
 
             global_epoch_idx += 1
 
@@ -103,38 +96,46 @@ class RlTrainCommand:
 
         return training_info
 
-    def gather_callbacks(self, optimizer) -> list:
-        """ Gather all the callbacks to be used in this training run """
-        callbacks = [FrameTracker(self.total_frames), TimeTracker()]
-
-        if self.scheduler_factory is not None:
-            callbacks.append(self.scheduler_factory.instantiate(optimizer))
-
-        callbacks.extend(self.callbacks)
-        callbacks.extend(self.storage.streaming_callbacks())
-
-        return callbacks
-
-    def resume_training(self, reinforcer, callbacks, metrics) -> TrainingInfo:
+    def start_training(self, reinforcer: Reinforcer, optimizer: VelOptimizer) -> TrainingInfo:
         """ Possibly resume training from a saved state from the storage """
+
         if self.model_config.resume_training:
             start_epoch = self.storage.last_epoch_idx()
         else:
             start_epoch = 0
 
+        callbacks = [FrameTracker(self.total_frames), TimeTracker()]
+
+        if self.scheduler_factory is not None:
+            callbacks.extend(
+                optimizer.create_scheduler(scheduler_factory=self.scheduler_factory, last_epoch=start_epoch-1)
+            )
+
+        callbacks.extend(self.callbacks)
+        callbacks.extend(self.storage.streaming_callbacks())
+
+        # Metrics to track through this training
+        metrics = reinforcer.metrics() + optimizer.metrics()
+
         training_info = TrainingInfo(
             start_epoch_idx=start_epoch,
-            run_name=self.model_config.run_name,
-            metrics=metrics, callbacks=callbacks
+            metrics=metrics,
+            callbacks=callbacks
         )
 
         if start_epoch == 0:
+            self.model_config.write_meta()
             self.storage.reset(self.model_config.render_configuration())
             training_info.initialize()
             reinforcer.initialize_training(training_info)
         else:
             model_state, hidden_state = self.storage.load(training_info)
+
+            training_info.restore(hidden_state)
             reinforcer.initialize_training(training_info, model_state, hidden_state)
+
+            if 'optimizer' in hidden_state:
+                optimizer.load_state_dict(hidden_state['optimizer'])
 
         return training_info
 

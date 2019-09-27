@@ -7,7 +7,7 @@ from vel.api import BatchInfo, ModelFactory
 from vel.openai.baselines.common.vec_env import VecEnv
 from vel.openai.baselines.common.running_mean_std import RunningMeanStd
 from vel.rl.api import (
-    Trajectories, Rollout, ReplayEnvRollerBase, ReplayEnvRollerFactoryBase, ReplayBuffer, ReplayBufferFactory, Policy
+    Trajectories, Rollout, ReplayEnvRollerBase, ReplayEnvRollerFactoryBase, ReplayBuffer, ReplayBufferFactory, RlPolicy
 )
 from vel.rl.util.actor import PolicyActor
 from vel.util.tensor_accumulator import TensorAccumulator
@@ -20,7 +20,7 @@ class TransitionReplayEnvRoller(ReplayEnvRollerBase):
     Samples transitions from the replay buffer (individual frame transitions)
     """
 
-    def __init__(self, environment: VecEnv, policy: Policy, device: torch.device, replay_buffer: ReplayBuffer,
+    def __init__(self, environment: VecEnv, policy: RlPolicy, device: torch.device, replay_buffer: ReplayBuffer,
                  discount_factor: typing.Optional[float] = None, normalize_returns: bool = False,
                  forward_steps: int = 1, action_noise: typing.Optional[nn.Module] = None):
         self._environment = environment

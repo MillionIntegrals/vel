@@ -4,7 +4,7 @@ import numpy as np
 from vel.api import BatchInfo
 from vel.openai.baselines.common.vec_env import VecEnv
 from vel.rl.api import (
-    Trajectories, Rollout, ReplayEnvRollerBase, ReplayEnvRollerFactoryBase, ReplayBuffer, ReplayBufferFactory, Policy
+    Trajectories, Rollout, ReplayEnvRollerBase, ReplayEnvRollerFactoryBase, ReplayBuffer, ReplayBufferFactory, RlPolicy
 )
 from vel.rl.util.actor import PolicyActor
 from vel.util.tensor_accumulator import TensorAccumulator
@@ -17,7 +17,7 @@ class TrajectoryReplayEnvRoller(ReplayEnvRollerBase):
     Samples trajectories from the replay buffer (consecutive series of frames)
     """
 
-    def __init__(self, environment: VecEnv, policy: Policy, device: torch.device, replay_buffer: ReplayBuffer):
+    def __init__(self, environment: VecEnv, policy: RlPolicy, device: torch.device, replay_buffer: ReplayBuffer):
         self._environment = environment
         self.device = device
         self.replay_buffer = replay_buffer

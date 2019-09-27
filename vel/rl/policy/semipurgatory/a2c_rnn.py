@@ -9,8 +9,8 @@ from vel.rl.discount_bootstrap import discount_bootstrap_gae
 
 class A2CPolicyGradient(OptimizerAlgoBase):
     """ Simplest policy gradient - calculate loss as an advantage of an actor versus value function """
-    def __init__(self, entropy_coefficient, value_coefficient, max_grad_norm, discount_factor: float, gae_lambda=1.0):
-        super().__init__(max_grad_norm)
+    def __init__(self, entropy_coefficient, value_coefficient, discount_factor: float, gae_lambda=1.0):
+        super().__init__()
 
         self.entropy_coefficient = entropy_coefficient
         self.value_coefficient = value_coefficient
@@ -82,12 +82,11 @@ class A2CPolicyGradient(OptimizerAlgoBase):
         ]
 
 
-def create(entropy_coefficient, value_coefficient, max_grad_norm, discount_factor, gae_lambda=1.0):
+def create(entropy_coefficient, value_coefficient, discount_factor, gae_lambda=1.0):
     """ Vel factory function """
     return A2CPolicyGradient(
         entropy_coefficient,
         value_coefficient,
-        max_grad_norm,
         discount_factor,
         gae_lambda
     )

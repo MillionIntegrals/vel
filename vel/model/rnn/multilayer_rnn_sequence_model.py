@@ -9,7 +9,7 @@ from vel.module.rnn_layer import RnnLayer
 
 
 class MultilayerRnnSequenceModel(LossFunctionModel):
-    """ Multilayer GRU network for sequence modeling (n:n) """
+    """ Multilayer RNN network for sequence modeling (n:n) """
 
     def __init__(self, input_block: LinearBackboneModel, rnn_type: str, hidden_layers: typing.List[int],
                  output_dim: int, dropout: float = 0.0):

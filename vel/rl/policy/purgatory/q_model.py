@@ -3,7 +3,7 @@ import typing
 
 from vel.api import LinearBackboneModel, ModelFactory, BackboneModel
 from vel.module.input.identity import IdentityFactory
-from vel.rl.api import Rollout, RlModel, Evaluator
+from vel.rl.api import Rollout, RlPolicy, Evaluator
 from vel.rl.module.q_head import QHead
 
 
@@ -33,7 +33,7 @@ class QModelEvaluator(Evaluator):
         return self.model(observations)
 
 
-class QModel(RlModel):
+class QModel(RlPolicy):
     """
     Simple deterministic greedy action-value model.
     Supports only discrete action spaces (ones that can be enumerated)
