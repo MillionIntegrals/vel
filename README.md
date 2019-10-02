@@ -9,12 +9,13 @@ Bring **velocity** to deep-learning research.
 
 
 This project hosts a collection of **highly modular** deep learning components that are tested to be working well together.
-A simple yaml-based system ties these modules together declaratively using configuration files.
+A simple yaml-based system ties these modules declaratively using configuration files.
 
 
-This is still an early version and a hobby project so documentation is unfortunately nonexistent. I've tried to make the
-code as clear as possible, and provide many usage examples, but whenever there was a tradeoff to be made between 
-simplicity and modularity I've chosen modularity first and simplicity second.
+This is still an early version and a hobby project, so documentation is unfortunately nonexistent.
+I've made an effort to make the code clear and provide many usage examples,
+but whenever there was a tradeoff to be made between simplicity and modularity
+I've chosen modularity first and simplicity second. Therefore, high emphasis is made on interfaces between components.
 
 
 Having conducted a few research projects, I've gathered a small collection of repositories 
@@ -97,14 +98,14 @@ that are ready to run and easy to modify for other similar usecases:
   
 # Implemented models - Reinforcement learning
 
-- Continuous and discrete action spaces
+- Support for continuous and discrete environment action spaces
 - Basic support for recurrent policies for A2C and PPO
 - Following policy gradient reinforcement learning algorithms:
     - Advantage Actor-Critic (A2C)
-    - Deep Deterministic Policy Gradient (DDPG)
     - Proximal Policy Optimization (PPO)
     - Trust Region Policy Optimization (TRPO)
     - Actor-Critic with Experience Replay (ACER)
+    - Deep Deterministic Policy Gradient (DDPG)
 - Deep Q-Learning (DQN) as described by DeepMind in their Nature publication with following 
   improvements:
     - Double DQN
@@ -213,6 +214,55 @@ Possible to be included:
 
 Code quality:
 - Factor action noise back into the policy
+
+
+# Directories
+
+Below I'll list brief explanation about contents of main top-level directories.
+
+- `docs` - Few markdown documents about the framework
+- `examples-configs` - Ready to run configs with tried and tested models, usually heavily inspired by existing
+ literature.
+- `examples-notebooks` - A few examples of how to interact with `vel` from the level of IPython notebook
+- `vel` - Root for the Python source of the package
+  - `vel.api` - Interfaces and base classes used all over the codebase. To be used in source code only and not 
+    referenced from config files.
+  - `vel.callback` - Definitions of callbacks that can be used in the training process. Can be referenced both by code
+  and by the config files.
+  - `vel.command` - Commands that can be used in your configuration files, and there isn't much need to refer to
+  them from code.
+  - `vel.data` - Various classes for handling data sources and data transformations. Referenced both by source code
+   and config files.
+  - `vel.function` - Interfaces for creating various functions/interpolators, to be refereced by config files.
+  - `vel.internal` - Functions and classes to be only used by `vel` internally, and not by by user code nor configs.
+  - `vel.metric` - Code for tracking metrics during training of your models. To be used by both code and configs.
+  - `vel.model` - Definition of models, which is kind of an end-package that references all other packages. Models
+  contain most other parts of the pipeline and define a training procedure.
+  - `vel.module` - Various useful definitions of PyTorch modules, to be used when defining your own `models` and
+  `layers`.
+  - `vel.net` - "Network" module that may be referenced by a model to define neural network architecture used.
+      - `vel.net.layer` - Modular layer system for defining networks declaratively in configuration files.
+  - `vel.notebook` - Utilities for interfacing with `vel` using IPython notebooks
+  - `vel.openai` - Imported parts of the codebase of `openai/baselines` that I didn't want to bring as a package
+  dependency. To be referenced in code mostly.
+  - `vel.optimizer` - Various implementations of deep learning optimizers. To be referenced mostly by scripts.
+  - `vel.rl` - Meta package for everything related to Reinforcement Learning
+    - `vel.rl.api` - Interfaces and base classes to be used for Reinforcement Learning models and other classes.
+    - `vel.rl.buffer` - All classes relating to experience replay and experience buffers
+    - `vel.rl.command` - Commands used for RL training
+    - `vel.rl.env` - Basic reinforcement learning environments, mostly based on OpenAI gym
+    - `vel.rl.env_roller` - Classes for generating environment rollouts
+    - `vel.rl.layer` - Layers desined especially for RL
+    - `vel.rl.module` - PyTorch modules designed for RL
+    - `vel.rl.policy` - Equivalent of `vel.model` for RL
+    - `vel.rl.reinforcer` - Reinforcer manages RL training, and corresponds to `Trainer` in Supervised Learning
+    - `vel.rl.vecenv` - Utilities for vectorizing environments and stepping multiple environments at the same time
+  - `vel.scheduler` - Classes helping to set up learning rate schedules for the optimizers. To be referenced mostly
+  by scripts.
+  - `vel.storage` - Everything about persisting models and metrics. To be referenced mostly by configuration files.
+  - `vel.train` - Utilities for defining more generic training loops of models. To be referenced in both code and
+  config.
+  - `vel.util` - Collection of various utility functions to be used by all other modules.
 
 
 # Citing
