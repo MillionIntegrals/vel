@@ -5,7 +5,6 @@ https://github.com/openai/baselines/blob/master/baselines/ppo2/policies.py
 Under MIT license.
 """
 import numpy as np
-import typing
 
 import torch.nn as nn
 import torch.nn.init as init
@@ -13,8 +12,7 @@ import torch.nn.functional as F
 
 import vel.util.network as net_util
 
-from vel.api import ModelFactory, SizeHint, SizeHints
-
+from vel.api import SizeHint, SizeHints
 from vel.net.modular import Layer, LayerFactory
 
 

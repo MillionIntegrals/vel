@@ -7,8 +7,8 @@ import torch.autograd as autograd
 import torch.nn.functional as F
 import torch.nn.utils
 
-from vel.api import BatchInfo, VelOptimizer, BackboneModel, LinearBackboneModel, OptimizerFactory, ModelFactory
-from vel.calc.function import explained_variance
+from vel.api import BatchInfo, VelOptimizer, OptimizerFactory, ModelFactory, BackboneNetwork
+from vel.util.stats import explained_variance
 from vel.metric.base import AveragingNamedMetric
 
 from vel.rl.api import Rollout, Trajectories, RlPolicy
@@ -58,21 +58,11 @@ class TRPO(RlPolicy):
     """ Trust Region Policy Optimization - https://arxiv.org/abs/1502.05477 """
 
     def __init__(self,
-                 policy_backbone: LinearBackboneModel, value_backbone: LinearBackboneModel,
+                 policy_net: BackboneNetwork, value_net: BackboneNetwork,
                  action_space: gym.Space,
                  max_kl, cg_iters, line_search_iters, cg_damping, entropy_coefficient, vf_iters,
                  discount_factor, gae_lambda, improvement_acceptance_ratio):
         super().__init__(discount_factor)
-
-        self.policy_backbone = policy_backbone
-        self.value_backbone = value_backbone
-
-        self.action_head = StochasticActionHead(
-            action_space=action_space,
-            input_dim=self.policy_backbone.output_dim
-        )
-
-        self.value_head = ValueHead(input_dim=self.value_backbone.output_dim)
 
         self.mak_kl = max_kl
         self.cg_iters = cg_iters
@@ -83,18 +73,30 @@ class TRPO(RlPolicy):
         self.gae_lambda = gae_lambda
         self.improvement_acceptance_ratio = improvement_acceptance_ratio
 
+        self.policy_net = policy_net
+        self.value_net = value_net
+
+        self.action_head = StochasticActionHead(
+            action_space=action_space,
+            input_dim=self.policy_net.size_hints().assert_single(2).last()
+        )
+
+        self.value_head = ValueHead(
+            input_dim=self.value_net.size_hints().assert_single(2).last()
+        )
+
     def reset_weights(self):
         """ Initialize properly model weights """
-        self.policy_backbone.reset_weights()
-        self.value_backbone.reset_weights()
+        self.policy_net.reset_weights()
+        self.value_net.reset_weights()
 
         self.action_head.reset_weights()
         self.value_head.reset_weights()
 
     def forward(self, observations):
         """ Calculate model outputs """
-        policy_base_output = self.policy_backbone(observations)
-        value_base_output = self.value_backbone(observations)
+        policy_base_output = self.policy_net(observations)
+        value_base_output = self.value_net(observations)
 
         action_output = self.action_head(policy_base_output)
         value_output = self.value_head(value_base_output)
@@ -103,13 +105,13 @@ class TRPO(RlPolicy):
 
     def value(self, observations, state=None):
         """ Calculate only value head for given state """
-        base_output = self.value_backbone(observations)
+        base_output = self.value_net(observations)
         value_output = self.value_head(base_output)
         return value_output
 
     def policy(self, observations):
         """ Calculate only action head for given state """
-        policy_base_output = self.policy_backbone(observations)
+        policy_base_output = self.policy_net(observations)
         policy_params = self.action_head(policy_base_output)
         return policy_params
 
@@ -135,14 +137,14 @@ class TRPO(RlPolicy):
     def policy_parameters(self):
         """ Parameters of policy """
         return it.chain(
-            self.policy_backbone.parameters(),
+            self.policy_net.parameters(),
             self.action_head.parameters()
         )
 
     def value_parameters(self):
         """ Parameters of value function """
         return it.chain(
-            self.value_backbone.parameters(),
+            self.value_net.parameters(),
             self.value_head.parameters()
         )
 
@@ -333,11 +335,11 @@ class TRPO(RlPolicy):
 
 class TRPOFactory(ModelFactory):
     """ Factory class for policy gradient models """
-    def __init__(self, policy_backbone: ModelFactory, value_backbone: ModelFactory,
+    def __init__(self, policy_net: ModelFactory, value_net: ModelFactory,
                  max_kl, cg_iters, line_search_iters, cg_damping, entropy_coefficient, vf_iters,
                  discount_factor, gae_lambda, improvement_acceptance_ratio):
-        self.policy_backbone = policy_backbone
-        self.value_backbone = value_backbone
+        self.policy_net = policy_net
+        self.value_net = value_net
         self.entropy_coefficient = entropy_coefficient
 
         self.mak_kl = max_kl
@@ -353,12 +355,12 @@ class TRPOFactory(ModelFactory):
         """ Instantiate the model """
         action_space = extra_args.pop('action_space')
 
-        policy_backbone = self.policy_backbone.instantiate(**extra_args)
-        value_backbone = self.value_backbone.instantiate(**extra_args)
+        policy_net = self.policy_net.instantiate(**extra_args)
+        value_net = self.value_net.instantiate(**extra_args)
 
         return TRPO(
-            policy_backbone=policy_backbone,
-            value_backbone=value_backbone,
+            policy_net=policy_net,
+            value_net=value_net,
             action_space=action_space,
             max_kl=self.mak_kl,
             cg_iters=self.cg_iters,
@@ -372,14 +374,14 @@ class TRPOFactory(ModelFactory):
         )
 
 
-def create(policy_backbone: ModelFactory, value_backbone: ModelFactory,
+def create(policy_net: ModelFactory, value_net: ModelFactory,
            max_kl, cg_iters, line_search_iters, cg_damping, entropy_coefficient, vf_iters,
            discount_factor, gae_lambda, improvement_acceptance_ratio):
     """ Vel factory function """
 
     return TRPOFactory(
-        policy_backbone=policy_backbone,
-        value_backbone=value_backbone,
+        policy_net=policy_net,
+        value_net=value_net,
         max_kl=max_kl,
         cg_iters=cg_iters,
         line_search_iters=line_search_iters,

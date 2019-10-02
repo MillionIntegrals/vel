@@ -12,18 +12,19 @@ import torch.nn.functional as F
 
 import vel.util.network as net_util
 
-from vel.api import LinearBackboneModel, ModelFactory
+from vel.api import SizeHint, SizeHints
+from vel.net.modular import Layer, LayerFactory
 
 
-class NatureCnnSmall(LinearBackboneModel):
+class NatureCnnSmall(Layer):
     """
     Neural network as defined in the paper 'Human-level control through deep reinforcement learning'
     Smaller version.
     """
-    def __init__(self, input_width, input_height, input_channels, output_dim=128):
-        super().__init__()
+    def __init__(self, name: str, input_width, input_height, input_channels, output_dim=128):
+        super().__init__(name)
 
-        self._output_dim = output_dim
+        self.output_dim = output_dim
 
         self.conv1 = nn.Conv2d(
             in_channels=input_channels,
@@ -54,11 +55,6 @@ class NatureCnnSmall(LinearBackboneModel):
             self.output_dim
         )
 
-    @property
-    def output_dim(self) -> int:
-        """ Final dimension of model output """
-        return self._output_dim
-
     def reset_weights(self):
         for m in self.modules():
             if isinstance(m, nn.Conv2d):
@@ -70,7 +66,10 @@ class NatureCnnSmall(LinearBackboneModel):
                 init.orthogonal_(m.weight, gain=np.sqrt(2))
                 init.constant_(m.bias, 0.0)
 
-    def forward(self, image):
+    def size_hints(self) -> SizeHints:
+        return SizeHints(SizeHint(None, self.output_dim))
+
+    def forward(self, image, state: dict = None, context: dict = None):
         result = image
         result = F.relu(self.conv1(result))
         result = F.relu(self.conv2(result))
@@ -78,12 +77,29 @@ class NatureCnnSmall(LinearBackboneModel):
         return F.relu(self.linear_layer(flattened))
 
 
-def create(input_width, input_height, input_channels=1):
+class NatureCnnSmallFactory(LayerFactory):
+    """ Nature Cnn Network Factory """
+
+    def __init__(self, output_dim: int = 128):
+        self.output_dim = output_dim
+
+    @property
+    def name_base(self) -> str:
+        """ Base of layer name """
+        return "nature_cnn_small"
+
+    def instantiate(self, name: str, direct_input: SizeHints, context: dict) -> Layer:
+        (b, c, w, h) = direct_input.assert_single(4)
+
+        return NatureCnnSmall(
+            name=name,
+            input_width=w,
+            input_height=h,
+            input_channels=c,
+            output_dim=self.output_dim
+        )
+
+
+def create(output_dim: int = 128):
     """ Vel factory function """
-    def instantiate(**_):
-        return NatureCnnSmall(input_width=input_width, input_height=input_height, input_channels=input_channels)
-
-    return ModelFactory.generic(instantiate)
-
-
-NatureCnnSmallFactory = create
+    return NatureCnnSmallFactory(output_dim=output_dim)

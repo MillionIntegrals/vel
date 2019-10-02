@@ -12,7 +12,7 @@ vec_env:
 
 
 model:
-  name: vel.rl.algo.trpo
+  name: vel.rl.policy.trpo
 
   max_kl: 0.001
   cg_iters: 10
@@ -25,20 +25,19 @@ model:
 
   gae_lambda: 1.00 # Generalized Advantage Estimator Lambda parameter
 
-  input_block:
-    name: vel.module.input.image_to_tensor
+  policy_net:
+    name: vel.net.modular
+    layers:
+      - name: vel.net.layer.input.image_to_tensor
+        size: [84, 84, 4] # Number of channels is frame history
+      - name: vel.rl.layer.nature_cnn_small
 
-  policy_backbone:
-    name: vel.rl.backbone.nature_cnn_small
-    input_width: 84
-    input_height: 84
-    input_channels: 4  # The same as frame_history
-
-  value_backbone:
-    name: vel.rl.backbone.nature_cnn_small
-    input_width: 84
-    input_height: 84
-    input_channels: 4  # The same as frame_history
+  value_net:
+    name: vel.net.modular
+    layers:
+      - name: vel.net.layer.input.image_to_tensor
+        size: [84, 84, 4] # Number of channels is frame history
+      - name: vel.rl.layer.nature_cnn_small
 
 
 reinforcer:
