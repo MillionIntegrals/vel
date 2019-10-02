@@ -12,23 +12,20 @@ vec_env:
 
 
 model:
-  name: vel.rl.algo.a2c
+  name: vel.rl.policy.a2c
 
   entropy_coefficient: 0.01
   value_coefficient: 0.5
   discount_factor: 0.99
 
-  policy:
-    name: vel.rl.policy.stochastic_policy
-    input_block:
-      name: vel.module.input.image_to_tensor
-
-    backbone:
-      name: vel.rl.backbone.nature_cnn
-
-      input_width: 84
-      input_height: 84
-      input_channels: 4  # The same as frame_history
+  net:
+    name: vel.net.modular
+    layers:
+      - name: vel.net.layer.input.image_to_tensor
+        size: [84, 84, 4] # Number of channels is frame history
+      - name: vel.rl.layer.nature_cnn
+      - name: vel.net.layer.util.repeat_tensor
+        times: 2 # Need to repeat output twice, for action and value heads
 
 
 reinforcer:

@@ -27,7 +27,3 @@ def create(alphabet_size: int):
         return OneHotEncodingInput(alphabet_size)
 
     return ModelFactory.generic(instantiate)
-
-
-# Scripting interface
-OneHotEncodingInputFactory = create

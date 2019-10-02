@@ -41,7 +41,3 @@ def create(alphabet_size: int, output_dim: int, pretrained: bool = False, frozen
         return EmbeddingInput(alphabet_size, output_dim, pretrained=pretrained, frozen=frozen, source=source)
 
     return ModelFactory.generic(instantiate)
-
-
-# Scripting interface
-EmbeddingInputFactory = create

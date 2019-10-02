@@ -13,11 +13,16 @@ import torch.nn.functional as F
 import vel.util.network as net_util
 
 from vel.api import LinearBackboneModel, ModelFactory
+from vel.rl.module.noisy_linear import NoisyLinear
 
 
-class NatureCnn(LinearBackboneModel):
-    """ Neural network as defined in the paper 'Human-level control through deep reinforcement learning' """
-    def __init__(self, input_width, input_height, input_channels, output_dim=512):
+class NoisyNatureCnn(LinearBackboneModel):
+    """
+    Neural network as defined in the paper 'Human-level control through deep reinforcement learning'
+    implemented via "Noisy Networks for Exploration"
+    """
+    def __init__(self, input_width, input_height, input_channels, output_dim=512, initial_std_dev=0.4,
+                 factorized_noise=True):
         super().__init__()
 
         self._output_dim = output_dim
@@ -52,9 +57,11 @@ class NatureCnn(LinearBackboneModel):
         self.final_width = net_util.convolutional_layer_series(input_width, layer_series)
         self.final_height = net_util.convolutional_layer_series(input_height, layer_series)
 
-        self.linear_layer = nn.Linear(
+        self.linear_layer = NoisyLinear(
             self.final_width * self.final_height * 64,  # 64 is the number of channels of the last conv layer
-            self.output_dim
+            self.output_dim,
+            initial_std_dev=initial_std_dev,
+            factorized_noise=factorized_noise
         )
 
     @property
@@ -73,6 +80,8 @@ class NatureCnn(LinearBackboneModel):
                 # init.kaiming_normal_(m.weight, mode='fan_out', nonlinearity='relu')
                 init.orthogonal_(m.weight, gain=np.sqrt(2))
                 init.constant_(m.bias, 0.0)
+            elif isinstance(m, NoisyLinear):
+                m.reset_weights()
 
     def forward(self, image):
         result = image
@@ -83,16 +92,12 @@ class NatureCnn(LinearBackboneModel):
         return F.relu(self.linear_layer(flattened))
 
 
-def create(input_width, input_height, input_channels=1, output_dim=512):
+def create(input_width, input_height, input_channels=1, output_dim=512, initial_std_dev=0.4, factorized_noise=True):
     """ Vel factory function """
     def instantiate(**_):
-        return NatureCnn(
+        return NoisyNatureCnn(
             input_width=input_width, input_height=input_height, input_channels=input_channels,
-            output_dim=output_dim
+            output_dim=output_dim, initial_std_dev=initial_std_dev, factorized_noise=factorized_noise
         )
 
     return ModelFactory.generic(instantiate)
-
-
-# Scripting interface
-NatureCnnFactory = create

@@ -20,7 +20,3 @@ def create():
         return Flatten()
 
     return ModelFactory.generic(instantiate)
-
-
-# Scripting interface
-FlattenInputFactory = create

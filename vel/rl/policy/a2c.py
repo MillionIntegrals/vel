@@ -1,17 +1,21 @@
+import gym
 import torch
 import torch.nn.functional as F
 
 from vel.metric.base import AveragingNamedMetric
-from vel.calc.function import explained_variance
-from vel.api import BackboneModel, ModelFactory, BatchInfo
+from vel.util.stats import explained_variance
+from vel.api import ModelFactory, BatchInfo, BackboneNetwork
 
 from vel.rl.api import RlPolicy, Rollout, Trajectories
 from vel.rl.discount_bootstrap import discount_bootstrap_gae
+from vel.rl.module.stochastic_action_head import StochasticActionHead
+from vel.rl.module.value_head import ValueHead
 
 
 class A2C(RlPolicy):
     """ Simplest policy gradient - calculate loss as an advantage of an actor versus value function """
-    def __init__(self, policy: BackboneModel, entropy_coefficient, value_coefficient, discount_factor: float,
+    def __init__(self, net: BackboneNetwork, action_space: gym.Space,
+                 entropy_coefficient, value_coefficient, discount_factor: float,
                  gae_lambda=1.0):
         super().__init__(discount_factor)
 
@@ -19,26 +23,40 @@ class A2C(RlPolicy):
         self.value_coefficient = value_coefficient
         self.gae_lambda = gae_lambda
 
-        self.policy = policy
+        self.net = net
 
-        assert not self.policy.is_stateful, "For stateful policies, try A2CRnn"
+        assert not self.net.is_stateful, "For stateful policies, use A2CRnn"
+
+        # Make sure network returns two results
+        (action_size, value_size) = self.net.size_hints().assert_tuple(2)
+
+        self.action_head = StochasticActionHead(
+            action_space=action_space,
+            input_dim=action_size.last(),
+        )
+
+        self.value_head = ValueHead(
+            input_dim=value_size.last()
+        )
 
     def reset_weights(self):
         """ Initialize properly model weights """
-        self.policy.reset_weights()
+        self.net.reset_weights()
+        self.action_head.reset_weights()
+        self.value_head.reset_weights()
 
     def forward(self, observation, state=None):
         """ Calculate model outputs """
-        return self.policy(observation, state=state)
+        action_hidden, value_hidden = self.net(observation, state=state)
+        return self.action_head(action_hidden), self.value_head(value_hidden)
 
     def act(self, observation, state=None, deterministic=False):
         """ Select actions based on model's output """
-        action_pd_params, value_output = self(observation, state=state)
-
-        actions = self.policy.action_head.sample(action_pd_params, deterministic=deterministic)
+        action_pd_params, value_output = self(observation)
+        actions = self.action_head.sample(action_pd_params, deterministic=deterministic)
 
         # log likelihood of selected action
-        logprobs = self.policy.action_head.logprob(actions, action_pd_params)
+        logprobs = self.action_head.logprob(actions, action_pd_params)
 
         return {
             'actions': actions,
@@ -78,8 +96,8 @@ class A2C(RlPolicy):
 
         pd_params, model_values = self(observations)
 
-        log_probs = self.policy.action_head.logprob(actions, pd_params)
-        entropy = self.policy.action_head.entropy(pd_params)
+        log_probs = self.action_head.logprob(actions, pd_params)
+        entropy = self.action_head.entropy(pd_params)
 
         # Actual calculations. Pretty trivial
         policy_loss = -torch.mean(advantages * log_probs)
@@ -113,8 +131,8 @@ class A2C(RlPolicy):
 
 class A2CFactory(ModelFactory):
     """ Factory class for policy gradient models """
-    def __init__(self, policy, entropy_coefficient, value_coefficient, discount_factor, gae_lambda=1.0):
-        self.policy = policy
+    def __init__(self, net, entropy_coefficient, value_coefficient, discount_factor, gae_lambda=1.0):
+        self.net = net
         self.entropy_coefficient = entropy_coefficient
         self.value_coefficient = value_coefficient
         self.discount_factor = discount_factor
@@ -122,11 +140,12 @@ class A2CFactory(ModelFactory):
 
     def instantiate(self, **extra_args):
         """ Instantiate the model """
-        # action_space = extra_args.pop('action_space')
-        policy = self.policy.instantiate(**extra_args)
+        action_space = extra_args.pop('action_space')
+        net = self.net.instantiate(**extra_args)
 
         return A2C(
-            policy=policy,
+            net=net,
+            action_space=action_space,
             entropy_coefficient=self.entropy_coefficient,
             value_coefficient=self.value_coefficient,
             discount_factor=self.discount_factor,
@@ -134,10 +153,10 @@ class A2CFactory(ModelFactory):
         )
 
 
-def create(policy: BackboneModel, entropy_coefficient, value_coefficient, discount_factor, gae_lambda=1.0):
+def create(net: ModelFactory, entropy_coefficient, value_coefficient, discount_factor, gae_lambda=1.0):
     """ Vel factory function """
     return A2CFactory(
-        policy=policy,
+        net=net,
         entropy_coefficient=entropy_coefficient,
         value_coefficient=value_coefficient,
         discount_factor=discount_factor,

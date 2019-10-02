@@ -58,7 +58,3 @@ def create(input_shape):
         return NormalizeObservations(input_shape)
 
     return ModelFactory.generic(instantiate)
-
-
-# Scripting interface
-NormalizeObservationsFactory = create

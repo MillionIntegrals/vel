@@ -4,14 +4,14 @@ import torch.nn as nn
 import vel.util.module_util as mu
 
 from vel.api.optimizer import VelOptimizer, OptimizerFactory
-from vel.api.scheduler import SchedulerFactory
-from vel.api.callback import Callback
 from vel.metric.loss_metric import Loss
 from vel.util.summary import summary
 
+from .network import Network
 
-class Model(nn.Module):
-    """ Class representing full neural network model """
+
+class Model(Network):
+    """ Class representing full neural network model, generally used to solve some problem """
 
     def metrics(self) -> list:
         """ Set of metrics for this model """
@@ -48,19 +48,6 @@ class Model(nn.Module):
         else:
             summary(self, input_size)
 
-    def reset_weights(self):
-        """ Call proper initializers for the weights """
-        pass
-
-    @property
-    def is_stateful(self) -> bool:
-        """ If the model has a state that needs to be fed between individual observations """
-        return False
-
-    def zero_state(self, batch_size):
-        """ Potential state for the model """
-        return None
-
 
 class OptimizedModel(Model):
     """ Model that is being optimized by an 'optimizer' """
@@ -77,6 +64,10 @@ class OptimizedModel(Model):
         """
         raise NotImplementedError
 
+
+class ValidatedModel(OptimizedModel):
+    """ Model that also has a validation operation """
+
     def validate(self, data: dict) -> dict:
         """
         Perform one step of model inference without optimization
@@ -85,7 +76,7 @@ class OptimizedModel(Model):
         raise NotImplementedError
 
 
-class GradientModel(OptimizedModel):
+class GradientModel(ValidatedModel):
     """ Model that calculates a single gradient and optimizes it """
 
     def optimize(self, data: dict, optimizer: VelOptimizer) -> dict:
@@ -143,20 +134,4 @@ class LossFunctionModel(GradientModel):
 
     def loss_value(self, x_data, y_true, y_pred) -> torch.tensor:
         """ Calculate a value of loss function """
-        raise NotImplementedError
-
-
-class BackboneModel(Model):
-    """ Model that serves as a backbone network to connect your heads to """
-
-
-class LinearBackboneModel(BackboneModel):
-    """
-    Model that serves as a backbone network to connect your heads to.
-    Has a final output of a single-dimensional linear layer.
-    """
-
-    @property
-    def output_dim(self) -> int:
-        """ Final dimension of model output """
         raise NotImplementedError

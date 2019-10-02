@@ -5,6 +5,7 @@ https://github.com/openai/baselines/blob/master/baselines/ppo2/policies.py
 Under MIT license.
 """
 import numpy as np
+import typing
 
 import torch.nn as nn
 import torch.nn.init as init
@@ -12,20 +13,18 @@ import torch.nn.functional as F
 
 import vel.util.network as net_util
 
-from vel.api import LinearBackboneModel, ModelFactory
-from vel.rl.module.noisy_linear import NoisyLinear
+from vel.api import ModelFactory, SizeHint, SizeHints
+
+from vel.net.modular import Layer, LayerFactory
 
 
-class NoisyNatureCnn(LinearBackboneModel):
-    """
-    Neural network as defined in the paper 'Human-level control through deep reinforcement learning'
-    implemented via "Noisy Networks for Exploration"
-    """
-    def __init__(self, input_width, input_height, input_channels, output_dim=512, initial_std_dev=0.4,
-                 factorized_noise=True):
-        super().__init__()
+class NatureCnn(Layer):
+    """ Neural network as defined in the paper 'Human-level control through deep reinforcement learning' """
 
-        self._output_dim = output_dim
+    def __init__(self, name: str, input_width, input_height, input_channels, output_dim=512):
+        super().__init__(name)
+
+        self.output_dim = output_dim
 
         self.conv1 = nn.Conv2d(
             in_channels=input_channels,
@@ -57,17 +56,10 @@ class NoisyNatureCnn(LinearBackboneModel):
         self.final_width = net_util.convolutional_layer_series(input_width, layer_series)
         self.final_height = net_util.convolutional_layer_series(input_height, layer_series)
 
-        self.linear_layer = NoisyLinear(
+        self.linear_layer = nn.Linear(
             self.final_width * self.final_height * 64,  # 64 is the number of channels of the last conv layer
-            self.output_dim,
-            initial_std_dev=initial_std_dev,
-            factorized_noise=factorized_noise
+            self.output_dim
         )
-
-    @property
-    def output_dim(self) -> int:
-        """ Final dimension of model output """
-        return self._output_dim
 
     def reset_weights(self):
         """ Call proper initializers for the weights """
@@ -80,10 +72,11 @@ class NoisyNatureCnn(LinearBackboneModel):
                 # init.kaiming_normal_(m.weight, mode='fan_out', nonlinearity='relu')
                 init.orthogonal_(m.weight, gain=np.sqrt(2))
                 init.constant_(m.bias, 0.0)
-            elif isinstance(m, NoisyLinear):
-                m.reset_weights()
 
-    def forward(self, image):
+    def size_hints(self) -> SizeHints:
+        return SizeHints(SizeHint(None, self.output_dim))
+
+    def forward(self, image, state: dict = None, context: dict = None):
         result = image
         result = F.relu(self.conv1(result))
         result = F.relu(self.conv2(result))
@@ -92,16 +85,30 @@ class NoisyNatureCnn(LinearBackboneModel):
         return F.relu(self.linear_layer(flattened))
 
 
-def create(input_width, input_height, input_channels=1, output_dim=512, initial_std_dev=0.4, factorized_noise=True):
-    """ Vel factory function """
-    def instantiate(**_):
-        return NoisyNatureCnn(
-            input_width=input_width, input_height=input_height, input_channels=input_channels,
-            output_dim=output_dim, initial_std_dev=initial_std_dev, factorized_noise=factorized_noise
+class NatureCnnFactory(LayerFactory):
+    """ Nature Cnn Network Factory """
+
+    def __init__(self, output_dim: int = 512):
+        self.output_dim = output_dim
+
+    @property
+    def name_base(self) -> str:
+        """ Base of layer name """
+        return "nature_cnn"
+
+    def instantiate(self, name: str, direct_input: SizeHints, context: dict) -> Layer:
+        (b, c, w, h) = direct_input.assert_single(4)
+
+        return NatureCnn(
+            name=name,
+            input_width=w,
+            input_height=h,
+            input_channels=c,
+            output_dim=self.output_dim
         )
 
-    return ModelFactory.generic(instantiate)
 
+def create(output_dim=512):
+    """ Vel factory function """
+    return NatureCnnFactory(output_dim=output_dim)
 
-# Scripting interface
-NatureCnnFactory = create

@@ -2,20 +2,20 @@ import torch
 import torch.nn.functional as F
 import torch.nn.utils
 
-from vel.api import ModelFactory
+from vel.api import ModelFactory, BackboneModel
 from vel.metric import AveragingNamedMetric
-from vel.rl.api import OptimizerAlgoBase
+from vel.rl.api import RlPolicy
 
 
-class DeepQLearning(OptimizerAlgoBase):
+class DeepQLearning(RlPolicy):
     """ Deep Q-Learning algorithm """
 
-    def __init__(self, model_factory: ModelFactory, discount_factor: float, double_dqn: bool,
-                 target_update_frequency: int, max_grad_norm: float):
-        super().__init__(max_grad_norm)
+    def __init__(self, backbone: BackboneModel,
+                 discount_factor: float, double_dqn: bool,
+                 target_update_frequency: int):
+        super().__init__(discount_factor)
 
-        self.model_factory = model_factory
-        self.discount_factor = discount_factor
+        self.backbone = backbone
 
         self.double_dqn = double_dqn
         self.target_update_frequency = target_update_frequency
@@ -28,7 +28,7 @@ class DeepQLearning(OptimizerAlgoBase):
         self.target_model.load_state_dict(model.state_dict())
         self.target_model.eval()
 
-    def calculate_gradient(self, batch_info, device, model, rollout):
+    def calculate_gradient(self, batch_info: BatchInfo, rollout: Rollout) -> dict:
         """ Calculate loss of the supplied rollout """
         evaluator = model.evaluate(rollout)
 
@@ -74,29 +74,29 @@ class DeepQLearning(OptimizerAlgoBase):
             'average_q_target': torch.mean(estimated_return).item()
         }
 
-    def post_optimization_step(self, batch_info, device, model, rollout):
+    def post_optimization_step(self, batch_info, rollout):
         """ Steps to take after optimization has been done"""
         if batch_info.aggregate_batch_number % self.target_update_frequency == 0:
-            self.target_model.load_state_dict(model.state_dict())
+            self.target_model.load_state_dict(self.state_dict())
             self.target_model.eval()
 
     def metrics(self) -> list:
         """ List of metrics to track for this learning process """
         return [
-            AveragingNamedMetric("loss"),
-            AveragingNamedMetric("average_q_selected"),
-            AveragingNamedMetric("average_q_target"),
-            AveragingNamedMetric("grad_norm"),
+            AveragingNamedMetric("loss", scope="model"),
+            AveragingNamedMetric("average_q_selected", scope="model"),
+            AveragingNamedMetric("average_q_target", scope="model")
         ]
 
 
-def create(model: ModelFactory, discount_factor: float, target_update_frequency: int,
-           max_grad_norm: float, double_dqn: bool = False):
+def create(backbone: ModelFactory,
+           discount_factor: float, target_update_frequency: int,
+           double_dqn: bool = False):
     """ Vel factory function """
+
     return DeepQLearning(
-        model_factory=model,
+        backbone=backbone,
         discount_factor=discount_factor,
         double_dqn=double_dqn,
         target_update_frequency=target_update_frequency,
-        max_grad_norm=max_grad_norm
     )

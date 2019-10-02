@@ -19,7 +19,3 @@ def create():
         return Identity()
 
     return ModelFactory.generic(instantiate)
-
-
-# Scripting interface
-IdentityFactory = create

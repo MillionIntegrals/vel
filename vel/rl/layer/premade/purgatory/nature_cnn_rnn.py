@@ -56,7 +56,3 @@ def create(input_width, input_height, input_channels=1, rnn_type='lstm', cnn_out
         )
 
     return ModelFactory.generic(instantiate)
-
-
-# Add this to make nicer scripting interface
-NatureCnnFactory = create

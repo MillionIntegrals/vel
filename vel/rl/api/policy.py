@@ -1,8 +1,8 @@
-from vel.api import Model, VelOptimizer, OptimizerFactory, BatchInfo
+from vel.api import OptimizedModel, VelOptimizer, OptimizerFactory, BatchInfo
 from vel.rl.api import Rollout
 
 
-class RlPolicy(Model):
+class RlPolicy(OptimizedModel):
     """ Base class for reinforcement learning policies """
 
     def __init__(self, discount_factor: float):
@@ -41,6 +41,8 @@ class RlPolicy(Model):
         for key, value in opt_metrics.items():
             metrics[key] = value
 
+        self.post_optimization_step(batch_info, rollout)
+
         return metrics
 
     def calculate_gradient(self, batch_info: BatchInfo, rollout: Rollout) -> dict:
@@ -49,6 +51,10 @@ class RlPolicy(Model):
         :returns a dictionary of metrics
         """
         raise NotImplementedError
+
+    def post_optimization_step(self, batch_info: BatchInfo, rollout: Rollout):
+        """ Optional operations to perform after optimization """
+        pass
 
     def reset_state(self, state, dones):
         """ Reset the state after the episode has been terminated """

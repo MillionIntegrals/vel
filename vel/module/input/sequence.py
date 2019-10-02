@@ -19,7 +19,3 @@ def create(modules):
         return SequenceInput([f.instantiate() for f in modules])
 
     return ModelFactory.generic(instantiate)
-
-
-# Scripting interface
-SequenceInputFactory = create

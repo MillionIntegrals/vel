@@ -1,11 +1,11 @@
-from .model import Model
+from .network import Network
 from vel.internal.generic_factory import GenericFactory
 
 
 class ModelFactory:
     """ Factory class for models """
 
-    def instantiate(self, **extra_args) -> Model:
+    def instantiate(self, **extra_args) -> Network:
         raise NotImplementedError
 
     @staticmethod
