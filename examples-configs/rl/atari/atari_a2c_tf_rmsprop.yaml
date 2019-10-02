@@ -12,37 +12,35 @@ vec_env:
 
 
 model:
-  name: vel.rl.models.stochastic_policy_model
+  name: vel.rl.policy.a2c
 
-  input_block:
-    name: vel.modules.input.image_to_tensor
+  entropy_coefficient: 0.01
+  value_coefficient: 0.5
+  discount_factor: 0.99
 
-  backbone:
-    name: vel.rl.models.backbone.nature_cnn
-    input_width: 84
-    input_height: 84
-    input_channels: 4  # The same as frame_history
+  net:
+    name: vel.net.modular
+    layers:
+      - name: vel.net.layer.input.image_to_tensor
+        size: [84, 84, 4] # Number of channels is frame history
+      - name: vel.rl.layer.nature_cnn
+      - name: vel.net.layer.util.repeat_tensor
+        times: 2 # Need to repeat output twice, for action and value heads
 
 
 reinforcer:
-  name: vel.rl.reinforcers.on_policy_iteration_reinforcer
-
-  algo:
-    name: vel.rl.algo.policy_gradient.a2c
-    entropy_coefficient: 0.01
-    value_coefficient: 0.5
-    max_grad_norm: 0.5
-    discount_factor: 0.99
+  name: vel.rl.reinforcer.on_policy_iteration_reinforcer
 
   env_roller:
     name: vel.rl.env_roller.step_env_roller
 
   number_of_steps: 5 # How many environment steps go into a single batch
   parallel_envs: 16 # How many environments to run in parallel
+  batch_size: 256 # How many samples can go into the model once
 
 
 optimizer:
-  name: vel.optimizers.rmsprop_tf
+  name: vel.optimizer.rmsprop_tf
   lr: 7.0e-4
   alpha: 0.99
   epsilon: 1.0e-6
@@ -50,20 +48,20 @@ optimizer:
 
 commands:
   train:
-    name: vel.rl.commands.rl_train_command
+    name: vel.rl.command.rl_train_command
     total_frames: 1.1e7
     batches_per_epoch: 100
 
   record:
-    name: vel.rl.commands.record_movie_command
+    name: vel.rl.command.record_movie_command
     takes: 10
     videoname: 'atari_vid_{:04}.avi'
 
   evaluate:
-    name: vel.rl.commands.evaluate_env_command
+    name: vel.rl.command.evaluate_env_command
     parallel_envs: 16 # How many environments to run in parallel
 
     takes: 20
 
   visdom:
-    name: vel.commands.vis_store_command
+    name: vel.command.vis_store_command

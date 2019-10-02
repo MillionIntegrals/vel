@@ -1,3 +1,6 @@
+import torch
+import typing
+
 from torch.optim.optimizer import Optimizer
 
 import vel.util.module_util as mu
