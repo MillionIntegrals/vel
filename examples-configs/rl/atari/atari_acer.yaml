@@ -10,28 +10,39 @@ vec_env:
   name: vel.rl.vecenv.shared_mem
   frame_history: 4  # How many stacked frames go into a single observation
 
+  algo:
+    name: vel.rl.algo.policy_gradient.acer
 
 model:
-  name: vel.rl.models.q_stochastic_policy_model
+  name: vel.rl.policy.acer
 
-  input_block:
-    name: vel.modules.input.image_to_tensor
+  entropy_coefficient: 0.01
+  q_coefficient: 0.5
+  rho_cap: 10.0
+  retrace_rho_cap: 1.0
 
-  backbone:
-    name: vel.rl.models.backbone.nature_cnn
-    input_width: 84
-    input_height: 84
-    input_channels: 4  # The same as frame_history
+  discount_factor: 0.99
+
+  trust_region: true
+
+  net:
+    name: vel.net.modular
+    layers:
+      - name: vel.net.layer.input.image_to_tensor
+        size: [84, 84, 4] # Number of channels is frame history
+      - name: vel.rl.layer.nature_cnn
+      - name: vel.net.layer.util.repeat_tensor
+        times: 2 # Need to repeat output twice, for action and value heads
 
 
 reinforcer:
-  name: vel.rl.reinforcers.buffered_mixed_policy_iteration_reinforcer
+  name: vel.rl.reinforcer.buffered_mixed_policy_iteration_reinforcer
 
   env_roller:
     name: vel.rl.env_roller.trajectory_replay_env_roller
 
     replay_buffer:
-      name: vel.rl.buffers.circular_replay_buffer
+      name: vel.rl.buffer.circular_replay_buffer
 
       buffer_initial_size: 1_000 # How many samples we need in the buffer before we start using replay buffer
       buffer_capacity: 50_000
@@ -40,17 +51,6 @@ reinforcer:
       frame_stack_compensation: true
       frame_history: 4  # How many stacked frames go into a single observation
 
-  algo:
-    name: vel.rl.algo.policy_gradient.acer
-    entropy_coefficient: 0.01
-    q_coefficient: 0.5
-    rho_cap: 10.0
-    retrace_rho_cap: 1.0
-
-    max_grad_norm: 10.0
-    discount_factor: 0.99
-
-    trust_region: false
 
   parallel_envs: 12 # How many environments to run in parallel
   number_of_steps: 20 # How many environment steps go into a single batch
@@ -58,25 +58,26 @@ reinforcer:
 
 
 optimizer:
-  name: vel.optimizers.rmsprop
+  name: vel.optimizer.rmsprop
   lr: 7.0e-4
   alpha: 0.99
   #  epsilon: 1.0e-5
   epsilon: 1.0e-3
+  max_grad_norm: 10.0
 
 
 commands:
   train:
-    name: vel.rl.commands.rl_train_command
+    name: vel.rl.command.rl_train_command
     total_frames: 1.1e7
     batches_per_epoch: 30
 
   record:
-    name: vel.rl.commands.record_movie_command
+    name: vel.rl.command.record_movie_command
     takes: 10
     videoname: 'atari_vid_{:04}.avi'
 
   evaluate:
-    name: vel.rl.commands.evaluate_env_command
+    name: vel.rl.command.evaluate_env_command
     takes: 100
     parallel_envs: 12 # How many environments to run in parallel

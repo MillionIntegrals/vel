@@ -81,14 +81,19 @@ class TrajectoryReplayEnvRoller(ReplayEnvRollerBase):
 
         accumulated_tensors = accumulator.result()
 
+        final_obs = self.actor.act(self.last_observation.to(self.device), advance_state=False)
+
+        rollout_tensors = {}
+
+        for key, value in final_obs.items():
+            rollout_tensors[f"final_{key}"] = value.cpu()
+
         return Trajectories(
             num_steps=accumulated_tensors['observations'].size(0),
             num_envs=accumulated_tensors['observations'].size(1),
             environment_information=episode_information,
             transition_tensors=accumulated_tensors,
-            rollout_tensors={
-                'final_values': self.actor.value(self.last_observation).cpu()
-            }
+            rollout_tensors=rollout_tensors
         )
 
     def sample(self, batch_info: BatchInfo, number_of_steps: int) -> Rollout:

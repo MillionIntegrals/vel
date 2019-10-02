@@ -8,8 +8,7 @@ from vel.api import ModelFactory, BatchInfo, BackboneNetwork
 
 from vel.rl.api import RlPolicy, Rollout, Trajectories
 from vel.rl.discount_bootstrap import discount_bootstrap_gae
-from vel.rl.module.stochastic_action_head import StochasticActionHead
-from vel.rl.module.value_head import ValueHead
+from vel.rl.module.stochastic_policy import StochasticPolicy
 
 
 class A2C(RlPolicy):
@@ -23,40 +22,23 @@ class A2C(RlPolicy):
         self.value_coefficient = value_coefficient
         self.gae_lambda = gae_lambda
 
-        self.net = net
-
-        assert not self.net.is_stateful, "For stateful policies, use A2CRnn"
-
-        # Make sure network returns two results
-        (action_size, value_size) = self.net.size_hints().assert_tuple(2)
-
-        self.action_head = StochasticActionHead(
-            action_space=action_space,
-            input_dim=action_size.last(),
-        )
-
-        self.value_head = ValueHead(
-            input_dim=value_size.last()
-        )
+        self.policy = StochasticPolicy(net, action_space)
 
     def reset_weights(self):
         """ Initialize properly model weights """
-        self.net.reset_weights()
-        self.action_head.reset_weights()
-        self.value_head.reset_weights()
+        self.policy.reset_weights()
 
     def forward(self, observation, state=None):
         """ Calculate model outputs """
-        action_hidden, value_hidden = self.net(observation, state=state)
-        return self.action_head(action_hidden), self.value_head(value_hidden)
+        return self.policy(observation)
 
     def act(self, observation, state=None, deterministic=False):
         """ Select actions based on model's output """
         action_pd_params, value_output = self(observation)
-        actions = self.action_head.sample(action_pd_params, deterministic=deterministic)
+        actions = self.policy.action_head.sample(action_pd_params, deterministic=deterministic)
 
         # log likelihood of selected action
-        logprobs = self.action_head.logprob(actions, action_pd_params)
+        logprobs = self.policy.action_head.logprob(actions, action_pd_params)
 
         return {
             'actions': actions,
@@ -96,8 +78,8 @@ class A2C(RlPolicy):
 
         pd_params, model_values = self(observations)
 
-        log_probs = self.action_head.logprob(actions, pd_params)
-        entropy = self.action_head.entropy(pd_params)
+        log_probs = self.policy.action_head.logprob(actions, pd_params)
+        entropy = self.policy.action_head.entropy(pd_params)
 
         # Actual calculations. Pretty trivial
         policy_loss = -torch.mean(advantages * log_probs)

@@ -58,18 +58,22 @@ class StepEnvRoller(EnvRollerBase):
 
             episode_information.append(new_infos)
 
-        final_values = self.actor.value(self.last_observation.to(self.device)).cpu()
-
         accumulated_tensors = accumulator.result()
+
+        # Perform last agent step, without advancing the state
+        final_obs = self.actor.act(self.last_observation.to(self.device), advance_state=False)
+
+        rollout_tensors = {}
+
+        for key, value in final_obs.items():
+            rollout_tensors[f"final_{key}"] = value.cpu()
 
         return Trajectories(
             num_steps=accumulated_tensors['observations'].size(0),
             num_envs=accumulated_tensors['observations'].size(1),
             environment_information=episode_information,
             transition_tensors=accumulated_tensors,
-            rollout_tensors={
-                'final_values': final_values
-            }
+            rollout_tensors=rollout_tensors
         )
 
 

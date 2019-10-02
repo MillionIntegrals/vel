@@ -1,3 +1,4 @@
+import gym
 import numpy as np
 
 import torch
@@ -110,7 +111,7 @@ class CategoricalActionHead(nn.Module):
         if deterministic:
             return torch.argmax(logits, dim=-1)
         else:
-            # Gumbel-softmax trick
+            # Gumbel-Softmax trick
             u = torch.rand_like(logits)
             return torch.argmax(logits - torch.log(-torch.log(u)), dim=-1)
 
@@ -134,47 +135,12 @@ class CategoricalActionHead(nn.Module):
         return (torch.exp(logits_q) * (logits_q - logits_p)).sum(1, keepdim=True)
 
 
-class StochasticActionHead(nn.Module):
-    """
-    Network head for action determination. Returns probability distribution parametrization
-    """
-
-    def __init__(self, input_dim, action_space):
-        super().__init__()
-
-        self.action_space = action_space
-
-        if isinstance(action_space, spaces.Box):
-            assert len(action_space.shape) == 1
-            self.head = DiagGaussianActionHead(input_dim, action_space.shape[0])
-        elif isinstance(action_space, spaces.Discrete):
-            self.head = CategoricalActionHead(input_dim, action_space.n)
-        # elif isinstance(action_space, spaces.MultiDiscrete):
-        #     return MultiCategoricalPdType(action_space.nvec)
-        # elif isinstance(action_space, spaces.MultiBinary):
-        #     return BernoulliPdType(action_space.n)
-        else:
-            raise NotImplementedError
-
-    def forward(self, input_data):
-        return self.head(input_data)
-
-    def sample(self, policy_params, **kwargs):
-        """ Sample from a probability space of all actions """
-        return self.head.sample(policy_params, **kwargs)
-
-    def reset_weights(self):
-        """ Initialize weights to sane defaults """
-        self.head.reset_weights()
-
-    def entropy(self, policy_params):
-        """ Entropy calculation - sum probs * log(probs) """
-        return self.head.entropy(policy_params)
-
-    def kl_divergence(self, params_q, params_p):
-        """ Kullback–Leibler divergence between two sets of parameters """
-        return self.head.kl_divergence(params_q, params_p)
-
-    def logprob(self, action_sample, policy_params):
-        """ - log probabilty of selected actions """
-        return self.head.logprob(action_sample, policy_params)
+def make_stockastic_action_head(input_dim: int, action_space: gym.Space):
+    """ Instantiate stochastic action space relevant for the task """
+    if isinstance(action_space, spaces.Box):
+        assert len(action_space.shape) == 1
+        return DiagGaussianActionHead(input_dim, action_space.shape[0])
+    elif isinstance(action_space, spaces.Discrete):
+        return CategoricalActionHead(input_dim, action_space.n)
+    else:
+        raise NotImplementedError

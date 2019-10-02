@@ -7,8 +7,8 @@ import tqdm
 from vel.api import TrainingInfo, EpochInfo, BatchInfo, Model, ModelFactory
 from vel.openai.baselines.common.vec_env import VecEnv
 from vel.rl.api import (
-    Reinforcer, ReinforcerFactory, VecEnvFactory, ReplayEnvRollerBase, AlgoBase, ReplayEnvRollerFactoryBase
-)
+    Reinforcer, ReinforcerFactory, VecEnvFactory, ReplayEnvRollerBase, ReplayEnvRollerFactoryBase,
+    RlPolicy)
 from vel.rl.metrics import (
     FPSMetric, EpisodeLengthMetric, EpisodeRewardMetricQuantile, EpisodeRewardMetric, FramesMetric
 )
@@ -33,15 +33,19 @@ class BufferedMixedPolicyIterationReinforcer(Reinforcer):
     """
 
     def __init__(self, device: torch.device, settings: BufferedMixedPolicyIterationReinforcerSettings, env: VecEnv,
-                 model: Model, env_roller: ReplayEnvRollerBase, algo: AlgoBase) -> None:
+                 model: Model, env_roller: ReplayEnvRollerBase) -> None:
         self.device = device
         self.settings = settings
 
         self.environment = env
-        self._trained_model = model.to(self.device)
+        self._model: RlPolicy = model.to(self.device)
 
         self.env_roller = env_roller
-        self.algo = algo
+
+    @property
+    def policy(self) -> RlPolicy:
+        """ Model trained by this reinforcer """
+        return self._model
 
     def metrics(self) -> list:
         """ List of metrics to track for this learning process """
@@ -54,12 +58,7 @@ class BufferedMixedPolicyIterationReinforcer(Reinforcer):
             EpisodeLengthMetric("episode_length")
         ]
 
-        return my_metrics + self.algo.metrics() + self.env_roller.metrics()
-
-    @property
-    def policy(self) -> Model:
-        """ Model trained by this reinforcer """
-        return self._trained_model
+        return my_metrics + self.policy.metrics() + self.env_roller.metrics()
 
     def initialize_training(self, training_info: TrainingInfo, model_state=None, hidden_state=None):
         """ Prepare models for training """
@@ -68,11 +67,7 @@ class BufferedMixedPolicyIterationReinforcer(Reinforcer):
         else:
             self.policy.reset_weights()
 
-        self.algo.initialize(
-            training_info=training_info, model=self.policy, environment=self.environment, device=self.device
-        )
-
-    def train_epoch(self, epoch_info: EpochInfo, interactive=True):
+    def train_epoch(self, epoch_info: EpochInfo, interactive=True) -> None:
         """ Train model on an epoch of a fixed number of batch updates """
         epoch_info.on_epoch_begin()
 
@@ -91,7 +86,7 @@ class BufferedMixedPolicyIterationReinforcer(Reinforcer):
         epoch_info.result_accumulator.freeze_results()
         epoch_info.on_epoch_end()
 
-    def train_batch(self, batch_info: BatchInfo):
+    def train_batch(self, batch_info: BatchInfo) -> None:
         """ Single, most atomic 'step' of learning this reinforcer can perform """
         batch_info['sub_batch_data'] = []
 
@@ -113,12 +108,13 @@ class BufferedMixedPolicyIterationReinforcer(Reinforcer):
         """ Perform an 'on-policy' training step of evaluating an env and a single backpropagation step """
         self.policy.train()
 
-        rollout = self.env_roller.rollout(batch_info, self.policy, self.settings.number_of_steps).to_device(self.device)
+        rollout = self.env_roller.rollout(batch_info, self.settings.number_of_steps).to_device(self.device)
 
-        batch_result = self.algo.optimize(
+        # Preprocessing of the rollout for this algorithm
+        rollout = self.policy.process_rollout(rollout)
+
+        batch_result = self.policy.optimize(
             batch_info=batch_info,
-            device=self.device,
-            model=self.policy,
             rollout=rollout
         )
 
@@ -130,12 +126,10 @@ class BufferedMixedPolicyIterationReinforcer(Reinforcer):
         """ Perform an 'off-policy' training step of sampling the replay buffer and gradient descent """
         self.policy.train()
 
-        rollout = self.env_roller.sample(batch_info, self.policy, self.settings.number_of_steps).to_device(self.device)
+        rollout = self.env_roller.sample(batch_info, self.settings.number_of_steps).to_device(self.device)
 
-        batch_result = self.algo.optimize(
+        batch_result = self.policy.optimize(
             batch_info=batch_info,
-            device=self.device,
-            model=self.policy,
             rollout=rollout
         )
 
@@ -145,25 +139,23 @@ class BufferedMixedPolicyIterationReinforcer(Reinforcer):
 class BufferedMixedPolicyIterationReinforcerFactory(ReinforcerFactory):
     """ Factory class for the PolicyGradientReplayBuffer factory """
     def __init__(self, settings, env_factory: VecEnvFactory, model_factory: ModelFactory,
-                 env_roller_factory: ReplayEnvRollerFactoryBase, algo: AlgoBase, parallel_envs: int, seed: int):
+                 env_roller_factory: ReplayEnvRollerFactoryBase, parallel_envs: int, seed: int):
         self.settings = settings
 
         self.model_factory = model_factory
         self.env_factory = env_factory
         self.parallel_envs = parallel_envs
         self.env_roller_factory = env_roller_factory
-        self.algo = algo
         self.seed = seed
 
     def instantiate(self, device: torch.device) -> Reinforcer:
         env = self.env_factory.instantiate(parallel_envs=self.parallel_envs, seed=self.seed)
-        model = self.model_factory.instantiate(action_space=env.action_space)
-        env_roller = self.env_roller_factory.instantiate(env, device)
+        policy = self.model_factory.instantiate(action_space=env.action_space)
+        env_roller = self.env_roller_factory.instantiate(environment=env, policy=policy, device=device)
+        return BufferedMixedPolicyIterationReinforcer(device, self.settings, env, policy, env_roller)
 
-        return BufferedMixedPolicyIterationReinforcer(device, self.settings, env, model, env_roller, self.algo)
 
-
-def create(model_config, model, vec_env, algo, env_roller,
+def create(model_config, model, vec_env, env_roller,
            parallel_envs, number_of_steps,
            experience_replay=1, stochastic_experience_replay=True):
     """ Vel factory function """
@@ -179,6 +171,5 @@ def create(model_config, model, vec_env, algo, env_roller,
         model_factory=model,
         parallel_envs=parallel_envs,
         env_roller_factory=env_roller,
-        algo=algo,
         seed=model_config.seed
     )

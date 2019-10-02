@@ -1,8 +1,12 @@
+import gym
 import torch
 import torch.nn.functional as F
 
+from vel.api import BackboneNetwork, ModelFactory, BatchInfo, Network
 from vel.metric.base import AveragingNamedMetric
-from vel.rl.api import Trajectories, OptimizerAlgoBase
+from vel.rl.api import Trajectories, RlPolicy, Rollout
+from vel.rl.module.head.stochastic_action_head import make_stockastic_action_head
+from vel.rl.module.head.q_head import QHead
 
 
 def select_indices(tensor, indices):
@@ -10,18 +14,57 @@ def select_indices(tensor, indices):
     return tensor.gather(1, indices.unsqueeze(1)).squeeze()
 
 
-class AcerPolicyGradient(OptimizerAlgoBase):
+class QStochasticPolicy(Network):
+    """
+    A policy model with an action-value critic head (instead of more common state-value critic head).
+    Supports only discrete action spaces (ones that can be enumerated)
+    """
+
+    def __init__(self, net: BackboneNetwork, action_space: gym.Space):
+        super().__init__()
+
+        assert isinstance(action_space, gym.spaces.Discrete)
+
+        self.net = net
+
+        (action_size, value_size) = self.net.size_hints().assert_tuple(2)
+
+        self.action_head = make_stockastic_action_head(
+            input_dim=action_size.last(),
+            action_space=action_space
+        )
+
+        self.q_head = QHead(
+            input_dim=value_size.last(),
+            action_space=action_space
+        )
+
+    def reset_weights(self):
+        """ Initialize properly model weights """
+        self.net.reset_weights()
+        self.action_head.reset_weights()
+        self.q_head.reset_weights()
+
+    def forward(self, observations):
+        """ Calculate model outputs """
+        action_hidden, q_hidden = self.net(observations)
+        policy_params = self.action_head(action_hidden)
+
+        q = self.q_head(q_hidden)
+
+        return policy_params, q
+
+
+class ACER(RlPolicy):
     """ Actor-Critic with Experience Replay - policy gradient calculations """
 
-    def __init__(self, model_factory, discount_factor, trust_region: bool = True, entropy_coefficient: float = 0.01,
+    def __init__(self, net: BackboneNetwork, net_factory: ModelFactory, action_space: gym.Space,
+                 discount_factor: float, trust_region: bool = True, entropy_coefficient: float = 0.01,
                  q_coefficient: float = 0.5, rho_cap: float = 10.0, retrace_rho_cap: float = 1.0,
-                 max_grad_norm: float = None, average_model_alpha: float = 0.99, trust_region_delta: float = 1.0):
-        super().__init__(max_grad_norm)
-
-        self.discount_factor = discount_factor
+                 average_model_alpha: float = 0.99, trust_region_delta: float = 1.0):
+        super().__init__(discount_factor)
 
         self.trust_region = trust_region
-        self.model_factory = model_factory
 
         self.entropy_coefficient = entropy_coefficient
         self.q_coefficient = q_coefficient
@@ -30,39 +73,67 @@ class AcerPolicyGradient(OptimizerAlgoBase):
         self.retrace_rho_cap = retrace_rho_cap
 
         # Trust region settings
-        self.average_model = None
         self.average_model_alpha = average_model_alpha
         self.trust_region_delta = trust_region_delta
 
-    def initialize(self, training_info, model, environment, device):
-        """ Initialize policy gradient from reinforcer settings """
-        if self.trust_region:
-            self.average_model = self.model_factory.instantiate(action_space=environment.action_space).to(device)
-            self.average_model.load_state_dict(model.state_dict())
+        self.policy = QStochasticPolicy(net, action_space)
 
-    def update_average_model(self, model):
+        if self.trust_region:
+            self.target_policy = QStochasticPolicy(net_factory.instantiate(), action_space)
+        else:
+            self.target_policy = None
+
+    def reset_weights(self):
+        """ Initialize properly model weights """
+        self.policy.reset_weights()
+
+        if self.trust_region:
+            self.target_policy.load_state_dict(self.policy.state_dict())
+
+    def forward(self, observation, state=None):
+        """ Calculate model outputs """
+        return self.policy(observation)
+
+    def act(self, observation, state=None, deterministic=False):
+        """ Select actions based on model's output """
+        logprobs, q = self(observation)
+        actions = self.policy.action_head.sample(logprobs, deterministic=deterministic)
+
+        # log likelihood of selected action
+        action_logprobs = self.policy.action_head.logprob(actions, logprobs)
+        values = (torch.exp(logprobs) * q).sum(dim=1)
+
+        return {
+            'actions': actions,
+            'q': q,
+            'values': values,
+            'action:logprobs': action_logprobs,
+            'logprobs': logprobs
+        }
+
+    def update_target_policy(self):
         """ Update weights of the average model with new model observation """
-        for model_param, average_param in zip(model.parameters(), self.average_model.parameters()):
+        for model_param, average_param in zip(self.policy.parameters(), self.target_policy.parameters()):
             # EWMA average model update
             average_param.data.mul_(self.average_model_alpha).add_(model_param.data * (1 - self.average_model_alpha))
 
-    def calculate_gradient(self, batch_info, device, model, rollout):
+    def calculate_gradient(self, batch_info: BatchInfo, rollout: Rollout) -> dict:
         """ Calculate loss of the supplied rollout """
         assert isinstance(rollout, Trajectories), "ACER algorithm requires trajectory input"
 
-        local_epsilon = 1e-6
-
-        evaluator = model.evaluate(rollout)
-
-        actions = evaluator.get('rollout:actions')
-        rollout_probabilities = torch.exp(evaluator.get('rollout:logprobs'))
-
         # We calculate the trust-region update with respect to the average model
         if self.trust_region:
-            self.update_average_model(model)
+            self.update_target_policy()
 
-        logprobs = evaluator.get('model:logprobs')
-        q = evaluator.get('model:q')
+        local_epsilon = 1e-6
+
+        # Part 0.0 - Rollout values
+        actions = rollout.batch_tensor('actions')
+        rollout_probabilities = torch.exp(rollout.batch_tensor('logprobs'))
+        observations = rollout.batch_tensor('observations')
+
+        # PART 0.1 - Model evaluation
+        logprobs, q = self(observations)
 
         # Selected action values
         action_logprobs = select_indices(logprobs, actions)
@@ -99,7 +170,7 @@ class AcerPolicyGradient(OptimizerAlgoBase):
             explained_variance = 1 - torch.var(q_retraced - action_q) / torch.var(q_retraced)
 
         # Entropy of the policy distribution
-        policy_entropy = torch.mean(model.entropy(logprobs))
+        policy_entropy = torch.mean(self.policy.action_head.entropy(logprobs))
         policy_gradient_loss = -torch.mean(advantages * importance_sampling_coefficient * action_logprobs)
 
         # Policy gradient bias correction
@@ -121,8 +192,7 @@ class AcerPolicyGradient(OptimizerAlgoBase):
 
         if self.trust_region:
             with torch.no_grad():
-                average_evaluator = self.average_model.evaluate(rollout)
-                average_action_logits = average_evaluator.get('model:logprobs')
+                target_logprobs = self.target_policy(observations)[0]
 
             actor_loss = policy_loss - self.entropy_coefficient * policy_entropy
             q_loss = self.q_coefficient * q_function_loss
@@ -134,7 +204,7 @@ class AcerPolicyGradient(OptimizerAlgoBase):
 
             # Analytically calculated derivative of KL divergence on logits
             # That makes it hardcoded for discrete action spaces
-            kl_divergence_grad_symbolic = - torch.exp(average_action_logits) / logprobs.size(0)
+            kl_divergence_grad_symbolic = - torch.exp(target_logprobs) / logprobs.size(0)
 
             k_dot_g = (actor_gradient * kl_divergence_grad_symbolic).sum(dim=-1)
             k_dot_k = (kl_divergence_grad_symbolic ** 2).sum(dim=-1)
@@ -195,7 +265,6 @@ class AcerPolicyGradient(OptimizerAlgoBase):
             AveragingNamedMetric("policy_gradient_bias_correction"),
             AveragingNamedMetric("explained_variance"),
             AveragingNamedMetric("advantage_norm"),
-            AveragingNamedMetric("grad_norm"),
             AveragingNamedMetric("model_prob_std"),
             AveragingNamedMetric("rollout_prob_std"),
             AveragingNamedMetric("avg_q_selected"),
@@ -203,17 +272,52 @@ class AcerPolicyGradient(OptimizerAlgoBase):
         ]
 
 
-def create(model, trust_region, entropy_coefficient, q_coefficient, max_grad_norm, discount_factor,
-           rho_cap=10.0, retrace_rho_cap=1.0, average_model_alpha=0.99, trust_region_delta=1.0):
+class ACERFactory(ModelFactory):
+    """ Factory class for ACER policies """
+    def __init__(self, net_factory, trust_region: bool, entropy_coefficient: float, q_coefficient: float,
+                 discount_factor: float, rho_cap: float = 10.0, retrace_rho_cap: float = 1.0,
+                 average_model_alpha: float = 0.99, trust_region_delta: float = 1.0):
+        self.net_factory = net_factory
+        self.trust_region = trust_region
+        self.entropy_coefficient = entropy_coefficient
+        self.q_coefficient = q_coefficient
+        self.discount_factor = discount_factor
+        self.rho_cap = rho_cap
+        self.retrace_rho_cap = retrace_rho_cap
+        self.average_model_alpha = average_model_alpha
+        self.trust_region_delta = trust_region_delta
+
+    def instantiate(self, **extra_args):
+        """ Instantiate the model """
+        action_space = extra_args.pop('action_space')
+        net = self.net_factory.instantiate(**extra_args)
+
+        return ACER(
+            net=net,
+            net_factory=self.net_factory,
+            action_space=action_space,
+            trust_region=self.trust_region,
+            entropy_coefficient=self.entropy_coefficient,
+            q_coefficient=self.q_coefficient,
+            discount_factor=self.discount_factor,
+            rho_cap=self.rho_cap,
+            retrace_rho_cap=self.retrace_rho_cap,
+            average_model_alpha=self.average_model_alpha,
+            trust_region_delta=self.trust_region_delta,
+        )
+
+
+def create(net, trust_region: bool , entropy_coefficient: float, q_coefficient: float, discount_factor: float,
+           rho_cap: float = 10.0, retrace_rho_cap: float = 1.0, average_model_alpha: float = 0.99,
+           trust_region_delta: float = 1.0):
     """ Vel factory function """
-    return AcerPolicyGradient(
+    return ACERFactory(
+        net_factory=net,
         trust_region=trust_region,
-        model_factory=model,
         entropy_coefficient=entropy_coefficient,
         q_coefficient=q_coefficient,
         rho_cap=rho_cap,
         retrace_rho_cap=retrace_rho_cap,
-        max_grad_norm=max_grad_norm,
         discount_factor=discount_factor,
         average_model_alpha=average_model_alpha,
         trust_region_delta=trust_region_delta

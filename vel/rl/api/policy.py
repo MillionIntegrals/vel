@@ -12,7 +12,7 @@ class RlPolicy(OptimizedModel):
 
     def process_rollout(self, rollout: Rollout) -> Rollout:
         """ Process rollout for optimization before any chunking/shuffling  """
-        raise NotImplementedError
+        return rollout
 
     def act(self, observation, state=None, deterministic=False) -> dict:
         """

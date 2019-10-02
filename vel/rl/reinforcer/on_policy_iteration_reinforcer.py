@@ -43,6 +43,11 @@ class OnPolicyIterationReinforcer(Reinforcer):
 
         self._model: RlPolicy = policy.to(self.device)
 
+    @property
+    def policy(self) -> RlPolicy:
+        """ Model trained by this reinforcer """
+        return self._model
+
     def metrics(self) -> list:
         """ List of metrics to track for this learning process """
         my_metrics = [
@@ -55,11 +60,6 @@ class OnPolicyIterationReinforcer(Reinforcer):
         ]
 
         return my_metrics + self.env_roller.metrics() + self.policy.metrics()
-
-    @property
-    def policy(self) -> RlPolicy:
-        """ Model trained by this reinforcer """
-        return self._model
 
     def initialize_training(self, training_info: TrainingInfo, model_state=None, hidden_state=None):
         """ Prepare models for training """
