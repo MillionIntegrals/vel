@@ -30,7 +30,7 @@ def process_environment_settings(default_dictionary: dict, settings: typing.Opti
     return result_dict
 
 
-def observation_space_to_size_hint(space: gym.Space) -> SizeHints:
+def gym_space_to_size_hint(space: gym.Space) -> SizeHints:
     """ Convert Gym observation space to size hints """
     if isinstance(space, gym.spaces.Box):
         return size_hint_from_shape(space.shape)

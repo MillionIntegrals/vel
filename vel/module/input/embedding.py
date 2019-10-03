@@ -1,9 +1,9 @@
 import torch.nn as nn
 
-from vel.api import LinearBackboneModel, ModelFactory, LanguageSource
+from vel.api import Network, LanguageSource, ModelFactory
 
 
-class EmbeddingInput(LinearBackboneModel):
+class EmbeddingInput(Network):
     """ Learnable Embedding input layer """
 
     def __init__(self, alphabet_size: int, output_dim: int, pretrained: bool = False, frozen: bool = False,

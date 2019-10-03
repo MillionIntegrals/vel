@@ -3,11 +3,11 @@ import gym
 import torch
 import torch.nn.functional as F
 
-from vel.api import BackboneNetwork, ModelFactory, BatchInfo
+from vel.api import BackboneNetwork, ModelFactory, BatchInfo, OptimizerFactory, VelOptimizer
 from vel.metric.base import AveragingNamedMetric
 from vel.rl.api import Trajectories, RlPolicy, Rollout
 from vel.rl.module.q_stochastic_policy import QStochasticPolicy
-from vel.util.situational import observation_space_to_size_hint
+from vel.util.situational import gym_space_to_size_hint
 
 
 def select_indices(tensor, indices):
@@ -40,8 +40,14 @@ class ACER(RlPolicy):
 
         if self.trust_region:
             self.target_policy = QStochasticPolicy(target_net, action_space)
+            self.target_policy.requires_grad_(False)
         else:
             self.target_policy = None
+
+    def create_optimizer(self, optimizer_factory: OptimizerFactory) -> VelOptimizer:
+        """ Create optimizer for the purpose of optimizing this model """
+        parameters = filter(lambda p: p.requires_grad, self.policy.parameters())
+        return optimizer_factory.instantiate(parameters)
 
     def train(self, mode=True):
         """ Override train to make sure target model is always in eval mode """
@@ -261,7 +267,7 @@ class ACERFactory(ModelFactory):
         action_space = extra_args.pop('action_space')
         observation_space = extra_args.pop('observation_space')
 
-        size_hint = observation_space_to_size_hint(observation_space)
+        size_hint = gym_space_to_size_hint(observation_space)
 
         net = self.net_factory.instantiate(size_hint=size_hint, **extra_args)
 

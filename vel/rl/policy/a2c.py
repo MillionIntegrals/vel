@@ -3,7 +3,7 @@ import torch
 import torch.nn.functional as F
 
 from vel.metric.base import AveragingNamedMetric
-from vel.util.situational import observation_space_to_size_hint
+from vel.util.situational import gym_space_to_size_hint
 from vel.util.stats import explained_variance
 from vel.api import ModelFactory, BatchInfo, BackboneNetwork
 
@@ -126,7 +126,7 @@ class A2CFactory(ModelFactory):
         action_space = extra_args.pop('action_space')
         observation_space = extra_args.pop('observation_space')
 
-        size_hint = observation_space_to_size_hint(observation_space)
+        size_hint = gym_space_to_size_hint(observation_space)
 
         net = self.net_factory.instantiate(size_hint=size_hint, **extra_args)
 

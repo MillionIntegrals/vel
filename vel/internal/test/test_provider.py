@@ -139,7 +139,7 @@ def test_render_configuration():
 
     }, parameters={'xxx': 5})
 
-    configuration = provider.render_configuration()
+    configuration = provider.render_environment()
 
     assert configuration == {
         'a': 1,

@@ -2,11 +2,11 @@ import gym
 import torch
 import torch.nn.utils
 
-from vel.api import ModelFactory, BackboneNetwork, BatchInfo
+from vel.api import ModelFactory, BackboneNetwork, BatchInfo, OptimizerFactory, VelOptimizer
 from vel.metric import AveragingNamedMetric
 from vel.rl.api import RlPolicy, Rollout
 from vel.rl.module.rainbow_policy import RainbowPolicy
-from vel.util.situational import observation_space_to_size_hint
+from vel.util.situational import gym_space_to_size_hint
 
 
 class Rainbow(RlPolicy):
@@ -36,6 +36,7 @@ class Rainbow(RlPolicy):
             initial_std_dev=initial_std_dev,
             factorized_noise=factorized_noise
         )
+        self.target_model.requires_grad_(False)
 
         self.discount_factor = discount_factor
         self.target_update_frequency = target_update_frequency
@@ -48,6 +49,11 @@ class Rainbow(RlPolicy):
         # self.atom_delta = histogram_info['atom_delta']
         self.register_buffer('support_atoms', self.model.support_atoms.clone())
         self.atom_delta = self.model.atom_delta
+
+    def create_optimizer(self, optimizer_factory: OptimizerFactory) -> VelOptimizer:
+        """ Create optimizer for the purpose of optimizing this model """
+        parameters = filter(lambda p: p.requires_grad, self.model.parameters())
+        return optimizer_factory.instantiate(parameters)
 
     def train(self, mode=True):
         """ Override train to make sure target model is always in eval mode """
@@ -214,7 +220,7 @@ class RainbowFactory(ModelFactory):
         action_space = extra_args.pop('action_space')
         observation_space = extra_args.pop('observation_space')
 
-        size_hint = observation_space_to_size_hint(observation_space)
+        size_hint = gym_space_to_size_hint(observation_space)
 
         # TODO(jerry): Push noisy net parameters down the stack here
         net = self.net_factory.instantiate(size_hint=size_hint, **extra_args)

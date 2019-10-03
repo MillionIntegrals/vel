@@ -26,13 +26,14 @@ class PolicyActor:
 
         return result
 
-    def reset_states(self, dones):
+    def reset_states(self, dones: torch.Tensor):
         """ Reset states given dones """
+        self.policy.reset_episodic_state(dones)
+
         if not self.policy.is_stateful:
             return
 
         dones = dones.to(self.device)
-
         self.state = self.policy.reset_state(self.state, dones)
 
     def value(self, observation):

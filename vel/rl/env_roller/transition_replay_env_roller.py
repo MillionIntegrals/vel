@@ -89,6 +89,8 @@ class TransitionReplayEnvRoller(ReplayEnvRollerBase):
             dones_tensor = torch.from_numpy(new_dones.astype(np.float32)).clone()
             accumulator.add('dones', dones_tensor)
 
+            self.actor.reset_states(dones_tensor)
+
             self.accumulated_returns = self.accumulated_returns * (1.0 - new_dones.astype(np.float32))
 
             self.last_observation_cpu = torch.from_numpy(new_obs).clone()

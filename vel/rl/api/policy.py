@@ -1,3 +1,5 @@
+import torch
+
 from vel.api import OptimizedModel, VelOptimizer, OptimizerFactory, BatchInfo
 from vel.rl.api import Rollout
 
@@ -21,6 +23,10 @@ class RlPolicy(OptimizedModel):
         each env in the observations
         """
         raise NotImplementedError
+
+    def reset_episodic_state(self, dones: torch.Tensor):
+        """ Called by the rollout worker, whenever episode is finished """
+        pass
 
     def create_optimizer(self, optimizer_factory: OptimizerFactory) -> VelOptimizer:
         """ Create optimizer for the purpose of optimizing this model """

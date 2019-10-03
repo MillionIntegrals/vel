@@ -23,7 +23,7 @@ model:
     layers:
       - name: vel.net.layer.input.image_to_tensor
       - name: vel.rl.layer.nature_cnn
-      - name: vel.net.layer.util.repeat_tensor
+      - name: vel.net.layer.util.repeat
         times: 2 # Need to repeat output twice, for action and value heads
 
 

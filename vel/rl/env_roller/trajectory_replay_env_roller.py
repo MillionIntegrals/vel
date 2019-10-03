@@ -74,6 +74,8 @@ class TrajectoryReplayEnvRoller(ReplayEnvRollerBase):
             dones_tensor = torch.from_numpy(new_dones.astype(np.float32)).clone()
             accumulator.add('dones', dones_tensor)
 
+            self.actor.reset_states(dones_tensor)
+
             self.last_observation_cpu = torch.from_numpy(new_obs).clone()
             self.last_observation = self.last_observation_cpu.to(self.device)
             accumulator.add('rewards', torch.from_numpy(new_rewards.astype(np.float32)).clone())

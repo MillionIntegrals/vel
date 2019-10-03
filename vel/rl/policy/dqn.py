@@ -6,13 +6,13 @@ import torch
 import torch.nn.functional as F
 import torch.nn.utils
 
-from vel.api import ModelFactory, BackboneNetwork, BatchInfo, Schedule
+from vel.api import ModelFactory, BackboneNetwork, BatchInfo, Schedule, OptimizerFactory, VelOptimizer
 from vel.function.constant import ConstantSchedule
 from vel.metric import AveragingNamedMetric
 from vel.rl.api import RlPolicy, Rollout
 from vel.rl.module.q_policy import QPolicy
 from vel.rl.module.noise.eps_greedy import EpsGreedy
-from vel.util.situational import observation_space_to_size_hint
+from vel.util.situational import gym_space_to_size_hint
 
 
 class DQN(RlPolicy):
@@ -25,6 +25,7 @@ class DQN(RlPolicy):
 
         self.model = QPolicy(net=net, action_space=action_space, dueling_dqn=dueling_dqn)
         self.target_model = QPolicy(net=target_net, action_space=action_space, dueling_dqn=dueling_dqn)
+        self.target_model.requires_grad_(False)
 
         self.double_dqn = double_dqn
         self.target_update_frequency = target_update_frequency
@@ -36,6 +37,11 @@ class DQN(RlPolicy):
 
         self.epsilon_value = self.epsilon_schedule.value(0.0)
         self.action_noise = EpsGreedy(action_space=action_space)
+
+    def create_optimizer(self, optimizer_factory: OptimizerFactory) -> VelOptimizer:
+        """ Create optimizer for the purpose of optimizing this model """
+        parameters = filter(lambda p: p.requires_grad, self.model.parameters())
+        return optimizer_factory.instantiate(parameters)
 
     def train(self, mode=True):
         """ Override train to make sure target model is always in eval mode """
@@ -142,7 +148,7 @@ class DQNFactory(ModelFactory):
         action_space = extra_args.pop('action_space')
         observation_space = extra_args.pop('observation_space')
 
-        size_hint = observation_space_to_size_hint(observation_space)
+        size_hint = gym_space_to_size_hint(observation_space)
 
         net = self.net_factory.instantiate(size_hint=size_hint, **extra_args)
         target_net = self.net_factory.instantiate(size_hint=size_hint, **extra_args)

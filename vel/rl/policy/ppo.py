@@ -4,7 +4,7 @@ import torch
 import numbers
 
 from vel.api import BatchInfo, ModelFactory, BackboneNetwork
-from vel.util.situational import observation_space_to_size_hint
+from vel.util.situational import gym_space_to_size_hint
 from vel.util.stats import explained_variance
 from vel.function.constant import ConstantSchedule
 from vel.metric.base import AveragingNamedMetric
@@ -169,7 +169,7 @@ class PPOFactory(ModelFactory):
         action_space = extra_args.pop('action_space')
         observation_space = extra_args.pop('observation_space')
 
-        size_hint = observation_space_to_size_hint(observation_space)
+        size_hint = gym_space_to_size_hint(observation_space)
 
         net = self.net_factory.instantiate(size_hint=size_hint, **extra_args)
 

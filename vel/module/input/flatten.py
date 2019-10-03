@@ -1,10 +1,10 @@
 from vel.module.layers import Flatten
 
 
-from vel.api import ModelFactory, BackboneModel
+from vel.api import ModelFactory, BackboneNetwork
 
 
-class FlattenInput(BackboneModel):
+class FlattenInput(BackboneNetwork):
     """ Sequence input """
     def __init__(self):
         super().__init__()
@@ -13,10 +13,3 @@ class FlattenInput(BackboneModel):
     def forward(self, input_data):
         return self.model(input_data)
 
-
-def create():
-    """ Vel factory function """
-    def instantiate(**_):
-        return Flatten()
-
-    return ModelFactory.generic(instantiate)

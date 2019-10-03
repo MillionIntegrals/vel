@@ -16,7 +16,7 @@ from vel.rl.api import Rollout, Trajectories, RlPolicy
 from vel.rl.discount_bootstrap import discount_bootstrap_gae
 from vel.rl.module.head.stochastic_action_head import make_stockastic_action_head
 from vel.rl.module.head.value_head import ValueHead
-from vel.util.situational import observation_space_to_size_hint
+from vel.util.situational import gym_space_to_size_hint
 
 
 def p2v(params):
@@ -375,7 +375,7 @@ class TRPOFactory(ModelFactory):
         action_space = extra_args.pop('action_space')
         observation_space = extra_args.pop('observation_space')
 
-        size_hint = observation_space_to_size_hint(observation_space)
+        size_hint = gym_space_to_size_hint(observation_space)
 
         if self.input_net is None:
             input_net = None
