@@ -72,7 +72,6 @@ class DQN(RlPolicy):
         q = self.model(observations)
 
         with torch.no_grad():
-            self.target_model.eval()
             target_q = self.target_model(observations_next)
 
             if self.double_dqn:

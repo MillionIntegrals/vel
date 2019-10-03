@@ -82,5 +82,5 @@ class NoisyLinear(nn.Module):
         """
         return (
             f'{self.in_features}, {self.out_features}, initial_std_dev={self.initial_std_dev}, '
-            'factorized_noise={self.factorized_noise} '
+            f'factorized_noise={self.factorized_noise} '
         )

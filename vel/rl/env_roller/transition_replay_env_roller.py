@@ -1,9 +1,8 @@
 import torch
-import torch.nn as nn
 import typing
 import numpy as np
 
-from vel.api import BatchInfo, ModelFactory
+from vel.api import BatchInfo
 from vel.openai.baselines.common.vec_env import VecEnv
 from vel.openai.baselines.common.running_mean_std import RunningMeanStd
 from vel.rl.api import (
@@ -21,25 +20,15 @@ class TransitionReplayEnvRoller(ReplayEnvRollerBase):
     """
 
     def __init__(self, environment: VecEnv, policy: RlPolicy, device: torch.device, replay_buffer: ReplayBuffer,
-                 discount_factor: typing.Optional[float] = None, normalize_returns: bool = False,
-                 forward_steps: int = 1):
+                 normalize_returns: bool = False, forward_steps: int = 1):
         self._environment = environment
         self.device = device
         self.replay_buffer = replay_buffer
         self.normalize_returns = normalize_returns
         self.forward_steps = forward_steps
-        self.discount_factor = discount_factor
 
         self.actor = PolicyActor(self.environment.num_envs, policy, device)
         assert not self.actor.is_stateful, "Does not support stateful policies"
-
-        if self.normalize_returns:
-            assert self.discount_factor is not None, \
-                "TransitionReplayEnvRoller must have a discount factor defined if normalize_returns is turned on"
-
-        if self.forward_steps > 1:
-            assert self.discount_factor is not None, \
-                "TransitionReplayEnvRoller must have a discount factor defined if forward_steps is larger than one"
 
         self.ret_rms = RunningMeanStd(shape=()) if normalize_returns else None
 
@@ -59,6 +48,8 @@ class TransitionReplayEnvRoller(ReplayEnvRollerBase):
     @torch.no_grad()
     def rollout(self, batch_info: BatchInfo, number_of_steps: int) -> Rollout:
         """ Calculate env rollout """
+        self.actor.train()
+
         accumulator = TensorAccumulator()
         episode_information = []  # List of dictionaries with episode information
 
@@ -90,7 +81,7 @@ class TransitionReplayEnvRoller(ReplayEnvRollerBase):
             )
 
             if self.ret_rms is not None:
-                self.accumulated_returns = new_rewards + self.discount_factor * self.accumulated_returns
+                self.accumulated_returns = new_rewards + self.actor.discount_factor * self.accumulated_returns
                 self.ret_rms.update(self.accumulated_returns)
 
             # Done is flagged true when the episode has ended AND the frame we see is already a first frame from the
@@ -125,7 +116,7 @@ class TransitionReplayEnvRoller(ReplayEnvRollerBase):
         if self.forward_steps > 1:
             transitions = self.replay_buffer.sample_forward_transitions(
                 batch_size=number_of_steps, batch_info=batch_info, forward_steps=self.forward_steps,
-                discount_factor=self.discount_factor
+                discount_factor=self.actor.discount_factor
             )
         else:
             transitions = self.replay_buffer.sample_transitions(batch_size=number_of_steps, batch_info=batch_info)
@@ -153,12 +144,11 @@ class TransitionReplayEnvRoller(ReplayEnvRollerBase):
 class TransitionReplayEnvRollerFactory(ReplayEnvRollerFactoryBase):
     """ Factory for the ReplayEnvRoller """
 
-    def __init__(self, replay_buffer_factory: ReplayBufferFactory, discount_factor: typing.Optional[float] = None,
-                 normalize_returns: bool = False, forward_steps: int = 1):
+    def __init__(self, replay_buffer_factory: ReplayBufferFactory, normalize_returns: bool = False,
+                 forward_steps: int = 1):
         self.replay_buffer_factory = replay_buffer_factory
         self.normalize_returns = normalize_returns
         self.forward_steps = forward_steps
-        self.discount_factor = discount_factor
 
     def instantiate(self, environment, policy, device):
         replay_buffer = self.replay_buffer_factory.instantiate(environment)
@@ -168,18 +158,15 @@ class TransitionReplayEnvRollerFactory(ReplayEnvRollerFactoryBase):
             policy=policy,
             device=device,
             replay_buffer=replay_buffer,
-            discount_factor=self.discount_factor,
             normalize_returns=self.normalize_returns,
             forward_steps=self.forward_steps
         )
 
 
-def create(replay_buffer, discount_factor: typing.Optional[float] = None, normalize_returns: bool = False,
-           forward_steps: int = 1):
+def create(replay_buffer, normalize_returns: bool = False, forward_steps: int = 1):
     """ Vel factory function """
     return TransitionReplayEnvRollerFactory(
         replay_buffer_factory=replay_buffer,
-        discount_factor=discount_factor,
         forward_steps=forward_steps,
         normalize_returns=normalize_returns
     )

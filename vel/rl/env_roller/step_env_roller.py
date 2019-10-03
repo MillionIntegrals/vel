@@ -30,6 +30,7 @@ class StepEnvRoller(EnvRollerBase):
     @torch.no_grad()
     def rollout(self, batch_info: BatchInfo, number_of_steps: int) -> Rollout:
         """ Calculate env rollout """
+        self.actor.train()
         accumulator = TensorAccumulator()
         episode_information = []  # List of dictionaries with episode information
 

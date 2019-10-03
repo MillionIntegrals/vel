@@ -10,7 +10,7 @@ from vel.rl.module.noisy_linear import NoisyLinear
 
 class QDistributionalNoisyDuelingHead(nn.Module):
     """ Network head calculating Q-function value for each (discrete) action. """
-    def __init__(self, input_dim, action_space, vmin: float, vmax: float, atoms: int = 1,
+    def __init__(self, val_input_dim, adv_input_dim, action_space, vmin: float, vmax: float, atoms: int = 1,
                  initial_std_dev: float = 0.4, factorized_noise: bool = True):
         super().__init__()
 
@@ -28,11 +28,12 @@ class QDistributionalNoisyDuelingHead(nn.Module):
         self.atom_delta = (self.vmax - self.vmin) / (self.atoms - 1)
 
         self.linear_layer_advantage = NoisyLinear(
-            input_dim, self.action_size * self.atoms, initial_std_dev=initial_std_dev, factorized_noise=factorized_noise
+            adv_input_dim, self.action_size * self.atoms, initial_std_dev=initial_std_dev,
+            factorized_noise=factorized_noise
         )
 
         self.linear_layer_value = NoisyLinear(
-            input_dim, self.atoms, initial_std_dev=initial_std_dev, factorized_noise=factorized_noise
+            val_input_dim, self.atoms, initial_std_dev=initial_std_dev, factorized_noise=factorized_noise
         )
 
         self.register_buffer('support_atoms', torch.linspace(self.vmin, self.vmax, self.atoms))

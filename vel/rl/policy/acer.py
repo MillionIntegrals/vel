@@ -152,7 +152,6 @@ class ACER(RlPolicy):
 
         if self.trust_region:
             with torch.no_grad():
-                self.target_policy.eval()
                 target_logprobs = self.target_policy(observations)[0]
 
             actor_loss = policy_loss - self.entropy_coefficient * policy_entropy

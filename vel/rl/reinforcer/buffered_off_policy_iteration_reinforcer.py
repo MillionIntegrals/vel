@@ -103,8 +103,6 @@ class BufferedOffPolicyIterationReinforcer(Reinforcer):
 
     def roll_out_and_store(self, batch_info):
         """ Roll out environment and store result in the replay buffer """
-        self.policy.train()
-
         if self.env_roller.is_ready_for_sampling():
             rollout = self.env_roller.rollout(batch_info, self.settings.rollout_steps)
             rollout = rollout.to_device(self.device)

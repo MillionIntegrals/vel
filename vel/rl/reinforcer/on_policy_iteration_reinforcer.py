@@ -96,9 +96,6 @@ class OnPolicyIterationReinforcer(Reinforcer):
         1. Roll out the environmnent using current policy
         2. Use that rollout to train the policy
         """
-        # Calculate environment rollout on the evaluation version of the model
-        self.policy.train()
-
         rollout = self.env_roller.rollout(batch_info, self.settings.number_of_steps)
 
         # Preprocessing of the rollout for this algorithm
@@ -116,6 +113,8 @@ class OnPolicyIterationReinforcer(Reinforcer):
             experience_replay_count = 1 + np.random.poisson(self.settings.experience_replay - 1)
         else:
             experience_replay_count = self.settings.experience_replay
+
+        self.policy.train()
 
         # Repeat the experience N times
         for i in range(experience_replay_count):

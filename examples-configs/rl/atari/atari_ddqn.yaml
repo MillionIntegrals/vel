@@ -17,7 +17,6 @@ model:
   double_dqn: true
   dueling_dqn: true
   target_update_frequency: 10_000  # After how many batches to update the target network
-  max_grad_norm: 0.5
 
   discount_factor: 0.99
 
@@ -71,6 +70,7 @@ optimizer:
   alpha: 0.95
   momentum: 0.95
   epsilon: 1.0e-1
+  max_grad_norm: 0.5
 
 
 commands:

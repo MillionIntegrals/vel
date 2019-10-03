@@ -12,20 +12,22 @@ import torch.nn.functional as F
 
 import vel.util.network as net_util
 
-from vel.api import LinearBackboneModel, ModelFactory
+from vel.api import SizeHints, SizeHint
+
+from vel.net.layer_base import Layer, LayerFactory
 from vel.rl.module.noisy_linear import NoisyLinear
 
 
-class DoubleNoisyNatureCnn(LinearBackboneModel):
+class DoubleNoisyNatureCnn(Layer):
     """
     Neural network as defined in the paper 'Human-level control through deep reinforcement learning'
     but with two separate heads and "noisy" linear layer.
     """
-    def __init__(self, input_width, input_height, input_channels, output_dim=512, initial_std_dev=0.4,
+    def __init__(self, name: str, input_width, input_height, input_channels, output_dim=512, initial_std_dev=0.4,
                  factorized_noise=True):
-        super().__init__()
+        super().__init__(name)
 
-        self._output_dim = output_dim
+        self.output_dim = output_dim
 
         self.conv1 = nn.Conv2d(
             in_channels=input_channels,
@@ -76,10 +78,11 @@ class DoubleNoisyNatureCnn(LinearBackboneModel):
             factorized_noise=factorized_noise
         )
 
-    @property
-    def output_dim(self) -> int:
-        """ Final dimension of model output """
-        return self._output_dim
+    def size_hints(self) -> SizeHints:
+        return SizeHints((
+            SizeHint(None, self.output_dim),
+            SizeHint(None, self.output_dim)
+        ))
 
     def reset_weights(self):
         for m in self.modules():
@@ -94,7 +97,7 @@ class DoubleNoisyNatureCnn(LinearBackboneModel):
             elif isinstance(m, NoisyLinear):
                 m.reset_weights()
 
-    def forward(self, image):
+    def forward(self, image, state: dict = None, context: dict = None):
         result = image
         result = F.relu(self.conv1(result))
         result = F.relu(self.conv2(result))
@@ -107,12 +110,37 @@ class DoubleNoisyNatureCnn(LinearBackboneModel):
         return output_one, output_two
 
 
-def create(input_width, input_height, input_channels=1, output_dim=512, initial_std_dev=0.4, factorized_noise=True):
-    """ Vel factory function """
-    def instantiate(**_):
+class DoubleNoisyNatureCnnFactory(LayerFactory):
+    """ Nature Cnn Network Factory """
+
+    def __init__(self, initial_std_dev: float = 0.4, factorized_noise: bool = True, output_dim: int = 512):
+        self.initial_std_dev = initial_std_dev
+        self.factorized_noise = factorized_noise
+        self.output_dim = output_dim
+
+    @property
+    def name_base(self) -> str:
+        """ Base of layer name """
+        return "double_noisy_nature_cnn"
+
+    def instantiate(self, name: str, direct_input: SizeHints, context: dict) -> Layer:
+        (b, c, w, h) = direct_input.assert_single(4)
+
         return DoubleNoisyNatureCnn(
-            input_width=input_width, input_height=input_height, input_channels=input_channels,
-            output_dim=output_dim, initial_std_dev=initial_std_dev, factorized_noise=factorized_noise
+            name=name,
+            input_width=w,
+            input_height=h,
+            input_channels=c,
+            output_dim=self.output_dim,
+            initial_std_dev=self.initial_std_dev,
+            factorized_noise=self.factorized_noise
         )
 
-    return ModelFactory.generic(instantiate)
+
+def create(initial_std_dev: float = 0.4, factorized_noise: bool = True, output_dim: int = 512):
+    """ Vel factory function """
+    return DoubleNoisyNatureCnnFactory(
+        output_dim=output_dim,
+        initial_std_dev=initial_std_dev,
+        factorized_noise=factorized_noise
+    )

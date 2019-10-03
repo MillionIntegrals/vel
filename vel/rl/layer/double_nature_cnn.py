@@ -108,7 +108,7 @@ class DoubleNatureCnnFactory(LayerFactory):
     @property
     def name_base(self) -> str:
         """ Base of layer name """
-        return "nature_cnn"
+        return "double_nature_cnn"
 
     def instantiate(self, name: str, direct_input: SizeHints, context: dict) -> Layer:
         (b, c, w, h) = direct_input.assert_single(4)

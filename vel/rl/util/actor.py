@@ -13,6 +13,10 @@ class PolicyActor:
         self.device = device
         self.state = to_device(self.policy.zero_state(num_envs), self.device)
 
+    @property
+    def discount_factor(self) -> float:
+        return self.policy.discount_factor
+
     def act(self, observation, advance_state=True, deterministic=False):
         """ Return result of a policy on a given input """
         result = self.policy.act(observation, state=self.state, deterministic=deterministic)
@@ -39,3 +43,9 @@ class PolicyActor:
     def is_stateful(self) -> bool:
         """ If the model has a state that needs to be fed between individual observations """
         return self.policy.is_stateful
+
+    def eval(self):
+        self.policy.eval()
+
+    def train(self):
+        self.policy.train()
