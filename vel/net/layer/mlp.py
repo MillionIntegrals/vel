@@ -11,15 +11,16 @@ import torch.nn as nn
 import torch.nn.init as init
 
 import vel.util.network as net_util
+from vel.api import SizeHints, SizeHint
 
-from vel.api import LinearBackboneModel, ModelFactory
+from vel.net.layer_base import LayerFactory, Layer
 
 
-class MLP(LinearBackboneModel):
+class MLP(Layer):
     """ Simple Multi-Layer-Perceptron network """
-    def __init__(self, input_length: int, hidden_layers: typing.List[int], activation: str = 'tanh',
+    def __init__(self, name: str, input_length: int, hidden_layers: typing.List[int], activation: str = 'tanh',
                  normalization: typing.Optional[str] = None):
-        super().__init__()
+        super().__init__(name)
 
         self.input_length = input_length
         self.hidden_layers = hidden_layers
@@ -40,11 +41,6 @@ class MLP(LinearBackboneModel):
         self.model = nn.Sequential(*layer_objects)
         self.hidden_units = hidden_layers[-1] if hidden_layers else input_length
 
-    @property
-    def output_dim(self) -> int:
-        """ Final dimension of model output """
-        return self.hidden_units
-
     def reset_weights(self):
         for m in self.modules():
             if isinstance(m, nn.Linear):
@@ -52,19 +48,36 @@ class MLP(LinearBackboneModel):
                 init.orthogonal_(m.weight, gain=np.sqrt(2))
                 init.constant_(m.bias, 0.0)
 
-    def forward(self, input_data):
-        input_data = input_data.float()
-        return self.model(input_data)
+    def forward(self, direct, state: dict = None, context: dict = None):
+        return self.model(direct.float())
+
+    def size_hints(self) -> SizeHints:
+        return SizeHints(SizeHint(None, self.hidden_units))
 
 
-def create(input_length, hidden_layers, activation='tanh', normalization=None):
-    """ Vel factory function """
-    def instantiate(**_):
+class MLPFactory(LayerFactory):
+    def __init__(self, hidden_layers: typing.List[int], activation: str = 'tanh',
+                 normalization: typing.Optional[str] = None):
+        self.hidden_layers = hidden_layers
+        self.activation = activation
+        self.normalization = normalization
+
+    @property
+    def name_base(self) -> str:
+        """ Base of layer name """
+        return "mlp"
+
+    def instantiate(self, name: str, direct_input: SizeHints, context: dict) -> Layer:
+        """ Create a given layer object """
         return MLP(
-            input_length=input_length,
-            hidden_layers=hidden_layers,
-            activation=activation,
-            normalization=normalization
+            name=name,
+            input_length=direct_input.assert_single().last(),
+            hidden_layers=self.hidden_layers,
+            activation=self.activation,
+            normalization=self.normalization
         )
 
-    return ModelFactory.generic(instantiate)
+
+def create(hidden_layers, activation='tanh', normalization=None):
+    """ Vel factory function """
+    return MLPFactory(hidden_layers=hidden_layers, activation=activation, normalization=normalization)

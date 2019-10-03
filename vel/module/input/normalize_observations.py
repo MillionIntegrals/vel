@@ -1,10 +1,9 @@
 import torch
-import numbers
 
-from vel.api import BackboneModel, ModelFactory
+from vel.api import Network
 
 
-class NormalizeObservations(BackboneModel):
+class NormalizeObservations(Network):
     """ Normalize a vector of observations """
 
     def __init__(self, input_shape, epsilon=1e-6):
@@ -46,15 +45,3 @@ class NormalizeObservations(BackboneModel):
 
         return (input_vector - self.running_mean.unsqueeze(0)) / torch.sqrt(self.running_var.unsqueeze(0))
 
-
-def create(input_shape):
-    """ Vel factory function """
-    if isinstance(input_shape, numbers.Number):
-        input_shape = (input_shape,)
-    elif not isinstance(input_shape, tuple):
-        input_shape = tuple(input_shape)
-
-    def instantiate(**_):
-        return NormalizeObservations(input_shape)
-
-    return ModelFactory.generic(instantiate)

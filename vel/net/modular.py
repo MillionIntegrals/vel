@@ -1,10 +1,9 @@
-import typing
 import collections
+
 import torch.nn as nn
 
-from vel.api import Network, BackboneNetwork, ModelFactory, SizeHints, SizeHint
-
-from .layer_base import Layer, LayerFactory
+from vel.api import BackboneNetwork, ModelFactory, SizeHints
+from .layer_base import LayerFactory
 
 
 def instantiate_layers(layers: [LayerFactory]) -> nn.Module:

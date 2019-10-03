@@ -4,33 +4,31 @@ name: 'mujoco_a2c'
 env:
   name: vel.rl.env.mujoco
   game: !param game = 'Reacher-v2'
-  normalize_returns: true
 
 
 vec_env:
   name: vel.rl.vecenv.dummy
+  normalize_returns: true
 
 
 model:
-  name: vel.rl.algo.a2c
+  name: vel.rl.policy.a2c
 
   entropy_coefficient: 0.0
   value_coefficient: 0.5
   gae_lambda: 0.95 # Generalized Advantage Estimator Lambda parameter
   discount_factor: 0.99 # Discount factor for the rewards
 
-  policy:
-    name: vel.rl.policy.stochastic_policy
-
-    input_block:
-      name: vel.module.input.normalize_observations
-      input_shape: 11
-
-    backbone:
-      name: vel.rl.backbone.mlp
-      input_length: 11
-      hidden_layers: [64, 64]
-      activation: 'tanh'
+  net:
+    name: vel.net.modular
+    layers:
+      - name: vel.net.layer.input.normalize
+        shape: 11
+      - name: vel.net.layer.mlp
+        hidden_layers: [64, 64]
+        activation: 'tanh'
+      - name: vel.net.layer.util.repeat_tensor
+        times: 2 # Need to repeat output twice, for action and value heads
 
 
 reinforcer:
@@ -61,5 +59,3 @@ commands:
     name: vel.rl.command.record_movie_command
     takes: 10
     videoname: 'reacher_vid_{:04}.avi'
-    sample_args:
-      argmax_sampling: true

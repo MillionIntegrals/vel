@@ -1,8 +1,6 @@
-import typing
-
 from vel.api import SizeHints, SizeHint
-from vel.net.modular import LayerFactory, Layer
 from vel.module.input.image_to_tensor import image_to_tensor
+from vel.net.layer_base import LayerFactory, Layer
 
 
 class ImageToTensorLayer(Layer):

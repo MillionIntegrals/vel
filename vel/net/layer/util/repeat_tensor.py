@@ -1,7 +1,5 @@
-import typing
-
 from vel.api import SizeHints, SizeHint
-from vel.net.modular import LayerFactory, Layer
+from vel.net.layer_base import LayerFactory, Layer
 
 
 class RepeatTensor(Layer):
