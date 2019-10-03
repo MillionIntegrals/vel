@@ -98,14 +98,19 @@ class DoubleNoisyNatureCnn(Layer):
                 m.reset_weights()
 
     def forward(self, image, state: dict = None, context: dict = None):
+        if context is not None:
+            deterministic = context.get('deterministic', False)
+        else:
+            deterministic = False
+
         result = image
         result = F.relu(self.conv1(result))
         result = F.relu(self.conv2(result))
         result = F.relu(self.conv3(result))
         flattened = result.view(result.size(0), -1)
 
-        output_one = F.relu(self.linear_layer_one(flattened))
-        output_two = F.relu(self.linear_layer_two(flattened))
+        output_one = F.relu(self.linear_layer_one(flattened, deterministic=deterministic))
+        output_two = F.relu(self.linear_layer_two(flattened, deterministic=deterministic))
 
         return output_one, output_two
 

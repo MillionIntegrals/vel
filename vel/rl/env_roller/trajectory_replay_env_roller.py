@@ -37,12 +37,12 @@ class TrajectoryReplayEnvRoller(ReplayEnvRollerBase):
     @torch.no_grad()
     def rollout(self, batch_info: BatchInfo,  number_of_steps: int) -> Rollout:
         """ Calculate env rollout """
-        self.actor.train()
+        self.actor.eval()
         accumulator = TensorAccumulator()
         episode_information = []  # List of dictionaries with episode information
 
         for step_idx in range(number_of_steps):
-            step = self.actor.act(self.last_observation)
+            step = self.actor.act(self.last_observation, deterministic=False)
 
             replay_extra_information = {}
 

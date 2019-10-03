@@ -1,10 +1,10 @@
+import sys
 import attr
 import numpy as np
-import sys
 import torch
 import tqdm
 
-from vel.api import TrainingInfo, EpochInfo, BatchInfo, Model, ModelFactory
+from vel.api import TrainingInfo, EpochInfo, BatchInfo, ModelFactory
 from vel.openai.baselines.common.vec_env import VecEnv
 from vel.rl.api import (
     Reinforcer, ReinforcerFactory, VecEnvFactory, ReplayEnvRollerBase, ReplayEnvRollerFactoryBase,

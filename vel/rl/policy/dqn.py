@@ -38,6 +38,11 @@ class DQN(RlPolicy):
 
         self.target_model = QPolicy(net=net_factory.instantiate(), action_space=action_space, dueling_dqn=dueling_dqn)
 
+    def train(self, mode=True):
+        """ Override train to make sure target model is always in eval mode """
+        self.model.train(mode)
+        self.target_model.train(False)
+
     def reset_weights(self):
         """ Initialize properly model weights """
         self.model.reset_weights()

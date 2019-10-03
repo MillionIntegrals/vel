@@ -52,9 +52,14 @@ class QDistributionalNoisyDuelingHead(nn.Module):
         self.linear_layer_advantage.reset_weights()
         self.linear_layer_value.reset_weights()
 
-    def forward(self, advantage_features, value_features):
-        adv = self.linear_layer_advantage(advantage_features).view(-1, self.action_size, self.atoms)
-        val = self.linear_layer_value(value_features).view(-1, 1, self.atoms)
+    def forward(self, advantage_features, value_features, deterministic=False):
+        adv = self.linear_layer_advantage(
+            advantage_features, deterministic=deterministic
+        ).view(-1, self.action_size, self.atoms)
+
+        val = self.linear_layer_value(
+            value_features, deterministic=deterministic
+        ).view(-1, 1, self.atoms)
 
         # I'm quite unsure if this is the right way to combine these, but this is what paper seems to be suggesting
         # and I don't know any better way.

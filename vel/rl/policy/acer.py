@@ -41,6 +41,13 @@ class ACER(RlPolicy):
         else:
             self.target_policy = None
 
+    def train(self, mode=True):
+        """ Override train to make sure target model is always in eval mode """
+        self.policy.train(mode)
+
+        if self.trust_region:
+            self.target_policy.train(False)
+
     def reset_weights(self):
         """ Initialize properly model weights """
         self.policy.reset_weights()

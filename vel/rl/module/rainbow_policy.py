@@ -45,23 +45,12 @@ class RainbowPolicy(Network):
         self.net.reset_weights()
         self.q_head.reset_weights()
 
-    def forward(self, observations):
+    def forward(self, observations, deterministic=False):
         """ Model forward pass """
-        advantage_features, value_features = self.net(observations)
+        advantage_features, value_features = self.net(observations, context={'deterministic': deterministic})
         log_histogram = self.q_head(advantage_features, value_features)
         return log_histogram
 
     def histogram_info(self):
         """ Return extra information about histogram """
         return self.q_head.histogram_info()
-
-    # def step(self, observations):
-    #     """ Sample action from an action space for given state """
-    #     log_histogram = self(observations)
-    #     actions = self.q_head.sample(log_histogram)
-    #
-    #     return {
-    #         'actions': actions,
-    #         'log_histogram': log_histogram
-    #     }
-

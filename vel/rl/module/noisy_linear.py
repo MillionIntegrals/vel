@@ -54,8 +54,8 @@ class NoisyLinear(nn.Module):
         self.weight_sigma.data.fill_(self.initial_std_dev / math.sqrt(self.in_features))
         self.bias_sigma.data.fill_(self.initial_std_dev / math.sqrt(self.out_features))
 
-    def forward(self, input_data):
-        if self.training:
+    def forward(self, input_data, deterministic=False):
+        if not deterministic:
             if self.factorized_noise:
                 weight_epsilon, bias_epsilon = factorized_gaussian_noise(
                     self.in_features, self.out_features, device=input_data.device

@@ -11,11 +11,9 @@ from vel.rl.module.rainbow_policy import RainbowPolicy
 class Rainbow(RlPolicy):
     """ Deep Q-Learning algorithm """
 
-    # def __init__(self, model_factory: ModelFactory, discount_factor: float, double_dqn: bool,
-
     def __init__(self, net: BackboneNetwork, net_factory: ModelFactory, action_space: gym.Space,
-                 discount_factor: float, target_update_frequency: int,
-                 vmin: float, vmax: float, atoms: int = 1, initial_std_dev: float = 0.4, factorized_noise: bool = True):
+                 discount_factor: float, target_update_frequency: int, vmin: float, vmax: float, atoms: int = 1,
+                 initial_std_dev: float = 0.4, factorized_noise: bool = True):
         super().__init__(discount_factor)
 
         self.model = RainbowPolicy(
@@ -49,6 +47,11 @@ class Rainbow(RlPolicy):
         # self.atom_delta = histogram_info['atom_delta']
         self.register_buffer('support_atoms', self.model.support_atoms.clone())
         self.atom_delta = self.model.atom_delta
+
+    def train(self, mode=True):
+        """ Override train to make sure target model is always in eval mode """
+        self.model.train(mode)
+        self.target_model.train(False)
 
     def reset_weights(self):
         """ Initialize properly model weights """

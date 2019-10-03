@@ -1,8 +1,7 @@
-import attr
 import sys
-import tqdm
-
+import attr
 import torch
+import tqdm
 
 from vel.api import TrainingInfo, EpochInfo, BatchInfo, Model, ModelFactory
 from vel.openai.baselines.common.vec_env import VecEnv

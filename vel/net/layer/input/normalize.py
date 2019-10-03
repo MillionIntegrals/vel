@@ -6,6 +6,8 @@ from vel.net.layer_base import LayerFactory, Layer
 
 
 class NormalizeLayer(Layer):
+    """ Layer that normalizes the inputs """
+
     def __init__(self, name: str, shape):
         super().__init__(name)
         if not isinstance(shape, abc.Sequence):
