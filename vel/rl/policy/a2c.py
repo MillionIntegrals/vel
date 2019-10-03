@@ -23,23 +23,23 @@ class A2C(RlPolicy):
         self.value_coefficient = value_coefficient
         self.gae_lambda = gae_lambda
 
-        self.policy = StochasticPolicy(net, action_space)
+        self.net = StochasticPolicy(net, action_space)
 
     def reset_weights(self):
         """ Initialize properly model weights """
-        self.policy.reset_weights()
+        self.net.reset_weights()
 
     def forward(self, observation, state=None):
         """ Calculate model outputs """
-        return self.policy(observation)
+        return self.net(observation)
 
     def act(self, observation, state=None, deterministic=False):
         """ Select actions based on model's output """
         action_pd_params, value_output = self(observation)
-        actions = self.policy.action_head.sample(action_pd_params, deterministic=deterministic)
+        actions = self.net.action_head.sample(action_pd_params, deterministic=deterministic)
 
         # log likelihood of selected action
-        logprobs = self.policy.action_head.logprob(actions, action_pd_params)
+        logprobs = self.net.action_head.logprob(actions, action_pd_params)
 
         return {
             'actions': actions,
@@ -79,8 +79,8 @@ class A2C(RlPolicy):
 
         pd_params, model_values = self(observations)
 
-        log_probs = self.policy.action_head.logprob(actions, pd_params)
-        entropy = self.policy.action_head.entropy(pd_params)
+        log_probs = self.net.action_head.logprob(actions, pd_params)
+        entropy = self.net.action_head.entropy(pd_params)
 
         # Actual calculations. Pretty trivial
         policy_loss = -torch.mean(advantages * log_probs)

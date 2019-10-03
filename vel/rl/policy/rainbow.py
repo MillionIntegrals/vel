@@ -17,7 +17,7 @@ class Rainbow(RlPolicy):
                  initial_std_dev: float = 0.4, factorized_noise: bool = True):
         super().__init__(discount_factor)
 
-        self.model = RainbowPolicy(
+        self.net = RainbowPolicy(
             net=net,
             action_space=action_space,
             vmin=vmin,
@@ -27,7 +27,7 @@ class Rainbow(RlPolicy):
             factorized_noise=factorized_noise
         )
 
-        self.target_model = RainbowPolicy(
+        self.target_net = RainbowPolicy(
             net=target_net,
             action_space=action_space,
             vmin=vmin,
@@ -36,7 +36,7 @@ class Rainbow(RlPolicy):
             initial_std_dev=initial_std_dev,
             factorized_noise=factorized_noise
         )
-        self.target_model.requires_grad_(False)
+        self.target_net.requires_grad_(False)
 
         self.discount_factor = discount_factor
         self.target_update_frequency = target_update_frequency
@@ -47,34 +47,34 @@ class Rainbow(RlPolicy):
 
         # self.support_atoms = self.model.q
         # self.atom_delta = histogram_info['atom_delta']
-        self.register_buffer('support_atoms', self.model.support_atoms.clone())
-        self.atom_delta = self.model.atom_delta
+        self.register_buffer('support_atoms', self.net.support_atoms.clone())
+        self.atom_delta = self.net.atom_delta
 
     def create_optimizer(self, optimizer_factory: OptimizerFactory) -> VelOptimizer:
         """ Create optimizer for the purpose of optimizing this model """
-        parameters = filter(lambda p: p.requires_grad, self.model.parameters())
+        parameters = filter(lambda p: p.requires_grad, self.net.parameters())
         return optimizer_factory.instantiate(parameters)
 
     def train(self, mode=True):
         """ Override train to make sure target model is always in eval mode """
-        self.model.train(mode)
-        self.target_model.train(False)
+        self.net.train(mode)
+        self.target_net.train(False)
 
     def reset_weights(self):
         """ Initialize properly model weights """
-        self.model.reset_weights()
-        self.target_model.load_state_dict(self.model.state_dict())
+        self.net.reset_weights()
+        self.target_net.load_state_dict(self.net.state_dict())
 
     def forward(self, observation, state=None):
         """ Calculate model outputs """
-        return self.model(observation)
+        return self.net(observation)
 
     def act(self, observation, state=None, deterministic=False):
         """ Select actions based on model's output """
         self.train(mode=not deterministic)
 
-        q_values = self.model(observation)
-        actions = self.model.q_head.sample(q_values)
+        q_values = self.net(observation)
+        actions = self.net.q_head.sample(q_values)
 
         return {
             'actions': actions,
@@ -94,13 +94,13 @@ class Rainbow(RlPolicy):
 
         assert dones_tensor.dtype == torch.float32
 
-        q = self.model(observations)
+        q = self.net(observations)
 
         with torch.no_grad():
             # DOUBLE DQN
             # Histogram gets returned as logits initially, we need to exp it before projection
-            target_value_histogram_for_all_actions = self.target_model(observations_next).exp()
-            model_value_histogram_for_all_actions = self.model(observations_next).exp()
+            target_value_histogram_for_all_actions = self.target_net(observations_next).exp()
+            model_value_histogram_for_all_actions = self.net(observations_next).exp()
 
             atoms_aligned = self.support_atoms.view(1, 1, self.num_atoms)
 
@@ -192,7 +192,7 @@ class Rainbow(RlPolicy):
     def post_optimization_step(self, batch_info, rollout):
         """ Steps to take after optimization has been done"""
         if batch_info.aggregate_batch_number % self.target_update_frequency == 0:
-            self.target_model.load_state_dict(self.model.state_dict())
+            self.target_net.load_state_dict(self.net.state_dict())
 
     def metrics(self) -> list:
         """ List of metrics to track for this learning process """

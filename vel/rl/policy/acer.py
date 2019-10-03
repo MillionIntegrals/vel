@@ -36,44 +36,44 @@ class ACER(RlPolicy):
         self.average_model_alpha = average_model_alpha
         self.trust_region_delta = trust_region_delta
 
-        self.policy = QStochasticPolicy(net, action_space)
+        self.net = QStochasticPolicy(net, action_space)
 
         if self.trust_region:
-            self.target_policy = QStochasticPolicy(target_net, action_space)
-            self.target_policy.requires_grad_(False)
+            self.target_net = QStochasticPolicy(target_net, action_space)
+            self.target_net.requires_grad_(False)
         else:
-            self.target_policy = None
+            self.target_net = None
 
     def create_optimizer(self, optimizer_factory: OptimizerFactory) -> VelOptimizer:
         """ Create optimizer for the purpose of optimizing this model """
-        parameters = filter(lambda p: p.requires_grad, self.policy.parameters())
+        parameters = filter(lambda p: p.requires_grad, self.net.parameters())
         return optimizer_factory.instantiate(parameters)
 
     def train(self, mode=True):
         """ Override train to make sure target model is always in eval mode """
-        self.policy.train(mode)
+        self.net.train(mode)
 
         if self.trust_region:
-            self.target_policy.train(False)
+            self.target_net.train(False)
 
     def reset_weights(self):
         """ Initialize properly model weights """
-        self.policy.reset_weights()
+        self.net.reset_weights()
 
         if self.trust_region:
-            self.target_policy.load_state_dict(self.policy.state_dict())
+            self.target_net.load_state_dict(self.net.state_dict())
 
     def forward(self, observation, state=None):
         """ Calculate model outputs """
-        return self.policy(observation)
+        return self.net(observation)
 
     def act(self, observation, state=None, deterministic=False):
         """ Select actions based on model's output """
         logprobs, q = self(observation)
-        actions = self.policy.action_head.sample(logprobs, deterministic=deterministic)
+        actions = self.net.action_head.sample(logprobs, deterministic=deterministic)
 
         # log likelihood of selected action
-        action_logprobs = self.policy.action_head.logprob(actions, logprobs)
+        action_logprobs = self.net.action_head.logprob(actions, logprobs)
         values = (torch.exp(logprobs) * q).sum(dim=1)
 
         return {
@@ -86,7 +86,7 @@ class ACER(RlPolicy):
 
     def update_target_policy(self):
         """ Update weights of the average model with new model observation """
-        for model_param, average_param in zip(self.policy.parameters(), self.target_policy.parameters()):
+        for model_param, average_param in zip(self.net.parameters(), self.target_net.parameters()):
             # EWMA average model update
             average_param.data.mul_(self.average_model_alpha).add_(model_param.data * (1 - self.average_model_alpha))
 
@@ -145,7 +145,7 @@ class ACER(RlPolicy):
             explained_variance = 1 - torch.var(q_retraced - action_q) / torch.var(q_retraced)
 
         # Entropy of the policy distribution
-        policy_entropy = torch.mean(self.policy.action_head.entropy(logprobs))
+        policy_entropy = torch.mean(self.net.action_head.entropy(logprobs))
         policy_gradient_loss = -torch.mean(advantages * importance_sampling_coefficient * action_logprobs)
 
         # Policy gradient bias correction
@@ -167,7 +167,7 @@ class ACER(RlPolicy):
 
         if self.trust_region:
             with torch.no_grad():
-                target_logprobs = self.target_policy(observations)[0]
+                target_logprobs = self.target_net(observations)[0]
 
             actor_loss = policy_loss - self.entropy_coefficient * policy_entropy
             q_loss = self.q_coefficient * q_function_loss

@@ -23,9 +23,9 @@ class DQN(RlPolicy):
                  dueling_dqn: bool, target_update_frequency: int):
         super().__init__(discount_factor)
 
-        self.model = QPolicy(net=net, action_space=action_space, dueling_dqn=dueling_dqn)
-        self.target_model = QPolicy(net=target_net, action_space=action_space, dueling_dqn=dueling_dqn)
-        self.target_model.requires_grad_(False)
+        self.net = QPolicy(net=net, action_space=action_space, dueling_dqn=dueling_dqn)
+        self.target_net = QPolicy(net=target_net, action_space=action_space, dueling_dqn=dueling_dqn)
+        self.target_net.requires_grad_(False)
 
         self.double_dqn = double_dqn
         self.target_update_frequency = target_update_frequency
@@ -40,27 +40,27 @@ class DQN(RlPolicy):
 
     def create_optimizer(self, optimizer_factory: OptimizerFactory) -> VelOptimizer:
         """ Create optimizer for the purpose of optimizing this model """
-        parameters = filter(lambda p: p.requires_grad, self.model.parameters())
+        parameters = filter(lambda p: p.requires_grad, self.net.parameters())
         return optimizer_factory.instantiate(parameters)
 
     def train(self, mode=True):
         """ Override train to make sure target model is always in eval mode """
-        self.model.train(mode)
-        self.target_model.train(False)
+        self.net.train(mode)
+        self.target_net.train(False)
 
     def reset_weights(self):
         """ Initialize properly model weights """
-        self.model.reset_weights()
-        self.target_model.load_state_dict(self.model.state_dict())
+        self.net.reset_weights()
+        self.target_net.load_state_dict(self.net.state_dict())
 
     def forward(self, observation, state=None):
         """ Calculate model outputs """
-        return self.model(observation)
+        return self.net(observation)
 
     def act(self, observation, state=None, deterministic=False):
         """ Select actions based on model's output """
-        q_values = self.model(observation)
-        actions = self.model.q_head.sample(q_values)
+        q_values = self.net(observation)
+        actions = self.net.q_head.sample(q_values)
         noisy_actions = self.action_noise(actions, epsilon=self.epsilon_value, deterministic=deterministic)
 
         return {
@@ -79,14 +79,14 @@ class DQN(RlPolicy):
 
         assert dones_tensor.dtype == torch.float32
 
-        q = self.model(observations)
+        q = self.net(observations)
 
         with torch.no_grad():
-            target_q = self.target_model(observations_next)
+            target_q = self.target_net(observations_next)
 
             if self.double_dqn:
                 # DOUBLE DQN
-                model_q_next = self.model(observations_next)
+                model_q_next = self.net(observations_next)
                 # Select largest 'target' value based on action that 'model' selects
                 values = target_q.gather(1, model_q_next.argmax(dim=1, keepdim=True)).squeeze(1)
             else:
@@ -120,7 +120,7 @@ class DQN(RlPolicy):
     def post_optimization_step(self, batch_info, rollout):
         """ Steps to take after optimization has been done"""
         if batch_info.aggregate_batch_number % self.target_update_frequency == 0:
-            self.target_model.load_state_dict(self.model.state_dict())
+            self.target_net.load_state_dict(self.net.state_dict())
 
         self.epsilon_value = self.epsilon_schedule.value(batch_info['progress'])
 
