@@ -77,7 +77,7 @@ class Resnet34(LossFunctionModel):
         for idx, child in enumerate(self.model.children()):
             mu.unfreeze_layer(child)
 
-    def get_layer_groups(self):
+    def layer_groups(self):
         """ Return layers grouped """
         g1 = list(self.model[:self.group_cut_layers[0]])
         g2 = list(self.model[self.group_cut_layers[0]:self.group_cut_layers[1]])
@@ -85,7 +85,7 @@ class Resnet34(LossFunctionModel):
         return [g1, g2, g3]
 
     def create_optimizer(self, optimizer_factory: OptimizerFactory) -> VelOptimizer:
-        parameters = mu.to_parameter_groups(self.get_layer_groups())
+        parameters = mu.to_parameter_groups(self.layer_groups())
         return optimizer_factory.instantiate_parameter_groups(parameters)
 
     def forward(self, x):

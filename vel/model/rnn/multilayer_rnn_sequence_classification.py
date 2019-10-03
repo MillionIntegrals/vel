@@ -123,7 +123,7 @@ class MultilayerRnnSequenceClassification(LossFunctionModel):
 
         return self.output_activation(data)
 
-    def get_layer_groups(self):
+    def layer_groups(self):
         return [
             self.input_block,
             self.rnn_layers,
@@ -133,7 +133,7 @@ class MultilayerRnnSequenceClassification(LossFunctionModel):
 
     def create_optimizer(self, optimizer_factory: OptimizerFactory) -> VelOptimizer:
         """ Create optimizer for the purpose of optimizing this model """
-        parameters = mu.to_parameter_groups(self.get_layer_groups())
+        parameters = mu.to_parameter_groups(self.layer_groups())
         return optimizer_factory.instantiate_parameter_groups(parameters)
 
     @property
