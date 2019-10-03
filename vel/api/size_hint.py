@@ -68,5 +68,9 @@ class SizeHints:
 
         return self.size_hints
 
+    def unwrap(self):
+        """ Return the underlying data """
+        return self.size_hints
+
     def __repr__(self):
         return repr(self.size_hints)

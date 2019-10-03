@@ -4,15 +4,15 @@ name: 'mujoco_ppo'
 env:
   name: vel.rl.env.mujoco
   game: !param game = 'Reacher-v2'
-  normalize_returns: true
 
 
 vec_env:
   name: vel.rl.vecenv.dummy
+  normalize_returns: true
 
 
 model:
-  name: vel.rl.algo.ppo
+  name: vel.rl.policy.ppo
 
   entropy_coefficient: 0.0
   value_coefficient: 0.5
@@ -22,24 +22,21 @@ model:
   discount_factor: 0.99 # Discount factor for the rewards
   gae_lambda: 0.95 # Generalized Advantage Estimator Lambda parameter
 
-  policy:
-    name: vel.rl.policy.stochastic_policy_separate
-
-    input_block:
-      name: vel.module.input.normalize_observations
-      input_shape: 11
-
-    policy_backbone:
-      name: vel.rl.backbone.mlp
-      input_length: 11
-      hidden_layers: [64, 64]
-      activation: 'tanh'
-
-    value_backbone:
-      name: vel.rl.backbone.mlp
-      input_length: 11
-      hidden_layers: [64, 64]
-      activation: 'tanh'
+  net:
+    name: vel.net.modular
+    layers:
+      - name: vel.net.layer.input.normalize
+        shape: 11
+      - name: vel.net.layer.util.repeat_tensor
+        times: 2 # Need to repeat output twice, to consume by the 'parallel' layers
+      - name: vel.net.layer.arch.parallel
+        layers:
+          - name: vel.net.layer.mlp
+            hidden_layers: [64, 64]
+            activation: 'tanh'
+          - name: vel.net.layer.mlp
+            hidden_layers: [64, 64]
+            activation: 'tanh'
 
 
 reinforcer:
