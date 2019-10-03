@@ -6,9 +6,8 @@ from vel.api import BackboneNetwork, ModelFactory, SizeHints
 from .layer_base import LayerFactory
 
 
-def instantiate_layers(layers: [LayerFactory]) -> nn.Module:
+def instantiate_layers(layers: [LayerFactory], size_hint: SizeHints) -> nn.Module:
     """ Instantiate list of layer factories into PyTorch Module """
-    size_hint = SizeHints()  # Empty input at first
     module_dict = collections.OrderedDict()
     context = {}
 
@@ -96,9 +95,12 @@ class ModularNetworkFactory(ModelFactory):
     def __init__(self, layers: [LayerFactory]):
         self.layers = layers
 
-    def instantiate(self, **extra_args) -> BackboneNetwork:
+    def instantiate(self, size_hint=None, **extra_args) -> BackboneNetwork:
         """ Create either stateful or not modular network instance """
-        layers = instantiate_layers(self.layers)
+        if size_hint is None:
+            size_hint = SizeHints()
+
+        layers = instantiate_layers(self.layers, size_hint=size_hint)
         is_stateful = any(l.is_stateful for l in layers)
 
         if is_stateful:

@@ -6,12 +6,13 @@ from vel.api import ModelFactory, BackboneNetwork, BatchInfo
 from vel.metric import AveragingNamedMetric
 from vel.rl.api import RlPolicy, Rollout
 from vel.rl.module.rainbow_policy import RainbowPolicy
+from vel.util.situational import observation_space_to_size_hint
 
 
 class Rainbow(RlPolicy):
     """ Deep Q-Learning algorithm """
 
-    def __init__(self, net: BackboneNetwork, net_factory: ModelFactory, action_space: gym.Space,
+    def __init__(self, net: BackboneNetwork, target_net: BackboneNetwork, action_space: gym.Space,
                  discount_factor: float, target_update_frequency: int, vmin: float, vmax: float, atoms: int = 1,
                  initial_std_dev: float = 0.4, factorized_noise: bool = True):
         super().__init__(discount_factor)
@@ -27,7 +28,7 @@ class Rainbow(RlPolicy):
         )
 
         self.target_model = RainbowPolicy(
-            net=net_factory.instantiate(),
+            net=target_net,
             action_space=action_space,
             vmin=vmin,
             vmax=vmax,
@@ -211,12 +212,17 @@ class RainbowFactory(ModelFactory):
     def instantiate(self, **extra_args):
         """ Instantiate the model """
         action_space = extra_args.pop('action_space')
+        observation_space = extra_args.pop('observation_space')
+
+        size_hint = observation_space_to_size_hint(observation_space)
+
         # TODO(jerry): Push noisy net parameters down the stack here
-        net = self.net_factory.instantiate(**extra_args)
+        net = self.net_factory.instantiate(size_hint=size_hint, **extra_args)
+        target_net = self.net_factory.instantiate(size_hint=size_hint, **extra_args)
 
         return Rainbow(
             net=net,
-            net_factory=self.net_factory,
+            target_net=target_net,
             action_space=action_space,
             discount_factor=self.discount_factor,
             target_update_frequency=self.target_update_frequency,

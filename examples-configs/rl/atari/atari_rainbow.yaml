@@ -31,9 +31,8 @@ model:
     name: vel.net.modular
     layers:
       - name: vel.net.layer.input.image_to_tensor
-        size: [84, 84, 4] # Number of channels is frame history
       - name: vel.rl.layer.double_noisy_nature_cnn
-        # TODO(this should ideally be brough from level up)
+        # TODO(this should ideally be brought from level up)
         initial_std_dev: 0.5
         factorized_noise: true
 

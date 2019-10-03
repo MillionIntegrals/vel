@@ -1,6 +1,7 @@
 import gym
 import numpy as np
 import itertools as it
+import typing
 
 import torch
 import torch.autograd as autograd
@@ -13,8 +14,9 @@ from vel.metric.base import AveragingNamedMetric
 
 from vel.rl.api import Rollout, Trajectories, RlPolicy
 from vel.rl.discount_bootstrap import discount_bootstrap_gae
-from vel.rl.module.stochastic_action_head import StochasticActionHead
-from vel.rl.module.value_head import ValueHead
+from vel.rl.module.head.stochastic_action_head import make_stockastic_action_head
+from vel.rl.module.head.value_head import ValueHead
+from vel.util.situational import observation_space_to_size_hint
 
 
 def p2v(params):
@@ -57,11 +59,11 @@ def conjugate_gradient_method(matrix_vector_operator, loss_gradient, nsteps, rdo
 class TRPO(RlPolicy):
     """ Trust Region Policy Optimization - https://arxiv.org/abs/1502.05477 """
 
-    def __init__(self,
-                 policy_net: BackboneNetwork, value_net: BackboneNetwork,
-                 action_space: gym.Space,
+    def __init__(self, policy_net: BackboneNetwork, value_net: BackboneNetwork, action_space: gym.Space,
                  max_kl, cg_iters, line_search_iters, cg_damping, entropy_coefficient, vf_iters,
-                 discount_factor, gae_lambda, improvement_acceptance_ratio):
+                 discount_factor, gae_lambda, improvement_acceptance_ratio,
+                 input_net: typing.Optional[BackboneNetwork] = None,
+                 ):
         super().__init__(discount_factor)
 
         self.mak_kl = max_kl
@@ -73,10 +75,11 @@ class TRPO(RlPolicy):
         self.gae_lambda = gae_lambda
         self.improvement_acceptance_ratio = improvement_acceptance_ratio
 
+        self.input_net = input_net
         self.policy_net = policy_net
         self.value_net = value_net
 
-        self.action_head = StochasticActionHead(
+        self.action_head = make_stockastic_action_head(
             action_space=action_space,
             input_dim=self.policy_net.size_hints().assert_single(2).last()
         )
@@ -87,6 +90,9 @@ class TRPO(RlPolicy):
 
     def reset_weights(self):
         """ Initialize properly model weights """
+        if self.input_net:
+            self.input_net.reset_weights()
+
         self.policy_net.reset_weights()
         self.value_net.reset_weights()
 
@@ -95,23 +101,28 @@ class TRPO(RlPolicy):
 
     def forward(self, observations):
         """ Calculate model outputs """
-        policy_base_output = self.policy_net(observations)
-        value_base_output = self.value_net(observations)
+        if self.input_net is not None:
+            normalized_observations = self.input_net(observations)
+        else:
+            normalized_observations = observations
+
+        policy_base_output = self.policy_net(normalized_observations)
+        value_base_output = self.value_net(normalized_observations)
 
         action_output = self.action_head(policy_base_output)
         value_output = self.value_head(value_base_output)
 
         return action_output, value_output
 
-    def value(self, observations, state=None):
+    def _value(self, normalized_observations):
         """ Calculate only value head for given state """
-        base_output = self.value_net(observations)
+        base_output = self.value_net(normalized_observations)
         value_output = self.value_head(base_output)
         return value_output
 
-    def policy(self, observations):
+    def _policy(self, normalized_observations):
         """ Calculate only action head for given state """
-        policy_base_output = self.policy_net(observations)
+        policy_base_output = self.policy_net(normalized_observations)
         policy_params = self.action_head(policy_base_output)
         return policy_params
 
@@ -174,10 +185,16 @@ class TRPO(RlPolicy):
         rollout = rollout.to_transitions()
 
         observations = rollout.batch_tensor('observations')
+
+        if self.input_net is not None:
+            normalized_observations = self.input_net(observations)
+        else:
+            normalized_observations = observations
+
         returns = rollout.batch_tensor('returns')
 
         # Evaluate model on the observations
-        action_pd_params = self.policy(observations)
+        action_pd_params = self._policy(normalized_observations)
         policy_entropy = torch.mean(self.action_head.entropy(action_pd_params))
 
         policy_loss = self.calc_policy_loss(action_pd_params, policy_entropy, rollout)
@@ -205,7 +222,8 @@ class TRPO(RlPolicy):
 
         (policy_optimization_success, ratio, policy_loss_improvement, new_policy_loss, kl_divergence_step) = (
             self.line_search(
-                rollout, policy_loss, action_pd_params, original_parameter_vec, full_step, expected_improvement
+                normalized_observations, rollout, policy_loss, action_pd_params, original_parameter_vec,
+                full_step, expected_improvement
             )
         )
 
@@ -213,7 +231,7 @@ class TRPO(RlPolicy):
 
         for i in range(self.vf_iters):
             batch_info.optimizer.zero_grad()
-            value_loss = self.value_loss(observations, returns)
+            value_loss = self._value_loss(normalized_observations, returns)
 
             value_loss.backward()
 
@@ -238,7 +256,7 @@ class TRPO(RlPolicy):
             'explained_variance': explained_variance(returns, rollout.batch_tensor('values'))
         }
 
-    def line_search(self, rollout, original_policy_loss, original_policy_params, original_parameter_vec,
+    def line_search(self, normalized_observations, rollout, original_policy_loss, original_policy_params, original_parameter_vec,
                     full_step, expected_improvement_full):
         """ Find the right stepsize to make sure policy improves """
         current_parameter_vec = original_parameter_vec.clone()
@@ -253,7 +271,7 @@ class TRPO(RlPolicy):
 
             # Calculate new loss
             with torch.no_grad():
-                policy_params = self.policy(rollout.batch_tensor('observations'))
+                policy_params = self._policy(normalized_observations)
                 policy_entropy = torch.mean(self.action_head.entropy(policy_params))
                 kl_divergence = torch.mean(self.action_head.kl_divergence(original_policy_params, policy_params))
 
@@ -289,9 +307,9 @@ class TRPO(RlPolicy):
 
         return fvp + vector * self.cg_damping
 
-    def value_loss(self, observations, returns):
+    def _value_loss(self, normalized_observations, returns):
         """ Loss of value function head """
-        value_outputs = self.value(observations)
+        value_outputs = self._value(normalized_observations)
         value_loss = 0.5 * F.mse_loss(value_outputs, returns)
         return value_loss
 
@@ -337,9 +355,10 @@ class TRPOFactory(ModelFactory):
     """ Factory class for policy gradient models """
     def __init__(self, policy_net: ModelFactory, value_net: ModelFactory,
                  max_kl, cg_iters, line_search_iters, cg_damping, entropy_coefficient, vf_iters,
-                 discount_factor, gae_lambda, improvement_acceptance_ratio):
+                 discount_factor, gae_lambda, improvement_acceptance_ratio, input_net: typing.Optional[ModelFactory]):
         self.policy_net = policy_net
         self.value_net = value_net
+        self.input_net = input_net
         self.entropy_coefficient = entropy_coefficient
 
         self.mak_kl = max_kl
@@ -354,13 +373,23 @@ class TRPOFactory(ModelFactory):
     def instantiate(self, **extra_args):
         """ Instantiate the model """
         action_space = extra_args.pop('action_space')
+        observation_space = extra_args.pop('observation_space')
 
-        policy_net = self.policy_net.instantiate(**extra_args)
-        value_net = self.value_net.instantiate(**extra_args)
+        size_hint = observation_space_to_size_hint(observation_space)
+
+        if self.input_net is None:
+            input_net = None
+        else:
+            input_net = self.input_net.instantiate(size_hint=size_hint, **extra_args)
+            size_hint = input_net.size_hints()
+
+        policy_net = self.policy_net.instantiate(size_hint=size_hint, **extra_args)
+        value_net = self.value_net.instantiate(size_hint=size_hint, **extra_args)
 
         return TRPO(
             policy_net=policy_net,
             value_net=value_net,
+            input_net=input_net,
             action_space=action_space,
             max_kl=self.mak_kl,
             cg_iters=self.cg_iters,
@@ -376,12 +405,13 @@ class TRPOFactory(ModelFactory):
 
 def create(policy_net: ModelFactory, value_net: ModelFactory,
            max_kl, cg_iters, line_search_iters, cg_damping, entropy_coefficient, vf_iters,
-           discount_factor, gae_lambda, improvement_acceptance_ratio):
+           discount_factor, gae_lambda, improvement_acceptance_ratio, input_net: typing.Optional[ModelFactory]=None):
     """ Vel factory function """
 
     return TRPOFactory(
         policy_net=policy_net,
         value_net=value_net,
+        input_net=input_net,
         max_kl=max_kl,
         cg_iters=cg_iters,
         line_search_iters=line_search_iters,

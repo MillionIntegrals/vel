@@ -5,7 +5,7 @@ from vel.api import BatchInfo
 from vel.openai.baselines.common.vec_env import VecEnv
 from vel.rl.api import Trajectories, Rollout, EnvRollerBase, EnvRollerFactoryBase, RlPolicy
 from vel.rl.util.actor import PolicyActor
-from vel.util.tensor_accumulator import TensorAccumulator
+from vel.util.tensor_util import TensorAccumulator
 
 
 class StepEnvRoller(EnvRollerBase):

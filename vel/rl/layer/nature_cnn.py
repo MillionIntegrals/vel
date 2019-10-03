@@ -13,7 +13,7 @@ import torch.nn.functional as F
 import vel.util.network as net_util
 
 from vel.api import SizeHint, SizeHints
-from vel.net.modular import Layer, LayerFactory
+from vel.net.layer_base import Layer, LayerFactory
 
 
 class NatureCnn(Layer):
@@ -109,4 +109,3 @@ class NatureCnnFactory(LayerFactory):
 def create(output_dim=512):
     """ Vel factory function """
     return NatureCnnFactory(output_dim=output_dim)
-

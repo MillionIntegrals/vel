@@ -3,6 +3,7 @@ import torch
 import torch.nn.functional as F
 
 from vel.metric.base import AveragingNamedMetric
+from vel.util.situational import observation_space_to_size_hint
 from vel.util.stats import explained_variance
 from vel.api import ModelFactory, BatchInfo, BackboneNetwork
 
@@ -113,8 +114,8 @@ class A2C(RlPolicy):
 
 class A2CFactory(ModelFactory):
     """ Factory class for policy gradient models """
-    def __init__(self, net, entropy_coefficient, value_coefficient, discount_factor, gae_lambda=1.0):
-        self.net = net
+    def __init__(self, net_factory, entropy_coefficient, value_coefficient, discount_factor, gae_lambda=1.0):
+        self.net_factory = net_factory
         self.entropy_coefficient = entropy_coefficient
         self.value_coefficient = value_coefficient
         self.discount_factor = discount_factor
@@ -123,7 +124,11 @@ class A2CFactory(ModelFactory):
     def instantiate(self, **extra_args):
         """ Instantiate the model """
         action_space = extra_args.pop('action_space')
-        net = self.net.instantiate(**extra_args)
+        observation_space = extra_args.pop('observation_space')
+
+        size_hint = observation_space_to_size_hint(observation_space)
+
+        net = self.net_factory.instantiate(size_hint=size_hint, **extra_args)
 
         return A2C(
             net=net,
@@ -138,7 +143,7 @@ class A2CFactory(ModelFactory):
 def create(net: ModelFactory, entropy_coefficient, value_coefficient, discount_factor, gae_lambda=1.0):
     """ Vel factory function """
     return A2CFactory(
-        net=net,
+        net_factory=net,
         entropy_coefficient=entropy_coefficient,
         value_coefficient=value_coefficient,
         discount_factor=discount_factor,

@@ -1,3 +1,4 @@
+import typing
 import gym
 import torch
 import torch.nn.functional as F
@@ -6,6 +7,7 @@ from vel.api import BackboneNetwork, ModelFactory, BatchInfo
 from vel.metric.base import AveragingNamedMetric
 from vel.rl.api import Trajectories, RlPolicy, Rollout
 from vel.rl.module.q_stochastic_policy import QStochasticPolicy
+from vel.util.situational import observation_space_to_size_hint
 
 
 def select_indices(tensor, indices):
@@ -16,7 +18,7 @@ def select_indices(tensor, indices):
 class ACER(RlPolicy):
     """ Actor-Critic with Experience Replay - policy gradient calculations """
 
-    def __init__(self, net: BackboneNetwork, net_factory: ModelFactory, action_space: gym.Space,
+    def __init__(self, net: BackboneNetwork, target_net: typing.Optional[BackboneNetwork], action_space: gym.Space,
                  discount_factor: float, trust_region: bool = True, entropy_coefficient: float = 0.01,
                  q_coefficient: float = 0.5, rho_cap: float = 10.0, retrace_rho_cap: float = 1.0,
                  average_model_alpha: float = 0.99, trust_region_delta: float = 1.0):
@@ -37,7 +39,7 @@ class ACER(RlPolicy):
         self.policy = QStochasticPolicy(net, action_space)
 
         if self.trust_region:
-            self.target_policy = QStochasticPolicy(net_factory.instantiate(), action_space)
+            self.target_policy = QStochasticPolicy(target_net, action_space)
         else:
             self.target_policy = None
 
@@ -257,11 +259,20 @@ class ACERFactory(ModelFactory):
     def instantiate(self, **extra_args):
         """ Instantiate the model """
         action_space = extra_args.pop('action_space')
-        net = self.net_factory.instantiate(**extra_args)
+        observation_space = extra_args.pop('observation_space')
+
+        size_hint = observation_space_to_size_hint(observation_space)
+
+        net = self.net_factory.instantiate(size_hint=size_hint, **extra_args)
+
+        if self.trust_region:
+            target_net = self.net_factory.instantiate(size_hint=size_hint, **extra_args)
+        else:
+            target_net = None
 
         return ACER(
             net=net,
-            net_factory=self.net_factory,
+            target_net=target_net,
             action_space=action_space,
             trust_region=self.trust_region,
             entropy_coefficient=self.entropy_coefficient,

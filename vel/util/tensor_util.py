@@ -1,4 +1,5 @@
 import torch
+import collections
 
 
 def one_hot_encoding(input_tensor, num_labels):
@@ -32,3 +33,16 @@ def to_device(tensor, device: torch.device):
         return tuple(to_device(v, device) for v in tensor)
     else:
         raise NotImplementedError
+
+
+class TensorAccumulator:
+    """ Buffer for tensors that will be stacked together """
+    def __init__(self):
+        self.accumulants = collections.defaultdict(list)
+
+    def add(self, name, tensor):
+        self.accumulants[name].append(tensor)
+
+    def result(self):
+        """ Concatenate accumulated tensors """
+        return {k: torch.stack(v) for k, v in self.accumulants.items()}

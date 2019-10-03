@@ -3,15 +3,15 @@ name: 'mujoco_trpo'
 env:
   name: vel.rl.env.mujoco
   game: !param game = 'Reacher-v2'
-  normalize_returns: true
 
 
 vec_env:
   name: vel.rl.vecenv.dummy
+  normalize_returns: true
 
 
 model:
-  name: vel.rl.algo.trpo
+  name: vel.rl.policy.trpo
 
   discount_factor: 0.99 # Discount factor for the rewards
   gae_lambda: 0.98 # Generalized Advantage Estimator Lambda parameter
@@ -24,21 +24,24 @@ model:
   vf_iters: 5
   entropy_coefficient: 0.0
 
-  input_block:
-    name: vel.module.input.normalize_observations
-    input_shape: 11
+  input_net:
+    name: vel.net.modular
+    layers:
+      - name: vel.net.layer.input.normalize
 
-  policy_backbone:
-    name: vel.rl.backbone.mlp
-    input_length: 11
-    hidden_layers: [32, 32]
-    activation: 'tanh'
+  policy_net:
+    name: vel.net.modular
+    layers:
+      - name: vel.net.layer.mlp
+        hidden_layers: [32, 32]
+        activation: 'tanh'
 
-  value_backbone:
-    name: vel.rl.backbone.mlp
-    input_length: 11
-    hidden_layers: [32, 32]
-    activation: 'tanh'
+  value_net:
+    name: vel.net.modular
+    layers:
+      - name: vel.net.layer.mlp
+        hidden_layers: [32, 32]
+        activation: 'tanh'
 
 
 reinforcer:

@@ -29,7 +29,6 @@ model:
     name: vel.net.modular
     layers:
       - name: vel.net.layer.input.image_to_tensor
-        size: [84, 84, 4] # Number of channels is frame history
       - name: vel.rl.layer.nature_cnn_small
 
   value_net:

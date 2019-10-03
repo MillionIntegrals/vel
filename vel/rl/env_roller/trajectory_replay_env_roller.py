@@ -7,7 +7,7 @@ from vel.rl.api import (
     Trajectories, Rollout, ReplayEnvRollerBase, ReplayEnvRollerFactoryBase, ReplayBuffer, ReplayBufferFactory, RlPolicy
 )
 from vel.rl.util.actor import PolicyActor
-from vel.util.tensor_accumulator import TensorAccumulator
+from vel.util.tensor_util import TensorAccumulator
 
 
 class TrajectoryReplayEnvRoller(ReplayEnvRollerBase):

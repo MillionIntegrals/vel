@@ -26,7 +26,6 @@ model:
     name: vel.net.modular
     layers:
       - name: vel.net.layer.input.normalize
-        shape: 11
       - name: vel.net.layer.util.repeat_tensor
         times: 2 # Need to repeat output twice, to consume by the 'parallel' layers
       - name: vel.net.layer.arch.parallel

@@ -36,7 +36,12 @@ class NormalizeLayerFactory(LayerFactory):
     def instantiate(self, name: str, direct_input: SizeHints, context: dict) -> Layer:
         """ Create a given layer object """
         # Potential improvement here is to use either direct input or size parameter
-        return NormalizeLayer(name=name, shape=self.shape)
+        if self.shape is None:
+            shape = direct_input.assert_single().shape()
+        else:
+            shape = self.shape
+
+        return NormalizeLayer(name=name, shape=shape)
 
 
 def create(shape=None):

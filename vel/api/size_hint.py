@@ -15,6 +15,10 @@ class SizeHint(tuple):
         assert self[-1] is not None, "Size hint shouldn't be None"
         return self[-1]
 
+    def shape(self, idx=1) -> typing.Tuple[int]:
+        """ Get shape of size hint, except for a number of dimensions (batch dimensions """
+        return self[idx:]
+
     def __repr__(self):
         internal = ", ".join([self._inner_repr(s) for s in self])
         return f"{self.__class__.__name__}({internal})"

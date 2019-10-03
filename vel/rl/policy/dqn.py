@@ -12,17 +12,19 @@ from vel.metric import AveragingNamedMetric
 from vel.rl.api import RlPolicy, Rollout
 from vel.rl.module.q_policy import QPolicy
 from vel.rl.module.noise.eps_greedy import EpsGreedy
+from vel.util.situational import observation_space_to_size_hint
 
 
 class DQN(RlPolicy):
     """ Deep Q-Learning algorithm """
 
-    def __init__(self, net: BackboneNetwork, net_factory: ModelFactory, action_space: gym.Space,
+    def __init__(self, net: BackboneNetwork, target_net: BackboneNetwork, action_space: gym.Space,
                  epsilon: typing.Union[float, Schedule], discount_factor: float, double_dqn: bool,
                  dueling_dqn: bool, target_update_frequency: int):
         super().__init__(discount_factor)
 
         self.model = QPolicy(net=net, action_space=action_space, dueling_dqn=dueling_dqn)
+        self.target_model = QPolicy(net=target_net, action_space=action_space, dueling_dqn=dueling_dqn)
 
         self.double_dqn = double_dqn
         self.target_update_frequency = target_update_frequency
@@ -33,10 +35,7 @@ class DQN(RlPolicy):
             self.epsilon_schedule = epsilon
 
         self.epsilon_value = self.epsilon_schedule.value(0.0)
-
         self.action_noise = EpsGreedy(action_space=action_space)
-
-        self.target_model = QPolicy(net=net_factory.instantiate(), action_space=action_space, dueling_dqn=dueling_dqn)
 
     def train(self, mode=True):
         """ Override train to make sure target model is always in eval mode """
@@ -141,11 +140,16 @@ class DQNFactory(ModelFactory):
     def instantiate(self, **extra_args):
         """ Instantiate the model """
         action_space = extra_args.pop('action_space')
-        net = self.net_factory.instantiate(**extra_args)
+        observation_space = extra_args.pop('observation_space')
+
+        size_hint = observation_space_to_size_hint(observation_space)
+
+        net = self.net_factory.instantiate(size_hint=size_hint, **extra_args)
+        target_net = self.net_factory.instantiate(size_hint=size_hint, **extra_args)
 
         return DQN(
             net=net,
-            net_factory=self.net_factory,
+            target_net=target_net,
             action_space=action_space,
             epsilon=self.epsilon,
             discount_factor=self.discount_factor,

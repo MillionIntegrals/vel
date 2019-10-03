@@ -23,7 +23,6 @@ model:
     name: vel.net.modular
     layers:
       - name: vel.net.layer.input.normalize
-        shape: 11
       - name: vel.net.layer.mlp
         hidden_layers: [64, 64]
         activation: 'tanh'

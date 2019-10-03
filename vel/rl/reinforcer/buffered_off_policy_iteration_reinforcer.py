@@ -165,7 +165,7 @@ class BufferedOffPolicyIterationReinforcerFactory(ReinforcerFactory):
 
     def instantiate(self, device: torch.device) -> BufferedOffPolicyIterationReinforcer:
         env = self.env_factory.instantiate(parallel_envs=self.parallel_envs, seed=self.seed)
-        policy = self.model_factory.instantiate(action_space=env.action_space)
+        policy = self.model_factory.instantiate(action_space=env.action_space, observation_space=env.observation_space)
         env_roller = self.env_roller_factory.instantiate(environment=env, policy=policy, device=device)
 
         return BufferedOffPolicyIterationReinforcer(
