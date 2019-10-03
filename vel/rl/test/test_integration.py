@@ -1,219 +1,219 @@
-import torch
-import torch.optim as optim
-
-from vel.module.input.image_to_tensor import ImageToTensorFactory
-from vel.module.input.normalize_observations import NormalizeObservationsFactory
-from vel.rl.buffer.circular_replay_buffer import CircularReplayBuffer
-from vel.rl.buffer.prioritized_circular_replay_buffer import PrioritizedCircularReplayBuffer
-from vel.rl.command.rl_train_command import FrameTracker
-from vel.rl.env_roller.step_env_roller import StepEnvRoller
-from vel.rl.env_roller.trajectory_replay_env_roller import TrajectoryReplayEnvRoller
-from vel.rl.env_roller.transition_replay_env_roller import TransitionReplayEnvRoller
-from vel.rl.metrics import EpisodeRewardMetric
-from vel.rl.module.noise.eps_greedy import EpsGreedy
-from vel.rl.module.noise.ou_noise import OuNoise
-from vel.function.linear import LinearSchedule
-from vel.function.linear_and_constant import LinearAndConstantSchedule
-from vel.util.random import set_seed
-
-from vel.rl.env.classic_atari import ClassicAtariEnv
-from vel.rl.env.mujoco import MujocoEnv
-from vel.rl.vecenv.subproc import SubprocVecEnvWrapper
-from vel.rl.vecenv.dummy import DummyVecEnvWrapper
-
-from vel.rl.policy.stochastic_policy import StochasticPolicyFactory
-# from vel.rl.model.q_stochastic_policy_model import QStochasticPolicyModelFactory
-# from vel.rl.model.q_model import QModelFactory
-# from vel.rl.model.deterministic_policy_model import DeterministicPolicyModelFactory
-# from vel.rl.model.stochastic_policy_model_separate import StochasticPolicyModelSeparateFactory
-
-from vel.rl.backbone.nature_cnn import NatureCnnFactory
-from vel.rl.backbone.mlp import MLPFactory
-
-from vel.rl.reinforcer.on_policy_iteration_reinforcer import (
-    OnPolicyIterationReinforcer, OnPolicyIterationReinforcerSettings
-)
-
-from vel.rl.reinforcer.buffered_off_policy_iteration_reinforcer import (
-    BufferedOffPolicyIterationReinforcer, BufferedOffPolicyIterationReinforcerSettings
-)
-
-from vel.rl.reinforcer.buffered_mixed_policy_iteration_reinforcer import (
-    BufferedMixedPolicyIterationReinforcer, BufferedMixedPolicyIterationReinforcerSettings
-)
-
-from vel.rl.algo.dqn import DeepQLearning
-from vel.rl.algo.policy_gradient.a2c import A2CPolicyGradient
-from vel.rl.algo.policy_gradient.ppo import PpoPolicyGradient
-from vel.rl.algo.policy_gradient.trpo import TrpoPolicyGradient
-from vel.rl.algo.policy_gradient.acer import AcerPolicyGradient
-from vel.rl.algo.policy_gradient.ddpg import DeepDeterministicPolicyGradient
-
-from vel.api.info import TrainingInfo, EpochInfo
-
-
-CPU_DEVICE = torch.device('cpu')
-
-
-def test_a2c_breakout():
-    """
-    Simple 1 iteration of a2c breakout
-    """
-    seed = 1001
-
-    # Set random seed in python std lib, numpy and pytorch
-    set_seed(seed)
-
-    # Create 16 environments evaluated in parallel in sub processess with all usual DeepMind wrappers
-    # These are just helper functions for that
-    vec_env = SubprocVecEnvWrapper(
-        ClassicAtariEnv('BreakoutNoFrameskip-v4'), frame_history=4
-    ).instantiate(parallel_envs=16, seed=seed)
-
-    # Again, use a helper to create a model
-    # But because model is owned by the reinforcer, model should not be accessed using this variable
-    # but from reinforcer.model property
-    policy = StochasticPolicyFactory(
-        input_block=ImageToTensorFactory(),
-        backbone=NatureCnnFactory(input_width=84, input_height=84, input_channels=4)
-    ).instantiate(action_space=vec_env.action_space)
-
-    # Reinforcer - an object managing the learning process
-    reinforcer = OnPolicyIterationReinforcer(
-        device=CPU_DEVICE,
-        settings=OnPolicyIterationReinforcerSettings(
-            batch_size=256,
-            number_of_steps=5
-        ),
-        policy=policy,
-        algo=A2CPolicyGradient(
-            entropy_coefficient=0.01,
-            value_coefficient=0.5,
-            discount_factor=0.99,
-            max_grad_norm=0.5
-        ),
-        env_roller=StepEnvRoller(
-            environment=vec_env,
-            policy=policy,
-            device=CPU_DEVICE
-        )
-    )
-
-    # Model optimizer
-    optimizer = optim.RMSprop(reinforcer.policy.parameters(), lr=7.0e-4, eps=1e-3)
-
-    # Overall information store for training information
-    training_info = TrainingInfo(
-        metrics=[
-            EpisodeRewardMetric('episode_rewards'),  # Calculate average reward from episode
-        ],
-        callbacks=[]  # Print live metrics every epoch to standard output
-    )
-
-    # A bit of training initialization bookkeeping...
-    training_info.initialize()
-    reinforcer.initialize_training(training_info)
-    training_info.on_train_begin()
-
-    # Let's make 100 batches per epoch to average metrics nicely
-    num_epochs = 1
-
-    # Normal handrolled training loop
-    for i in range(1, num_epochs+1):
-        epoch_info = EpochInfo(
-            training_info=training_info,
-            global_epoch_idx=i,
-            batches_per_epoch=1,
-            optimizer=optimizer
-        )
-
-        reinforcer.train_epoch(epoch_info, interactive=False)
-
-    training_info.on_train_end()
-
-
-def test_ppo_breakout():
-    """
-    Simple 1 iteration of ppo breakout
-    """
-    device = torch.device('cpu')
-    seed = 1001
-
-    # Set random seed in python std lib, numpy and pytorch
-    set_seed(seed)
-
-    # Create 16 environments evaluated in parallel in sub processess with all usual DeepMind wrappers
-    # These are just helper functions for that
-    vec_env = SubprocVecEnvWrapper(
-        ClassicAtariEnv('BreakoutNoFrameskip-v4'), frame_history=4
-    ).instantiate(parallel_envs=8, seed=seed)
-
-    # Again, use a helper to create a model
-    # But because model is owned by the reinforcer, model should not be accessed using this variable
-    # but from reinforcer.model property
-    policy = StochasticPolicyFactory(
-        input_block=ImageToTensorFactory(),
-        backbone=NatureCnnFactory(input_width=84, input_height=84, input_channels=4)
-    ).instantiate(action_space=vec_env.action_space)
-
-    # Reinforcer - an object managing the learning process
-    reinforcer = OnPolicyIterationReinforcer(
-        device=device,
-        settings=OnPolicyIterationReinforcerSettings(
-            number_of_steps=12,
-            batch_size=4,
-            experience_replay=2,
-        ),
-        policy=policy,
-        algo=PpoPolicyGradient(
-            entropy_coefficient=0.01,
-            value_coefficient=0.5,
-            max_grad_norm=0.5,
-            cliprange=LinearSchedule(0.1, 0.0),
-            discount_factor=0.99,
-            normalize_advantage=True
-        ),
-        env_roller=StepEnvRoller(
-            environment=vec_env,
-            policy=policy,
-            device=device,
-        )
-    )
-
-    # Model optimizer
-    # optimizer = optim.RMSprop(reinforcer.model.parameters(), lr=7.0e-4, eps=1e-3)
-    optimizer = optim.Adam(reinforcer.policy.parameters(), lr=2.5e-4, eps=1e-5)
-
-    # Overall information store for training information
-    training_info = TrainingInfo(
-        metrics=[
-            EpisodeRewardMetric('episode_rewards'),  # Calculate average reward from episode
-        ],
-        callbacks=[
-            FrameTracker(100_000)
-        ]  # Print live metrics every epoch to standard output
-    )
-
-    # A bit of training initialization bookkeeping...
-    training_info.initialize()
-    reinforcer.initialize_training(training_info)
-    training_info.on_train_begin()
-
-    # Let's make 100 batches per epoch to average metrics nicely
-    num_epochs = 1
-
-    # Normal handrolled training loop
-    for i in range(1, num_epochs+1):
-        epoch_info = EpochInfo(
-            training_info=training_info,
-            global_epoch_idx=i,
-            batches_per_epoch=1,
-            optimizer=optimizer
-        )
-
-        reinforcer.train_epoch(epoch_info, interactive=False)
-
-    training_info.on_train_end()
+# import torch
+# import torch.optim as optim
+#
+# from vel.module.input.image_to_tensor import ImageToTensorFactory
+# from vel.module.input.normalize_observations import NormalizeObservationsFactory
+# from vel.rl.buffer.circular_replay_buffer import CircularReplayBuffer
+# from vel.rl.buffer.prioritized_circular_replay_buffer import PrioritizedCircularReplayBuffer
+# from vel.rl.command.rl_train_command import FrameTracker
+# from vel.rl.env_roller.step_env_roller import StepEnvRoller
+# from vel.rl.env_roller.trajectory_replay_env_roller import TrajectoryReplayEnvRoller
+# from vel.rl.env_roller.transition_replay_env_roller import TransitionReplayEnvRoller
+# from vel.rl.metrics import EpisodeRewardMetric
+# from vel.rl.module.noise.eps_greedy import EpsGreedy
+# from vel.rl.module.noise.ou_noise import OuNoise
+# from vel.function.linear import LinearSchedule
+# from vel.function.linear_and_constant import LinearAndConstantSchedule
+# from vel.util.random import set_seed
+#
+# from vel.rl.env.classic_atari import ClassicAtariEnv
+# from vel.rl.env.mujoco import MujocoEnv
+# from vel.rl.vecenv.subproc import SubprocVecEnvWrapper
+# from vel.rl.vecenv.dummy import DummyVecEnvWrapper
+#
+# from vel.rl.policy.stochastic_policy import StochasticPolicyFactory
+# # from vel.rl.model.q_stochastic_policy_model import QStochasticPolicyModelFactory
+# # from vel.rl.model.q_model import QModelFactory
+# # from vel.rl.model.deterministic_policy_model import DeterministicPolicyModelFactory
+# # from vel.rl.model.stochastic_policy_model_separate import StochasticPolicyModelSeparateFactory
+#
+# from vel.rl.backbone.nature_cnn import NatureCnnFactory
+# from vel.rl.backbone.mlp import MLPFactory
+#
+# from vel.rl.reinforcer.on_policy_iteration_reinforcer import (
+#     OnPolicyIterationReinforcer, OnPolicyIterationReinforcerSettings
+# )
+#
+# from vel.rl.reinforcer.buffered_off_policy_iteration_reinforcer import (
+#     BufferedOffPolicyIterationReinforcer, BufferedOffPolicyIterationReinforcerSettings
+# )
+#
+# from vel.rl.reinforcer.buffered_mixed_policy_iteration_reinforcer import (
+#     BufferedMixedPolicyIterationReinforcer, BufferedMixedPolicyIterationReinforcerSettings
+# )
+#
+# from vel.rl.algo.dqn import DeepQLearning
+# from vel.rl.algo.policy_gradient.a2c import A2CPolicyGradient
+# from vel.rl.algo.policy_gradient.ppo import PpoPolicyGradient
+# from vel.rl.algo.policy_gradient.trpo import TrpoPolicyGradient
+# from vel.rl.algo.policy_gradient.acer import AcerPolicyGradient
+# from vel.rl.algo.policy_gradient.ddpg import DeepDeterministicPolicyGradient
+#
+# from vel.api.info import TrainingInfo, EpochInfo
+#
+#
+# CPU_DEVICE = torch.device('cpu')
+#
+#
+# def test_a2c_breakout():
+#     """
+#     Simple 1 iteration of a2c breakout
+#     """
+#     seed = 1001
+#
+#     # Set random seed in python std lib, numpy and pytorch
+#     set_seed(seed)
+#
+#     # Create 16 environments evaluated in parallel in sub processess with all usual DeepMind wrappers
+#     # These are just helper functions for that
+#     vec_env = SubprocVecEnvWrapper(
+#         ClassicAtariEnv('BreakoutNoFrameskip-v4'), frame_history=4
+#     ).instantiate(parallel_envs=16, seed=seed)
+#
+#     # Again, use a helper to create a model
+#     # But because model is owned by the reinforcer, model should not be accessed using this variable
+#     # but from reinforcer.model property
+#     policy = StochasticPolicyFactory(
+#         input_block=ImageToTensorFactory(),
+#         backbone=NatureCnnFactory(input_width=84, input_height=84, input_channels=4)
+#     ).instantiate(action_space=vec_env.action_space)
+#
+#     # Reinforcer - an object managing the learning process
+#     reinforcer = OnPolicyIterationReinforcer(
+#         device=CPU_DEVICE,
+#         settings=OnPolicyIterationReinforcerSettings(
+#             batch_size=256,
+#             number_of_steps=5
+#         ),
+#         policy=policy,
+#         algo=A2CPolicyGradient(
+#             entropy_coefficient=0.01,
+#             value_coefficient=0.5,
+#             discount_factor=0.99,
+#             max_grad_norm=0.5
+#         ),
+#         env_roller=StepEnvRoller(
+#             environment=vec_env,
+#             policy=policy,
+#             device=CPU_DEVICE
+#         )
+#     )
+#
+#     # Model optimizer
+#     optimizer = optim.RMSprop(reinforcer.policy.parameters(), lr=7.0e-4, eps=1e-3)
+#
+#     # Overall information store for training information
+#     training_info = TrainingInfo(
+#         metrics=[
+#             EpisodeRewardMetric('episode_rewards'),  # Calculate average reward from episode
+#         ],
+#         callbacks=[]  # Print live metrics every epoch to standard output
+#     )
+#
+#     # A bit of training initialization bookkeeping...
+#     training_info.initialize()
+#     reinforcer.initialize_training(training_info)
+#     training_info.on_train_begin()
+#
+#     # Let's make 100 batches per epoch to average metrics nicely
+#     num_epochs = 1
+#
+#     # Normal handrolled training loop
+#     for i in range(1, num_epochs+1):
+#         epoch_info = EpochInfo(
+#             training_info=training_info,
+#             global_epoch_idx=i,
+#             batches_per_epoch=1,
+#             optimizer=optimizer
+#         )
+#
+#         reinforcer.train_epoch(epoch_info, interactive=False)
+#
+#     training_info.on_train_end()
+#
+#
+# def test_ppo_breakout():
+#     """
+#     Simple 1 iteration of ppo breakout
+#     """
+#     device = torch.device('cpu')
+#     seed = 1001
+#
+#     # Set random seed in python std lib, numpy and pytorch
+#     set_seed(seed)
+#
+#     # Create 16 environments evaluated in parallel in sub processess with all usual DeepMind wrappers
+#     # These are just helper functions for that
+#     vec_env = SubprocVecEnvWrapper(
+#         ClassicAtariEnv('BreakoutNoFrameskip-v4'), frame_history=4
+#     ).instantiate(parallel_envs=8, seed=seed)
+#
+#     # Again, use a helper to create a model
+#     # But because model is owned by the reinforcer, model should not be accessed using this variable
+#     # but from reinforcer.model property
+#     policy = StochasticPolicyFactory(
+#         input_block=ImageToTensorFactory(),
+#         backbone=NatureCnnFactory(input_width=84, input_height=84, input_channels=4)
+#     ).instantiate(action_space=vec_env.action_space)
+#
+#     # Reinforcer - an object managing the learning process
+#     reinforcer = OnPolicyIterationReinforcer(
+#         device=device,
+#         settings=OnPolicyIterationReinforcerSettings(
+#             number_of_steps=12,
+#             batch_size=4,
+#             experience_replay=2,
+#         ),
+#         policy=policy,
+#         algo=PpoPolicyGradient(
+#             entropy_coefficient=0.01,
+#             value_coefficient=0.5,
+#             max_grad_norm=0.5,
+#             cliprange=LinearSchedule(0.1, 0.0),
+#             discount_factor=0.99,
+#             normalize_advantage=True
+#         ),
+#         env_roller=StepEnvRoller(
+#             environment=vec_env,
+#             policy=policy,
+#             device=device,
+#         )
+#     )
+#
+#     # Model optimizer
+#     # optimizer = optim.RMSprop(reinforcer.model.parameters(), lr=7.0e-4, eps=1e-3)
+#     optimizer = optim.Adam(reinforcer.policy.parameters(), lr=2.5e-4, eps=1e-5)
+#
+#     # Overall information store for training information
+#     training_info = TrainingInfo(
+#         metrics=[
+#             EpisodeRewardMetric('episode_rewards'),  # Calculate average reward from episode
+#         ],
+#         callbacks=[
+#             FrameTracker(100_000)
+#         ]  # Print live metrics every epoch to standard output
+#     )
+#
+#     # A bit of training initialization bookkeeping...
+#     training_info.initialize()
+#     reinforcer.initialize_training(training_info)
+#     training_info.on_train_begin()
+#
+#     # Let's make 100 batches per epoch to average metrics nicely
+#     num_epochs = 1
+#
+#     # Normal handrolled training loop
+#     for i in range(1, num_epochs+1):
+#         epoch_info = EpochInfo(
+#             training_info=training_info,
+#             global_epoch_idx=i,
+#             batches_per_epoch=1,
+#             optimizer=optimizer
+#         )
+#
+#         reinforcer.train_epoch(epoch_info, interactive=False)
+#
+#     training_info.on_train_end()
 
 
 # def test_dqn_breakout():
