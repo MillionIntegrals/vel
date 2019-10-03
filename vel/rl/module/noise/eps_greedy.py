@@ -1,39 +1,31 @@
+import gym
 import typing
 
 import torch
-import torch.nn as nn
 
-from vel.api import Schedule
+from vel.api import Schedule, Network
 from vel.internal.generic_factory import GenericFactory
 from vel.function.constant import ConstantSchedule
 
 
-class EpsGreedy(nn.Module):
+class EpsGreedy(Network):
     """ Epsilon-greedy action selection """
-    def __init__(self, epsilon: typing.Union[Schedule, float], environment):
+    def __init__(self, action_space: gym.Space):
         super().__init__()
 
-        if isinstance(epsilon, Schedule):
-            self.epsilon_schedule = epsilon
+        self.action_space = action_space
+
+    def forward(self, actions, epsilon, deterministic=False):
+        if deterministic:
+            return actions
         else:
-            self.epsilon_schedule = ConstantSchedule(epsilon)
+            random_samples = torch.randint_like(actions, self.action_space.n)
+            selector = torch.rand_like(random_samples, dtype=torch.float32)
 
-        self.action_space = environment.action_space
+            # Actions with noise applied
+            noisy_actions = torch.where(selector > epsilon, actions, random_samples)
 
-    def forward(self, actions, batch_info=None):
-        if batch_info is None:
-            # Just take final value if there is no batch info
-            epsilon = self.epsilon_schedule.value(1.0)
-        else:
-            epsilon = self.epsilon_schedule.value(batch_info['progress'])
-
-        random_samples = torch.randint_like(actions, self.action_space.n)
-        selector = torch.rand_like(random_samples, dtype=torch.float32)
-
-        # Actions with noise applied
-        noisy_actions = torch.where(selector > epsilon, actions, random_samples)
-
-        return noisy_actions
+            return noisy_actions
 
     def reset_training_state(self, dones, batch_info):
         """ A hook for a model to react when during training episode is finished """

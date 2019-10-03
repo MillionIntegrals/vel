@@ -57,6 +57,3 @@ def create(input_length: int, mlp_layers: typing.List[int], rnn_units: int, rnn_
         )
 
     return ModelFactory.generic(instantiate)
-
-
-MlpRnnFactory = create

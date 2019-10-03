@@ -12,19 +12,23 @@ vec_env:
 
 
 model:
-  name: vel.rl.algo.dqn
+  name: vel.rl.policy.dqn
 
   target_update_frequency: 10_000  # After how many batches to update the target network
   discount_factor: 0.99
 
-  backbone:
-    name: vel.module.sequence
-    modules:
-      - name: vel.modules.input.image_to_tensor
-      - name: vel.rl.models.backbone.nature_cnn
-        input_width: 84
-        input_height: 84
-        input_channels: 4  # The same as frame_history
+  epsilon:
+    name: vel.function.linear_and_constant
+    end_of_interpolation: 0.1
+    initial_value: 1.0
+    final_value: 0.1
+
+  net:
+    name: vel.net.modular
+    layers:
+      - name: vel.net.layer.input.image_to_tensor
+        size: [84, 84, 4] # Number of channels is frame history
+      - name: vel.rl.layer.nature_cnn
 
 
 reinforcer:
@@ -42,15 +46,6 @@ reinforcer:
       # Because env has a framestack already built-in, save memory by encoding only last frames in the replay buffer
       frame_stack_compensation: true
       frame_history: 4  # How many stacked frames go into a single observation
-
-    action_noise:
-      name: vel.rl.module.noise.eps_greedy
-
-      epsilon:
-        name: vel.function.linear_and_constant
-        end_of_interpolation: 0.1
-        initial_value: 1.0
-        final_value: 0.1
 
   rollout_steps: 4 # How many environment steps (per env) to perform per batch of training
   training_steps: 32 # How many environment steps (per env) to perform per training round

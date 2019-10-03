@@ -1,19 +1,21 @@
-import torch
+import gym
 import numpy as np
+import torch
 import torch.nn as nn
 
-from vel.calc.process import OrnsteinUhlenbeckNoiseProcess
+from vel.api import Network
+from vel.util.process import OrnsteinUhlenbeckNoiseProcess
 from vel.internal.generic_factory import GenericFactory
 
 
-class OuNoise(nn.Module):
+class OuNoise(Network):
     """ Ornstein–Uhlenbeck noise process for action noise """
 
-    def __init__(self, std_dev, environment):
+    def __init__(self, std_dev: float, action_space: gym.Space):
         super().__init__()
 
         self.std_dev = std_dev
-        self.action_space = environment.action_space
+        self.action_space = action_space
         self.processes = []
 
         self.register_buffer('low_tensor', torch.from_numpy(self.action_space.low).unsqueeze(0))

@@ -12,20 +12,19 @@ import torch.nn.functional as F
 
 import vel.util.network as net_util
 
-from vel.api import LinearBackboneModel, ModelFactory
-from vel.rl.module.noisy_linear import NoisyLinear
+from vel.api import SizeHints, SizeHint
+from vel.net.layer_base import Layer, LayerFactory
 
 
-class DoubleNoisyNatureCnn(LinearBackboneModel):
+class DoubleNatureCnn(Layer):
     """
     Neural network as defined in the paper 'Human-level control through deep reinforcement learning'
-    but with two separate heads and "noisy" linear layer.
+    but with two separate heads.
     """
-    def __init__(self, input_width, input_height, input_channels, output_dim=512, initial_std_dev=0.4,
-                 factorized_noise=True):
-        super().__init__()
+    def __init__(self, name: str, input_width, input_height, input_channels, output_dim=512):
+        super().__init__(name)
 
-        self._output_dim = output_dim
+        self.output_dim = output_dim
 
         self.conv1 = nn.Conv2d(
             in_channels=input_channels,
@@ -60,26 +59,15 @@ class DoubleNoisyNatureCnn(LinearBackboneModel):
             (3, 0, 1)
         ])
 
-        self.linear_layer_one = NoisyLinear(
-            # 64 is the number of channels of the last conv layer
+        self.linear_layer_one = nn.Linear(
             self.final_width * self.final_height * 64,
-            self.output_dim,
-            initial_std_dev=initial_std_dev,
-            factorized_noise=factorized_noise
+            self.output_dim
         )
 
-        self.linear_layer_two = NoisyLinear(
-            # 64 is the number of channels of the last conv layer
+        self.linear_layer_two = nn.Linear(
             self.final_width * self.final_height * 64,
-            self.output_dim,
-            initial_std_dev=initial_std_dev,
-            factorized_noise=factorized_noise
+            self.output_dim
         )
-
-    @property
-    def output_dim(self) -> int:
-        """ Final dimension of model output """
-        return self._output_dim
 
     def reset_weights(self):
         for m in self.modules():
@@ -91,10 +79,14 @@ class DoubleNoisyNatureCnn(LinearBackboneModel):
                 # init.kaiming_normal_(m.weight, mode='fan_out', nonlinearity='relu')
                 init.orthogonal_(m.weight, gain=np.sqrt(2))
                 init.constant_(m.bias, 0.0)
-            elif isinstance(m, NoisyLinear):
-                m.reset_weights()
 
-    def forward(self, image):
+    def size_hints(self) -> SizeHints:
+        return SizeHints((
+            SizeHint(None, self.output_dim),
+            SizeHint(None, self.output_dim)
+        ))
+
+    def forward(self, image, state: dict = None, context: dict = None):
         result = image
         result = F.relu(self.conv1(result))
         result = F.relu(self.conv2(result))
@@ -107,15 +99,29 @@ class DoubleNoisyNatureCnn(LinearBackboneModel):
         return output_one, output_two
 
 
-def create(input_width, input_height, input_channels=1, output_dim=512, initial_std_dev=0.4, factorized_noise=True):
-    """ Vel factory function """
-    def instantiate(**_):
-        return DoubleNoisyNatureCnn(
-            input_width=input_width, input_height=input_height, input_channels=input_channels,
-            output_dim=output_dim, initial_std_dev=initial_std_dev, factorized_noise=factorized_noise
+class DoubleNatureCnnFactory(LayerFactory):
+    """ Nature Cnn Network Factory """
+
+    def __init__(self, output_dim: int = 512):
+        self.output_dim = output_dim
+
+    @property
+    def name_base(self) -> str:
+        """ Base of layer name """
+        return "nature_cnn"
+
+    def instantiate(self, name: str, direct_input: SizeHints, context: dict) -> Layer:
+        (b, c, w, h) = direct_input.assert_single(4)
+
+        return DoubleNatureCnn(
+            name=name,
+            input_width=w,
+            input_height=h,
+            input_channels=c,
+            output_dim=self.output_dim
         )
 
-    return ModelFactory.generic(instantiate)
 
-
-DoubleNoisyNatureCnnFactory = create
+def create(output_dim: int = 512):
+    """ Vel factory function """
+    return DoubleNatureCnnFactory(output_dim=output_dim)

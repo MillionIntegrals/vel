@@ -6,14 +6,14 @@ import gym.spaces as spaces
 
 class QDuelingHead(nn.Module):
     """ Network head calculating Q-function value for each (discrete) action using two separate inputs. """
-    def __init__(self, input_dim, action_space):
+    def __init__(self, val_input_dim, adv_input_dim, action_space):
         super().__init__()
 
         # Q-function requires a discrete action space
         assert isinstance(action_space, spaces.Discrete)
 
-        self.linear_layer_advantage = nn.Linear(input_dim, action_space.n)
-        self.linear_layer_value = nn.Linear(input_dim, 1)
+        self.linear_layer_value = nn.Linear(val_input_dim, 1)
+        self.linear_layer_advantage = nn.Linear(adv_input_dim, action_space.n)
         self.action_space = action_space
 
     def reset_weights(self):

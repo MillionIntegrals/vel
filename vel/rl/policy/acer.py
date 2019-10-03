@@ -2,57 +2,15 @@ import gym
 import torch
 import torch.nn.functional as F
 
-from vel.api import BackboneNetwork, ModelFactory, BatchInfo, Network
+from vel.api import BackboneNetwork, ModelFactory, BatchInfo
 from vel.metric.base import AveragingNamedMetric
 from vel.rl.api import Trajectories, RlPolicy, Rollout
-from vel.rl.module.head.stochastic_action_head import make_stockastic_action_head
-from vel.rl.module.head.q_head import QHead
+from vel.rl.module.q_stochastic_policy import QStochasticPolicy
 
 
 def select_indices(tensor, indices):
     """ Select indices from tensor """
     return tensor.gather(1, indices.unsqueeze(1)).squeeze()
-
-
-class QStochasticPolicy(Network):
-    """
-    A policy model with an action-value critic head (instead of more common state-value critic head).
-    Supports only discrete action spaces (ones that can be enumerated)
-    """
-
-    def __init__(self, net: BackboneNetwork, action_space: gym.Space):
-        super().__init__()
-
-        assert isinstance(action_space, gym.spaces.Discrete)
-
-        self.net = net
-
-        (action_size, value_size) = self.net.size_hints().assert_tuple(2)
-
-        self.action_head = make_stockastic_action_head(
-            input_dim=action_size.last(),
-            action_space=action_space
-        )
-
-        self.q_head = QHead(
-            input_dim=value_size.last(),
-            action_space=action_space
-        )
-
-    def reset_weights(self):
-        """ Initialize properly model weights """
-        self.net.reset_weights()
-        self.action_head.reset_weights()
-        self.q_head.reset_weights()
-
-    def forward(self, observations):
-        """ Calculate model outputs """
-        action_hidden, q_hidden = self.net(observations)
-        policy_params = self.action_head(action_hidden)
-
-        q = self.q_head(q_hidden)
-
-        return policy_params, q
 
 
 class ACER(RlPolicy):
@@ -117,13 +75,15 @@ class ACER(RlPolicy):
             # EWMA average model update
             average_param.data.mul_(self.average_model_alpha).add_(model_param.data * (1 - self.average_model_alpha))
 
-    def calculate_gradient(self, batch_info: BatchInfo, rollout: Rollout) -> dict:
-        """ Calculate loss of the supplied rollout """
-        assert isinstance(rollout, Trajectories), "ACER algorithm requires trajectory input"
-
+    def post_optimization_step(self, batch_info: BatchInfo, rollout: Rollout):
+        """ Optional operations to perform after optimization """
         # We calculate the trust-region update with respect to the average model
         if self.trust_region:
             self.update_target_policy()
+
+    def calculate_gradient(self, batch_info: BatchInfo, rollout: Rollout) -> dict:
+        """ Calculate loss of the supplied rollout """
+        assert isinstance(rollout, Trajectories), "ACER algorithm requires trajectory input"
 
         local_epsilon = 1e-6
 
@@ -192,6 +152,7 @@ class ACER(RlPolicy):
 
         if self.trust_region:
             with torch.no_grad():
+                self.target_policy.eval()
                 target_logprobs = self.target_policy(observations)[0]
 
             actor_loss = policy_loss - self.entropy_coefficient * policy_entropy

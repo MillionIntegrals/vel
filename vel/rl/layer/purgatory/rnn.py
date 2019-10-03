@@ -45,6 +45,3 @@ def create(input_length: int, hidden_units: int, rnn_type: str = 'lstm'):
             rnn_type=rnn_type
         )
     return ModelFactory.generic(instantiate)
-
-
-RNNFactory = create

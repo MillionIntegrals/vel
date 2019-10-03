@@ -7,8 +7,8 @@ import torch
 from vel.api import TrainingInfo, EpochInfo, BatchInfo, Model, ModelFactory
 from vel.openai.baselines.common.vec_env import VecEnv
 from vel.rl.api import (
-    Reinforcer, ReinforcerFactory, ReplayEnvRollerBase, AlgoBase, VecEnvFactory, ReplayEnvRollerFactoryBase
-)
+    Reinforcer, ReinforcerFactory, ReplayEnvRollerBase, VecEnvFactory, ReplayEnvRollerFactoryBase,
+    RlPolicy)
 from vel.rl.metrics import (
     FPSMetric, EpisodeLengthMetric, EpisodeRewardMetricQuantile, EpisodeRewardMetric, FramesMetric,
 )
@@ -32,13 +32,12 @@ class BufferedOffPolicyIterationReinforcer(Reinforcer):
     Afterwards, it samples experience batches from this buffer to train the policy.
     """
     def __init__(self, device: torch.device, settings: BufferedOffPolicyIterationReinforcerSettings,
-                 environment: VecEnv, model: Model, algo: AlgoBase, env_roller: ReplayEnvRollerBase):
+                 environment: VecEnv, policy: RlPolicy, env_roller: ReplayEnvRollerBase):
         self.device = device
         self.settings = settings
         self.environment = environment
 
-        self._trained_model = model.to(self.device)
-        self.algo = algo
+        self._policy = policy.to(self.device)
 
         self.env_roller = env_roller
 
@@ -53,11 +52,11 @@ class BufferedOffPolicyIterationReinforcer(Reinforcer):
             EpisodeLengthMetric("episode_length")
         ]
 
-        return my_metrics + self.algo.metrics() + self.env_roller.metrics()
+        return my_metrics + self.policy.metrics() + self.env_roller.metrics()
 
     @property
     def policy(self) -> Model:
-        return self._trained_model
+        return self._policy
 
     def initialize_training(self, training_info: TrainingInfo, model_state=None, hidden_state=None):
         """ Prepare models for training """
@@ -65,10 +64,6 @@ class BufferedOffPolicyIterationReinforcer(Reinforcer):
             self.policy.load_state_dict(model_state)
         else:
             self.policy.reset_weights()
-
-        self.algo.initialize(
-            training_info=training_info, model=self.policy, environment=self.environment, device=self.device
-        )
 
     def train_epoch(self, epoch_info: EpochInfo, interactive=True) -> None:
         """ Train model for a single epoch  """
@@ -96,14 +91,14 @@ class BufferedOffPolicyIterationReinforcer(Reinforcer):
         For this reinforforcer, that involves:
 
         1. Roll out environment and store out experience in the buffer
-        2. Sample the buffer and train the algo on sample batch
+        2. Sample the buffer and train the policy on sample batch
         """
         # For each reinforcer batch:
 
         # 1. Roll out environment and store out experience in the buffer
         self.roll_out_and_store(batch_info)
 
-        # 2. Sample the buffer and train the algo on sample batch
+        # 2. Sample the buffer and train the policy on sample batch
         self.train_on_replay_memory(batch_info)
 
     def roll_out_and_store(self, batch_info):
@@ -111,7 +106,7 @@ class BufferedOffPolicyIterationReinforcer(Reinforcer):
         self.policy.train()
 
         if self.env_roller.is_ready_for_sampling():
-            rollout = self.env_roller.rollout(batch_info, self.policy, self.settings.rollout_steps)
+            rollout = self.env_roller.rollout(batch_info, self.settings.rollout_steps)
             rollout = rollout.to_device(self.device)
 
             # Store some information about the rollout, no training phase
@@ -123,7 +118,7 @@ class BufferedOffPolicyIterationReinforcer(Reinforcer):
 
             with tqdm.tqdm(desc="Populating memory", total=self.env_roller.initial_memory_size_hint()) as pbar:
                 while not self.env_roller.is_ready_for_sampling():
-                    rollout = self.env_roller.rollout(batch_info, self.policy, self.settings.rollout_steps)
+                    rollout = self.env_roller.rollout(batch_info, self.settings.rollout_steps)
                     rollout = rollout.to_device(self.device)
 
                     new_frames = rollout.frames()
@@ -144,12 +139,10 @@ class BufferedOffPolicyIterationReinforcer(Reinforcer):
         batch_info['sub_batch_data'] = []
 
         for i in range(self.settings.training_rounds):
-            sampled_rollout = self.env_roller.sample(batch_info, self.policy, self.settings.training_steps)
+            sampled_rollout = self.env_roller.sample(batch_info, self.settings.training_steps)
 
-            batch_result = self.algo.optimize(
+            batch_result = self.policy.optimize(
                 batch_info=batch_info,
-                device=self.device,
-                model=self.policy,
                 rollout=sampled_rollout.to_device(self.device)
             )
 
@@ -164,32 +157,30 @@ class BufferedOffPolicyIterationReinforcerFactory(ReinforcerFactory):
     """ Factory class for the DQN reinforcer """
 
     def __init__(self, settings, env_factory: VecEnvFactory, model_factory: ModelFactory,
-                 algo: AlgoBase, env_roller_factory: ReplayEnvRollerFactoryBase, parallel_envs: int, seed: int):
+                 env_roller_factory: ReplayEnvRollerFactoryBase, parallel_envs: int, seed: int):
         self.settings = settings
 
         self.env_factory = env_factory
         self.model_factory = model_factory
-        self.algo = algo
         self.env_roller_factory = env_roller_factory
         self.parallel_envs = parallel_envs
         self.seed = seed
 
     def instantiate(self, device: torch.device) -> BufferedOffPolicyIterationReinforcer:
         env = self.env_factory.instantiate(parallel_envs=self.parallel_envs, seed=self.seed)
-        env_roller = self.env_roller_factory.instantiate(env, device)
-        model = self.model_factory.instantiate(action_space=env.action_space)
+        policy = self.model_factory.instantiate(action_space=env.action_space)
+        env_roller = self.env_roller_factory.instantiate(environment=env, policy=policy, device=device)
 
         return BufferedOffPolicyIterationReinforcer(
             device=device,
             settings=self.settings,
             environment=env,
-            model=model,
-            algo=self.algo,
+            policy=policy,
             env_roller=env_roller
         )
 
 
-def create(model_config, vec_env, model, algo, env_roller, parallel_envs: int,
+def create(model_config, vec_env, model, env_roller, parallel_envs: int,
            rollout_steps: int, training_steps: int, training_rounds: int = 1):
     """ Vel factory function """
     settings = BufferedOffPolicyIterationReinforcerSettings(
@@ -202,7 +193,6 @@ def create(model_config, vec_env, model, algo, env_roller, parallel_envs: int,
         settings=settings,
         env_factory=vec_env,
         model_factory=model,
-        algo=algo,
         env_roller_factory=env_roller,
         parallel_envs=parallel_envs,
         seed=model_config.seed

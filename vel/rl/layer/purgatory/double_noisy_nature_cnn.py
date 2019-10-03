@@ -13,14 +13,16 @@ import torch.nn.functional as F
 import vel.util.network as net_util
 
 from vel.api import LinearBackboneModel, ModelFactory
+from vel.rl.module.noisy_linear import NoisyLinear
 
 
-class DoubleNatureCnn(LinearBackboneModel):
+class DoubleNoisyNatureCnn(LinearBackboneModel):
     """
     Neural network as defined in the paper 'Human-level control through deep reinforcement learning'
-    but with two separate heads.
+    but with two separate heads and "noisy" linear layer.
     """
-    def __init__(self, input_width, input_height, input_channels, output_dim=512):
+    def __init__(self, input_width, input_height, input_channels, output_dim=512, initial_std_dev=0.4,
+                 factorized_noise=True):
         super().__init__()
 
         self._output_dim = output_dim
@@ -58,14 +60,20 @@ class DoubleNatureCnn(LinearBackboneModel):
             (3, 0, 1)
         ])
 
-        self.linear_layer_one = nn.Linear(
+        self.linear_layer_one = NoisyLinear(
+            # 64 is the number of channels of the last conv layer
             self.final_width * self.final_height * 64,
-            self.output_dim
+            self.output_dim,
+            initial_std_dev=initial_std_dev,
+            factorized_noise=factorized_noise
         )
 
-        self.linear_layer_two = nn.Linear(
+        self.linear_layer_two = NoisyLinear(
+            # 64 is the number of channels of the last conv layer
             self.final_width * self.final_height * 64,
-            self.output_dim
+            self.output_dim,
+            initial_std_dev=initial_std_dev,
+            factorized_noise=factorized_noise
         )
 
     @property
@@ -83,6 +91,8 @@ class DoubleNatureCnn(LinearBackboneModel):
                 # init.kaiming_normal_(m.weight, mode='fan_out', nonlinearity='relu')
                 init.orthogonal_(m.weight, gain=np.sqrt(2))
                 init.constant_(m.bias, 0.0)
+            elif isinstance(m, NoisyLinear):
+                m.reset_weights()
 
     def forward(self, image):
         result = image
@@ -97,12 +107,12 @@ class DoubleNatureCnn(LinearBackboneModel):
         return output_one, output_two
 
 
-def create(input_width, input_height, input_channels=1):
+def create(input_width, input_height, input_channels=1, output_dim=512, initial_std_dev=0.4, factorized_noise=True):
     """ Vel factory function """
     def instantiate(**_):
-        return DoubleNatureCnn(input_width=input_width, input_height=input_height, input_channels=input_channels)
+        return DoubleNoisyNatureCnn(
+            input_width=input_width, input_height=input_height, input_channels=input_channels,
+            output_dim=output_dim, initial_std_dev=initial_std_dev, factorized_noise=factorized_noise
+        )
 
     return ModelFactory.generic(instantiate)
-
-
-DoubleNatureCnnFactory = create

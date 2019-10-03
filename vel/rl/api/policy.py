@@ -62,10 +62,6 @@ class RlPolicy(OptimizedModel):
 
     ####################################################################################################################
     # Utility Methods - that provide default implementations but may be short circuited by some implementations
-    def value(self, observation, state=None):
-        """ Return value for given observation """
-        return self.act(observation, state=state)['values']
-
     def action(self, observation, state=None, deterministic=False):
         """ Return policy action for given observation """
         return self.act(observation, state=state, deterministic=deterministic)['actions']

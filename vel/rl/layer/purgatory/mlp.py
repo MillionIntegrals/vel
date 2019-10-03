@@ -68,6 +68,3 @@ def create(input_length, hidden_layers, activation='tanh', normalization=None):
         )
 
     return ModelFactory.generic(instantiate)
-
-
-MLPFactory = create

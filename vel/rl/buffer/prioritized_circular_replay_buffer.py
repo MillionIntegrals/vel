@@ -58,7 +58,7 @@ class PrioritizedCircularReplayBuffer(ReplayBuffer):
         weights = (capacity * probs) ** (-priority_weight)
         weights = weights / weights.max(axis=0, keepdims=True)
 
-        transition_arrays['weights'] = weights
+        transition_arrays['weights'] = weights.astype(np.float32)
         transition_tensors = {k: torch.from_numpy(v) for k, v in transition_arrays.items()}
 
         transitions = Trajectories(

@@ -33,12 +33,12 @@ class BufferedMixedPolicyIterationReinforcer(Reinforcer):
     """
 
     def __init__(self, device: torch.device, settings: BufferedMixedPolicyIterationReinforcerSettings, env: VecEnv,
-                 model: Model, env_roller: ReplayEnvRollerBase) -> None:
+                 policy: RlPolicy, env_roller: ReplayEnvRollerBase) -> None:
         self.device = device
         self.settings = settings
 
         self.environment = env
-        self._model: RlPolicy = model.to(self.device)
+        self._model: RlPolicy = policy.to(self.device)
 
         self.env_roller = env_roller
 
@@ -110,7 +110,7 @@ class BufferedMixedPolicyIterationReinforcer(Reinforcer):
 
         rollout = self.env_roller.rollout(batch_info, self.settings.number_of_steps).to_device(self.device)
 
-        # Preprocessing of the rollout for this algorithm
+        # Preprocessing of the rollout for this policy
         rollout = self.policy.process_rollout(rollout)
 
         batch_result = self.policy.optimize(
@@ -155,8 +155,7 @@ class BufferedMixedPolicyIterationReinforcerFactory(ReinforcerFactory):
         return BufferedMixedPolicyIterationReinforcer(device, self.settings, env, policy, env_roller)
 
 
-def create(model_config, model, vec_env, env_roller,
-           parallel_envs, number_of_steps,
+def create(model_config, model, vec_env, env_roller, parallel_envs, number_of_steps,
            experience_replay=1, stochastic_experience_replay=True):
     """ Vel factory function """
     settings = BufferedMixedPolicyIterationReinforcerSettings(
