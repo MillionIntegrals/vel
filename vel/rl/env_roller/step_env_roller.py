@@ -5,7 +5,8 @@ from vel.api import BatchInfo
 from vel.openai.baselines.common.vec_env import VecEnv
 from vel.rl.api import Trajectories, Rollout, EnvRollerBase, EnvRollerFactoryBase, RlPolicy
 from vel.rl.util.actor import PolicyActor
-from vel.util.tensor_util import TensorAccumulator
+from vel.util.tensor_util import TensorAccumulator, to_device
+from vel.util.datastructure import flatten_dict
 
 
 class StepEnvRoller(EnvRollerBase):
@@ -36,15 +37,17 @@ class StepEnvRoller(EnvRollerBase):
 
         for step_idx in range(number_of_steps):
             step = self.actor.act(self.last_observation.to(self.device), deterministic=False)
+            cpu_step = to_device(step, torch.device('cpu'))
 
             # Add step to the tensor accumulator
-            for name, tensor in step.items():
+            for name, tensor in cpu_step.items():
+
                 # Take not that here we convert all the tensors to CPU
-                accumulator.add(name, tensor.cpu())
+                accumulator.add(name, tensor)
 
             accumulator.add('observations', self.last_observation)
 
-            actions_numpy = step['actions'].detach().cpu().numpy()
+            actions_numpy = cpu_step['actions'].detach().numpy()
             new_obs, new_rewards, new_dones, new_infos = self.environment.step(actions_numpy)
 
             # Done is flagged true when the episode has ended AND the frame we see is already a first frame from the
@@ -63,11 +66,14 @@ class StepEnvRoller(EnvRollerBase):
 
         # Perform last agent step, without advancing the state
         final_obs = self.actor.act(self.last_observation.to(self.device), advance_state=False)
+        cpu_final_obs = to_device(final_obs, torch.device('cpu'))
 
         rollout_tensors = {}
 
-        for key, value in final_obs.items():
-            rollout_tensors[f"final_{key}"] = value.cpu()
+        flatten_dict(cpu_final_obs, rollout_tensors, root='final')
+
+        # for key, value in final_obs.items():
+        #     rollout_tensors[f"final_{key}"] = value.cpu()
 
         return Trajectories(
             num_steps=accumulated_tensors['observations'].size(0),

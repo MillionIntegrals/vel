@@ -11,7 +11,7 @@ vec_env:
 
 
 model:
-  name: vel.rl.algo.ppo_rnn
+  name: vel.rl.policy.ppo_rnn
 
   entropy_coefficient: 0.01
   value_coefficient: 0.5
@@ -24,20 +24,16 @@ model:
     initial_value: 0.1
     final_value: 0.0
 
-  policy:
-    name: vel.rl.policy.stochastic_rnn_policy
-
-    input_block:
-      name: vel.module.input.image_to_tensor
-
-    backbone:
-      name: vel.rl.backbone.nature_cnn_rnn
-      rnn_type: 'gru'
-      hidden_units: 512
-
-      input_width: 84
-      input_height: 84
-      input_channels: 1  # The same as frame_history
+  net:
+    name: vel.net.modular
+    layers:
+      - name: vel.net.layer.input.image_to_tensor
+      - name: vel.rl.layer.nature_cnn
+      - name: vel.rl.layer.rnn_cell
+        hidden_size: 512
+        rnn_type: 'gru'
+      - name: vel.net.layer.util.repeat
+        times: 2 # Need to repeat output twice, for action and value heads
 
 
 reinforcer:

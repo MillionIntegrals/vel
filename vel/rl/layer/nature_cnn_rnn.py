@@ -2,6 +2,9 @@ from vel.api import LinearBackboneModel, ModelFactory
 from vel.rl.backbone.nature_cnn import NatureCnn
 from vel.module.rnn_cell import RnnCell
 
+from vel.api import SizeHint, SizeHints
+from vel.net.layer_base import Layer, LayerFactory
+
 
 class NatureCnnRnnBackbone(LinearBackboneModel):
     """

@@ -54,7 +54,8 @@ class ModularNetwork(BackboneNetwork):
         raise NotImplementedError
 
     def forward(self, input_data, state=None):
-        return self.layers(input_data)
+        context = {}
+        return self.layers(input_data, context=context)
 
 
 class StatefulModularNetwork(BackboneNetwork):
@@ -80,14 +81,33 @@ class StatefulModularNetwork(BackboneNetwork):
 
     def zero_state(self, batch_size):
         """ Potential state for the model """
-        raise NotImplementedError
+        zero_state = {}
+
+        for l in self.layers:
+            layer_zero_state = l.zero_state(batch_size)
+            if layer_zero_state is not None:
+                zero_state.update(layer_zero_state)
+
+        return zero_state
 
     def reset_state(self, state, dones):
         """ Reset the state after the episode has been terminated """
         raise NotImplementedError
 
-    def forward(self, input_data, state=None):
-        raise NotImplementedError
+    def forward(self, input_data, state):
+        data = input_data
+
+        context = {}
+        output_state = {}
+
+        for layer in self.layers:
+            if layer.is_stateful:
+                data, new_state = layer(data, state=state, context=context)
+                output_state.update(new_state)
+            else:
+                data = layer(data, state=state, context=context)
+
+        return data, output_state
 
 
 class ModularNetworkFactory(ModelFactory):

@@ -108,7 +108,7 @@ class TrajectoryReplayEnvRoller(ReplayEnvRollerBase):
         final_values = self.actor.value(last_observations).cpu()
 
         # Add 'final_values' to the rollout
-        rollout.rollout_tensors['final_values'] = final_values
+        rollout.rollout_tensors['final.values'] = final_values
 
         return rollout
 

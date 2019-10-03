@@ -55,7 +55,7 @@ class A2C(RlPolicy):
             rewards_buffer=rollout.transition_tensors['rewards'],
             dones_buffer=rollout.transition_tensors['dones'],
             values_buffer=rollout.transition_tensors['values'],
-            final_values=rollout.rollout_tensors['final_values'],
+            final_values=rollout.rollout_tensors['final.values'],
             discount_factor=self.discount_factor,
             gae_lambda=self.gae_lambda,
             number_of_steps=rollout.num_steps

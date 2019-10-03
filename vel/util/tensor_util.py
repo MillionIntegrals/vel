@@ -41,7 +41,11 @@ class TensorAccumulator:
         self.accumulants = collections.defaultdict(list)
 
     def add(self, name, tensor):
-        self.accumulants[name].append(tensor)
+        if isinstance(tensor, dict):
+            for subname, subtensor in tensor.items():
+                self.add(f"{name}.{subname}", subtensor)
+        else:
+            self.accumulants[name].append(tensor)
 
     def result(self):
         """ Concatenate accumulated tensors """

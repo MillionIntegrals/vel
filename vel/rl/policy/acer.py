@@ -136,7 +136,7 @@ class ACER(RlPolicy):
                 action_q.reshape(trajectory_rewards.size()),
                 model_state_values.reshape(trajectory_rewards.size()),
                 actions_rho.reshape(trajectory_rewards.size()),
-                rollout.rollout_tensors['final_values']
+                rollout.rollout_tensors['final.values']
             ).flatten()
 
             advantages = q_retraced - model_state_values
