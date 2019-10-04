@@ -76,6 +76,7 @@ class ValidatedModel(OptimizedModel):
         raise NotImplementedError
 
 
+
 class GradientModel(ValidatedModel):
     """ Model that calculates a single gradient and optimizes it """
 

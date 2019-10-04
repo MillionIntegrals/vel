@@ -153,6 +153,7 @@ in the following repositories (in alphabetical order):
 - https://github.com/Kaixhin/Rainbow
 - https://github.com/Khrylx/PyTorch-RL
 - https://github.com/LiyuanLucasLiu/RAdam
+- https://github.com/eriklindernoren/PyTorch-GAN
 - https://github.com/fastai/fastai
 - https://github.com/lessw2020/Ranger-Deep-Learning-Optimizer
 - https://github.com/openai/baselines

@@ -73,7 +73,8 @@ class Trainer:
             batch_info.update(metrics)
             batch_info.on_batch_end('train')
 
-            iterator.set_postfix(loss=epoch_info.result_accumulator.intermediate_value('loss'))
+            if 'loss' in epoch_info.result_accumulator:
+                iterator.set_postfix(loss=epoch_info.result_accumulator.intermediate_value('loss'))
 
     def validation_epoch(self, epoch_info, loader: DatasetLoader, interactive=True):
         """ Run a single evaluation epoch """

@@ -99,6 +99,15 @@ class EpochResultAccumulator:
         self._reset_metrics()
         self.metrics_by_name = {m.name: m for m in self.metrics}
 
+    def __contains__(self, metric):
+        if ':' in metric:
+            # TODO(jerry) There's got to be a better way to do it
+            metric_name = metric.split(':')[-1]
+        else:
+            metric_name = metric
+
+        return metric_name in self.metrics_by_name
+
     @torch.no_grad()
     def calculate(self, batch_info):
         """ Calculate metric values """
