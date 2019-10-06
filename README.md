@@ -206,14 +206,17 @@ Very likely to be included:
 
 
 Possible to be included:
-- Popart reward normalization
-- Parameter Space Noise for Exploration
-- Hindsight experience replay
 - Generative adversarial networks
 
+For version 0.5 I'll again be looking to expand widely on the spectrum of available models in the framework,
+as well as I'll try to support **multi-gpu** training by data parallelism.
 
-Code quality:
-- Factor action noise back into the policy
+Work in progress roadmap:
+
+- Popart reward normalization
+- PixelCNN
+- MADE: Masked Autoencoder for Distribution Estimation
+- Variational AutoEncoder with Inverse Autoregressive Flow
 
 
 # Directories
