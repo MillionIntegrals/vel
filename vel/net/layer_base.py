@@ -1,7 +1,7 @@
-from vel.api import BackboneNetwork, SizeHints
+from vel.api import BackboneModule, SizeHints
 
 
-class Layer(BackboneNetwork):
+class Layer(BackboneModule):
     def __init__(self, name: str):
         super().__init__()
         self.name = name

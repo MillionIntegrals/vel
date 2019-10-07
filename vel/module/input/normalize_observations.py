@@ -1,9 +1,9 @@
 import torch
 
-from vel.api import Network
+from vel.api import VModule
 
 
-class NormalizeObservations(Network):
+class NormalizeObservations(VModule):
     """ Normalize a vector of observations """
 
     def __init__(self, input_shape, epsilon=1e-6):

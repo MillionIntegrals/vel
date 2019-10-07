@@ -6,7 +6,7 @@ import torch
 import torch.nn.functional as F
 import torch.nn.utils
 
-from vel.api import ModelFactory, BackboneNetwork, BatchInfo, Schedule, OptimizerFactory, VelOptimizer
+from vel.api import ModelFactory, BackboneModule, BatchInfo, Schedule, OptimizerFactory, VelOptimizer
 from vel.function.constant import ConstantSchedule
 from vel.metric import AveragingNamedMetric
 from vel.rl.api import RlPolicy, Rollout
@@ -18,7 +18,7 @@ from vel.util.situational import gym_space_to_size_hint
 class DQN(RlPolicy):
     """ Deep Q-Learning algorithm """
 
-    def __init__(self, net: BackboneNetwork, target_net: BackboneNetwork, action_space: gym.Space,
+    def __init__(self, net: BackboneModule, target_net: BackboneModule, action_space: gym.Space,
                  epsilon: typing.Union[float, Schedule], discount_factor: float, double_dqn: bool,
                  dueling_dqn: bool, target_update_frequency: int):
         super().__init__(discount_factor)

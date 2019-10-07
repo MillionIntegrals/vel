@@ -3,7 +3,7 @@ import gym
 import torch
 import torch.nn.functional as F
 
-from vel.api import BackboneNetwork, ModelFactory, BatchInfo, OptimizerFactory, VelOptimizer
+from vel.api import BackboneModule, ModelFactory, BatchInfo, OptimizerFactory, VelOptimizer
 from vel.metric.base import AveragingNamedMetric
 from vel.rl.api import Trajectories, RlPolicy, Rollout
 from vel.rl.module.q_stochastic_policy import QStochasticPolicy
@@ -18,7 +18,7 @@ def select_indices(tensor, indices):
 class ACER(RlPolicy):
     """ Actor-Critic with Experience Replay - policy gradient calculations """
 
-    def __init__(self, net: BackboneNetwork, target_net: typing.Optional[BackboneNetwork], action_space: gym.Space,
+    def __init__(self, net: BackboneModule, target_net: typing.Optional[BackboneModule], action_space: gym.Space,
                  discount_factor: float, trust_region: bool = True, entropy_coefficient: float = 0.01,
                  q_coefficient: float = 0.5, rho_cap: float = 10.0, retrace_rho_cap: float = 1.0,
                  average_model_alpha: float = 0.99, trust_region_delta: float = 1.0):

@@ -8,7 +8,7 @@ import torch.autograd as autograd
 import torch.nn.functional as F
 import torch.nn.utils
 
-from vel.api import BatchInfo, VelOptimizer, OptimizerFactory, ModelFactory, BackboneNetwork
+from vel.api import BatchInfo, VelOptimizer, OptimizerFactory, ModelFactory, BackboneModule
 from vel.util.stats import explained_variance
 from vel.metric.base import AveragingNamedMetric
 
@@ -59,10 +59,10 @@ def conjugate_gradient_method(matrix_vector_operator, loss_gradient, nsteps, rdo
 class TRPO(RlPolicy):
     """ Trust Region Policy Optimization - https://arxiv.org/abs/1502.05477 """
 
-    def __init__(self, policy_net: BackboneNetwork, value_net: BackboneNetwork, action_space: gym.Space,
+    def __init__(self, policy_net: BackboneModule, value_net: BackboneModule, action_space: gym.Space,
                  max_kl, cg_iters, line_search_iters, cg_damping, entropy_coefficient, vf_iters,
                  discount_factor, gae_lambda, improvement_acceptance_ratio,
-                 input_net: typing.Optional[BackboneNetwork] = None,
+                 input_net: typing.Optional[BackboneModule] = None,
                  ):
         super().__init__(discount_factor)
 

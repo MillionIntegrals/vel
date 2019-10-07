@@ -5,7 +5,7 @@ import torch.nn.functional as F
 from vel.metric.base import AveragingNamedMetric
 from vel.util.situational import gym_space_to_size_hint
 from vel.util.stats import explained_variance
-from vel.api import ModelFactory, BatchInfo, BackboneNetwork
+from vel.api import ModelFactory, BatchInfo, BackboneModule
 
 from vel.rl.api import RlPolicy, Rollout, Trajectories
 from vel.rl.discount_bootstrap import discount_bootstrap_gae
@@ -14,7 +14,7 @@ from vel.rl.module.stochastic_policy import StochasticPolicy
 
 class A2C(RlPolicy):
     """ Simplest policy gradient - calculate loss as an advantage of an actor versus value function """
-    def __init__(self, net: BackboneNetwork, action_space: gym.Space,
+    def __init__(self, net: BackboneModule, action_space: gym.Space,
                  entropy_coefficient, value_coefficient, discount_factor: float,
                  gae_lambda=1.0):
         super().__init__(discount_factor)

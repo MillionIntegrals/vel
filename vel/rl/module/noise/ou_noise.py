@@ -2,12 +2,12 @@ import gym
 import numpy as np
 import torch
 
-from vel.api import Network
+from vel.api import VModule
 from vel.util.process import OrnsteinUhlenbeckNoiseProcess
 from vel.internal.generic_factory import GenericFactory
 
 
-class OuNoise(Network):
+class OuNoise(VModule):
     """ Ornstein–Uhlenbeck noise process for action noise """
 
     def __init__(self, std_dev: float, action_space: gym.Space):

@@ -1,7 +1,7 @@
 from .callback import Callback
 from .info import BatchInfo, EpochInfo, TrainingInfo
 from .size_hint import SizeHint, SizeHints
-from .network import Network, BackboneNetwork
+from .vmodule import VModule, BackboneModule
 from .model import (
     Model, ValidatedModel, OptimizedModel, GradientModel, LossFunctionModel
 )

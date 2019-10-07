@@ -1,17 +1,17 @@
 import gym
 
-from vel.api import Network, BackboneNetwork
+from vel.api import VModule, BackboneModule
 
 from vel.rl.module.head.q_head import QHead
 from vel.rl.module.head.q_dueling_head import QDuelingHead
 
 
-class QPolicy(Network):
+class QPolicy(VModule):
     """
     Simple deterministic greedy action-value model.
     Supports only discrete action spaces (ones that can be enumerated)
     """
-    def __init__(self, net: BackboneNetwork, action_space: gym.Space, dueling_dqn=False):
+    def __init__(self, net: BackboneModule, action_space: gym.Space, dueling_dqn=False):
         super().__init__()
 
         self.dueling_dqn = dueling_dqn

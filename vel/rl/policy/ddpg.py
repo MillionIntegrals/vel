@@ -8,7 +8,7 @@ import torch.nn.functional as F
 
 import vel.util.module_util as mu
 
-from vel.api import BackboneNetwork, BatchInfo, ModelFactory, OptimizerFactory, VelOptimizer, SizeHints
+from vel.api import BackboneModule, BatchInfo, ModelFactory, OptimizerFactory, VelOptimizer, SizeHints
 from vel.metric.base import AveragingNamedMetric
 from vel.rl.api import RlPolicy, Rollout
 from vel.rl.module.actor_critic_policy import ActorCriticPolicy
@@ -19,7 +19,7 @@ from vel.util.situational import gym_space_to_size_hint
 class DDPG(RlPolicy):
     """ Deep Deterministic Policy Gradient (DDPG) - policy gradient calculations """
 
-    def __init__(self, net: BackboneNetwork, target_net: BackboneNetwork, action_space: gym.Space,
+    def __init__(self, net: BackboneModule, target_net: BackboneModule, action_space: gym.Space,
                  discount_factor: float, tau: float, noise_std_dev: float):
         super().__init__(discount_factor)
 

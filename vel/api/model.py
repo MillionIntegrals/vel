@@ -6,10 +6,10 @@ from vel.api.optimizer import VelOptimizer, OptimizerFactory
 from vel.metric.loss_metric import Loss
 
 
-from .network import Network
+from .vmodule import VModule
 
 
-class Model(Network):
+class Model(VModule):
     """ Class representing full neural network model, generally used to solve some problem """
 
     def metrics(self) -> list:

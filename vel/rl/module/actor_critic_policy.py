@@ -3,18 +3,18 @@ import itertools as it
 import gym
 import torch
 
-from vel.api import Network, BackboneNetwork
+from vel.api import VModule, BackboneModule
 
 
 from vel.rl.module.head.deterministic_action_head import DeterministicActionHead
 from vel.rl.module.head.deterministic_critic_head import DeterministicCriticHead
 
 
-class ActorCriticPolicy(Network):
+class ActorCriticPolicy(VModule):
     """ Deterministic Policy Gradient - model """
 
-    def __init__(self, input_net: BackboneNetwork, policy_net: BackboneNetwork,
-                 value_net: BackboneNetwork, action_space: gym.Space):
+    def __init__(self, input_net: BackboneModule, policy_net: BackboneModule,
+                 value_net: BackboneModule, action_space: gym.Space):
         super().__init__()
 
         self.input_net = input_net

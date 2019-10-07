@@ -2,13 +2,13 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
-from vel.api import LossFunctionModel, ModelFactory, Network, BackboneNetwork, SizeHints, SizeHint
+from vel.api import LossFunctionModel, ModelFactory, VModule, BackboneModule, SizeHints, SizeHint
 
 
 class LanguageModel(LossFunctionModel):
     """ Language model - autoregressive generative model for text """
 
-    def __init__(self, alphabet_size: int, net: BackboneNetwork):
+    def __init__(self, alphabet_size: int, net: BackboneModule):
         super().__init__()
 
         self.net = net
@@ -61,7 +61,7 @@ class LanguageModelFactory(ModelFactory):
         self.alphabet_size = alphabet_size
         self.net_factory = net_factory
 
-    def instantiate(self, **extra_args) -> Network:
+    def instantiate(self, **extra_args) -> VModule:
         size_hint = SizeHints(SizeHint(None, None))
         net = self.net_factory.instantiate(alphabet_size=self.alphabet_size, size_hint=size_hint)
 

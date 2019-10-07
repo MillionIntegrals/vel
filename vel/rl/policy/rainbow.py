@@ -2,7 +2,7 @@ import gym
 import torch
 import torch.nn.utils
 
-from vel.api import ModelFactory, BackboneNetwork, BatchInfo, OptimizerFactory, VelOptimizer
+from vel.api import ModelFactory, BackboneModule, BatchInfo, OptimizerFactory, VelOptimizer
 from vel.metric import AveragingNamedMetric
 from vel.rl.api import RlPolicy, Rollout
 from vel.rl.module.rainbow_policy import RainbowPolicy
@@ -12,7 +12,7 @@ from vel.util.situational import gym_space_to_size_hint
 class Rainbow(RlPolicy):
     """ Deep Q-Learning algorithm """
 
-    def __init__(self, net: BackboneNetwork, target_net: BackboneNetwork, action_space: gym.Space,
+    def __init__(self, net: BackboneModule, target_net: BackboneModule, action_space: gym.Space,
                  discount_factor: float, target_update_frequency: int, vmin: float, vmax: float, atoms: int = 1,
                  initial_std_dev: float = 0.4, factorized_noise: bool = True):
         super().__init__(discount_factor)

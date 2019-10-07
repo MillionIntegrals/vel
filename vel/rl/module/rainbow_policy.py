@@ -1,11 +1,11 @@
 import gym
 import torch
 
-from vel.api import Network, BackboneNetwork
+from vel.api import VModule, BackboneModule
 from vel.rl.module.head.q_distributional_noisy_dueling_head import QDistributionalNoisyDuelingHead
 
 
-class RainbowPolicy(Network):
+class RainbowPolicy(VModule):
     """
     A deterministic greedy action-value model.
     Includes following commonly known modifications:
@@ -14,7 +14,7 @@ class RainbowPolicy(Network):
     - Noisy Nets
     """
 
-    def __init__(self, net: BackboneNetwork, action_space: gym.Space, vmin: float, vmax: float,
+    def __init__(self, net: BackboneModule, action_space: gym.Space, vmin: float, vmax: float,
                  atoms: int = 1, initial_std_dev: float = 0.4, factorized_noise: bool = True):
         super().__init__()
 

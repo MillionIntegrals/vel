@@ -1,10 +1,10 @@
 from vel.module.layers import Flatten
 
 
-from vel.api import Network
+from vel.api import VModule
 
 
-class FlattenInput(Network):
+class FlattenInput(VModule):
     """ Sequence input """
     def __init__(self):
         super().__init__()

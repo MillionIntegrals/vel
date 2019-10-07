@@ -3,7 +3,7 @@ import torch
 
 import numbers
 
-from vel.api import BatchInfo, ModelFactory, BackboneNetwork
+from vel.api import BatchInfo, ModelFactory, BackboneModule
 from vel.util.situational import gym_space_to_size_hint
 from vel.util.stats import explained_variance
 from vel.function.constant import ConstantSchedule
@@ -16,7 +16,7 @@ from vel.rl.module.stochastic_policy import StochasticPolicy
 
 class PPO(RlPolicy):
     """ Proximal Policy Optimization - https://arxiv.org/abs/1707.06347 """
-    def __init__(self, net: BackboneNetwork, action_space: gym.Space,
+    def __init__(self, net: BackboneModule, action_space: gym.Space,
                  entropy_coefficient, value_coefficient, cliprange, discount_factor: float,
                  normalize_advantage: bool = True, gae_lambda: float = 1.0):
         super().__init__(discount_factor)

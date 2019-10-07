@@ -3,12 +3,12 @@ import typing
 
 import torch
 
-from vel.api import Schedule, Network
+from vel.api import Schedule, VModule
 from vel.internal.generic_factory import GenericFactory
 from vel.function.constant import ConstantSchedule
 
 
-class EpsGreedy(Network):
+class EpsGreedy(VModule):
     """ Epsilon-greedy action selection """
     def __init__(self, action_space: gym.Space):
         super().__init__()

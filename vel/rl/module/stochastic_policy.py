@@ -1,17 +1,17 @@
 import gym
 
-from vel.api import Network, BackboneNetwork
+from vel.api import VModule, BackboneModule
 
 from vel.rl.module.head.stochastic_action_head import make_stockastic_action_head
 from vel.rl.module.head.value_head import ValueHead
 
 
-class StochasticPolicy(Network):
+class StochasticPolicy(VModule):
     """
     Most generic policy gradient model class with a set of common actor-critic heads that share a single backbone
     """
 
-    def __init__(self, net: BackboneNetwork, action_space: gym.Space):
+    def __init__(self, net: BackboneModule, action_space: gym.Space):
         super().__init__()
 
         self.net = net

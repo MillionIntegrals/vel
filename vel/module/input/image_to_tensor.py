@@ -1,6 +1,6 @@
 import torch
 
-from vel.api import Network
+from vel.api import VModule
 
 
 def image_to_tensor(image: torch.Tensor) -> torch.Tensor:
@@ -15,7 +15,7 @@ def image_to_tensor(image: torch.Tensor) -> torch.Tensor:
     return result
 
 
-class ImageToTensor(Network):
+class ImageToTensor(VModule):
     """
     Convert simple image to tensor.
 

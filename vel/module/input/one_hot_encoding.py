@@ -1,8 +1,8 @@
-from vel.api import Network
+from vel.api import VModule
 from vel.module.layers import OneHotEncode
 
 
-class OneHotEncodingInput(Network):
+class OneHotEncodingInput(VModule):
     """ One-hot encoding input layer """
 
     def __init__(self, alphabet_size: int):

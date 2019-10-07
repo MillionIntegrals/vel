@@ -3,7 +3,7 @@ import numbers
 import gym
 import torch
 
-from vel.api import BatchInfo, ModelFactory, BackboneNetwork
+from vel.api import BatchInfo, ModelFactory, BackboneModule
 from vel.function.constant import ConstantSchedule
 from vel.metric.base import AveragingNamedMetric
 from vel.rl.api import RlPolicy, Rollout, Trajectories
@@ -15,7 +15,7 @@ from vel.util.stats import explained_variance
 
 class PPORnn(RlPolicy):
     """ Proximal Policy Optimization - https://arxiv.org/abs/1707.06347 """
-    def __init__(self, net: BackboneNetwork, action_space: gym.Space,
+    def __init__(self, net: BackboneModule, action_space: gym.Space,
                  entropy_coefficient, value_coefficient, cliprange, discount_factor: float,
                  normalize_advantage: bool = True, gae_lambda: float = 1.0):
         super().__init__(discount_factor)

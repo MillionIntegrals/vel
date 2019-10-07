@@ -1,17 +1,17 @@
 import gym
 
-from vel.api import BackboneNetwork, Network
+from vel.api import BackboneModule, VModule
 from vel.rl.module.head.stochastic_action_head import make_stockastic_action_head
 from vel.rl.module.head.q_head import QHead
 
 
-class QStochasticPolicy(Network):
+class QStochasticPolicy(VModule):
     """
     A policy model with an action-value critic head (instead of more common state-value critic head).
     Supports only discrete action spaces (ones that can be enumerated)
     """
 
-    def __init__(self, net: BackboneNetwork, action_space: gym.Space):
+    def __init__(self, net: BackboneModule, action_space: gym.Space):
         super().__init__()
 
         assert isinstance(action_space, gym.spaces.Discrete)

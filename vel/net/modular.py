@@ -2,7 +2,7 @@ import collections
 
 import torch.nn as nn
 
-from vel.api import BackboneNetwork, ModelFactory, SizeHints
+from vel.api import BackboneModule, ModelFactory, SizeHints
 from vel.util.tensor_util import to_device
 from .layer_base import LayerFactory
 
@@ -47,7 +47,7 @@ def instantiate_layers(layers: [LayerFactory], size_hint: SizeHints, extra_args:
     return ModularSequential(module_dict)
 
 
-class ModularNetwork(BackboneNetwork):
+class ModularNetwork(BackboneModule):
     """ Network that is built from layers """
 
     def __init__(self, layers: nn.Module):
@@ -82,7 +82,7 @@ class ModularNetwork(BackboneNetwork):
         return self.layers(input_data, context=context)
 
 
-class StatefulModularNetwork(BackboneNetwork):
+class StatefulModularNetwork(BackboneModule):
     """ Modular network handling the state between the episodes """
 
     def __init__(self, layers: nn.Module):
@@ -142,7 +142,7 @@ class ModularNetworkFactory(ModelFactory):
     def __init__(self, layers: [LayerFactory]):
         self.layers = layers
 
-    def instantiate(self, size_hint=None, **extra_args) -> BackboneNetwork:
+    def instantiate(self, size_hint=None, **extra_args) -> BackboneModule:
         """ Create either stateful or not modular network instance """
         if size_hint is None:
             size_hint = SizeHints()

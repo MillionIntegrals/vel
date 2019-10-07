@@ -3,7 +3,7 @@ import torch.nn as nn
 from .size_hint import SizeHints
 
 
-class Network(nn.Module):
+class VModule(nn.Module):
     """ Vel wrapper over nn.Module offering a few internally useful utilities """
 
     def reset_weights(self):
@@ -20,7 +20,7 @@ class Network(nn.Module):
         return None
 
 
-class BackboneNetwork(Network):
+class BackboneModule(VModule):
     """ Network, whose output feeds into other models. Needs to provide size hints. """
 
     def size_hints(self) -> SizeHints:
