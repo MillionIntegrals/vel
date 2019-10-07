@@ -6,7 +6,7 @@ import numpy as np
 import torch
 import torch.nn as nn
 
-from vel.api import OptimizedModel, ModelFactory, VelOptimizer, OptimizerFactory
+from vel.api import OptimizedModel, ModuleFactory, VelOptimizer, OptimizerFactory
 from vel.api.optimizer import VelMultiOptimizer
 from vel.metric import AveragingNamedMetric
 
@@ -159,4 +159,4 @@ def create(img_rows, img_cols, img_channels, latent_dim):
             img_rows, img_cols, img_channels, latent_dim=latent_dim
         )
 
-    return ModelFactory.generic(instantiate)
+    return ModuleFactory.generic(instantiate)

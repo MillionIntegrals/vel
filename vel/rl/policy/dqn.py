@@ -6,7 +6,7 @@ import torch
 import torch.nn.functional as F
 import torch.nn.utils
 
-from vel.api import ModelFactory, BackboneModule, BatchInfo, Schedule, OptimizerFactory, VelOptimizer
+from vel.api import ModuleFactory, BackboneModule, BatchInfo, Schedule, OptimizerFactory, VelOptimizer
 from vel.function.constant import ConstantSchedule
 from vel.metric import AveragingNamedMetric
 from vel.rl.api import RlPolicy, Rollout
@@ -133,8 +133,8 @@ class DQN(RlPolicy):
         ]
 
 
-class DQNFactory(ModelFactory):
-    def __init__(self, net_factory: ModelFactory, epsilon: typing.Union[float, Schedule], discount_factor: float,
+class DQNFactory(ModuleFactory):
+    def __init__(self, net_factory: ModuleFactory, epsilon: typing.Union[float, Schedule], discount_factor: float,
                  target_update_frequency: int, double_dqn: bool = False, dueling_dqn: bool = False):
         self.net_factory = net_factory
         self.epsilon = epsilon
@@ -165,7 +165,7 @@ class DQNFactory(ModelFactory):
         )
 
 
-def create(net: ModelFactory, epsilon: typing.Union[float, Schedule], discount_factor: float,
+def create(net: ModuleFactory, epsilon: typing.Union[float, Schedule], discount_factor: float,
            target_update_frequency: int, double_dqn: bool = False, dueling_dqn: bool = False):
     """ Vel factory function """
 

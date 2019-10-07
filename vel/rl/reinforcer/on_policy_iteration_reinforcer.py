@@ -4,7 +4,7 @@ import sys
 import torch
 import tqdm
 
-from vel.api import ModelFactory, TrainingInfo, EpochInfo, BatchInfo
+from vel.api import ModuleFactory, TrainingInfo, EpochInfo, BatchInfo
 from vel.rl.api import (
     Reinforcer, ReinforcerFactory, VecEnvFactory, EnvRollerFactoryBase, EnvRollerBase,
     RlPolicy
@@ -146,7 +146,7 @@ class OnPolicyIterationReinforcer(Reinforcer):
 
 class OnPolicyIterationReinforcerFactory(ReinforcerFactory):
     """ Vel factory class for the PolicyGradientReinforcer """
-    def __init__(self, settings, parallel_envs: int, env_factory: VecEnvFactory, model_factory: ModelFactory,
+    def __init__(self, settings, parallel_envs: int, env_factory: VecEnvFactory, model_factory: ModuleFactory,
                  env_roller_factory: EnvRollerFactoryBase, seed: int):
         self.settings = settings
         self.parallel_envs = parallel_envs

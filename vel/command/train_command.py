@@ -12,7 +12,7 @@ from vel.callback.sample_tracker import SampleTracker
 class SimpleTrainCommand:
     """ Very simple training command - just run the supplied generators """
 
-    def __init__(self, epochs: int, model_config: api.ModelConfig, model_factory: api.ModelFactory,
+    def __init__(self, epochs: int, model_config: api.ModelConfig, model_factory: api.ModuleFactory,
                  optimizer_factory: api.OptimizerFactory, scheduler_factory: typing.Optional[api.SchedulerFactory],
                  loader: data.DatasetLoader, storage: api.Storage,
                  callbacks: typing.Optional[typing.List[api.Callback]]):

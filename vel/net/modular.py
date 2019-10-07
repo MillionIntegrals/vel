@@ -2,7 +2,7 @@ import collections
 
 import torch.nn as nn
 
-from vel.api import BackboneModule, ModelFactory, SizeHints
+from vel.api import BackboneModule, ModuleFactory, SizeHints
 from vel.util.tensor_util import to_device
 from .layer_base import LayerFactory
 
@@ -137,7 +137,7 @@ class StatefulModularNetwork(BackboneModule):
         return data, output_state
 
 
-class ModularNetworkFactory(ModelFactory):
+class ModularNetworkFactory(ModuleFactory):
     """ Factory class for the modular network """
     def __init__(self, layers: [LayerFactory]):
         self.layers = layers

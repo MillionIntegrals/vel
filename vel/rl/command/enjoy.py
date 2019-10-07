@@ -3,14 +3,14 @@ import torch
 import typing
 import time
 
-from vel.api import ModelConfig, TrainingInfo, Storage, ModelFactory
+from vel.api import ModelConfig, TrainingInfo, Storage, ModuleFactory
 from vel.rl.api import VecEnvFactory
 
 
 class EnjoyCommand:
     """ Play render("human") in a loop for a human to enjoy """
 
-    def __init__(self, model_config: ModelConfig, model_factory: ModelFactory, vec_env_factory: VecEnvFactory,
+    def __init__(self, model_config: ModelConfig, model_factory: ModuleFactory, vec_env_factory: VecEnvFactory,
                  storage: Storage, fps: float, sample_args: typing.Optional[dict]):
         self.model_config = model_config
         self.model_factory = model_factory

@@ -8,7 +8,7 @@ import torch.nn.functional as F
 
 import vel.util.module_util as mu
 
-from vel.api import BackboneModule, BatchInfo, ModelFactory, OptimizerFactory, VelOptimizer, SizeHints
+from vel.api import BackboneModule, BatchInfo, ModuleFactory, OptimizerFactory, VelOptimizer, SizeHints
 from vel.metric.base import AveragingNamedMetric
 from vel.rl.api import RlPolicy, Rollout
 from vel.rl.module.actor_critic_policy import ActorCriticPolicy
@@ -127,12 +127,12 @@ class DDPG(RlPolicy):
         ]
 
 
-class DDPGFactory(ModelFactory):
+class DDPGFactory(ModuleFactory):
     """ Factory for the DDPG policy """
 
-    def __init__(self, actor_net: ModelFactory, critic_net: ModelFactory,
+    def __init__(self, actor_net: ModuleFactory, critic_net: ModuleFactory,
                  discount_factor: float, tau: float, noise_std_dev: float,
-                 input_net: typing.Optional[ModelFactory] = None):
+                 input_net: typing.Optional[ModuleFactory] = None):
         self.actor_net_factory = actor_net
         self.critic_net_factory = critic_net
         self.input_net_factory = input_net
@@ -182,9 +182,9 @@ class DDPGFactory(ModelFactory):
         )
 
 
-def create(actor_net: ModelFactory, critic_net: ModelFactory,
+def create(actor_net: ModuleFactory, critic_net: ModuleFactory,
            discount_factor: float, tau: float, noise_std_dev: float,
-           input_net: typing.Optional[ModelFactory] = None
+           input_net: typing.Optional[ModuleFactory] = None
            ):
     """ Vel factory function """
     return DDPGFactory(

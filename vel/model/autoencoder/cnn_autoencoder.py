@@ -6,7 +6,7 @@ import torch.nn.functional as F
 
 import vel.util.network as net_util
 
-from vel.api import LossFunctionModel, ModelFactory
+from vel.api import LossFunctionModel, ModuleFactory
 from vel.metric.loss_metric import Loss
 from vel.module.layers import Flatten, Reshape
 
@@ -104,4 +104,4 @@ def create(img_rows, img_cols, img_channels, channels=None, representation_lengt
             img_rows, img_cols, img_channels, channels=channels, representation_length=representation_length
         )
 
-    return ModelFactory.generic(instantiate)
+    return ModuleFactory.generic(instantiate)

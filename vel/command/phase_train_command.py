@@ -14,7 +14,7 @@ from vel.callback.sample_tracker import SampleTracker
 class PhaseTrainCommand:
     """ Training  command - learn according to a set of phases """
 
-    def __init__(self, model_config: api.ModelConfig, model_factory: api.ModelFactory, loader: data.DatasetLoader,
+    def __init__(self, model_config: api.ModelConfig, model_factory: api.ModuleFactory, loader: data.DatasetLoader,
                  storage: api.Storage, phases: typing.List[train.TrainPhase],
                  callbacks=None, restart=True):
         self.model_config = model_config

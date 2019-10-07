@@ -3,7 +3,7 @@ import numbers
 import gym
 import torch
 
-from vel.api import BatchInfo, ModelFactory, BackboneModule
+from vel.api import BatchInfo, ModuleFactory, BackboneModule
 from vel.function.constant import ConstantSchedule
 from vel.metric.base import AveragingNamedMetric
 from vel.rl.api import RlPolicy, Rollout, Trajectories
@@ -190,7 +190,7 @@ class PPORnn(RlPolicy):
         ]
 
 
-class PPORnnFactory(ModelFactory):
+class PPORnnFactory(ModuleFactory):
     """ Factory class for policy gradient models """
     def __init__(self, net_factory,
                  entropy_coefficient, value_coefficient, cliprange, discount_factor: float,
@@ -224,7 +224,7 @@ class PPORnnFactory(ModelFactory):
         )
 
 
-def create(net: ModelFactory,
+def create(net: ModuleFactory,
            entropy_coefficient, value_coefficient, cliprange, discount_factor: float,
            normalize_advantage: bool = True, gae_lambda: float = 1.0):
     """ Vel factory function """

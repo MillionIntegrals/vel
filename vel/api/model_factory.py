@@ -1,15 +1,15 @@
-from .vmodule import VModule
 from vel.internal.generic_factory import GenericFactory
+from .vmodule import VModule
 
 
-class ModelFactory:
-    """ Factory class for models """
+class ModuleFactory:
+    """ Factory for modules """
 
     def instantiate(self, **extra_args) -> VModule:
         raise NotImplementedError
 
     @staticmethod
-    def generic(closure, **kwargs) -> 'ModelFactory':
+    def generic(closure, **kwargs) -> 'ModuleFactory':
         """ Return a generic model factory """
         # noinspection PyTypeChecker
         return GenericFactory(closure, kwargs)

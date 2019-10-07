@@ -5,7 +5,7 @@ import torch.nn.functional as F
 import vel.module.layers as layers
 import vel.util.module_util as mu
 
-from vel.api import LossFunctionModel, ModelFactory, OptimizerFactory, VelOptimizer
+from vel.api import LossFunctionModel, ModuleFactory, OptimizerFactory, VelOptimizer
 
 
 # Because of concat pooling it's 2x 512
@@ -108,4 +108,4 @@ def create(fc_layers=None, dropout=None, pretrained=True):
     def instantiate(**_):
         return Resnet34(fc_layers, dropout, pretrained)
 
-    return ModelFactory.generic(instantiate)
+    return ModuleFactory.generic(instantiate)

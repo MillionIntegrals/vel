@@ -293,7 +293,7 @@ class VQVAE(GradientModel):
 def create(img_rows, img_cols, img_channels, channels=None, k: int = 512, d: int = 256,
            beta: float = 1.0):
     """ Vel factory function """
-    from vel.api import ModelFactory
+    from vel.api import ModuleFactory
 
     if channels is None:
         channels = [16, 32, 32]
@@ -303,4 +303,4 @@ def create(img_rows, img_cols, img_channels, channels=None, k: int = 512, d: int
             img_rows, img_cols, img_channels, channels=channels, k=k, d=d, beta=beta
         )
 
-    return ModelFactory.generic(instantiate)
+    return ModuleFactory.generic(instantiate)

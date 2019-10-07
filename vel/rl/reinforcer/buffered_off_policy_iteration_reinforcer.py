@@ -3,7 +3,7 @@ import attr
 import torch
 import tqdm
 
-from vel.api import TrainingInfo, EpochInfo, BatchInfo, Model, ModelFactory
+from vel.api import TrainingInfo, EpochInfo, BatchInfo, Model, ModuleFactory
 from vel.openai.baselines.common.vec_env import VecEnv
 from vel.rl.api import (
     Reinforcer, ReinforcerFactory, ReplayEnvRollerBase, VecEnvFactory, ReplayEnvRollerFactoryBase,
@@ -153,7 +153,7 @@ class BufferedOffPolicyIterationReinforcer(Reinforcer):
 class BufferedOffPolicyIterationReinforcerFactory(ReinforcerFactory):
     """ Factory class for the DQN reinforcer """
 
-    def __init__(self, settings, env_factory: VecEnvFactory, model_factory: ModelFactory,
+    def __init__(self, settings, env_factory: VecEnvFactory, model_factory: ModuleFactory,
                  env_roller_factory: ReplayEnvRollerFactoryBase, parallel_envs: int, seed: int):
         self.settings = settings
 

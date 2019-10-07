@@ -6,7 +6,7 @@ from .model import (
     Model, ValidatedModel, OptimizedModel, GradientModel, LossFunctionModel
 )
 from .model_config import ModelConfig
-from .model_factory import ModelFactory
+from .model_factory import ModuleFactory
 from .optimizer import OptimizerFactory, VelOptimizer, VelOptimizerProxy
 from .schedule import Schedule
 from .scheduler import SchedulerFactory

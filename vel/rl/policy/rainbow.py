@@ -2,7 +2,7 @@ import gym
 import torch
 import torch.nn.utils
 
-from vel.api import ModelFactory, BackboneModule, BatchInfo, OptimizerFactory, VelOptimizer
+from vel.api import ModuleFactory, BackboneModule, BatchInfo, OptimizerFactory, VelOptimizer
 from vel.metric import AveragingNamedMetric
 from vel.rl.api import RlPolicy, Rollout
 from vel.rl.module.rainbow_policy import RainbowPolicy
@@ -203,8 +203,8 @@ class Rainbow(RlPolicy):
         ]
 
 
-class RainbowFactory(ModelFactory):
-    def __init__(self, net_factory: ModelFactory, discount_factor: float, target_update_frequency: int,
+class RainbowFactory(ModuleFactory):
+    def __init__(self, net_factory: ModuleFactory, discount_factor: float, target_update_frequency: int,
                  vmin: float, vmax: float, atoms: int = 1, initial_std_dev: float = 0.4, factorized_noise: bool = True):
         self.net_factory = net_factory
         self.discount_factor = discount_factor
@@ -240,7 +240,7 @@ class RainbowFactory(ModelFactory):
         )
 
 
-def create(net: ModelFactory, discount_factor: float, target_update_frequency: int,
+def create(net: ModuleFactory, discount_factor: float, target_update_frequency: int,
            vmin: float, vmax: float, atoms: int = 1, initial_std_dev: float = 0.4, factorized_noise: bool = True):
     """ Vel factory function """
     return RainbowFactory(

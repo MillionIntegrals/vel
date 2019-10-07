@@ -3,7 +3,7 @@ import gym
 import torch
 import torch.nn.functional as F
 
-from vel.api import BackboneModule, ModelFactory, BatchInfo, OptimizerFactory, VelOptimizer
+from vel.api import BackboneModule, ModuleFactory, BatchInfo, OptimizerFactory, VelOptimizer
 from vel.metric.base import AveragingNamedMetric
 from vel.rl.api import Trajectories, RlPolicy, Rollout
 from vel.rl.module.q_stochastic_policy import QStochasticPolicy
@@ -247,7 +247,7 @@ class ACER(RlPolicy):
         ]
 
 
-class ACERFactory(ModelFactory):
+class ACERFactory(ModuleFactory):
     """ Factory class for ACER policies """
     def __init__(self, net_factory, trust_region: bool, entropy_coefficient: float, q_coefficient: float,
                  discount_factor: float, rho_cap: float = 10.0, retrace_rho_cap: float = 1.0,

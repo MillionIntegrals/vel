@@ -7,13 +7,13 @@ import torch
 import tqdm
 import typing
 
-from vel.api import ModelConfig, TrainingInfo, Storage, ModelFactory
+from vel.api import ModelConfig, TrainingInfo, Storage, ModuleFactory
 from vel.rl.api import VecEnvFactory
 
 
 class RecordMovieCommand:
     """ Record environment playthrough as a game  """
-    def __init__(self, model_config: ModelConfig, env_factory: VecEnvFactory, model_factory: ModelFactory,
+    def __init__(self, model_config: ModelConfig, env_factory: VecEnvFactory, model_factory: ModuleFactory,
                  storage: Storage, videoname: str, takes: int, fps: int, sample_args: typing.Optional[dict] = None):
         self.model_config = model_config
         self.model_factory = model_factory

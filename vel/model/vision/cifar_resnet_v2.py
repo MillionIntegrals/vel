@@ -6,7 +6,7 @@ https://github.com/pytorch/vision/blob/master/torchvision/models/resnet.py
 import torch.nn as nn
 import torch.nn.functional as F
 
-from vel.api import LossFunctionModel, ModelFactory
+from vel.api import LossFunctionModel, ModuleFactory
 from vel.module.resnet_v2 import Bottleneck, BasicBlock
 
 
@@ -91,4 +91,4 @@ def create(blocks, mode='basic', inplanes=16, divisor=4, num_classes=1000):
     def instantiate(**_):
         return ResNetV2(block_dict[mode], blocks, inplanes=inplanes, divisor=divisor, num_classes=num_classes)
 
-    return ModelFactory.generic(instantiate)
+    return ModuleFactory.generic(instantiate)

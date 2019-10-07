@@ -4,7 +4,7 @@ import torch
 import torch.nn.functional as F
 import torch.nn as nn
 
-from vel.api import LossFunctionModel, ModelFactory
+from vel.api import LossFunctionModel, ModuleFactory
 from vel.module.rnn_layer import RnnLayer
 
 
@@ -110,7 +110,7 @@ class MultilayerRnnSequenceModel(LossFunctionModel):
         return F.nll_loss(y_pred, y_true)
 
 
-def create(input_block: ModelFactory, rnn_type: str, hidden_layers: typing.List[int],
+def create(input_block: ModuleFactory, rnn_type: str, hidden_layers: typing.List[int],
            output_dim: int, dropout=0.0):
     """ Vel factory function """
     def instantiate(**_):
@@ -119,4 +119,4 @@ def create(input_block: ModelFactory, rnn_type: str, hidden_layers: typing.List[
             dropout=dropout
         )
 
-    return ModelFactory.generic(instantiate)
+    return ModuleFactory.generic(instantiate)

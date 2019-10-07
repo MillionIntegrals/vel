@@ -2,7 +2,7 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
-from vel.api import LossFunctionModel, ModelFactory, VModule, BackboneModule, SizeHints, SizeHint
+from vel.api import LossFunctionModel, ModuleFactory, VModule, BackboneModule, SizeHints, SizeHint
 
 
 class LanguageModel(LossFunctionModel):
@@ -56,8 +56,8 @@ class LanguageModel(LossFunctionModel):
         return F.nll_loss(y_pred, y_true)
 
 
-class LanguageModelFactory(ModelFactory):
-    def __init__(self, alphabet_size: int, net_factory: ModelFactory):
+class LanguageModelFactory(ModuleFactory):
+    def __init__(self, alphabet_size: int, net_factory: ModuleFactory):
         self.alphabet_size = alphabet_size
         self.net_factory = net_factory
 
@@ -71,7 +71,7 @@ class LanguageModelFactory(ModelFactory):
         )
 
 
-def create(loader, net: ModelFactory):
+def create(loader, net: ModuleFactory):
     """ Vel factory function """
     return LanguageModelFactory(
         alphabet_size=loader.alphabet_size,

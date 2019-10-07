@@ -8,7 +8,7 @@ import torch.distributions as dist
 
 import vel.util.network as net_util
 
-from vel.api import ModelFactory
+from vel.api import ModuleFactory
 from vel.module.layers import Flatten, Reshape
 from vel.model.latent.iwae import IWAE
 
@@ -155,4 +155,4 @@ def create(img_rows, img_cols, img_channels, k=5, channels=None, representation_
             img_rows, img_cols, img_channels, k=k, channels=channels, representation_length=representation_length
         )
 
-    return ModelFactory.generic(instantiate)
+    return ModuleFactory.generic(instantiate)

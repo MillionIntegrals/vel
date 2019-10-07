@@ -3,7 +3,7 @@ import torch
 
 import numbers
 
-from vel.api import BatchInfo, ModelFactory, BackboneModule
+from vel.api import BatchInfo, ModuleFactory, BackboneModule
 from vel.util.situational import gym_space_to_size_hint
 from vel.util.stats import explained_variance
 from vel.function.constant import ConstantSchedule
@@ -152,7 +152,7 @@ class PPO(RlPolicy):
         ]
 
 
-class PPOFactory(ModelFactory):
+class PPOFactory(ModuleFactory):
     """ Factory class for policy gradient models """
     def __init__(self, net_factory, entropy_coefficient, value_coefficient, cliprange, discount_factor: float,
                  normalize_advantage: bool = True, gae_lambda: float = 1.0):
@@ -185,7 +185,7 @@ class PPOFactory(ModelFactory):
         )
 
 
-def create(net: ModelFactory, entropy_coefficient, value_coefficient, cliprange, discount_factor: float,
+def create(net: ModuleFactory, entropy_coefficient, value_coefficient, cliprange, discount_factor: float,
            normalize_advantage: bool = True, gae_lambda: float = 1.0):
     """ Vel factory function """
     return PPOFactory(

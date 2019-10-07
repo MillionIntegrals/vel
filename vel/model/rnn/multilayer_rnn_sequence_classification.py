@@ -6,7 +6,7 @@ import torch.nn as nn
 
 import vel.util.module_util as mu
 
-from vel.api import LossFunctionModel, ModelFactory, LinearBackboneModel, OptimizerFactory, VelOptimizer
+from vel.api import LossFunctionModel, ModuleFactory, LinearBackboneModel, OptimizerFactory, VelOptimizer
 from vel.metric.accuracy import Accuracy
 from vel.metric.loss_metric import Loss
 from vel.module.rnn_layer import RnnLayer
@@ -150,7 +150,7 @@ class MultilayerRnnSequenceClassification(LossFunctionModel):
         return [Loss(), Accuracy()]
 
 
-def create(input_block: ModelFactory, rnn_type: str, output_dim: int,
+def create(input_block: ModuleFactory, rnn_type: str, output_dim: int,
            rnn_layers: typing.List[int], rnn_dropout: float = 0.0, bidirectional: bool = False,
            linear_layers: typing.List[int] = None, linear_dropout: float = 0.0):
     """ Vel factory function """
@@ -164,4 +164,4 @@ def create(input_block: ModelFactory, rnn_type: str, output_dim: int,
             linear_layers=linear_layers, linear_dropout=linear_dropout
         )
 
-    return ModelFactory.generic(instantiate)
+    return ModuleFactory.generic(instantiate)

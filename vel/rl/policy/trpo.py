@@ -8,7 +8,7 @@ import torch.autograd as autograd
 import torch.nn.functional as F
 import torch.nn.utils
 
-from vel.api import BatchInfo, VelOptimizer, OptimizerFactory, ModelFactory, BackboneModule
+from vel.api import BatchInfo, VelOptimizer, OptimizerFactory, ModuleFactory, BackboneModule
 from vel.util.stats import explained_variance
 from vel.metric.base import AveragingNamedMetric
 
@@ -351,11 +351,11 @@ class TRPO(RlPolicy):
         ]
 
 
-class TRPOFactory(ModelFactory):
+class TRPOFactory(ModuleFactory):
     """ Factory class for policy gradient models """
-    def __init__(self, policy_net: ModelFactory, value_net: ModelFactory,
+    def __init__(self, policy_net: ModuleFactory, value_net: ModuleFactory,
                  max_kl, cg_iters, line_search_iters, cg_damping, entropy_coefficient, vf_iters,
-                 discount_factor, gae_lambda, improvement_acceptance_ratio, input_net: typing.Optional[ModelFactory]):
+                 discount_factor, gae_lambda, improvement_acceptance_ratio, input_net: typing.Optional[ModuleFactory]):
         self.policy_net = policy_net
         self.value_net = value_net
         self.input_net = input_net
@@ -403,9 +403,9 @@ class TRPOFactory(ModelFactory):
         )
 
 
-def create(policy_net: ModelFactory, value_net: ModelFactory,
+def create(policy_net: ModuleFactory, value_net: ModuleFactory,
            max_kl, cg_iters, line_search_iters, cg_damping, entropy_coefficient, vf_iters,
-           discount_factor, gae_lambda, improvement_acceptance_ratio, input_net: typing.Optional[ModelFactory]=None):
+           discount_factor, gae_lambda, improvement_acceptance_ratio, input_net: typing.Optional[ModuleFactory]=None):
     """ Vel factory function """
 
     return TRPOFactory(

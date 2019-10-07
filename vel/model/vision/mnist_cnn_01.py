@@ -9,7 +9,7 @@ import torch.nn.init as init
 import torch.nn.functional as F
 
 
-from vel.api import LossFunctionModel, ModelFactory
+from vel.api import LossFunctionModel, ModuleFactory
 from vel.metric.loss_metric import Loss
 from vel.metric.accuracy import Accuracy
 
@@ -77,4 +77,4 @@ def create(img_rows, img_cols, img_channels, num_classes):
     def instantiate(**_):
         return Net(img_rows, img_cols, img_channels, num_classes)
 
-    return ModelFactory.generic(instantiate)
+    return ModuleFactory.generic(instantiate)

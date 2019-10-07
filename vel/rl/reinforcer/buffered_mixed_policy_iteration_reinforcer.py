@@ -4,7 +4,7 @@ import numpy as np
 import torch
 import tqdm
 
-from vel.api import TrainingInfo, EpochInfo, BatchInfo, ModelFactory
+from vel.api import TrainingInfo, EpochInfo, BatchInfo, ModuleFactory
 from vel.openai.baselines.common.vec_env import VecEnv
 from vel.rl.api import (
     Reinforcer, ReinforcerFactory, VecEnvFactory, ReplayEnvRollerBase, ReplayEnvRollerFactoryBase,
@@ -136,7 +136,7 @@ class BufferedMixedPolicyIterationReinforcer(Reinforcer):
 
 class BufferedMixedPolicyIterationReinforcerFactory(ReinforcerFactory):
     """ Factory class for the PolicyGradientReplayBuffer factory """
-    def __init__(self, settings, env_factory: VecEnvFactory, model_factory: ModelFactory,
+    def __init__(self, settings, env_factory: VecEnvFactory, model_factory: ModuleFactory,
                  env_roller_factory: ReplayEnvRollerFactoryBase, parallel_envs: int, seed: int):
         self.settings = settings
 

@@ -6,7 +6,7 @@ https://github.com/fastai/fastai/blob/master/fastai/models/cifar10/resnext.py
 import torch.nn as nn
 import torch.nn.functional as F
 
-from vel.api import LossFunctionModel, ModelFactory
+from vel.api import LossFunctionModel, ModuleFactory
 from vel.module.resnext import ResNeXtBottleneck
 
 
@@ -91,4 +91,4 @@ def create(blocks, mode='basic', inplanes=64, cardinality=4, image_features=64, 
             cardinality=cardinality, divisor=divisor, num_classes=num_classes
         )
 
-    return ModelFactory.generic(instantiate)
+    return ModuleFactory.generic(instantiate)

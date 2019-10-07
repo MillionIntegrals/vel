@@ -4,7 +4,7 @@ import torch.nn as nn
 import torch.nn.functional as F
 import torch.nn.init as init
 
-from vel.api import ModelFactory
+from vel.api import ModuleFactory
 from vel.module.layers import Flatten, Reshape
 
 from vel.model.latent.vae_base import VaeBase
@@ -103,4 +103,4 @@ def create(img_rows, img_cols, img_channels, layers=None, representation_length=
             analytical_kl_div=analytical_kl_div
         )
 
-    return ModelFactory.generic(instantiate)
+    return ModuleFactory.generic(instantiate)

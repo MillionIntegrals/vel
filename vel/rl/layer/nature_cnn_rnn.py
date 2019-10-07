@@ -1,4 +1,4 @@
-from vel.api import LinearBackboneModel, ModelFactory
+from vel.api import LinearBackboneModel, ModuleFactory
 from vel.rl.backbone.nature_cnn import NatureCnn
 from vel.module.rnn_cell import RnnCell
 
@@ -58,4 +58,4 @@ def create(input_width, input_height, input_channels=1, rnn_type='lstm', cnn_out
             rnn_type=rnn_type, cnn_output_dim=cnn_output_dim, hidden_units=hidden_units
         )
 
-    return ModelFactory.generic(instantiate)
+    return ModuleFactory.generic(instantiate)

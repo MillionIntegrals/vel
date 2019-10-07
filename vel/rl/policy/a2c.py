@@ -5,7 +5,7 @@ import torch.nn.functional as F
 from vel.metric.base import AveragingNamedMetric
 from vel.util.situational import gym_space_to_size_hint
 from vel.util.stats import explained_variance
-from vel.api import ModelFactory, BatchInfo, BackboneModule
+from vel.api import ModuleFactory, BatchInfo, BackboneModule
 
 from vel.rl.api import RlPolicy, Rollout, Trajectories
 from vel.rl.discount_bootstrap import discount_bootstrap_gae
@@ -112,7 +112,7 @@ class A2C(RlPolicy):
         ]
 
 
-class A2CFactory(ModelFactory):
+class A2CFactory(ModuleFactory):
     """ Factory class for policy gradient models """
     def __init__(self, net_factory, entropy_coefficient, value_coefficient, discount_factor, gae_lambda=1.0):
         self.net_factory = net_factory
@@ -140,7 +140,7 @@ class A2CFactory(ModelFactory):
         )
 
 
-def create(net: ModelFactory, entropy_coefficient, value_coefficient, discount_factor, gae_lambda=1.0):
+def create(net: ModuleFactory, entropy_coefficient, value_coefficient, discount_factor, gae_lambda=1.0):
     """ Vel factory function """
     return A2CFactory(
         net_factory=net,
