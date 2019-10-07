@@ -29,4 +29,6 @@ visdom_settings:
 global_commands:
   list:
     name: vel.command.list_command
+  summary:
+    name: vel.command.summary_command
 

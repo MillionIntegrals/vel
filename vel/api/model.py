@@ -1,11 +1,10 @@
 import torch
-import torch.nn as nn
 
 import vel.util.module_util as mu
 
 from vel.api.optimizer import VelOptimizer, OptimizerFactory
 from vel.metric.loss_metric import Loss
-from vel.util.summary import summary
+
 
 from .network import Network
 
@@ -36,17 +35,13 @@ class Model(Network):
 
         return self
 
-    def summary(self, input_size=None):
+    def summary(self):
         """ Print a model summary """
-
-        if input_size is None:
-            print(self)
-            print("-" * 100)
-            number = sum(p.numel() for p in self.parameters())
-            print("Number of model parameters: {:,}".format(number))
-            print("-" * 100)
-        else:
-            summary(self, input_size)
+        print(self)
+        print("-" * 100)
+        number = sum(p.numel() for p in self.parameters())
+        print("Number of model parameters: {:,}".format(number))
+        print("-" * 100)
 
 
 class OptimizedModel(Model):
@@ -74,7 +69,6 @@ class ValidatedModel(OptimizedModel):
         :returns a dictionary of metrics
         """
         raise NotImplementedError
-
 
 
 class GradientModel(ValidatedModel):
@@ -120,7 +114,11 @@ class LossFunctionModel(GradientModel):
         return [Loss()]
 
     def calculate_gradient(self, data: dict) -> dict:
-        y_hat = self(data['x'])
+        if self.is_stateful:
+            y_hat, _ = self(data['x'])
+        else:
+            y_hat = self(data['x'])
+
         loss_value = self.loss_value(data['x'], data['y'], y_hat)
 
         if self.training:

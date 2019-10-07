@@ -4,7 +4,7 @@ import torch
 import torch.nn.functional as F
 import torch.nn as nn
 
-from vel.api import LossFunctionModel, ModelFactory, LinearBackboneModel
+from vel.api import LossFunctionModel, ModelFactory
 from vel.module.rnn_layer import RnnLayer
 
 

@@ -1,4 +1,4 @@
-name: 'gen_shakespeare_lstm'
+name: 'gen_shakespeare'
 
 
 source:
@@ -15,16 +15,30 @@ loader:
 
 
 model:
-  name: vel.model.rnn.multilayer_rnn_sequence_model
+  name: vel.model.nlp.language_model
 
-  input_block:
-    name: vel.module.input.one_hot_encoding
-    alphabet_size: 68  # Size of the alphabet + 1
-
-  hidden_layers: [512, 512, 512]
-  output_dim: 68 # Size of the alphabet + 1
-  dropout: 0.5
-  rnn_type: 'lstm'
+  net:
+    name: vel.net.modular
+    layers:
+      - name: vel.net.layer.nlp.alphabet_embedding
+        dim: 512
+      - name: vel.net.layer.rnn
+        hidden_size: 512
+        rnn_type: 'lstm'
+      - name: vel.net.layer.dropout
+        p: 0.3
+      - name: vel.net.layer.rnn
+        hidden_size: 512
+        rnn_type: 'lstm'
+        dropout: 0.5
+      - name: vel.net.layer.dropout
+        p: 0.3
+      - name: vel.net.layer.rnn
+        hidden_size: 512
+        rnn_type: 'lstm'
+        dropout: 0.5
+      - name: vel.net.layer.dropout
+        p: 0.3
 
 
 optimizer:
@@ -44,6 +58,5 @@ commands:
     start_letter: !param start_letter = 'A'
     length: !param length = 500
     temperature: !param temperature = 0.8
-
 
 

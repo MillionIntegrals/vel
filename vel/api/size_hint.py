@@ -19,6 +19,14 @@ class SizeHint(tuple):
         """ Get shape of size hint, except for a number of dimensions (batch dimensions """
         return self[idx:]
 
+    def append(self, element: int) -> 'SizeHint':
+        """ Return a copy of this size hint, with new element added """
+        return SizeHint(*(list(self) + [element]))
+
+    def drop_last(self) -> 'SizeHint':
+        """ Return a copy of this size hint, with last element dropped """
+        return SizeHint(*self[:-1])
+
     def __repr__(self):
         internal = ", ".join([self._inner_repr(s) for s in self])
         return f"{self.__class__.__name__}({internal})"

@@ -128,7 +128,7 @@ class DoubleNoisyNatureCnnFactory(LayerFactory):
         """ Base of layer name """
         return "double_noisy_nature_cnn"
 
-    def instantiate(self, name: str, direct_input: SizeHints, context: dict) -> Layer:
+    def instantiate(self, name: str, direct_input: SizeHints, context: dict, extra_args: dict) -> Layer:
         (b, c, w, h) = direct_input.assert_single(4)
 
         return DoubleNoisyNatureCnn(

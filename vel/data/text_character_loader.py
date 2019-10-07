@@ -110,6 +110,11 @@ class TextCharacterLoader:
         return self._loaders[item]
 
     @property
+    def alphabet_size(self):
+        """ Size of the text alphabet """
+        return len(self.alphabet)
+
+    @property
     def loader(self):
         """ Get a dict of loaders """
         return self._loaders
@@ -127,8 +132,3 @@ def create(source: Source, sequence_length: int = 64, batch_size: int = 64):
         sequence_length=sequence_length,
         batch_size=batch_size
     )
-
-
-
-
-

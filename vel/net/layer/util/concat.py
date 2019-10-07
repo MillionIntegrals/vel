@@ -29,7 +29,7 @@ class ConcatFactory(LayerFactory):
         """ Base of layer name """
         return "concat"
 
-    def instantiate(self, name: str, direct_input: SizeHints, context: dict) -> Layer:
+    def instantiate(self, name: str, direct_input: SizeHints, context: dict, extra_args: dict) -> Layer:
         inputs = direct_input.assert_tuple()
 
         result = []

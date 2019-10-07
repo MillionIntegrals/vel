@@ -34,7 +34,7 @@ class ParallelLayerFactory(LayerFactory):
         """ Base of layer name """
         return "parallel"
 
-    def instantiate(self, name: str, direct_input: SizeHints, context: dict) -> Layer:
+    def instantiate(self, name: str, direct_input: SizeHints, context: dict, extra_args: dict) -> Layer:
         hints = direct_input.assert_tuple(len(self.layers))
 
         layers = []

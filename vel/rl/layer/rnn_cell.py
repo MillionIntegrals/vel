@@ -82,7 +82,7 @@ class RnnCellFactory(LayerFactory):
     def name_base(self) -> str:
         return "rnn_cell"
 
-    def instantiate(self, name: str, direct_input: SizeHints, context: dict) -> Layer:
+    def instantiate(self, name: str, direct_input: SizeHints, context: dict, extra_args: dict) -> Layer:
         input_size = direct_input.assert_single().last()
 
         return RnnCell(

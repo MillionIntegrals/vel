@@ -6,6 +6,7 @@ import torch.nn.functional as F
 import torch.distributions as dist
 
 from vel.api import TrainingInfo
+from vel.util.tensor_util import to_device
 
 
 class GenerateTextCommand:
@@ -41,12 +42,12 @@ class GenerateTextCommand:
 
         generated_text = [current_char]
 
-        state = model.zero_state(1).to(device)
+        state = to_device(model.zero_state(1), device)
 
         char_tensor = torch.from_numpy(np.array([current_char_encoded])).view(1, 1).to(device)
 
         for _ in tqdm.trange(self.length):
-            prob_logits, state = model.forward_state(char_tensor, state)
+            prob_logits, state = model(char_tensor, state)
 
             # Apply temperature to the logits
             prob_logits = F.log_softmax(prob_logits.view(-1).div(self.temperature), dim=0)

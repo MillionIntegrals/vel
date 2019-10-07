@@ -18,17 +18,18 @@ from vel.net.layer_base import LayerFactory, Layer
 
 class MLP(Layer):
     """ Simple Multi-Layer-Perceptron network """
-    def __init__(self, name: str, input_length: int, hidden_layers: typing.List[int], activation: str = 'tanh',
+    def __init__(self, name: str, input_size: SizeHints, hidden_layers: typing.List[int], activation: str = 'tanh',
                  normalization: typing.Optional[str] = None):
         super().__init__(name)
 
-        self.input_length = input_length
+        self.input_size = input_size
+        self.input_length = input_size.assert_single().last()
         self.hidden_layers = hidden_layers
         self.activation = activation
         self.normalization = normalization
 
         layer_objects = []
-        layer_sizes = zip([input_length] + hidden_layers, hidden_layers)
+        layer_sizes = zip([self.input_length] + hidden_layers, hidden_layers)
 
         for input_size, output_size in layer_sizes:
             layer_objects.append(nn.Linear(input_size, output_size))
@@ -39,9 +40,12 @@ class MLP(Layer):
             layer_objects.append(net_util.activation(activation)())
 
         self.model = nn.Sequential(*layer_objects)
-        self.hidden_units = hidden_layers[-1] if hidden_layers else input_length
+        self.hidden_units = hidden_layers[-1] if hidden_layers else self.input_length
+
+        self.output_size = input_size.assert_single().drop_last().append(self.hidden_units)
 
     def reset_weights(self):
+        """ Call proper initializers for the weights """
         for m in self.modules():
             if isinstance(m, nn.Linear):
                 # init.kaiming_normal_(m.weight, mode='fan_out', nonlinearity='relu')
@@ -52,7 +56,8 @@ class MLP(Layer):
         return self.model(direct.float())
 
     def size_hints(self) -> SizeHints:
-        return SizeHints(SizeHint(None, self.hidden_units))
+        """ Size hints for this network """
+        return SizeHints(self.output_size)
 
 
 class MLPFactory(LayerFactory):
@@ -67,11 +72,11 @@ class MLPFactory(LayerFactory):
         """ Base of layer name """
         return "mlp"
 
-    def instantiate(self, name: str, direct_input: SizeHints, context: dict) -> Layer:
+    def instantiate(self, name: str, direct_input: SizeHints, context: dict, extra_args: dict) -> Layer:
         """ Create a given layer object """
         return MLP(
             name=name,
-            input_length=direct_input.assert_single().last(),
+            input_size=direct_input,
             hidden_layers=self.hidden_layers,
             activation=self.activation,
             normalization=self.normalization

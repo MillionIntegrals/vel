@@ -26,7 +26,7 @@ class RepeatTensorFactory(LayerFactory):
         """ Base of layer name """
         return "repeat_tensor"
 
-    def instantiate(self, name: str, direct_input: SizeHints, context: dict) -> Layer:
+    def instantiate(self, name: str, direct_input: SizeHints, context: dict, extra_args: dict) -> Layer:
         return RepeatTensor(
             name=name,
             times=self.times,

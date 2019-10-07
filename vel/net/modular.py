@@ -3,10 +3,34 @@ import collections
 import torch.nn as nn
 
 from vel.api import BackboneNetwork, ModelFactory, SizeHints
+from vel.util.tensor_util import to_device
 from .layer_base import LayerFactory
 
 
-def instantiate_layers(layers: [LayerFactory], size_hint: SizeHints) -> nn.Module:
+class ModularSequential(nn.Module):
+    """ Modification of nn.Sequential for the purpose of modular networks """
+    def __init__(self, layers: collections.OrderedDict):
+        super().__init__()
+
+        self._layers = []
+
+        for key, module in layers.items():
+            self.add_module(key, module)
+            self._layers.append(module)
+
+    def __len__(self):
+        return len(self._layers)
+
+    def __getitem__(self, item):
+        return self._layers[item]
+
+    def forward(self, direct, state: dict = None, context: dict = None):
+        for layer in self._layers:
+            direct = layer(direct, state=state, context=context)
+        return direct
+
+
+def instantiate_layers(layers: [LayerFactory], size_hint: SizeHints, extra_args: dict) -> nn.Module:
     """ Instantiate list of layer factories into PyTorch Module """
     module_dict = collections.OrderedDict()
     context = {}
@@ -15,12 +39,12 @@ def instantiate_layers(layers: [LayerFactory], size_hint: SizeHints) -> nn.Modul
         counter = idx + 1
         name = "{}_{:04d}".format(layer_factory.name_base, counter)
 
-        layer = layer_factory.instantiate(name=name, direct_input=size_hint, context=context)
+        layer = layer_factory.instantiate(name=name, direct_input=size_hint, context=context, extra_args=extra_args)
         size_hint = layer.size_hints()
 
         module_dict[name] = layer
 
-    return nn.Sequential(module_dict)
+    return ModularSequential(module_dict)
 
 
 class ModularNetwork(BackboneNetwork):
@@ -94,11 +118,14 @@ class StatefulModularNetwork(BackboneNetwork):
         """ Reset the state after the episode has been terminated """
         raise NotImplementedError
 
-    def forward(self, input_data, state):
+    def forward(self, input_data, state=None):
         data = input_data
 
         context = {}
         output_state = {}
+
+        if state is None:
+            state = to_device(self.zero_state(input_data.size(0)), input_data.device)
 
         for layer in self.layers:
             if layer.is_stateful:
@@ -120,7 +147,7 @@ class ModularNetworkFactory(ModelFactory):
         if size_hint is None:
             size_hint = SizeHints()
 
-        layers = instantiate_layers(self.layers, size_hint=size_hint)
+        layers = instantiate_layers(self.layers, size_hint=size_hint, extra_args=extra_args)
         is_stateful = any(l.is_stateful for l in layers)
 
         if is_stateful:
