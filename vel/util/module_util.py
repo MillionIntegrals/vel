@@ -95,5 +95,3 @@ def optimizer_parameter_helper(parameters, parameter_dict):
             out_dict[parameter] = value[0]
 
     return out_dict
-
-

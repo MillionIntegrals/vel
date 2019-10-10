@@ -5,14 +5,14 @@ https://github.com/openai/baselines/blob/master/baselines/common/models.py
 Under MIT license.
 """
 import typing
-import numpy as np
 
+import numpy as np
 import torch.nn as nn
 import torch.nn.init as init
 
 import vel.util.network as net_util
-from vel.api import SizeHints, SizeHint
 
+from vel.api import SizeHints
 from vel.net.layer_base import LayerFactory, Layer
 
 

@@ -272,8 +272,6 @@ class VQVAE(GradientModel):
 
         return {
             'loss': loss.item(),
-
-            'grad_norm': grad_norm,
             'reconstruction': loss_recons.item(),
             'loss_vq': loss_vq.item(),
             'loss_commit': loss_commit.item()

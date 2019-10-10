@@ -256,8 +256,8 @@ class TRPO(RlPolicy):
             'explained_variance': explained_variance(returns, rollout.batch_tensor('values'))
         }
 
-    def line_search(self, normalized_observations, rollout, original_policy_loss, original_policy_params, original_parameter_vec,
-                    full_step, expected_improvement_full):
+    def line_search(self, normalized_observations, rollout, original_policy_loss, original_policy_params,
+                    original_parameter_vec, full_step, expected_improvement_full):
         """ Find the right stepsize to make sure policy improves """
         current_parameter_vec = original_parameter_vec.clone()
 
@@ -405,7 +405,8 @@ class TRPOFactory(ModuleFactory):
 
 def create(policy_net: ModuleFactory, value_net: ModuleFactory,
            max_kl, cg_iters, line_search_iters, cg_damping, entropy_coefficient, vf_iters,
-           discount_factor, gae_lambda, improvement_acceptance_ratio, input_net: typing.Optional[ModuleFactory]=None):
+           discount_factor, gae_lambda, improvement_acceptance_ratio,
+           input_net: typing.Optional[ModuleFactory] = None):
     """ Vel factory function """
 
     return TRPOFactory(
@@ -422,4 +423,3 @@ def create(policy_net: ModuleFactory, value_net: ModuleFactory,
         gae_lambda=gae_lambda,
         improvement_acceptance_ratio=improvement_acceptance_ratio,
     )
-

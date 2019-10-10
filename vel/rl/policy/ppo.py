@@ -197,4 +197,3 @@ def create(net: ModuleFactory, entropy_coefficient, value_coefficient, cliprange
         normalize_advantage=normalize_advantage,
         gae_lambda=gae_lambda
     )
-

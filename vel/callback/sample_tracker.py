@@ -23,4 +23,3 @@ class SampleTracker(Callback):
 
     def load_state_dict(self, training_info: TrainingInfo, hidden_state_dict: dict):
         training_info['samples'] = hidden_state_dict['sample_tracker/samples']
-

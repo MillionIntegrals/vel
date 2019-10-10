@@ -187,4 +187,3 @@ class OptimizerFactory:
             od[name] = self.instantiate(value)
 
         return VelMultiOptimizer(od)
-

@@ -237,4 +237,3 @@ def create(net: ModuleFactory,
         normalize_advantage=normalize_advantage,
         gae_lambda=gae_lambda
     )
-

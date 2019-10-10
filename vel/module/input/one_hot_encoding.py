@@ -14,4 +14,3 @@ class OneHotEncodingInput(VModule):
 
     def forward(self, input_data):
         return self.layer(input_data)
-

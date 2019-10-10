@@ -1,7 +1,6 @@
 import itertools as it
 
 import gym
-import torch
 
 from vel.api import VModule, BackboneModule
 

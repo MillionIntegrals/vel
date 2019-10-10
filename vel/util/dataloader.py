@@ -16,6 +16,3 @@ class IteratorDictWrapper:
         return {
             name: getattr(item, argument) for name, argument in self.field_mapping.items()
         }
-
-
-

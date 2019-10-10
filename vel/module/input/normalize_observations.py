@@ -44,4 +44,3 @@ class NormalizeObservations(VModule):
             self.running_var.copy_(new_var)
 
         return (input_vector - self.running_mean.unsqueeze(0)) / torch.sqrt(self.running_var.unsqueeze(0))
-

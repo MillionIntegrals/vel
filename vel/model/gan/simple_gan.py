@@ -2,11 +2,12 @@
 Simple GAN code is based on https://github.com/eriklindernoren/PyTorch-GAN/blob/master/implementations/gan/gan.py
 """
 import collections
+
 import numpy as np
 import torch
 import torch.nn as nn
 
-from vel.api import OptimizedModel, ModuleFactory, VelOptimizer, OptimizerFactory
+from vel.api import OptimizedModel, ModuleFactory, OptimizerFactory
 from vel.api.optimizer import VelMultiOptimizer
 from vel.metric import AveragingNamedMetric
 

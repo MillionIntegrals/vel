@@ -22,4 +22,3 @@ class LayerFactory:
     def instantiate(self, name: str, direct_input: SizeHints, context: dict, extra_args: dict) -> Layer:
         """ Create a given layer object """
         raise NotImplementedError
-

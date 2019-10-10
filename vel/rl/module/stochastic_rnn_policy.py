@@ -1,10 +1,8 @@
 import gym
 
 from vel.api import VModule, BackboneModule
-
 from vel.rl.module.head.stochastic_action_head import make_stockastic_action_head
 from vel.rl.module.head.value_head import ValueHead
-from vel.util.tensor_util import to_device
 
 
 class StochasticRnnPolicy(VModule):
@@ -73,4 +71,3 @@ class StochasticRnnPolicy(VModule):
             return out_state
         else:
             return state
-

@@ -2,7 +2,6 @@ import typing
 
 from vel.api import ModelConfig, EpochInfo, TrainingInfo, BatchInfo, OptimizerFactory, Storage, Callback, VelOptimizer
 from vel.callback.time_tracker import TimeTracker
-from vel.metric.samples_per_sec import SamplesPerSec
 from vel.rl.api import ReinforcerFactory, Reinforcer
 
 import vel.openai.baselines.logger as openai_logger

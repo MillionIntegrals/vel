@@ -39,4 +39,3 @@ class StochasticPolicy(VModule):
         """ Calculate model outputs """
         action_hidden, value_hidden = self.net(observation)
         return self.action_head(action_hidden), self.value_head(value_hidden)
-

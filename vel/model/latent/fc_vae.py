@@ -2,7 +2,6 @@ import torch
 import torch.distributions as dist
 import torch.nn as nn
 import torch.nn.functional as F
-import torch.nn.init as init
 
 from vel.api import ModuleFactory
 from vel.module.layers import Flatten, Reshape
@@ -76,6 +75,7 @@ class FcVae(VaeBase):
         """ Sample from a decoder distribution - we ignore that since it's so weak in this case """
         return decoded
 
+# import torch.nn.init as init
 #     @staticmethod
 #     def _weight_initializer(tensor):
 #         init.xavier_uniform_(tensor.weight, gain=init.calculate_gain('tanh'))

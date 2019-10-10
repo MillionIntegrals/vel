@@ -5,7 +5,6 @@ import torch
 
 from vel.api import Schedule, VModule
 from vel.internal.generic_factory import GenericFactory
-from vel.function.constant import ConstantSchedule
 
 
 class EpsGreedy(VModule):

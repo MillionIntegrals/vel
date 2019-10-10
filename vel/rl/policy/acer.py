@@ -291,7 +291,7 @@ class ACERFactory(ModuleFactory):
         )
 
 
-def create(net, trust_region: bool , entropy_coefficient: float, q_coefficient: float, discount_factor: float,
+def create(net, trust_region: bool, entropy_coefficient: float, q_coefficient: float, discount_factor: float,
            rho_cap: float = 10.0, retrace_rho_cap: float = 1.0, average_model_alpha: float = 0.99,
            trust_region_delta: float = 1.0):
     """ Vel factory function """

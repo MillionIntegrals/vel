@@ -65,7 +65,7 @@ class SizeHints:
         else:
             raise VelException("Invalid size hints: {}".format(self.size_hints))
 
-    def assert_tuple(self, length : typing.Optional[int] = None) -> SizeTuple:
+    def assert_tuple(self, length: typing.Optional[int] = None) -> SizeTuple:
         """ Assert given size hints is a tuple """
         assert self.type == self.TYPE_TUPLE, "Network needs to return a tuple"
 

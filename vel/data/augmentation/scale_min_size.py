@@ -2,8 +2,6 @@
 Code based on:
 https://github.com/fastai/fastai/blob/master/fastai/transforms.py
 """
-import PIL.Image as Image
-
 import vel.api as api
 import vel.data.operation.image_op as op
 

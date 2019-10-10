@@ -41,4 +41,3 @@ def gym_space_to_size_hint(space: gym.Space) -> SizeHints:
 def size_hint_from_shape(shape: typing.Tuple[int]) -> SizeHints:
     """ Convert tensor shape (without batch dimension) into a size hint """
     return SizeHints(SizeHint(*([None] + list(shape))))
-

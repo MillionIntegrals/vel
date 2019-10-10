@@ -8,7 +8,8 @@ from vel.internal.generic_factory import GenericFactory
 
 class Provider:
     """ Dependency injection resolver for the configuration file """
-    def __init__(self, environment: dict, instances: typing.Optional[dict] = None, parameters: typing.Optional[dict] = None):
+    def __init__(self, environment: dict, instances: typing.Optional[dict] = None,
+                 parameters: typing.Optional[dict] = None):
         self.environment = environment
 
         self.parameters = parameters if parameters is not None else {}

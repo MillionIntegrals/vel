@@ -12,4 +12,3 @@ class FlattenInput(VModule):
 
     def forward(self, input_data):
         return self.model(input_data)
-
