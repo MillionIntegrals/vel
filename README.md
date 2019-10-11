@@ -54,7 +54,7 @@ pip install -e .
 ```
 from the repository root directory.
 
-This project requires Python at least 3.6 and PyTorch 1.2.
+This project requires Python at least 3.6 and PyTorch 1.3.
 If you want to run YAML config examples, you'll also need a **project configuration file**
 `.velproject.yaml`. An example is included in this repository.
 
