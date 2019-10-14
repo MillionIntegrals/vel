@@ -4,15 +4,15 @@ import torch.nn.init as init
 
 
 from vel.api import SizeHint, SizeHints
-from vel.net.layer_base import Layer, LayerFactory
+from vel.net.layer_base import Layer, LayerFactory, LayerFactoryContext, LayerInfo
 
 
 class RnnCell(Layer):
     """ Generalization of RNN cell (Simple RNN, LSTM or GRU) """
 
-    def __init__(self, name: str, input_size: int, hidden_size: int, rnn_type: str, bias: bool = True,
+    def __init__(self, info: LayerInfo, input_size: int, hidden_size: int, rnn_type: str, bias: bool = True,
                  nonlinearity: str = 'tanh'):
-        super().__init__(name)
+        super().__init__(info)
 
         assert rnn_type in {'rnn', 'lstm', 'gru'}, "Rnn type {} is not supported".format(rnn_type)
 
@@ -73,6 +73,7 @@ class RnnCellFactory(LayerFactory):
     """ Factory for the RnnCell layer """
 
     def __init__(self, hidden_size: int, rnn_type: str, bias: bool = True, nonlinearity: str = 'tanh'):
+        super().__init__()
         self.hidden_size = hidden_size
         self.rnn_type = rnn_type
         self.bias = bias
@@ -82,11 +83,12 @@ class RnnCellFactory(LayerFactory):
     def name_base(self) -> str:
         return "rnn_cell"
 
-    def instantiate(self, name: str, direct_input: SizeHints, context: dict, extra_args: dict) -> Layer:
+    def instantiate(self, direct_input: SizeHints, context: LayerFactoryContext, extra_args: dict) -> Layer:
+        """ Create a given layer object """
         input_size = direct_input.assert_single().last()
 
         return RnnCell(
-            name=name,
+            info=self.make_info(context),
             input_size=input_size,
             hidden_size=self.hidden_size,
             rnn_type=self.rnn_type,
@@ -95,11 +97,11 @@ class RnnCellFactory(LayerFactory):
         )
 
 
-def create(hidden_size: int, rnn_type: str, bias: bool = True, nonlinearity: str = 'tanh'):
+def create(hidden_size: int, rnn_type: str, bias: bool = True, nonlinearity: str = 'tanh', label=None, group=None):
     """ Vel factory function """
     return RnnCellFactory(
         hidden_size=hidden_size,
         rnn_type=rnn_type,
         bias=bias,
         nonlinearity=nonlinearity
-    )
+    ).with_given_name(label).with_given_group(group)

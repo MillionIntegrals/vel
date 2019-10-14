@@ -3,17 +3,17 @@ import torch.nn as nn
 import torch.nn.init as init
 
 from vel.api import SizeHints
-from vel.net.layer_base import Layer, LayerFactory
+from vel.net.layer_base import Layer, LayerFactory, LayerFactoryContext, LayerInfo
 
 
 class RnnLayer(Layer):
     """ Single Recurrent Layer """
-    def __init__(self, name: str, input_size: SizeHints, hidden_size: int, rnn_type: str,
+    def __init__(self, info: LayerInfo, input_shape: SizeHints, hidden_size: int, rnn_type: str,
                  bias: bool = True, bidirectional: bool = False, nonlinearity: str = 'tanh'):
-        super().__init__(name)
+        super().__init__(info)
 
-        self.input_size = input_size
-        self.input_length = input_size.assert_single().last()
+        self.input_shape = input_shape
+        self.input_length = input_shape.assert_single().last()
         self.hidden_size = hidden_size
         self.rnn_type = rnn_type
 
@@ -37,7 +37,10 @@ class RnnLayer(Layer):
                 bidirectional=bidirectional, batch_first=True
             )
 
-        self.output_size = input_size.assert_single().drop_last().append(self.hidden_size)
+        if self.bidirectional:
+            self.output_shape = SizeHints(input_shape.assert_single().drop_last().append(2 * self.hidden_size))
+        else:
+            self.output_shape = SizeHints(input_shape.assert_single().drop_last().append(self.hidden_size))
 
     def reset_weights(self):
         """ Call proper initializers for the weights """
@@ -61,27 +64,30 @@ class RnnLayer(Layer):
 
     def zero_state(self, batch_size):
         """ Potential state for the model """
-        return {self.name: torch.zeros(batch_size, self.state_dim)}
+        if self.bidirectional:
+            return {self.global_name: torch.zeros(2, batch_size, self.state_dim)}
+        else:
+            return {self.global_name: torch.zeros(1, batch_size, self.state_dim)}
 
     def forward(self, input_data, state: dict, context: dict = None):
         """ Forward propagation of a single layer """
 
         if self.rnn_type == 'lstm':
-            state_tensor = state[self.name].unsqueeze(0)
+            state_tensor = state[self.name]
             hidden_state, cell_state = torch.split(state_tensor, self.hidden_size, dim=2)
             output, (hidden_state, cell_state) = self.rnn_cell(
                 input_data, (hidden_state.contiguous(), cell_state.contiguous())
             )
             new_state = torch.cat([hidden_state, cell_state], dim=2)
-            return output, {self.name: new_state[0]}
+            return output, {self.name: new_state}
         else:
-            state_tensor = state[self.name].unsqueeze(0)
+            state_tensor = state[self.name]
             output, new_state = self.rnn_cell(input_data, state_tensor)
-            return output, {self.name: new_state[0]}
+            return output, {self.name: new_state}
 
     def size_hints(self) -> SizeHints:
         """ Size hints for this network """
-        return SizeHints(self.output_size)
+        return self.output_shape
 
 
 class RnnLayerFactory(LayerFactory):
@@ -89,6 +95,7 @@ class RnnLayerFactory(LayerFactory):
 
     def __init__(self, hidden_size: int, rnn_type: str, bias: bool = True, bidirectional: bool = False,
                  nonlinearity: str = 'tanh'):
+        super().__init__()
         self.hidden_size = hidden_size
         self.rnn_type = rnn_type
 
@@ -101,11 +108,11 @@ class RnnLayerFactory(LayerFactory):
         """ Base of layer name """
         return "rnn"
 
-    def instantiate(self, name: str, direct_input: SizeHints, context: dict, extra_args: dict) -> Layer:
+    def instantiate(self, direct_input: SizeHints, context: LayerFactoryContext, extra_args: dict) -> Layer:
         """ Create instance of 'RnnLayer' """
         return RnnLayer(
-            name=name,
-            input_size=direct_input,
+            info=self.make_info(context),
+            input_shape=direct_input,
             hidden_size=self.hidden_size,
             rnn_type=self.rnn_type,
             bias=self.bias,
@@ -115,7 +122,7 @@ class RnnLayerFactory(LayerFactory):
 
 
 def create(hidden_size: int, rnn_type: str, bias: bool = True, bidirectional: bool = False,
-           nonlinearity: str = 'tanh'):
+           nonlinearity: str = 'tanh', label=None, group=None):
     """ Vel factory function """
     return RnnLayerFactory(
         hidden_size=hidden_size,
@@ -123,4 +130,4 @@ def create(hidden_size: int, rnn_type: str, bias: bool = True, bidirectional: bo
         bias=bias,
         bidirectional=bidirectional,
         nonlinearity=nonlinearity
-    )
+    ).with_given_name(label).with_given_group(group)

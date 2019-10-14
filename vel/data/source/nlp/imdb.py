@@ -45,7 +45,7 @@ class IMDBCached(ds.IMDB):
         data.Dataset.__init__(self, examples, fields, **kwargs)
 
 
-def create(model_config, data_dir='imdb', vectors=None):
+def create(model_config, vocab_size: int, data_dir='imdb', vectors=None):
     """ Create an IMDB dataset """
     path = model_config.data_dir(data_dir)
 
@@ -58,7 +58,7 @@ def create(model_config, data_dir='imdb', vectors=None):
         label_field=label_field
     )
 
-    text_field.build_vocab(train_source, max_size=25_000, vectors=vectors)
+    text_field.build_vocab(train_source, max_size=vocab_size, vectors=vectors)
     label_field.build_vocab(train_source)
 
     return LanguageSource(
@@ -68,16 +68,8 @@ def create(model_config, data_dir='imdb', vectors=None):
         mapping={
             'x': 'text',
             'y': 'label'
+        },
+        metadata={
+            'alphabet_size': vocab_size+2
         }
     )
-
-    # train_iterator, test_iterator = data.BucketIterator.splits(
-    #     (train_source, test_source),
-    #     batch_size=batch_size,
-    #     device=model_config.torch_device(),
-    #     shuffle=True
-    # )
-
-    # return SupervisedTextData(
-    #     train_source, test_source, train_iterator, test_iterator, text_field, label_field
-    # )

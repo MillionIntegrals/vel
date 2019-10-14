@@ -36,6 +36,16 @@ class ActorCriticPolicy(VModule):
             [self.input_net, self.value_backbone, self.critic_head],
         ]
 
+    def grouped_parameters(self):
+        """ Return iterable of pairs (group, parameters) """
+        return it.chain(
+            self.input_net.grouped_parameters(),
+            self.policy_backbone.grouped_parameters(),
+            self.value_backbone.grouped_parameters(),
+            [("actor", self.action_head.parameters())],
+            [("critic", self.critic_head.parameters())],
+        )
+
     def reset_weights(self):
         """ Initialize properly model weights """
         self.input_net.reset_weights()

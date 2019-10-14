@@ -63,14 +63,16 @@ class Resnet34(LossFunctionModel):
 
         self.model = final_model
 
-    def freeze(self, number=None):
+    def freeze(self, groups=None):
         """ Freeze given number of layers in the model """
-        if number is None:
-            number = self.head_layers
+        layer_groups = dict(self.layer_groups())
 
-        for idx, child in enumerate(self.model.children()):
-            if idx < number:
-                mu.freeze_layer(child)
+        if groups is None:
+            groups = layer_groups.keys()
+
+        for group in groups:
+            for module in layer_groups[group]:
+                mu.freeze_layer(module)
 
     def unfreeze(self):
         """ Unfreeze model layers """
@@ -82,11 +84,18 @@ class Resnet34(LossFunctionModel):
         g1 = list(self.model[:self.group_cut_layers[0]])
         g2 = list(self.model[self.group_cut_layers[0]:self.group_cut_layers[1]])
         g3 = list(self.model[self.group_cut_layers[1]:])
-        return [g1, g2, g3]
+
+        return [
+            ('top', g1),
+            ('mid', g2),
+            ('bottom', g3)
+        ]
+
+    def parameter_groups(self):
+        return [(name, mu.module_list_to_param_list(m)) for name, m in self.layer_groups()]
 
     def create_optimizer(self, optimizer_factory: OptimizerFactory) -> VelOptimizer:
-        parameters = mu.to_parameter_groups(self.layer_groups())
-        return optimizer_factory.instantiate_parameter_groups(parameters)
+        return optimizer_factory.instantiate(self.parameter_groups())
 
     def forward(self, x):
         """ Calculate model value """

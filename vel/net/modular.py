@@ -1,10 +1,11 @@
+import itertools as it
 import collections
 
 import torch.nn as nn
 
 from vel.api import BackboneModule, ModuleFactory, SizeHints
 from vel.util.tensor_util import to_device
-from .layer_base import LayerFactory
+from .layer_base import LayerFactory, LayerFactoryContext
 
 
 class ModularSequential(nn.Module):
@@ -30,19 +31,25 @@ class ModularSequential(nn.Module):
         return direct
 
 
-def instantiate_layers(layers: [LayerFactory], size_hint: SizeHints, extra_args: dict) -> nn.Module:
+def instantiate_layers(layers: [LayerFactory], group: str, size_hint: SizeHints, extra_args: dict) -> nn.Module:
     """ Instantiate list of layer factories into PyTorch Module """
     module_dict = collections.OrderedDict()
-    context = {}
+    context_data = {}
 
     for idx, layer_factory in enumerate(layers):
         counter = idx + 1
-        name = "{}_{:04d}".format(layer_factory.name_base, counter)
 
-        layer = layer_factory.instantiate(name=name, direct_input=size_hint, context=context, extra_args=extra_args)
+        context = LayerFactoryContext(
+            idx=counter,
+            parent_group=group,
+            parent_name=None,
+            data=context_data
+        )
+
+        layer = layer_factory.instantiate(direct_input=size_hint, context=context, extra_args=extra_args)
         size_hint = layer.size_hints()
 
-        module_dict[name] = layer
+        module_dict[layer.name] = layer
 
     return ModularSequential(module_dict)
 
@@ -79,7 +86,11 @@ class ModularNetwork(BackboneModule):
 
     def forward(self, input_data, state=None):
         context = {}
-        return self.layers(input_data, context=context)
+        return self.layers(input_data, state=None, context=context)
+
+    def grouped_parameters(self):
+        """ Return iterable of pairs (group, parameters) """
+        return it.chain.from_iterable(l.grouped_parameters() for l in self.layers)
 
 
 class StatefulModularNetwork(BackboneModule):
@@ -125,6 +136,7 @@ class StatefulModularNetwork(BackboneModule):
         output_state = {}
 
         if state is None:
+            # input_data.device here may break. Should be fixed at some point
             state = to_device(self.zero_state(input_data.size(0)), input_data.device)
 
         for layer in self.layers:
@@ -136,18 +148,27 @@ class StatefulModularNetwork(BackboneModule):
 
         return data, output_state
 
+    def grouped_parameters(self):
+        """ Return iterable of pairs (group, parameters) """
+        return it.chain.from_iterable(l.grouped_parameters() for l in self.layers)
+
 
 class ModularNetworkFactory(ModuleFactory):
     """ Factory class for the modular network """
-    def __init__(self, layers: [LayerFactory]):
+    def __init__(self, layers: [LayerFactory], group=None):
         self.layers = layers
+
+        if group is None:
+            self.group = "default"
+        else:
+            self.group = group
 
     def instantiate(self, size_hint=None, **extra_args) -> BackboneModule:
         """ Create either stateful or not modular network instance """
         if size_hint is None:
             size_hint = SizeHints()
 
-        layers = instantiate_layers(self.layers, size_hint=size_hint, extra_args=extra_args)
+        layers = instantiate_layers(self.layers, self.group, size_hint=size_hint, extra_args=extra_args)
         is_stateful = any(l.is_stateful for l in layers)
 
         if is_stateful:
@@ -156,6 +177,6 @@ class ModularNetworkFactory(ModuleFactory):
             return ModularNetwork(layers)
 
 
-def create(layers: [LayerFactory]):
+def create(layers: [LayerFactory], group=None):
     """ Vel factory function """
-    return ModularNetworkFactory(layers)
+    return ModularNetworkFactory(layers, group)

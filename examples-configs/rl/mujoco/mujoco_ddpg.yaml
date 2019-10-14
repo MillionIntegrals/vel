@@ -1,5 +1,6 @@
 name: 'mujoco_ddpg'
 
+
 env:
   name: vel.rl.env.mujoco
   game: !param game = 'Reacher-v2'
@@ -20,10 +21,11 @@ model:
   input_net:
     name: vel.net.modular
     layers:
-      - name: vel.net.layer.input.normalize
+      - name: vel.net.layer.input.normalize_expanding
 
   actor_net:
     name: vel.net.modular
+    group: 'actor'
     layers:
       - name: vel.net.layer.mlp
         hidden_layers: [64, 64]
@@ -31,6 +33,7 @@ model:
 
   critic_net:
     name: vel.net.modular
+    group: 'critic'
     layers:
       - name: vel.net.layer.util.concat # Concatenate observation and action
       - name: vel.net.layer.mlp
@@ -63,9 +66,14 @@ optimizer:
   name: vel.optimizer.adam
   # OpenAI has two different optimizers optimizing each network separately.
   # As far as I know it should be equivalent to optimizing two separate networks together with a sum of loss functions
-  lr: [1.0e-4, 1.0e-3]
-  weight_decay: [0.0, 0.0]
+  lr: 1.0e-3
+  weight_decay: 0.0
   epsilon: 1.0e-4
+  parameter_groups:
+    actor:
+      lr: 1.0e-4
+    critic:
+      lr: 1.0e-3
 
 
 commands:

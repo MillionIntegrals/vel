@@ -49,22 +49,39 @@ class VelOptimizer:
 
 class VelOptimizerProxy(VelOptimizer):
     """ Proxy PyTorch optimizer into a Vel optimizer """
-    def __init__(self, optimizer: Optimizer, max_grad_norm: typing.Optional[float] = None):
+    def __init__(self, optimizer: Optimizer, group_names: [str], max_grad_norm: typing.Optional[float] = None):
         self.optimizer = optimizer
+        self.group_names = group_names
         self.max_grad_norm = max_grad_norm
+
+        if 'default' in self.group_names:
+            self.main_idx = self.group_names.index('default')
+        else:
+            self.main_idx = len(self.group_names) - 1
+
+        assert len(self.optimizer.param_groups) == len(self.group_names), \
+            "There must be equal number of parameter groups and group names"
+
+        self.initial_lrs = [x['lr'] for x in self.optimizer.param_groups]
 
     def get_lr(self) -> float:
         """ Return current learning rate of the optimizer """
-        return self.optimizer.param_groups[-1]['lr']
+        return self.optimizer.param_groups[self.main_idx]['lr']
 
     def set_lr(self, lr: float):
         """ Set current learning rate of the optimizer """
         if isinstance(lr, list):
             for group_lr, param_group in zip(lr, self.optimizer.param_groups):
                 param_group['lr'] = group_lr
+        elif isinstance(lr, dict):
+            for idx, name in enumerate(self.group_names):
+                self.optimizer.param_groups[idx]['lr'] = lr[name]
         else:
-            for param_group in self.optimizer.param_groups:
-                param_group['lr'] = lr
+            canonical_lr = self.initial_lrs[0]
+
+            for idx, param_group in enumerate(self.optimizer.param_groups):
+                opt_lr = self.initial_lrs[idx] / canonical_lr * lr
+                param_group['lr'] = opt_lr
 
     def state_dict(self) -> dict:
         return self.optimizer.state_dict()
@@ -112,7 +129,10 @@ class VelMultiOptimizer(VelOptimizer):
         self.optimizers = optimizers
 
         # Canonical, chosen optimizer
-        self.canonical_name = list(optimizers.keys())[0]
+        if canonical_name is None:
+            self.canonical_name = list(optimizers.keys())[0]
+        else:
+            self.canonical_name = canonical_name
 
         self.initial_lrs = {
             name: optimizer.get_lr()
@@ -126,11 +146,18 @@ class VelMultiOptimizer(VelOptimizer):
         return self.optimizers[self.canonical_name].get_lr()
 
     def set_lr(self, lr: float):
-        canonical_lr = self.initial_lrs[self.canonical_name]
+        if isinstance(lr, list):
+            # TODO: implement
+            raise NotImplementedError
+        elif isinstance(lr, dict):
+            # TODO: implement
+            raise NotImplementedError
+        else:
+            canonical_lr = self.initial_lrs[self.canonical_name]
 
-        for name, optimizer in self.optimizers.items():
-            opt_lr = self.initial_lrs[name] / canonical_lr * lr
-            optimizer.set_lr(opt_lr)
+            for name, optimizer in self.optimizers.items():
+                opt_lr = self.initial_lrs[name] / canonical_lr * lr
+                optimizer.set_lr(opt_lr)
 
     def state_dict(self) -> dict:
         output = {}
@@ -173,11 +200,48 @@ class VelMultiOptimizer(VelOptimizer):
 
 class OptimizerFactory:
     """ Base class for optimizer factories """
+    def __init__(self):
+        self.parameter_groups = None
+
+    def with_parameter_groups(self, parameter_groups=None):
+        """ Set `parameter_groups` for this factory """
+        self.parameter_groups = parameter_groups
+        return self
+
+    def preprocess(self, parameters):
+        """ Preprocess given parameters input into proper optimizer parameter groups, with their names """
+        parameters = list(parameters)
+
+        # Make sure parameters have right format
+        if parameters:
+            if not isinstance(parameters[0], collections.Sequence) or not isinstance(parameters[0][0], str):
+                parameters = [("default", parameters)]
+
+        groups = collections.defaultdict(list)
+
+        for name, group in parameters:
+            group = [x for x in group if x.requires_grad]
+            if group:  # Must have at least 1 element
+                groups[name].extend(group)
+
+        group_names = []
+        sorted_groups = []
+
+        for name in sorted(groups.keys()):
+            parameter_group = {
+                'params': groups[name]
+            }
+
+            if self.parameter_groups and name in self.parameter_groups:
+                parameter_group.update(self.parameter_groups[name])
+
+            sorted_groups.append(parameter_group)
+            group_names.append(name)
+
+        return sorted_groups, group_names
 
     def instantiate(self, parameters) -> VelOptimizer:
-        raise NotImplementedError
-
-    def instantiate_parameter_groups(self, parameters) -> VelOptimizer:
+        """ Instantiate VelOptimizer for iterable of parameters or iterable of (parameter, group) """
         raise NotImplementedError
 
     def instantiate_multi(self, parameter_dict: dict) -> VelMultiOptimizer:

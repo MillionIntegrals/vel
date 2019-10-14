@@ -3,8 +3,8 @@ import torch
 from vel.api import VModule
 
 
-class NormalizeObservations(VModule):
-    """ Normalize a vector of observations """
+class NormalizeExpanding(VModule):
+    """ Normalize a vector of observations - across the batch dim """
 
     def __init__(self, input_shape, epsilon=1e-6):
         super().__init__()

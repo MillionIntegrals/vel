@@ -13,17 +13,17 @@ import torch.nn.init as init
 import vel.util.network as net_util
 
 from vel.api import SizeHints
-from vel.net.layer_base import LayerFactory, Layer
+from vel.net.layer_base import LayerFactory, Layer, LayerInfo, LayerFactoryContext
 
 
 class MLP(Layer):
     """ Simple Multi-Layer-Perceptron network """
-    def __init__(self, name: str, input_size: SizeHints, hidden_layers: typing.List[int], activation: str = 'tanh',
-                 normalization: typing.Optional[str] = None):
-        super().__init__(name)
+    def __init__(self, info: LayerInfo, input_shape: SizeHints, hidden_layers: typing.List[int],
+                 activation: str = 'tanh', normalization: typing.Optional[str] = None):
+        super().__init__(info)
 
-        self.input_size = input_size
-        self.input_length = input_size.assert_single().last()
+        self.input_shape = input_shape
+        self.input_length = input_shape.assert_single().last()
         self.hidden_layers = hidden_layers
         self.activation = activation
         self.normalization = normalization
@@ -31,18 +31,18 @@ class MLP(Layer):
         layer_objects = []
         layer_sizes = zip([self.input_length] + hidden_layers, hidden_layers)
 
-        for input_size, output_size in layer_sizes:
-            layer_objects.append(nn.Linear(input_size, output_size))
+        for i_size, o_size in layer_sizes:
+            layer_objects.append(nn.Linear(i_size, o_size))
 
             if self.normalization:
-                layer_objects.append(net_util.normalization(normalization)(output_size))
+                layer_objects.append(net_util.normalization(normalization)(o_size))
 
             layer_objects.append(net_util.activation(activation)())
 
         self.model = nn.Sequential(*layer_objects)
         self.hidden_units = hidden_layers[-1] if hidden_layers else self.input_length
 
-        self.output_size = input_size.assert_single().drop_last().append(self.hidden_units)
+        self.output_shape = SizeHints(input_shape.assert_single().drop_last().append(self.hidden_units))
 
     def reset_weights(self):
         """ Call proper initializers for the weights """
@@ -57,12 +57,13 @@ class MLP(Layer):
 
     def size_hints(self) -> SizeHints:
         """ Size hints for this network """
-        return SizeHints(self.output_size)
+        return self.output_shape
 
 
 class MLPFactory(LayerFactory):
     def __init__(self, hidden_layers: typing.List[int], activation: str = 'tanh',
                  normalization: typing.Optional[str] = None):
+        super().__init__()
         self.hidden_layers = hidden_layers
         self.activation = activation
         self.normalization = normalization
@@ -72,17 +73,19 @@ class MLPFactory(LayerFactory):
         """ Base of layer name """
         return "mlp"
 
-    def instantiate(self, name: str, direct_input: SizeHints, context: dict, extra_args: dict) -> Layer:
+    def instantiate(self, direct_input: SizeHints, context: LayerFactoryContext, extra_args: dict) -> Layer:
         """ Create a given layer object """
         return MLP(
-            name=name,
-            input_size=direct_input,
+            info=self.make_info(context),
+            input_shape=direct_input,
             hidden_layers=self.hidden_layers,
             activation=self.activation,
             normalization=self.normalization
         )
 
 
-def create(hidden_layers, activation='tanh', normalization=None):
+def create(hidden_layers: [int], activation='tanh', normalization=None, label=None, group=None):
     """ Vel factory function """
-    return MLPFactory(hidden_layers=hidden_layers, activation=activation, normalization=normalization)
+    return MLPFactory(
+        hidden_layers=hidden_layers, activation=activation, normalization=normalization
+    ).with_given_name(label).with_given_group(group)

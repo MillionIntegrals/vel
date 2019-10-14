@@ -14,7 +14,7 @@ import vel.util.network as net_util
 
 from vel.api import SizeHints, SizeHint
 
-from vel.net.layer_base import Layer, LayerFactory
+from vel.net.layer_base import Layer, LayerFactory, LayerFactoryContext
 from vel.rl.module.noisy_linear import NoisyLinear
 
 
@@ -23,9 +23,9 @@ class DoubleNoisyNatureCnn(Layer):
     Neural network as defined in the paper 'Human-level control through deep reinforcement learning'
     but with two separate heads and "noisy" linear layer.
     """
-    def __init__(self, name: str, input_width, input_height, input_channels, output_dim=512, initial_std_dev=0.4,
+    def __init__(self, info: LayerInfo, input_width, input_height, input_channels, output_dim=512, initial_std_dev=0.4,
                  factorized_noise=True):
-        super().__init__(name)
+        super().__init__(info)
 
         self.output_dim = output_dim
 
@@ -119,6 +119,7 @@ class DoubleNoisyNatureCnnFactory(LayerFactory):
     """ Nature Cnn Network Factory """
 
     def __init__(self, initial_std_dev: float = 0.4, factorized_noise: bool = True, output_dim: int = 512):
+        super().__init__()
         self.initial_std_dev = initial_std_dev
         self.factorized_noise = factorized_noise
         self.output_dim = output_dim
@@ -128,11 +129,11 @@ class DoubleNoisyNatureCnnFactory(LayerFactory):
         """ Base of layer name """
         return "double_noisy_nature_cnn"
 
-    def instantiate(self, name: str, direct_input: SizeHints, context: dict, extra_args: dict) -> Layer:
+    def instantiate(self, direct_input: SizeHints, context: LayerFactoryContext, extra_args: dict) -> Layer:
         (b, c, w, h) = direct_input.assert_single(4)
 
         return DoubleNoisyNatureCnn(
-            name=name,
+            info=self.make_info(context),
             input_width=w,
             input_height=h,
             input_channels=c,
@@ -142,10 +143,11 @@ class DoubleNoisyNatureCnnFactory(LayerFactory):
         )
 
 
-def create(initial_std_dev: float = 0.4, factorized_noise: bool = True, output_dim: int = 512):
+def create(initial_std_dev: float = 0.4, factorized_noise: bool = True, output_dim: int = 512,
+           label=None, group=None):
     """ Vel factory function """
     return DoubleNoisyNatureCnnFactory(
         output_dim=output_dim,
         initial_std_dev=initial_std_dev,
         factorized_noise=factorized_noise
-    )
+    ).with_given_name(label).with_given_group(group)

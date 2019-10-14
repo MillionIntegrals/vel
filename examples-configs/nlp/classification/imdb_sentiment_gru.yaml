@@ -3,7 +3,7 @@ name: 'imdb_sentiment_gru'
 
 source:
   name: vel.data.source.nlp.imdb
-  vectors: "glove.6B.100d"  # precomputed 100-dimensional embeddings
+  vocab_size: 25_000
 
 
 loader:
@@ -11,37 +11,57 @@ loader:
   batch_size: 32
 
 
-
 model:
-  name: vel.model.rnn.multilayer_rnn_sequence_classification
-
-  input_block:
-    name: vel.module.input.embedding
-    alphabet_size: 25_002  # Size of the alphabet
-
-    output_dim: 100 # Embedding dimension
-
-    pretrained: True
-#    frozen: True
-
-  rnn_type: 'gru'
-  rnn_layers: [256, 128]
-  rnn_dropout: 0.5
-  bidirectional: True
-
-  linear_layers: [64]
-  linear_dropout: 0.2
-
+  name: vel.model.nlp.sequence_classification
   output_dim: 2 # Positive or negative sentiment
+
+  net:
+    name: vel.net.modular
+    layers:
+      - name: vel.net.layer.nlp.pretrained_embedding
+        group: "embedding"
+        vectors: "glove.6B.100d"  # precomputed 100-dimensional embeddings
+
+      - name: vel.net.layer.rnn
+        group: "rnn"
+        hidden_size: 256
+        rnn_type: 'gru'
+        bidirectional: true
+
+      - name: vel.net.layer.dropout
+        p: 0.3
+
+      - name: vel.net.layer.rnn
+        group: "rnn"
+        hidden_size: 128
+        rnn_type: 'gru'
+        bidirectional: true
+
+      # For sequence classification we only want outputs for the last hidden state
+      - name: vel.net.layer.nlp.select_final_features
+        bidirectional: true
+
+      - name: vel.net.layer.dropout
+        p: 0.3
+
+      - name: vel.net.layer.mlp
+        hidden_layers: [64]
+        activation: 'relu'
+
+      - name: vel.net.layer.dropout
+        p: 0.2
 
 
 optimizer:
   name: vel.optimizer.adam
-  lr: [1.0e-4, 1.0e-3, 1.0e-2, 1.0e-2]
-  weight_decay: [0.0, 0.0001, 0.001, 0.001]
+  lr: 1.0e-2
+  weight_decay: 0.001
   epsilon: 1.0e-5
   betas: [0.7, 0.99]
-  layer_groups: true
+
+  parameter_groups:
+    embedding: {"lr": 1.0e-4, "weight_decay": 0.0}
+    rnn: {"lr": 1.0e-3, "weight_decay": 0.0001}
 
 
 commands:

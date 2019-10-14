@@ -1,23 +1,27 @@
+import itertools as it
+
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
-from vel.api import LossFunctionModel, ModuleFactory, VModule, BackboneModule, SizeHints, SizeHint
+from vel.api import (
+    LossFunctionModel, ModuleFactory, VModule, BackboneModule, SizeHints, SizeHint, OptimizerFactory,
+    VelOptimizer
+)
+from vel.metric.accuracy import Accuracy
+from vel.metric.loss_metric import Loss
 
 
-class LanguageModel(LossFunctionModel):
-    """ Language model - autoregressive generative model for text """
+class SequenceClassification(LossFunctionModel):
+    """ NLP (text) sequence classification """
 
-    def __init__(self, alphabet_size: int, net: BackboneModule):
+    def __init__(self, net: BackboneModule, output_size: int):
         super().__init__()
-
-        self.alphabet_size = alphabet_size
-        self.output_dim = self.alphabet_size + 1
 
         self.net = net
         self.output_layer = nn.Linear(
             in_features=self.net.size_hints().assert_single().last(),
-            out_features=self.alphabet_size+1
+            out_features=output_size
         )
 
     @property
@@ -42,37 +46,46 @@ class LanguageModel(LossFunctionModel):
         """
         if self.net.is_stateful:
             output, new_state = self.net(input_data, state=state)
-            return F.log_softmax(self.output_layer(output), dim=-1), new_state
+            output = F.log_softmax(self.output_layer(output), dim=-1)
+            return output, new_state
         else:
             output = self.net(input_data)
-            return F.log_softmax(self.output_layer(output), dim=-1)
-
+            output = F.log_softmax(self.output_layer(output), dim=-1)
+            return output
 
     def loss_value(self, x_data, y_true, y_pred) -> torch.tensor:
         """ Calculate a value of loss function """
-        y_pred = y_pred.view(-1, y_pred.size(2))
-        y_true = y_true.view(-1).to(torch.long)
         return F.nll_loss(y_pred, y_true)
 
+    def create_optimizer(self, optimizer_factory: OptimizerFactory) -> VelOptimizer:
+        grouped = self.net.grouped_parameters()
+        parameters = it.chain(grouped, [("output", self.output_layer.parameters())])
+        return optimizer_factory.instantiate(parameters)
 
-class LanguageModelFactory(ModuleFactory):
-    def __init__(self, alphabet_size: int, net_factory: ModuleFactory):
-        self.alphabet_size = alphabet_size
+    def metrics(self) -> list:
+        """ Set of metrics for this model """
+        return [Loss(), Accuracy()]
+
+
+class SequenceClassificationFactory(ModuleFactory):
+    def __init__(self, net_factory: ModuleFactory, alphabet_size: int, output_dim: int):
         self.net_factory = net_factory
+        self.output_dim = output_dim
+        self.alphabet_size = alphabet_size
 
     def instantiate(self, **extra_args) -> VModule:
         size_hint = SizeHints(SizeHint(None, None))
         net = self.net_factory.instantiate(alphabet_size=self.alphabet_size, size_hint=size_hint)
 
-        return LanguageModel(
-            alphabet_size=self.alphabet_size,
-            net=net
+        return SequenceClassification(
+            net=net, output_size=self.output_dim
         )
 
 
-def create(loader, net: ModuleFactory):
+def create(loader, net: ModuleFactory, output_dim: int):
     """ Vel factory function """
-    return LanguageModelFactory(
+    return SequenceClassificationFactory(
+        net_factory=net,
         alphabet_size=loader.alphabet_size,
-        net_factory=net
+        output_dim=output_dim
     )

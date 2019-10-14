@@ -1,14 +1,14 @@
 import torch
 
 from vel.api import SizeHints, SizeHint
-from vel.net.layer_base import LayerFactory, Layer
+from vel.net.layer_base import LayerFactory, Layer, LayerFactoryContext, LayerInfo
 
 
 class Concat(Layer):
     """ Repeat single tensor multiple times """
 
-    def __init__(self, name: str, size_hints: SizeHints, axis: int = -1):
-        super().__init__(name)
+    def __init__(self, info: LayerInfo, size_hints: SizeHints, axis: int = -1):
+        super().__init__(info)
 
         self.axis = axis
         self._size_hints = size_hints
@@ -21,7 +21,9 @@ class Concat(Layer):
 
 
 class ConcatFactory(LayerFactory):
+    """ Factory for Concat Layer """
     def __init__(self, axis: int = -1):
+        super().__init__()
         self.axis = axis
 
     @property
@@ -29,7 +31,8 @@ class ConcatFactory(LayerFactory):
         """ Base of layer name """
         return "concat"
 
-    def instantiate(self, name: str, direct_input: SizeHints, context: dict, extra_args: dict) -> Layer:
+    def instantiate(self, direct_input: SizeHints, context: LayerFactoryContext, extra_args: dict) -> Layer:
+        """ Create a given layer object """
         inputs = direct_input.assert_tuple()
 
         result = []
@@ -48,12 +51,12 @@ class ConcatFactory(LayerFactory):
                 result.append(inputs[0][i])
 
         return Concat(
-            name=name,
+            info=self.make_info(context),
             axis=self.axis,
             size_hints=SizeHints(SizeHint(*result))
         )
 
 
-def create(axis: int = -1):
+def create(axis: int = -1, label=None, group=None):
     """ Vel factory function """
-    return ConcatFactory(axis=axis)
+    return ConcatFactory(axis=axis).with_given_name(label).with_given_group(group)

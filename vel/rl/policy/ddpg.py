@@ -47,8 +47,7 @@ class DDPG(RlPolicy):
 
     def create_optimizer(self, optimizer_factory: OptimizerFactory) -> VelOptimizer:
         """ Create optimizer for the purpose of optimizing this model """
-        parameter_groups = mu.to_parameter_groups(self.net.layer_groups())
-        return optimizer_factory.instantiate_parameter_groups(parameter_groups)
+        return optimizer_factory.instantiate(self.net.grouped_parameters())
 
     def forward(self, observation, state=None):
         """ Calculate model outputs """

@@ -67,6 +67,7 @@ commands:
     name: vel.command.phase_train_command
     phases:
     - name: vel.train.phase.freeze
+      groups: ['top', 'mid']
     - name: vel.train.phase.cycle
       init_lr: 0.001
       init_iter: 20
@@ -80,8 +81,8 @@ commands:
       init_lr: 0.001
       init_iter: 20
 
-      max_lr: [1.0e-4, 1.0e-3, 1.0e-2]
-      min_lr: [0.0, 0.0, 0.0]
+      max_lr: {"top": 1.0e-4, "mid": 1.0e-3, "bottom": 1.0e-2}
+      min_lr: {"top": 0.0, "mid": 0.0, "bottom": 0.0}
       interpolate: 'cosine'
       cycles: 3
       cycle_len: 1

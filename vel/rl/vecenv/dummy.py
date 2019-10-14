@@ -29,7 +29,7 @@ class DummyVecEnvWrapper(VecEnvFactory):
 
     def instantiate_single(self, seed=0, preset='default'):
         """ Create a new Env instance - single """
-        env = self.env.instantiate(seed=seed, serial_id=0, preset=preset)
+        env = self.env.instantiate()
 
         if self.frame_history is not None:
             env = FrameStack(env, self.frame_history)
@@ -38,7 +38,7 @@ class DummyVecEnvWrapper(VecEnvFactory):
 
     def _creation_function(self, idx, seed, preset):
         """ Helper function to create a proper closure around supplied values """
-        return lambda: self.env.instantiate(seed=seed, serial_id=idx, preset=preset)
+        return lambda: self.env.instantiate()
 
 
 def create(env, frame_history=None, normalize_returns=False):

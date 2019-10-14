@@ -74,6 +74,13 @@ class CycleCallback(Callback):
                     interp.interpolate_single(max_lr, min_lr, interpolation_number, how=self.interpolate)
                     for max_lr, min_lr in zip(self.max_lr, self.min_lr)
                 ]
+            elif isinstance(self.max_lr, dict):
+                lr = {
+                    name: interp.interpolate_single(
+                        self.max_lr[name], self.min_lr[name], interpolation_number, how=self.interpolate
+                    )
+                    for name in self.max_lr
+                }
             else:
                 lr = interp.interpolate_single(self.max_lr, self.min_lr, interpolation_number, how=self.interpolate)
 

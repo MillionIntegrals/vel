@@ -2,8 +2,6 @@ import typing
 
 from torch.optim.adadelta import Adadelta
 
-import vel.util.module_util as mu
-
 from vel.api import OptimizerFactory, VelOptimizerProxy, VelOptimizer
 
 
@@ -12,6 +10,7 @@ class AdadeltaFactory(OptimizerFactory):
 
     def __init__(self, lr: float = 1.0, rho: float = 0.9, eps: float = 1e-6, weight_decay: float = 0.0,
                  max_grad_norm: typing.Optional[float] = None):
+        super().__init__()
         self.lr = lr
         self.rho = rho
         self.eps = eps
@@ -19,27 +18,16 @@ class AdadeltaFactory(OptimizerFactory):
         self.max_grad_norm = max_grad_norm
 
     def instantiate(self, parameters) -> VelOptimizer:
+        optimizer_params, group_names = self.preprocess(parameters)
+
         return VelOptimizerProxy(Adadelta(
-            parameters,
+            optimizer_params,
             lr=self.lr, rho=self.rho, eps=self.eps, weight_decay=self.weight_decay
-        ), self.max_grad_norm)
-
-    def instantiate_parameter_groups(self, out_parameters) -> VelOptimizer:
-        settings_dict = {
-            'lr': self.lr,
-            'rho': self.rho,
-            'eps': self.eps,
-            'weight_decay': self.weight_decay
-        }
-
-        out_parameters = out_parameters.copy()
-        out_settings_dict = mu.optimizer_parameter_helper(out_parameters, settings_dict)
-
-        return VelOptimizerProxy(Adadelta(out_parameters, **out_settings_dict), self.max_grad_norm)
+        ), group_names, self.max_grad_norm)
 
 
 def create(lr: float = 1.0, rho: float = 0.9, eps: float = 1e-6, weight_decay: float = 0.0,
-           max_grad_norm: typing.Optional[float] = None):
+           max_grad_norm: typing.Optional[float] = None, parameter_groups=None):
     """ Vel factory function """
     return AdadeltaFactory(
         lr=lr,
@@ -47,4 +35,4 @@ def create(lr: float = 1.0, rho: float = 0.9, eps: float = 1e-6, weight_decay: f
         eps=eps,
         weight_decay=weight_decay,
         max_grad_norm=max_grad_norm
-    )
+    ).with_parameter_groups(parameter_groups)

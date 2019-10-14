@@ -13,7 +13,7 @@ import torch.nn.functional as F
 import vel.util.network as net_util
 
 from vel.api import SizeHints, SizeHint
-from vel.net.layer_base import Layer, LayerFactory
+from vel.net.layer_base import Layer, LayerFactory, LayerFactoryContext, LayerInfo
 
 
 class DoubleNatureCnn(Layer):
@@ -21,8 +21,8 @@ class DoubleNatureCnn(Layer):
     Neural network as defined in the paper 'Human-level control through deep reinforcement learning'
     but with two separate heads.
     """
-    def __init__(self, name: str, input_width, input_height, input_channels, output_dim=512):
-        super().__init__(name)
+    def __init__(self, info: LayerInfo, input_width, input_height, input_channels, output_dim=512):
+        super().__init__(info)
 
         self.output_dim = output_dim
 
@@ -103,6 +103,7 @@ class DoubleNatureCnnFactory(LayerFactory):
     """ Nature Cnn Network Factory """
 
     def __init__(self, output_dim: int = 512):
+        super().__init__()
         self.output_dim = output_dim
 
     @property
@@ -110,11 +111,11 @@ class DoubleNatureCnnFactory(LayerFactory):
         """ Base of layer name """
         return "double_nature_cnn"
 
-    def instantiate(self, name: str, direct_input: SizeHints, context: dict, extra_args: dict) -> Layer:
+    def instantiate(self, direct_input: SizeHints, context: LayerFactoryContext, extra_args: dict) -> Layer:
         (b, c, w, h) = direct_input.assert_single(4)
 
         return DoubleNatureCnn(
-            name=name,
+            info=self.make_info(context),
             input_width=w,
             input_height=h,
             input_channels=c,
@@ -122,6 +123,6 @@ class DoubleNatureCnnFactory(LayerFactory):
         )
 
 
-def create(output_dim: int = 512):
+def create(output_dim: int = 512, label=None, group=None):
     """ Vel factory function """
-    return DoubleNatureCnnFactory(output_dim=output_dim)
+    return DoubleNatureCnnFactory(output_dim=output_dim).with_given_name(label).with_given_group(group)

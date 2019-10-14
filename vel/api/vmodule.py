@@ -19,6 +19,10 @@ class VModule(nn.Module):
         """ Potential state for the model """
         return None
 
+    def grouped_parameters(self):
+        """ Return iterable of parameters (group, parameters) """
+        return [("default", self.parameters())]
+
 
 class BackboneModule(VModule):
     """ Network, whose output feeds into other models. Needs to provide size hints. """

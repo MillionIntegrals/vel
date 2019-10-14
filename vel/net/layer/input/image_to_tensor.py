@@ -1,6 +1,6 @@
 from vel.api import SizeHints, SizeHint
 from vel.module.input.image_to_tensor import image_to_tensor
-from vel.net.layer_base import LayerFactory, Layer
+from vel.net.layer_base import LayerFactory, Layer, LayerFactoryContext, LayerInfo
 
 
 class ImageToTensorLayer(Layer):
@@ -9,8 +9,8 @@ class ImageToTensorLayer(Layer):
 
     Flip channels to a [C, W, H] order and potentially convert 8-bit color values to floats
     """
-    def __init__(self, name: str, shape: tuple = None):
-        super().__init__(name)
+    def __init__(self, info: LayerInfo, shape: tuple = None):
+        super().__init__(info)
 
         if shape is not None:
             assert len(shape) == 3, "Images must have three dimensions"
@@ -27,6 +27,7 @@ class ImageToTensorLayer(Layer):
 
 class ImageToTensorLayerFactory(LayerFactory):
     def __init__(self, shape: tuple = None):
+        super().__init__()
         self.shape = shape
 
     @property
@@ -34,16 +35,19 @@ class ImageToTensorLayerFactory(LayerFactory):
         """ Base of layer name """
         return "image_to_tensor"
 
-    def instantiate(self, name: str, direct_input: SizeHints, context: dict, extra_args: dict) -> Layer:
+    def instantiate(self, direct_input: SizeHints, context: LayerFactoryContext, extra_args: dict) -> Layer:
         """ Create a given layer object """
         if self.shape is None:
             shape = direct_input.assert_single().shape()
         else:
             shape = self.shape
 
-        return ImageToTensorLayer(name=name, shape=shape)
+        return ImageToTensorLayer(
+            info=self.make_info(context),
+            shape=shape
+        )
 
 
-def create(shape: tuple = None):
+def create(shape: tuple = None, label=None, group=None):
     """ Vel factory function """
-    return ImageToTensorLayerFactory(shape=shape)
+    return ImageToTensorLayerFactory(shape=shape).with_given_name(label).with_given_group(group)

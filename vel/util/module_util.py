@@ -83,6 +83,11 @@ def to_parameter_groups(layer_groups):
     return [{'params': chain_params(x)} for x in layer_groups]
 
 
+def module_list_to_param_list(module_list):
+    """ Conver a list of pytorch modules into a list of parameters """
+    return it.chain.from_iterable(m.parameters() for m in module_list)
+
+
 def optimizer_parameter_helper(parameters, parameter_dict):
     """ Helper function for creating layer group optimizer instances """
     out_dict = parameter_dict.copy()

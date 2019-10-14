@@ -1,6 +1,6 @@
 import torch.nn.functional as F
 from vel.api import SizeHints
-from vel.net.layer_base import Layer, LayerFactory
+from vel.net.layer_base import Layer, LayerFactory, LayerFactoryContext, LayerInfo
 
 
 class DropoutLayer(Layer):
@@ -11,18 +11,18 @@ class DropoutLayer(Layer):
 
     See :class:`~torch.nn.Dropout` for details.
     """
-    def __init__(self, name: str, input_size: SizeHints, p: float):
-        super().__init__(name)
+    def __init__(self, info: LayerInfo, input_shape: SizeHints, p: float):
+        super().__init__(info)
 
         self.p = p
-        self.input_size = input_size
+        self.input_shape = input_shape
 
     def forward(self, direct, state: dict = None, context: dict = None):
         return F.dropout(direct, p=self.p, training=self.training)
 
     def size_hints(self) -> SizeHints:
         """ Size hints for this network """
-        return self.input_size
+        return self.input_shape
 
     def extra_repr(self) -> str:
         """Set the extra representation of the module"""
@@ -33,6 +33,7 @@ class DropoutLayerFactory(LayerFactory):
     """ Factory class for the Dropout layer """
 
     def __init__(self, p: float):
+        super().__init__()
         self.p = p
 
     @property
@@ -40,15 +41,15 @@ class DropoutLayerFactory(LayerFactory):
         """ Base of layer name """
         return "dropout"
 
-    def instantiate(self, name: str, direct_input: SizeHints, context: dict, extra_args: dict) -> Layer:
+    def instantiate(self, direct_input: SizeHints, context: LayerFactoryContext, extra_args: dict) -> Layer:
         """ Create a given layer object """
         return DropoutLayer(
-            name=name,
-            input_size=direct_input,
+            info=self.make_info(context),
+            input_shape=direct_input,
             p=self.p
         )
 
 
-def create(p: float):
+def create(p: float, label=None, group=None):
     """ Vel factory function """
-    return DropoutLayerFactory(p)
+    return DropoutLayerFactory(p).with_given_name(label).with_given_group(group)

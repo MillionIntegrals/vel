@@ -1,5 +1,6 @@
 name: 'mujoco_trpo'
 
+
 env:
   name: vel.rl.env.mujoco
   game: !param game = 'Reacher-v2'
@@ -27,7 +28,7 @@ model:
   input_net:
     name: vel.net.modular
     layers:
-      - name: vel.net.layer.input.normalize
+      - name: vel.net.layer.input.normalize_expanding
 
   policy_net:
     name: vel.net.modular

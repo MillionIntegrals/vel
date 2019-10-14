@@ -1,14 +1,11 @@
 """
 RAdam implementation from: https://github.com/LiyuanLucasLiu/RAdam/blob/master/cifar_imagenet/utils/radam.py
 """
-import collections
 import math
 import torch
 import typing
 
 from torch.optim.optimizer import Optimizer
-
-import vel.util.module_util as mu
 
 from vel.api import OptimizerFactory, VelOptimizer, VelOptimizerProxy
 
@@ -93,6 +90,7 @@ class RAdamFactory(OptimizerFactory):
 
     def __init__(self, lr=1e-3, betas=(0.9, 0.999), eps=1e-8, weight_decay=0,
                  max_grad_norm: typing.Optional[float] = None):
+        super().__init__()
         self.lr = lr
         self.betas = betas
         self.eps = eps
@@ -100,24 +98,16 @@ class RAdamFactory(OptimizerFactory):
         self.max_grad_norm = max_grad_norm
 
     def instantiate(self, parameters) -> VelOptimizer:
+        optimizer_params, group_names = self.preprocess(parameters)
+
         return VelOptimizerProxy(RAdam(
-            parameters,
+            optimizer_params,
             lr=self.lr, betas=self.betas, eps=self.eps, weight_decay=self.weight_decay
-        ), self.max_grad_norm)
-
-    def instantiate_parameter_groups(self, out_parameters) -> VelOptimizer:
-        settings_dict = {
-            'lr': self.lr,
-            'eps': self.eps,
-            'weight_decay': self.weight_decay
-        }
-
-        out_parameters = out_parameters.copy()
-        out_settings_dict = mu.optimizer_parameter_helper(out_parameters, settings_dict)
-
-        return VelOptimizerProxy(RAdam(out_parameters, betas=self.betas, **out_settings_dict), self.max_grad_norm)
+        ), group_names, self.max_grad_norm)
 
 
-def create(lr, betas=(0.9, 0.999), weight_decay=0, epsilon=1e-8, max_grad_norm=None):
+def create(lr, betas=(0.9, 0.999), weight_decay=0, epsilon=1e-8, max_grad_norm=None, parameter_groups=None):
     """ Vel factory function """
-    return RAdamFactory(lr=lr, betas=betas, weight_decay=weight_decay, eps=epsilon, max_grad_norm=max_grad_norm)
+    return RAdamFactory(
+        lr=lr, betas=betas, weight_decay=weight_decay, eps=epsilon, max_grad_norm=max_grad_norm
+    ).with_parameter_groups(parameter_groups)

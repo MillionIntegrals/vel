@@ -58,6 +58,11 @@ class BucketLoader:
         """ Get a dict of sizes of each loader """
         return self._loader_sizes
 
+    @property
+    def alphabet_size(self):
+        """ Size of the text alphabet """
+        return self.source.metadata.get('alphabet_size', 0)
+
 
 def create(model_config: ModelConfig, source: LanguageSource, batch_size: int):
     """ Vel factory function """
