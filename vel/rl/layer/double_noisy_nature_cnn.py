@@ -13,8 +13,7 @@ import torch.nn.functional as F
 import vel.util.network as net_util
 
 from vel.api import SizeHints, SizeHint
-
-from vel.net.layer_base import Layer, LayerFactory, LayerFactoryContext
+from vel.net.layer_base import Layer, LayerFactory, LayerFactoryContext, LayerInfo
 from vel.rl.module.noisy_linear import NoisyLinear
 
 

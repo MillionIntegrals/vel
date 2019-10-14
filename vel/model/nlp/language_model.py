@@ -47,7 +47,6 @@ class LanguageModel(LossFunctionModel):
             output = self.net(input_data)
             return F.log_softmax(self.output_layer(output), dim=-1)
 
-
     def loss_value(self, x_data, y_true, y_pred) -> torch.tensor:
         """ Calculate a value of loss function """
         y_pred = y_pred.view(-1, y_pred.size(2))

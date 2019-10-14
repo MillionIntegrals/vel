@@ -6,8 +6,6 @@ import torch.autograd
 import torch.nn as nn
 import torch.nn.functional as F
 
-import vel.util.module_util as mu
-
 from vel.api import BackboneModule, BatchInfo, ModuleFactory, OptimizerFactory, VelOptimizer, SizeHints
 from vel.metric.base import AveragingNamedMetric
 from vel.rl.api import RlPolicy, Rollout
