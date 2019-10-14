@@ -181,8 +181,7 @@ class DDPGFactory(ModuleFactory):
 
 def create(actor_net: ModuleFactory, critic_net: ModuleFactory,
            discount_factor: float, tau: float, noise_std_dev: float,
-           input_net: typing.Optional[ModuleFactory] = None
-           ):
+           input_net: typing.Optional[ModuleFactory] = None):
     """ Vel factory function """
     return DDPGFactory(
         actor_net=actor_net,
