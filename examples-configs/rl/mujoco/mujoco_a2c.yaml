@@ -22,7 +22,7 @@ model:
   net:
     name: vel.net.modular
     layers:
-      - name: vel.net.layer.input.normalize_expanding
+      - name: vel.net.layer.input.normalize_ewma
       - name: vel.net.layer.mlp
         hidden_layers: [64, 64]
         activation: 'tanh'

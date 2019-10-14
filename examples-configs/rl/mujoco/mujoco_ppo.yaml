@@ -25,7 +25,7 @@ model:
   net:
     name: vel.net.modular
     layers:
-      - name: vel.net.layer.input.normalize_expanding
+      - name: vel.net.layer.input.normalize_ewma
       - name: vel.net.layer.util.repeat
         times: 2 # Need to repeat output twice, to consume by the 'parallel' layers
       - name: vel.net.layer.arch.parallel

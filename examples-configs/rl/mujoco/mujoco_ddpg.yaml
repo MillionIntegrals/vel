@@ -21,7 +21,7 @@ model:
   input_net:
     name: vel.net.modular
     layers:
-      - name: vel.net.layer.input.normalize_expanding
+      - name: vel.net.layer.input.normalize_ewma
 
   actor_net:
     name: vel.net.modular
