@@ -1,22 +1,23 @@
-import hashlib
 import torch
-import torch.nn as nn
 
 import vel.util.module_util as mu
 
-from vel.metrics.loss_metric import Loss
-from vel.util.summary import summary
+from vel.api.optimizer import VelOptimizer, OptimizerFactory
+from vel.metric.loss_metric import Loss
 
 
-class Model(nn.Module):
-    """ Class representing full neural network model """
+from .vmodule import VModule
+
+
+class Model(VModule):
+    """ Class representing full neural network model, generally used to solve some problem """
 
     def metrics(self) -> list:
         """ Set of metrics for this model """
-        return [Loss()]
+        return []
 
     def train(self, mode=True):
-        r"""
+        """
         Sets the module in training mode.
 
         This has any effect only on certain modules. See documentations of
@@ -34,126 +35,102 @@ class Model(nn.Module):
 
         return self
 
-    def summary(self, input_size=None, hashsummary=False):
+    def summary(self):
         """ Print a model summary """
+        print(self)
+        print("-" * 100)
+        number = sum(p.numel() for p in self.parameters())
+        print("Number of model parameters: {:,}".format(number))
+        print("-" * 100)
 
-        if input_size is None:
-            print(self)
-            print("-" * 120)
-            number = sum(p.numel() for p in self.model.parameters())
-            print("Number of model parameters: {:,}".format(number))
-            print("-" * 120)
+
+class OptimizedModel(Model):
+    """ Model that is being optimized by an 'optimizer' """
+
+    def create_optimizer(self, optimizer_factory: OptimizerFactory) -> VelOptimizer:
+        """ Create optimizer for the purpose of optimizing this model """
+        parameters = filter(lambda p: p.requires_grad, self.parameters())
+        return optimizer_factory.instantiate(parameters)
+
+    def optimize(self, data: dict, optimizer: VelOptimizer) -> dict:
+        """
+        Perform one step of optimization of the model
+        :returns a dictionary of metrics
+        """
+        raise NotImplementedError
+
+
+class ValidatedModel(OptimizedModel):
+    """ Model that also has a validation operation """
+
+    def validate(self, data: dict) -> dict:
+        """
+        Perform one step of model inference without optimization
+        :returns a dictionary of metrics
+        """
+        raise NotImplementedError
+
+
+class GradientModel(ValidatedModel):
+    """ Model that calculates a single gradient and optimizes it """
+
+    def optimize(self, data: dict, optimizer: VelOptimizer) -> dict:
+        """
+        Perform one step of optimization of the model
+        :returns a dictionary of metrics
+        """
+        optimizer.zero_grad()
+
+        metrics = self.calculate_gradient(data)
+
+        opt_metrics = optimizer.step()
+
+        for key, value in opt_metrics.items():
+            metrics[key] = value
+
+        return metrics
+
+    @torch.no_grad()
+    def validate(self, data: dict) -> dict:
+        """
+        Perform one step of model inference without optimization
+        :returns a dictionary of metrics
+        """
+        return self.calculate_gradient(data)
+
+    def calculate_gradient(self, data: dict) -> dict:
+        """
+        Calculate gradient for given batch of training data.
+        :returns a dictionary of metrics
+        """
+        raise NotImplementedError
+
+
+class LossFunctionModel(GradientModel):
+    """ Model for a supervised learning with a simple loss function """
+
+    def metrics(self) -> list:
+        """ Set of metrics for this model """
+        return [Loss()]
+
+    def calculate_gradient(self, data: dict) -> dict:
+        if self.is_stateful:
+            y_hat, _ = self(data['x'])
         else:
-            summary(self, input_size)
+            y_hat = self(data['x'])
 
-        if hashsummary:
-            for idx, hashvalue in enumerate(self.hashsummary()):
-                print(f"{idx}: {hashvalue}")
+        loss_value = self.loss_value(data['x'], data['y'], y_hat)
 
-    def hashsummary(self):
-        """ Print a model summary - checksums of each layer parameters """
-        children = list(self.children())
+        if self.training:
+            loss_value.backward()
 
-        result = []
+        return {
+            'loss': loss_value.item(),
+            'data': data['x'],
+            'target': data['y'],
+            'output': y_hat
+        }
 
-        for child in children:
-            result.extend(hashlib.sha256(x.detach().cpu().numpy().tobytes()).hexdigest() for x in child.parameters())
-
-        return result
-
-    def get_layer_groups(self):
-        """ Return layers grouped """
-        return [self]
-
-    def reset_weights(self):
-        """ Call proper initializers for the weights """
-        pass
-
-    @property
-    def is_recurrent(self) -> bool:
-        """ If the network is recurrent and needs to be fed state as well as the observations """
-        return False
-
-
-class RnnModel(Model):
-    """ Class representing recurrent model """
-
-    @property
-    def is_recurrent(self) -> bool:
-        """ If the network is recurrent and needs to be fed previous state """
-        return True
-
-    @property
-    def state_dim(self) -> int:
-        """ Dimension of model state """
-        raise NotImplementedError
-
-    def zero_state(self, batch_size):
-        """ Initial state of the network """
-        return torch.zeros(batch_size, self.state_dim)
-
-
-class BackboneModel(Model):
-    """ Model that serves as a backbone network to connect your heads to """
-
-
-class RnnLinearBackboneModel(BackboneModel):
-    """
-    Model that serves as a backbone network to connect your heads to -
-    one that spits out a single-dimension output and is a recurrent neural network
-    """
-
-    @property
-    def is_recurrent(self) -> bool:
-        """ If the network is recurrent and needs to be fed previous state """
-        return True
-
-    @property
-    def output_dim(self) -> int:
-        """ Final dimension of model output """
-        raise NotImplementedError
-
-    @property
-    def state_dim(self) -> int:
-        """ Dimension of model state """
-        raise NotImplementedError
-
-    def zero_state(self, batch_size):
-        """ Initial state of the network """
-        return torch.zeros(batch_size, self.state_dim, dtype=torch.float32)
-
-
-class LinearBackboneModel(BackboneModel):
-    """
-    Model that serves as a backbone network to connect your heads to - one that spits out a single-dimension output
-    """
-
-    @property
-    def output_dim(self) -> int:
-        """ Final dimension of model output """
-        raise NotImplementedError
-
-
-class SupervisedModel(Model):
-    """ Model for a supervised learning problem """
-    def loss(self, x_data, y_true):
-        """ Forward propagate network and return a value of loss function """
-        y_pred = self(x_data)
-        return y_pred, self.loss_value(x_data, y_true, y_pred)
-
-    def loss_value(self, x_data, y_true, y_pred):
-        """ Calculate a value of loss function """
-        raise NotImplementedError
-
-
-class RnnSupervisedModel(RnnModel):
-    """ Model for a supervised learning problem """
-
-    def loss(self, x_data, y_true):
-        """ Forward propagate network and return a value of loss function """
-        y_pred = self(x_data)
-        return y_pred, self.loss_value(x_data, y_true, y_pred)
-
-    def loss_value(self, x_data, y_true, y_pred):
+    def loss_value(self, x_data, y_true, y_pred) -> torch.tensor:
         """ Calculate a value of loss function """
         raise NotImplementedError

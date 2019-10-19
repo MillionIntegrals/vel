@@ -1,0 +1,17 @@
+attrs
+cloudpickle
+dnspython
+gym[atari,box2d,classic_control]
+matplotlib
+numpy
+opencv-python
+pandas
+pymongo
+pytest
+pyyaml
+scikit-learn
+torchtext
+torchvision
+torch~=1.3
+tqdm
+visdom

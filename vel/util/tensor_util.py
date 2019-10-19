@@ -1,4 +1,5 @@
 import torch
+import collections
 
 
 def one_hot_encoding(input_tensor, num_labels):
@@ -16,3 +17,36 @@ def merge_first_two_dims(tensor):
     batch_size = shape[0] * shape[1]
     new_shape = tuple([batch_size] + list(shape[2:]))
     return tensor.view(new_shape)
+
+
+def to_device(tensor, device: torch.device):
+    """ Convert tensor-like object to given PyTorch device """
+    if tensor is None:
+        return tensor
+    elif isinstance(tensor, torch.Tensor):
+        return tensor.to(device)
+    elif isinstance(tensor, dict):
+        return {k: to_device(v, device) for k, v in tensor.items()}
+    elif isinstance(tensor, list):
+        return [to_device(v, device) for v in tensor]
+    elif isinstance(tensor, tuple):
+        return tuple(to_device(v, device) for v in tensor)
+    else:
+        raise NotImplementedError
+
+
+class TensorAccumulator:
+    """ Buffer for tensors that will be stacked together """
+    def __init__(self):
+        self.accumulants = collections.defaultdict(list)
+
+    def add(self, name, tensor):
+        if isinstance(tensor, dict):
+            for subname, subtensor in tensor.items():
+                self.add(f"{name}.{subname}", subtensor)
+        else:
+            self.accumulants[name].append(tensor)
+
+    def result(self):
+        """ Concatenate accumulated tensors """
+        return {k: torch.stack(v) for k, v in self.accumulants.items()}

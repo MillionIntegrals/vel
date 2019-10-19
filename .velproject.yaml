@@ -2,12 +2,16 @@ storage:
   name: vel.storage.classic
 
   backend:
-    name: vel.storage.backend.mongodb
-    uri: 'mongodb://localhost:27017/'
-    database: deep_learning
+    name: vel.storage.backend.dummy
+
+#    Other potential setting
+#    name: vel.storage.backend.mongodb
+#    uri: 'mongodb://localhost:27017/'
+#    database: deep_learning
 
   streaming:
-    - name: vel.storage.streaming.visdom
+    - name: vel.storage.streaming.tensorboard
+#    - name: vel.storage.streaming.visdom
     - name: vel.storage.streaming.stdout
 
 
@@ -19,4 +23,12 @@ visdom_settings:
   stream_lr: false
   server: 'http://localhost'
   port: 8097
+
+
+# List of commands that are shared among all models in this project
+global_commands:
+  list:
+    name: vel.command.list_command
+  summary:
+    name: vel.command.summary_command
 

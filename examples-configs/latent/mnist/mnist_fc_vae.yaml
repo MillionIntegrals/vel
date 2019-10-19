@@ -1,0 +1,50 @@
+name: 'mnist_fc_vae'
+
+
+model:
+  name: vel.model.latent.fc_vae
+  img_rows: 28
+  img_cols: 28
+  img_channels: 1
+  layers: [200, 200]
+  representation_length: 50
+  analytical_kl_div: true
+
+
+source:
+  name: vel.data.source.vision.mnist
+
+loader:
+  name: vel.data.loader.dataset_loader
+  batch_size: 128
+  num_workers: 4
+  pin_memory: true
+
+  transformations:
+    - name: vel.data.transformation.to_array
+    - name: vel.data.transformation.binarize_image
+    - name: vel.data.transformation.image_to_tensor
+    - name: vel.data.transformation.unsupervised
+
+
+optimizer:
+  name: vel.optimizer.radam
+  lr: 1.0e-3
+  eps: 1.0e-4
+
+
+scheduler:
+  name: vel.scheduler.multi_step
+  gamma: 0.71968  # 10 * (-1/7)
+  milestones: [   1,    4,   13,   40,  121,  364, 1093, 3280]
+
+
+commands:
+  train:
+    name: vel.command.train_command
+    epochs: 3280
+
+  nll:
+    name: vel.command.latent.vae_nll
+    max_batch: 10_000
+    samples: !param samples = 10

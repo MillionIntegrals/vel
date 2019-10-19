@@ -1,8 +1,9 @@
-import torch.optim.lr_scheduler as scheduler
+# import torch.optim.lr_scheduler as scheduler
 
 
 # class ReduceLrOnPlateau:
-#     def __init__(self, optimizer, metric_name, mode, factor, patience, threshold, threshold_mode, cooldown, min_lr, epsilon):
+#     def __init__(self, optimizer, metric_name, mode, factor, patience, threshold, threshold_mode,
+#     cooldown, min_lr, epsilon):
 #         self.metric_name = metric_name
 #         self.scheduler = scheduler.ReduceLROnPlateau(
 #             optimizer,
@@ -30,7 +31,7 @@ import torch.optim.lr_scheduler as scheduler
 #            min_lr=0, epsilon=1e-8):
 #     """ Create a scheduler that lowers the LR on metric plateau """
 #     def scheduler_fn(optimizer):
-#         return ReduceLrOnPlateau(optimizer, metric_name, mode, factor, patience, threshold, threshold_mode, cooldown, min_lr, epsilon)
+#         return ReduceLrOnPlateau(optimizer, metric_name, mode, factor, patience, threshold, threshold_mode,
+#         cooldown, min_lr, epsilon)
 #
 #     return scheduler_fn
-

@@ -2,86 +2,73 @@ name: cats_vs_dogs_resnet34
 
 
 model:
-  name: vel.models.imagenet.resnet34
+  name: vel.model.imagenet.resnet34
   fc_layers: [512, 2]
   dropout: [0.25, 0.5]
   pretrained: true
 
 
 source:
-  name: vel.sources.img_dir_source
-  # Dataset downloaded from http://files.fast.ai/data/dogscats.zip
+  name: vel.data.source.img_dir_source
+  url: http://files.fast.ai/data/dogscats.zip
+  extract_parent: true
   path: data/dogscats
+
+
+loader:
+  name: vel.data.loader.dataset_loader
   num_workers: 8
   batch_size: 64
 
-#  tta:
-#    name: vel.augmentations.tta.train_tta
-#    n_augmentations: 4
-
-  augmentations:
-  - name: vel.augmentations.to_array
-    mode: x
-    tags: ["train", "val"]
-
-  - name: vel.augmentations.random_scale
-    mode: x
-    tags: ["train"]
+  transformations:
+  - name: vel.data.transformation.to_array
+  - name: vel.data.augmentation.random_scale
+    tags: train
     size: 224
     max_zoom: 1.1
-  - name: vel.augmentations.random_rotate
-    mode: x
-    tags: ["train"]
+  - name: vel.data.augmentation.random_rotate
+    tags: train
     deg: 10.0
-  - name: vel.augmentations.random_crop
-    mode: x
-    tags: ["train"]
+  - name: vel.data.augmentation.random_crop
+    tags: train
     width: 224
     height: 224
-  - name: vel.augmentations.random_lighting
-    mode: x
-    tags: ["train"]
+  - name: vel.data.augmentation.random_lighting
+    tags: train
     b: 0.05
     c: 0.05
-  - name: vel.augmentations.random_horizontal_flip
-    mode: x
-    tags: ["train"]
-
-  - name: vel.augmentations.scale_min_size
-    mode: x
-    tags: ["val"]
+  - name: vel.data.augmentation.random_horizontal_flip
+    tags: train
+  - name: vel.data.augmentation.scale_min_size
+    tags: val
     size: 224
-  - name: vel.augmentations.center_crop
-    mode: x
-    tags: ["val"]
+  - name: vel.data.augmentation.center_crop
+    tags: val
     size: 224
 
-  - name: vel.augmentations.normalize
-    mode: x
+  - name: vel.data.transformation.normalize
     tags: ["train", "val"]
     mean: [0.485, 0.456, 0.406]
     std:  [0.229, 0.224, 0.225]
 
-  - name: vel.augmentations.to_tensor
-    mode: x
+  - name: vel.data.transformation.image_to_tensor
     tags: ["train", "val"]
 
 
 optimizer:
-  name: vel.optimizers.sgd
+  name: vel.optimizer.sgd
   lr: 0.01
   weight_decay: 0.0
   momentum: 0.9
-  layer_groups: on
 
 
 commands:
   train:
-    name: vel.commands.phase_train_command
-    restart: false
+    name: vel.command.phase_train_command
     phases:
-    - name: vel.phase.freeze
-    - name: vel.phase.cycle
+    - name: vel.train.phase.freeze
+      groups: ['top', 'mid']
+    - name: vel.train.phase.cycle
       init_lr: 0.001
       init_iter: 20
       max_lr: 0.01
@@ -89,28 +76,27 @@ commands:
       interpolate: 'cosine'
       cycles: 3
       cycle_len: 1
-    - name: vel.phase.unfreeze
-    - name: vel.phase.cycle
+    - name: vel.train.phase.unfreeze
+    - name: vel.train.phase.cycle
       init_lr: 0.001
       init_iter: 20
 
-      max_lr: [1.0e-4, 1.0e-3, 1.0e-2]
-      min_lr: [0.0, 0.0, 0.0]
+      max_lr: {"top": 1.0e-4, "mid": 1.0e-3, "bottom": 1.0e-2}
+      min_lr: {"top": 0.0, "mid": 0.0, "bottom": 0.0}
       interpolate: 'cosine'
       cycles: 3
       cycle_len: 1
       cycle_mult: 2
 
   simple_train:
-    name: vel.commands.train_command
-    restart: false
+    name: vel.command.train_command
     epochs: 3
 
   summary:
-    name: vel.commands.summary_command
+    name: vel.command.summary_command
 
   lr_find:
-    name: vel.commands.lr_find_command
+    name: vel.command.lr_find_command
     metric: 'loss'
     start_lr: 1.0e-5
     end_lr: 10.0
@@ -119,6 +105,6 @@ commands:
     freeze: true
 
   augvis:
-    name: vel.commands.augvis_command
+    name: vel.command.augvis_command
     cases: 3
     samples: 4

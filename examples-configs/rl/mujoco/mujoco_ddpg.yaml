@@ -1,0 +1,93 @@
+name: 'mujoco_ddpg'
+
+
+env:
+  name: vel.rl.env.mujoco
+  game: !param game = 'Reacher-v2'
+
+
+vec_env:
+  name: vel.rl.vecenv.dummy
+  normalize_returns: true
+
+
+model:
+  name: vel.rl.policy.ddpg
+
+  tau: 0.01
+  discount_factor: 0.99
+  noise_std_dev: 0.2
+
+  input_net:
+    name: vel.net.modular
+    layers:
+      - name: vel.net.layer.input.normalize_ewma
+
+  actor_net:
+    name: vel.net.modular
+    group: 'actor'
+    layers:
+      - name: vel.net.layer.mlp
+        hidden_layers: [64, 64]
+        activation: 'tanh'
+
+  critic_net:
+    name: vel.net.modular
+    group: 'critic'
+    layers:
+      - name: vel.net.layer.util.concat # Concatenate observation and action
+      - name: vel.net.layer.mlp
+        hidden_layers: [64, 64]
+        activation: 'tanh'
+
+
+reinforcer:
+  name: vel.rl.reinforcer.buffered_off_policy_iteration_reinforcer
+
+  env_roller:
+    name: vel.rl.env_roller.transition_replay_env_roller
+
+    replay_buffer:
+      name: vel.rl.buffer.circular_replay_buffer
+
+      buffer_capacity: 1_000_000
+      buffer_initial_size: 2_000
+
+    normalize_returns: true
+    discount_factor: 0.99
+
+  rollout_steps: 2
+  training_steps: 64
+
+  parallel_envs: 1
+
+
+optimizer:
+  name: vel.optimizer.adam
+  # OpenAI has two different optimizers optimizing each network separately.
+  # As far as I know it should be equivalent to optimizing two separate networks together with a sum of loss functions
+  lr: 1.0e-3
+  weight_decay: 0.0
+  epsilon: 1.0e-4
+  parameter_groups:
+    actor:
+      lr: 1.0e-4
+    critic:
+      lr: 1.0e-3
+
+
+commands:
+  train:
+    name: vel.rl.command.rl_train_command
+    total_frames: 1.0e6
+    batches_per_epoch: 1000
+
+  record:
+    name: vel.rl.command.record_movie_command
+    takes: 10
+    videoname: 'half_cheetah_vid_{:04}.avi'
+
+  evaluate:
+    name: vel.rl.command.evaluate_env_command
+    takes: 100
+    frame_history: 4

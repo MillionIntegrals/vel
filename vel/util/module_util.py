@@ -38,7 +38,8 @@ def module_broadcast(m, broadcast_fn, *args, **kwargs):
 
 def set_train_mode(module):
     # Only fix ones which we don't want to "train"
-    if hasattr(module, 'running_mean') and (getattr(module, 'bn_freeze', False) or not getattr(module, 'trainable', True)):
+    if hasattr(module, 'running_mean') and (getattr(module, 'bn_freeze', False) or
+                                            not getattr(module, 'trainable', True)):
         module.eval()
     elif getattr(module, 'drop_freeze', False) and hasattr(module, 'p') and ('drop' in type(module).__name__.lower()):
         module.eval()
@@ -80,3 +81,22 @@ def chain_params(p):
 def to_parameter_groups(layer_groups):
     """ Convert from list of layer groups into list of parameter settings for an optimizer """
     return [{'params': chain_params(x)} for x in layer_groups]
+
+
+def module_list_to_param_list(module_list):
+    """ Conver a list of pytorch modules into a list of parameters """
+    return it.chain.from_iterable(m.parameters() for m in module_list)
+
+
+def optimizer_parameter_helper(parameters, parameter_dict):
+    """ Helper function for creating layer group optimizer instances """
+    out_dict = parameter_dict.copy()
+
+    for parameter, value in parameter_dict.items():
+        if isinstance(value, collections.Sequence):
+            for idx, this_value in enumerate(value):
+                parameters[idx][parameter] = this_value
+
+            out_dict[parameter] = value[0]
+
+    return out_dict

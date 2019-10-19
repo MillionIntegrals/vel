@@ -100,7 +100,8 @@ class Trajectories(Rollout):
     transition_tensors - tensors that have a row (multidimensional) per each transition. E.g. state, reward, done
     rollout_tensors - tensors that have a row (multidimensional) per whole rollout. E.g. final_value, initial rnn state
     """
-    def __init__(self, num_steps, num_envs, environment_information, transition_tensors, rollout_tensors, extra_data=None):
+    def __init__(self, num_steps, num_envs, environment_information, transition_tensors, rollout_tensors,
+                 extra_data=None):
         self.num_steps = num_steps
         self.num_envs = num_envs
         self.environment_information = environment_information
@@ -111,11 +112,15 @@ class Trajectories(Rollout):
     def to_transitions(self) -> 'Transitions':
         """ Convert given rollout to Transitions """
         # No need to propagate 'rollout_tensors' as they won't mean anything
+
+        if self.environment_information is not None:
+            env_info = [ei for l in self.environment_information for ei in l]
+        else:
+            env_info = None
+
         return Transitions(
             size=self.num_steps * self.num_envs,
-            environment_information=
-                [ei for l in self.environment_information for ei in l]
-                if self.environment_information is not None else None,
+            environment_information=env_info,
             transition_tensors={
                 name: tensor_util.merge_first_two_dims(t) for name, t in self.transition_tensors.items()
             },
@@ -171,7 +176,7 @@ class Trajectories(Rollout):
         """ Number of frames in rollout """
         return self.num_steps * self.num_envs
 
-    def to_device(self, device, non_blocking=True):
+    def to_device(self, device, non_blocking=False):
         """ Move a rollout to a selected device """
         return Trajectories(
             num_steps=self.num_steps,

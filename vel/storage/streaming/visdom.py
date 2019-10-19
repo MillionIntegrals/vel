@@ -29,14 +29,14 @@ class VisdomStreaming(Callback):
             first_epoch=epoch_info.global_epoch_idx == 1
         )
 
-    def on_batch_end(self, batch_info):
+    def on_batch_end(self, batch_info, dataset=None):
         """ Stream LR to visdom """
         if self.settings.stream_lr:
             iteration_idx = (
-                    float(batch_info.epoch_number) +
-                    float(batch_info.batch_number) / batch_info.batches_per_epoch
+                float(batch_info.epoch_number) +
+                float(batch_info.batch_number) / batch_info.batches_per_epoch
             )
-            
+
             lr = batch_info.optimizer.param_groups[-1]['lr']
 
             metrics_df = pd.DataFrame([lr], index=[iteration_idx], columns=['lr'])

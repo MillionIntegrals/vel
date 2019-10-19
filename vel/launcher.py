@@ -3,8 +3,8 @@ import argparse
 import multiprocessing
 import sys
 
-from vel.internals.model_config import ModelConfig
-from vel.internals.parser import Parser
+from vel.api.model_config import ModelConfig
+from vel.internal.parser import Parser
 
 
 def main():
@@ -13,16 +13,18 @@ def main():
 
     parser.add_argument('config', metavar='FILENAME', help='Configuration file for the run')
     parser.add_argument('command', metavar='COMMAND', help='A command to run')
-    parser.add_argument('varargs', nargs='*', metavar='VARARGS', help='Extra options to the command')
+    parser.add_argument('varargs', nargs='*', default=[], metavar='VARARGS', help='Extra options to the command')
     parser.add_argument('-r', '--run_number', type=int, default=0, help="A run number")
     parser.add_argument('-d', '--device', default='cuda', help="A device to run the model on")
     parser.add_argument('-s', '--seed', type=int, default=None, help="Random seed for the project")
+    parser.add_argument('-t', '--tag', type=str, default=None, help="String tag for a given run")
+    parser.add_argument('--werr', action='store_true', default=False, help="Convert warnings to errors")
     parser.add_argument(
         '-p', '--param', type=str, metavar='NAME=VALUE', action='append', default=[],
         help="Configuration parameters"
     )
     parser.add_argument(
-        '--continue', action='store_true', default=False, help="Continue previously started learning process"
+        '--resume', action='store_true', default=False, help="Resume previously started learning process"
     )
     parser.add_argument(
         '--profile', type=str, default=None, help="Profiler output"
@@ -30,9 +32,14 @@ def main():
 
     args = parser.parse_args()
 
+    if args.werr:
+        import warnings
+        warnings.filterwarnings('error', module='vel.*')
+        warnings.filterwarnings('error', module='torch\\..*')
+
     model_config = ModelConfig.from_file(
-        args.config, args.run_number, continue_training=getattr(args, 'continue'), device=args.device, seed=args.seed,
-        params={k: v for (k, v) in (Parser.parse_equality(eq) for eq in args.param)}
+        args.config, args.run_number, resume_training=args.resume, device=args.device, seed=args.seed,
+        parameters={k: v for (k, v) in (Parser.parse_equality(eq) for eq in args.param)}, tag=args.tag
     )
 
     if model_config.project_dir not in sys.path:

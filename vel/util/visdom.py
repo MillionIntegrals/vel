@@ -118,4 +118,3 @@ def visdom_append_metrics(vis, metrics, first_epoch=False):
                     },
                     update=update
                 )
-

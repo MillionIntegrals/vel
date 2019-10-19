@@ -1,3 +1,5 @@
+import typing
+
 from .info import EpochInfo, BatchInfo, TrainingInfo
 
 
@@ -38,27 +40,15 @@ class Callback:
         """
         pass
 
-    def on_batch_begin(self, batch_info: BatchInfo) -> None:
+    def on_batch_begin(self, batch_info: BatchInfo, dataset: typing.Optional[str] = None) -> None:
         """
         Runs for each batch before batch is evaluated
         """
         pass
 
-    def on_batch_end(self, batch_info: BatchInfo) -> None:
+    def on_batch_end(self, batch_info: BatchInfo, dataset: typing.Optional[str] = None) -> None:
         """
         Runs for each batch after batch is evaluated
-        """
-        pass
-
-    def on_validation_batch_begin(self, batch_info: BatchInfo) -> None:
-        """
-        Supervised learning only - runs before validation batch
-        """
-        pass
-
-    def on_validation_batch_end(self, batch_info: BatchInfo) -> None:
-        """
-        Supervised learning only - runs after validation batch
         """
         pass
 

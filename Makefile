@@ -1,3 +1,7 @@
+.PHONY: default test partest requpgrade lint
+
+default: test;
+
 tag := $(shell git symbolic-ref -q --short HEAD)
 
 docker-build:
@@ -31,3 +35,12 @@ serve-visdom:
 
 test:
 	pytest .
+
+requirements.txt: requirements.in
+	pip-compile requirements.in
+
+requpgrade:
+	pip-compile --upgrade
+
+lint:
+	flake8 vel

@@ -22,5 +22,3 @@ class CheckpointStrategy:
     def write_state_dict(self, hidden_state_dict): pass
 
     def restore(self, hidden_state_dict): pass
-
-

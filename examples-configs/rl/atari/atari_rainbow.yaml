@@ -1,0 +1,94 @@
+name: 'atari_rainbow'
+
+
+env:
+  name: vel.rl.env.classic_atari
+  game: !param game = 'BreakoutNoFrameskip-v4'
+  settings:
+    max_episode_frames: 108_000
+
+
+vec_env:
+  name: vel.rl.vecenv.dummy
+  frame_history: 4  # How many stacked frames go into a single observation
+
+
+model:
+  name: vel.rl.policy.rainbow
+
+  target_update_frequency: 32_000  # After how many batches to update the target network
+
+  discount_factor: 0.99
+
+  atoms: 51  # 51 bins for Distributional DQN
+  vmin: -10.0
+  vmax: 10.0
+
+  initial_std_dev: 0.5
+  factorized_noise: true
+
+  net:
+    name: vel.net.modular
+    layers:
+      - name: vel.net.layer.input.image_to_tensor
+      - name: vel.rl.layer.double_noisy_nature_cnn
+        # TODO(this should ideally be brought from level up)
+        initial_std_dev: 0.5
+        factorized_noise: true
+
+
+reinforcer:
+  name: vel.rl.reinforcer.buffered_off_policy_iteration_reinforcer
+
+  env_roller:
+    name: vel.rl.env_roller.transition_replay_env_roller
+
+    # N-Step Q-Learning
+    forward_steps: 3
+
+    replay_buffer:
+      name: vel.rl.buffer.prioritized_circular_replay_buffer
+
+      buffer_initial_size: 80_000 # How many samples we need in the buffer before we start using replay buffer
+      buffer_capacity: 1_000_000
+
+      # Because env has a framestack already built-in, save memory by encoding only last frames in the replay buffer
+      frame_stack_compensation: true
+      frame_history: 4  # How many stacked frames go into a single observation
+
+      priority_exponent: 0.5
+      priority_weight:
+        name: vel.function.linear
+        initial_value: 0.4
+        final_value: 1.0
+
+      priority_epsilon: 1.0e-6
+
+  rollout_steps: 4 # How many environment steps (per env) to perform per batch of training
+  training_steps: 32 # How many environment steps (per env) to perform per training round
+  parallel_envs: 1  # Roll out only one env in parallel, just like in DeepMind paper
+
+
+optimizer:
+  name: vel.optimizer.adam
+  lr: 6.25e-05
+  epsilon: 1.5e-4
+  max_grad_norm: 0.5
+
+
+commands:
+  train:
+    name: vel.rl.command.rl_train_command
+    total_frames: 1.1e7  # 11M
+    batches_per_epoch: 2500
+
+  record:
+    name: vel.rl.command.record_movie_command
+    takes: 10
+    videoname: 'atari_rainbow_vid_{:04}.avi'
+    fps: 15
+
+  evaluate:
+    name: vel.rl.command.evaluate_env_command
+    parallel_envs: 12
+    takes: 20

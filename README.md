@@ -1,22 +1,21 @@
-# Vel 0.3
+# Vel 0.4
 
 [![Build Status](https://travis-ci.org/MillionIntegrals/vel.svg?branch=master)](https://travis-ci.org/MillionIntegrals/vel)
 [![PyPI version](https://badge.fury.io/py/vel.svg)](https://badge.fury.io/py/vel)
 [![GitHub](https://img.shields.io/github/license/mashape/apistatus.svg)](https://github.com/MillionIntegrals/vel/blob/master/LICENSE)
-[![Gitter chat](https://badges.gitter.im/MillionIngegrals/vel.png)](https://gitter.im/deep-learning-vel)
 
 
 Bring **velocity** to deep-learning research.
 
 
 This project hosts a collection of **highly modular** deep learning components that are tested to be working well together.
-A simple yaml-based system ties these modules together declaratively using configuration files,
-but everything that can be defined using config files can be coded directly in the python script as well.
+A simple yaml-based system ties these modules declaratively using configuration files.
 
 
-This is still an early version and a hobby project so documentation is unfortunately nonexistent. I've tried to make the
-code as clear as possible, and provide many usage examples, but whenever there was a tradeoff to be made between 
-simplicity and modularity I've chosen modularity first and simplicity second.
+This is still an early version and a hobby project, so documentation is unfortunately nonexistent.
+I've made an effort to make the code clear and provide many usage examples,
+but whenever there was a tradeoff to be made between simplicity and modularity
+I've chosen modularity first and simplicity second. Therefore, high emphasis is made on interfaces between components.
 
 
 Having conducted a few research projects, I've gathered a small collection of repositories 
@@ -55,16 +54,14 @@ pip install -e .
 ```
 from the repository root directory.
 
-This project requires Python at least 3.6 and PyTorch 1.0.
+This project requires Python at least 3.6 and PyTorch 1.3.
 If you want to run YAML config examples, you'll also need a **project configuration file**
 `.velproject.yaml`. An example is included in this repository.
 
-Default project configuration writes
-metrics to MongoDB instance open on localhost port 27017 and Visdom instance 
-on localhost port 8097. 
+Default project configuration writes logs to the tensorboard directory `output/tensorboard`
+under the main directory. Outputs to visdom and mongodb are also implemented.
 
-If you don't want to run these services, there is included
-another example file `.velproject.dummy.yaml`
+If you don't want any logging, there is included another example file `.velproject.dummy.yaml`
 that writes training progress to the standard output only.
 To use it, just rename it to `.velproject.yaml`.
 
@@ -89,7 +86,7 @@ To use it, just rename it to `.velproject.yaml`.
 Several models are already implemented in the framework and have example config files
 that are ready to run and easy to modify for other similar usecases:
 
-- State-of-the art results on Cifar10 dataset using residual networks
+- Residual networks (resnets) trained on Cifar10 dataset replicating published performance
 - Cats vs dogs classification using transfer learning from a resnet34 model pretrained on 
   ImageNet
   
@@ -101,14 +98,14 @@ that are ready to run and easy to modify for other similar usecases:
   
 # Implemented models - Reinforcement learning
 
-- Continuous and discrete action spaces
-- Basic support for LSTM policies for A2C and PPO
-- Following published policy gradient reinforcement learning algorithms:
+- Support for continuous and discrete environment action spaces
+- Basic support for recurrent policies for A2C and PPO
+- Following policy gradient reinforcement learning algorithms:
     - Advantage Actor-Critic (A2C)
-    - Deep Deterministic Policy Gradient (DDPG)
     - Proximal Policy Optimization (PPO)
     - Trust Region Policy Optimization (TRPO)
     - Actor-Critic with Experience Replay (ACER)
+    - Deep Deterministic Policy Gradient (DDPG)
 - Deep Q-Learning (DQN) as described by DeepMind in their Nature publication with following 
   improvements:
     - Double DQN
@@ -118,6 +115,14 @@ that are ready to run and easy to modify for other similar usecases:
     - Distributional Q-Learning
     - Noisy Networks for Exploration
     - Rainbow (combination of the above)
+    
+# Implemented models - Unsupervised learning
+
+- A simple AutoEncoder (AE) with example on MNIST dataset.
+- Latent variable models:
+    - Variational AutoEncoders (VAE)
+    - Importance Weighted AutoEncoder (IWAE)
+    - Vector-Quantised Variational AutoEncoder (VQ-VAE)
 
 
 # Examples
@@ -128,14 +133,14 @@ Most of the examples for this framework are defined using config files in the
 For example, to run the A2C algorithm on a Breakout atari environment, simply invoke:
 
 ```
-python -m vel.launcher examples-configs/rl/atari/a2c/breakout_a2c.yaml train
+python -m vel.launcher examples-configs/rl/atari/atari_a2c.yaml train
 ```
 
 If you install the library locally, you'll have a special wrapper created
 that will invoke the launcher for you. Then, above becomes:
 
 ```
-vel examples-configs/rl/atari/a2c/breakout_a2c.yaml train
+vel examples-configs/rl/atari/atari_a2c.yaml train
 ```
 
 General command line interface of the launcher is:
@@ -151,112 +156,6 @@ If you prefer to use the library from inside your scripts, take a look at the
 `examples-scripts` directory. From time to time I'll be putting some examples in there as
 well. Scripts generally don't require any MongoDB or Visdom setup, so they can be run straight
 away in any setup, but their output will be less rich and less informative.
-
-Here is an example script running the same setup as a config file from above:
-
-```python
-import torch
-import torch.optim as optim
-
-from vel.rl.metrics import EpisodeRewardMetric
-from vel.storage.streaming.stdout import StdoutStreaming
-from vel.util.random import set_seed
-
-from vel.rl.env.classic_atari import ClassicAtariEnv
-from vel.rl.vecenv.subproc import SubprocVecEnvWrapper
-
-from vel.modules.input.image_to_tensor import ImageToTensorFactory
-from vel.rl.models.stochastic_policy_model import StochasticPolicyModelFactory
-from vel.rl.models.backbone.nature_cnn import NatureCnnFactory
-
-
-from vel.rl.reinforcers.on_policy_iteration_reinforcer import (
-    OnPolicyIterationReinforcer, OnPolicyIterationReinforcerSettings
-)
-
-from vel.rl.algo.policy_gradient.a2c import A2CPolicyGradient
-from vel.rl.env_roller.step_env_roller import StepEnvRoller
-
-from vel.api.info import TrainingInfo, EpochInfo
-
-
-def breakout_a2c():
-    device = torch.device('cuda:0')
-    seed = 1001
-
-    # Set random seed in python std lib, numpy and pytorch
-    set_seed(seed)
-
-    # Create 16 environments evaluated in parallel in sub processess with all usual DeepMind wrappers
-    # These are just helper functions for that
-    vec_env = SubprocVecEnvWrapper(
-        ClassicAtariEnv('BreakoutNoFrameskip-v4'), frame_history=4
-    ).instantiate(parallel_envs=16, seed=seed)
-
-    # Again, use a helper to create a model
-    # But because model is owned by the reinforcer, model should not be accessed using this variable
-    # but from reinforcer.model property
-    model = StochasticPolicyModelFactory(
-        input_block=ImageToTensorFactory(),
-        backbone=NatureCnnFactory(input_width=84, input_height=84, input_channels=4)
-    ).instantiate(action_space=vec_env.action_space)
-
-    # Reinforcer - an object managing the learning process
-    reinforcer = OnPolicyIterationReinforcer(
-        device=device,
-        settings=OnPolicyIterationReinforcerSettings(
-            batch_size=256,
-            number_of_steps=5,
-        ),
-        model=model,
-        algo=A2CPolicyGradient(
-            entropy_coefficient=0.01,
-            value_coefficient=0.5,
-            max_grad_norm=0.5,
-            discount_factor=0.99,
-        ),
-        env_roller=StepEnvRoller(
-            environment=vec_env,
-            device=device,
-        )
-    )
-
-    # Model optimizer
-    optimizer = optim.RMSprop(reinforcer.model.parameters(), lr=7.0e-4, eps=1e-3)
-
-    # Overall information store for training information
-    training_info = TrainingInfo(
-        metrics=[
-            EpisodeRewardMetric('episode_rewards'),  # Calculate average reward from episode
-        ],
-        callbacks=[StdoutStreaming()]  # Print live metrics every epoch to standard output
-    )
-
-    # A bit of training initialization bookkeeping...
-    training_info.initialize()
-    reinforcer.initialize_training(training_info)
-    training_info.on_train_begin()
-
-    # Let's make 100 batches per epoch to average metrics nicely
-    num_epochs = int(1.1e7 / (5 * 16) / 100)
-
-    # Normal handrolled training loop
-    for i in range(1, num_epochs+1):
-        epoch_info = EpochInfo(
-            training_info=training_info,
-            global_epoch_idx=i,
-            batches_per_epoch=100,
-            optimizer=optimizer
-        )
-
-        reinforcer.train_epoch(epoch_info)
-
-    training_info.on_train_end()
-
-
-if __name__ == '__main__':
-    breakout_a2c()
-```
 
 # Docker
 
@@ -307,17 +206,66 @@ Very likely to be included:
 
 
 Possible to be included:
-- Popart reward normalization
-- Parameter Space Noise for Exploration
-- Hindsight experience replay
 - Generative adversarial networks
 
+For version 0.5 I'll again be looking to expand widely on the spectrum of available models in the framework,
+as well as I'll try to support **multi-gpu** training by data parallelism.
 
-Code quality:
-- Rename models to policies
-- Force dictionary inputs and outputs for policies
-- Factor action noise back into the policy
-- Use linter as a part of the build process
+Work in progress roadmap:
+
+- Popart reward normalization
+- PixelCNN
+- MADE: Masked Autoencoder for Distribution Estimation
+- Variational AutoEncoder with Inverse Autoregressive Flow
+
+
+# Directories
+
+Below I'll list brief explanation about contents of main top-level directories.
+
+- `docs` - Few markdown documents about the framework
+- `examples-configs` - Ready to run configs with tried and tested models, usually heavily inspired by existing
+ literature.
+- `examples-notebooks` - A few examples of how to interact with `vel` from the level of IPython notebook
+- `vel` - Root for the Python source of the package
+  - `vel.api` - Interfaces and base classes used all over the codebase. To be used in source code only and not 
+    referenced from config files.
+  - `vel.callback` - Definitions of callbacks that can be used in the training process. Can be referenced both by code
+  and by the config files.
+  - `vel.command` - Commands that can be used in your configuration files, and there isn't much need to refer to
+  them from code.
+  - `vel.data` - Various classes for handling data sources and data transformations. Referenced both by source code
+   and config files.
+  - `vel.function` - Interfaces for creating various functions/interpolators, to be refereced by config files.
+  - `vel.internal` - Functions and classes to be only used by `vel` internally, and not by by user code nor configs.
+  - `vel.metric` - Code for tracking metrics during training of your models. To be used by both code and configs.
+  - `vel.model` - Definition of models, which is kind of an end-package that references all other packages. Models
+  contain most other parts of the pipeline and define a training procedure.
+  - `vel.module` - Various useful definitions of PyTorch modules, to be used when defining your own `models` and
+  `layers`.
+  - `vel.net` - "Network" module that may be referenced by a model to define neural network architecture used.
+      - `vel.net.layer` - Modular layer system for defining networks declaratively in configuration files.
+  - `vel.notebook` - Utilities for interfacing with `vel` using IPython notebooks
+  - `vel.openai` - Imported parts of the codebase of `openai/baselines` that I didn't want to bring as a package
+  dependency. To be referenced in code mostly.
+  - `vel.optimizer` - Various implementations of deep learning optimizers. To be referenced mostly by scripts.
+  - `vel.rl` - Meta package for everything related to Reinforcement Learning
+    - `vel.rl.api` - Interfaces and base classes to be used for Reinforcement Learning models and other classes.
+    - `vel.rl.buffer` - All classes relating to experience replay and experience buffers
+    - `vel.rl.command` - Commands used for RL training
+    - `vel.rl.env` - Basic reinforcement learning environments, mostly based on OpenAI gym
+    - `vel.rl.env_roller` - Classes for generating environment rollouts
+    - `vel.rl.layer` - Layers desined especially for RL
+    - `vel.rl.module` - PyTorch modules designed for RL
+    - `vel.rl.policy` - Equivalent of `vel.model` for RL
+    - `vel.rl.reinforcer` - Reinforcer manages RL training, and corresponds to `Trainer` in Supervised Learning
+    - `vel.rl.vecenv` - Utilities for vectorizing environments and stepping multiple environments at the same time
+  - `vel.scheduler` - Classes helping to set up learning rate schedules for the optimizers. To be referenced mostly
+  by scripts.
+  - `vel.storage` - Everything about persisting models and metrics. To be referenced mostly by configuration files.
+  - `vel.train` - Utilities for defining more generic training loops of models. To be referenced in both code and
+  config.
+  - `vel.util` - Collection of various utility functions to be used by all other modules.
 
 
 # Citing

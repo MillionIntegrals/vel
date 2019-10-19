@@ -2,10 +2,12 @@ import torch
 import numpy as np
 
 from vel.api import BatchInfo
+from vel.openai.baselines.common.vec_env import VecEnv
 from vel.rl.api import (
-    Trajectories, Rollout, ReplayEnvRollerBase, ReplayEnvRollerFactoryBase, ReplayBuffer, ReplayBufferFactory, RlModel
+    Trajectories, Rollout, ReplayEnvRollerBase, ReplayEnvRollerFactoryBase, ReplayBuffer, ReplayBufferFactory, RlPolicy
 )
-from vel.util.tensor_accumulator import TensorAccumulator
+from vel.rl.util.actor import PolicyActor
+from vel.util.tensor_util import TensorAccumulator
 
 
 class TrajectoryReplayEnvRoller(ReplayEnvRollerBase):
@@ -15,10 +17,13 @@ class TrajectoryReplayEnvRoller(ReplayEnvRollerBase):
     Samples trajectories from the replay buffer (consecutive series of frames)
     """
 
-    def __init__(self, environment, device, replay_buffer: ReplayBuffer):
+    def __init__(self, environment: VecEnv, policy: RlPolicy, device: torch.device, replay_buffer: ReplayBuffer):
         self._environment = environment
         self.device = device
         self.replay_buffer = replay_buffer
+
+        self.actor = PolicyActor(self.environment.num_envs, policy, device)
+        assert not self.actor.is_stateful, "Does not support stateful policies"
 
         # Initial observation
         self.last_observation_cpu = torch.from_numpy(self.environment.reset()).clone()
@@ -30,15 +35,14 @@ class TrajectoryReplayEnvRoller(ReplayEnvRollerBase):
         return self._environment
 
     @torch.no_grad()
-    def rollout(self, batch_info: BatchInfo, model: RlModel, number_of_steps: int) -> Rollout:
+    def rollout(self, batch_info: BatchInfo,  number_of_steps: int) -> Rollout:
         """ Calculate env rollout """
-        assert not model.is_recurrent, "Replay env roller does not support recurrent models"
-
+        self.actor.eval()
         accumulator = TensorAccumulator()
         episode_information = []  # List of dictionaries with episode information
 
         for step_idx in range(number_of_steps):
-            step = model.step(self.last_observation)
+            step = self.actor.act(self.last_observation, deterministic=False)
 
             replay_extra_information = {}
 
@@ -70,6 +74,8 @@ class TrajectoryReplayEnvRoller(ReplayEnvRollerBase):
             dones_tensor = torch.from_numpy(new_dones.astype(np.float32)).clone()
             accumulator.add('dones', dones_tensor)
 
+            self.actor.reset_states(dones_tensor)
+
             self.last_observation_cpu = torch.from_numpy(new_obs).clone()
             self.last_observation = self.last_observation_cpu.to(self.device)
             accumulator.add('rewards', torch.from_numpy(new_rewards.astype(np.float32)).clone())
@@ -78,26 +84,31 @@ class TrajectoryReplayEnvRoller(ReplayEnvRollerBase):
 
         accumulated_tensors = accumulator.result()
 
+        final_obs = self.actor.act(self.last_observation.to(self.device), advance_state=False)
+
+        rollout_tensors = {}
+
+        for key, value in final_obs.items():
+            rollout_tensors[f"final_{key}"] = value.cpu()
+
         return Trajectories(
             num_steps=accumulated_tensors['observations'].size(0),
             num_envs=accumulated_tensors['observations'].size(1),
             environment_information=episode_information,
             transition_tensors=accumulated_tensors,
-            rollout_tensors={
-                'final_values': model.value(self.last_observation).cpu()
-            }
+            rollout_tensors=rollout_tensors
         )
 
-    def sample(self, batch_info: BatchInfo, model: RlModel, number_of_steps: int) -> Rollout:
+    def sample(self, batch_info: BatchInfo, number_of_steps: int) -> Rollout:
         """ Sample experience from replay buffer and return a batch """
         # Sample trajectories
         rollout = self.replay_buffer.sample_trajectories(rollout_length=number_of_steps, batch_info=batch_info)
 
         last_observations = rollout.transition_tensors['observations_next'][-1].to(self.device)
-        final_values = model.value(last_observations).cpu()
+        final_values = self.actor.value(last_observations).cpu()
 
         # Add 'final_values' to the rollout
-        rollout.rollout_tensors['final_values'] = final_values
+        rollout.rollout_tensors['final.values'] = final_values
 
         return rollout
 
@@ -116,11 +127,12 @@ class TrajectoryReplayEnvRollerFactory(ReplayEnvRollerFactoryBase):
     def __init__(self, replay_buffer_factory: ReplayBufferFactory):
         self.replay_buffer_factory = replay_buffer_factory
 
-    def instantiate(self, environment, device):
+    def instantiate(self, environment, policy, device):
         replay_buffer = self.replay_buffer_factory.instantiate(environment)
 
         return TrajectoryReplayEnvRoller(
             environment=environment,
+            policy=policy,
             device=device,
             replay_buffer=replay_buffer
         )

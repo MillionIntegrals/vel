@@ -5,7 +5,7 @@ import typing
 
 import torch
 
-from vel.exceptions import VelException
+from vel.exception import VelException
 
 
 class TrainingHistory:
@@ -33,24 +33,18 @@ class TrainingInfo(abc.MutableMapping):
     Data dict is any extra information processes may want to store
     """
 
-    def __init__(self, start_epoch_idx=0, run_name: typing.Optional[str]=None, metrics=None, callbacks=None):
+    def __init__(self, start_epoch_idx=0, metrics=None, callbacks=None):
         self.data_dict = {}
 
         self.start_epoch_idx = start_epoch_idx
         self.metrics = metrics if metrics is not None else []
         self.callbacks = callbacks if callbacks is not None else []
-        self.run_name = run_name
         self.history = TrainingHistory()
-
-        self.optimizer_initial_state = None
 
     def restore(self, hidden_state):
         """ Restore any state from checkpoint - currently not implemented but possible to do so in the future """
         for callback in self.callbacks:
             callback.load_state_dict(self, hidden_state)
-
-        if 'optimizer' in hidden_state:
-            self.optimizer_initial_state = hidden_state['optimizer']
 
     def initialize(self):
         """
@@ -105,6 +99,15 @@ class EpochResultAccumulator:
         self._reset_metrics()
         self.metrics_by_name = {m.name: m for m in self.metrics}
 
+    def __contains__(self, metric):
+        if ':' in metric:
+            # TODO(jerry) There's got to be a better way to do it
+            metric_name = metric.split(':')[-1]
+        else:
+            metric_name = metric
+
+        return metric_name in self.metrics_by_name
+
     @torch.no_grad()
     def calculate(self, batch_info):
         """ Calculate metric values """
@@ -116,34 +119,28 @@ class EpochResultAccumulator:
         for m in self.metrics:
             m.reset()
 
-    def value(self):
-        """ Return current value of the metrics """
-        return {m.name: m.value() for m in self.metrics}
+    def value(self, dataset=None):
+        """ Return current dictionary value of the metrics """
+        from vel.metric import MetricKey
+        return {MetricKey(dataset, m.name, m.scope): m.value() for m in self.metrics}
 
     def intermediate_value(self, metric):
         """ Return an intermediate (inter-epoch) value of a metric """
         if ':' in metric:
+            # TODO(jerry) There's got to be a better way to do it
             metric_name = metric.split(':')[-1]
         else:
             metric_name = metric
 
         return self.metrics_by_name[metric_name].value()
 
-    def freeze_results(self, name=None):
-        new_results = self.value()
-
-        if name is None:
-            for key, value in new_results.items():
-                self.frozen_results[key] = value
-        else:
-            for key, value in new_results.items():
-                self.frozen_results[f'{name}:{key}'] = value
-
+    def freeze_results(self, dataset=None):
+        self.frozen_results.update(self.value(dataset))
         self._reset_metrics()
 
     def result(self):
         """ Return the epoch result """
-        final_result = {'epoch_idx': self.global_epoch_idx}
+        final_result = {}
 
         for key, value in self.frozen_results.items():
             final_result[key] = value
@@ -162,7 +159,8 @@ class EpochInfo(abc.MutableMapping):
     """
 
     def __init__(self, training_info: TrainingInfo, global_epoch_idx: int, batches_per_epoch: int,
-                 optimizer: torch.optim.Optimizer=None, local_epoch_idx: int = None, callbacks: list=None):
+                 optimizer: typing.Optional[torch.optim.Optimizer] = None, local_epoch_idx: int = None,
+                 callbacks: typing.Optional[list] = None):
         self.training_info = training_info
         self.optimizer = optimizer
         self.batches_per_epoch = batches_per_epoch
@@ -259,28 +257,15 @@ class BatchInfo(abc.MutableMapping):
         self.batch_number = batch_number
         self.data_dict = {}
 
-    def on_batch_begin(self):
+    def on_batch_begin(self, dataset=None):
         """ Initialize batch processing """
         for callback in self.callbacks:
-            callback.on_batch_begin(self)
+            callback.on_batch_begin(self, dataset)
 
-    def on_batch_end(self):
+    def on_batch_end(self, dataset=None):
         """ Finalize batch processing """
         for callback in self.callbacks:
-            callback.on_batch_end(self)
-
-        # Even with all the experience replay, we count the single rollout as a single batch
-        self.epoch_info.result_accumulator.calculate(self)
-
-    def on_validation_batch_begin(self):
-        """ Initialize batch processing """
-        for callback in self.callbacks:
-            callback.on_validation_batch_begin(self)
-
-    def on_validation_batch_end(self):
-        """ Finalize batch processing """
-        for callback in self.callbacks:
-            callback.on_validation_batch_end(self)
+            callback.on_batch_end(self, dataset)
 
         # Even with all the experience replay, we count the single rollout as a single batch
         self.epoch_info.result_accumulator.calculate(self)
@@ -348,4 +333,4 @@ class BatchInfo(abc.MutableMapping):
         return item in self.data_dict
 
     def __repr__(self):
-        return f"[BatchInfo epoch:{self.epoch_info.global_epoch_idx} batch:{self.batch_number}/{self.batches_per_epoch}]"
+        return f"[BatchInfo epoch:{self.epoch_info.global_epoch_idx} batch:{self.batch_number}/{self.batches_per_epoch}]"  # noqa
