@@ -117,3 +117,6 @@ environment.yaml
 
 # Test cache
 /.pytest_cache
+
+# WANDB settings
+/wandb
