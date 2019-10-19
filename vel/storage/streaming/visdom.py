@@ -33,8 +33,8 @@ class VisdomStreaming(Callback):
         """ Stream LR to visdom """
         if self.settings.stream_lr:
             iteration_idx = (
-                    float(batch_info.epoch_number) +
-                    float(batch_info.batch_number) / batch_info.batches_per_epoch
+                float(batch_info.epoch_number) +
+                float(batch_info.batch_number) / batch_info.batches_per_epoch
             )
 
             lr = batch_info.optimizer.param_groups[-1]['lr']

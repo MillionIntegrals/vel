@@ -1,9 +1,22 @@
-import collections
+import attr
+import typing
 
 from vel.api import TrainingInfo
 
 
-MetricKey = collections.namedtuple('MetricKey', ['dataset', 'name', 'scope'])
+@attr.s(auto_attribs=True, frozen=True)
+class MetricKey:
+    """ Key for each metric """
+    name: str
+    scope: str
+    dataset: typing.Optional[str] = None
+
+    def format(self):
+        """ Format a metric key into a string """
+        if self.dataset is None:
+            return f"{self.scope}/{self.name}"
+        else:
+            return f"{self.dataset}:{self.scope}/{self.name}"
 
 
 class BaseMetric:
