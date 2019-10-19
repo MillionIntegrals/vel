@@ -1,9 +1,9 @@
 import typing
 
 import vel.api as api
-import vel.data as data
 import vel.train as train
 
+from vel.data.loader import DatasetLoader
 from vel.metric.samples_per_sec import SamplesPerSec
 from vel.callback.time_tracker import TimeTracker
 from vel.callback.sample_tracker import SampleTracker
@@ -14,7 +14,7 @@ class SimpleTrainCommand:
 
     def __init__(self, epochs: int, model_config: api.ModelConfig, model_factory: api.ModuleFactory,
                  optimizer_factory: api.OptimizerFactory, scheduler_factory: typing.Optional[api.SchedulerFactory],
-                 loader: data.DatasetLoader, storage: api.Storage,
+                 loader: DatasetLoader, storage: api.Storage,
                  callbacks: typing.Optional[typing.List[api.Callback]]):
         self.epochs = epochs
         self.model_config = model_config
