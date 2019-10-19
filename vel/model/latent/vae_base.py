@@ -129,8 +129,6 @@ class VaeBase(GradientModel):
         """
         assert num_posterior_samples >= 1, "Need at least one posterior sample"
 
-        buffer = []
-
         encoded = self.encoder_network(sample)
         z_dist = self.encoder_distribution(encoded)
         prior = self.prior_distribution()
@@ -138,24 +136,25 @@ class VaeBase(GradientModel):
         if self.analytical_kl_div:
             kl_divergence = dist.kl_divergence(z_dist, prior)
 
-        for i in range(num_posterior_samples):
-            z = z_dist.rsample()
-            decoded = self.decoder_network(z)
-            x_dist = self.decoder_distribution(decoded)
+        bs = encoded.size(0)
+        z = z_dist.rsample((num_posterior_samples,))
 
-            if not self.analytical_kl_div:
-                lpz = prior.log_prob(z)
-                lqzx = z_dist.log_prob(z)
-                kl_divergence = -lpz + lqzx
+        # Reshape, decode, reshape
+        z_reshaped = z.view([bs * num_posterior_samples] + list(z.shape[2:]))
+        decoded = self.decoder_network(z_reshaped)
+        decoded = decoded.view([num_posterior_samples, bs] + list(decoded.shape[1:]))
 
-            likelihood = x_dist.log_prob(sample)
-            elbo = likelihood - kl_divergence
+        x_dist = self.decoder_distribution(decoded)
 
-            buffer.append(elbo)
+        if not self.analytical_kl_div:
+            lpz = prior.log_prob(z)
+            lqzx = z_dist.log_prob(z)
+            kl_divergence = -lpz + lqzx
 
-        averaged = self.log_mean_exp(torch.stack(buffer, dim=-1), dim=-1)
+        likelihood = x_dist.log_prob(sample)
+        elbo = likelihood - kl_divergence
 
-        return -averaged
+        return -self.log_mean_exp(elbo, dim=0)
 
     ####################################################################################################################
     # Utility methods

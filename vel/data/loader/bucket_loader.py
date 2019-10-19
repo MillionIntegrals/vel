@@ -8,12 +8,12 @@ class BucketLoader:
     """ Loads sequence data from a source and batches together examples of similar length """
 
     def __init__(self, model_config: ModelConfig, source: LanguageSource, batch_size: int):
-        self.source = source
+        self._source = source
         self.batch_size = batch_size
 
-        if self.source.test is None:
+        if self._source.test is None:
             self.train_loader, self.val_loader = data.BucketIterator.splits(
-                (self.source.train, self.source.validation),
+                (self._source.train, self._source.validation),
                 batch_size=batch_size,
                 device=model_config.torch_device(),
                 shuffle=True
@@ -21,17 +21,17 @@ class BucketLoader:
             self.test_loader = None
         else:
             self.train_loader, self.val_loader, self.test_loader = data.BucketIterator.splits(
-                (self.source.train, self.source.validation, self.source.test),
+                (self._source.train, self._source.validation, self._source.test),
                 batch_size=batch_size,
                 device=model_config.torch_device(),
                 shuffle=True
             )
 
-        self.train_loader = IteratorDictWrapper(self.train_loader, self.source.mapping)
-        self.val_loader = IteratorDictWrapper(self.val_loader, self.source.mapping)
+        self.train_loader = IteratorDictWrapper(self.train_loader, self._source.mapping)
+        self.val_loader = IteratorDictWrapper(self.val_loader, self._source.mapping)
 
         if self.test_loader:
-            self.test_loader = IteratorDictWrapper(self.test_loader, self.source.mapping)
+            self.test_loader = IteratorDictWrapper(self.test_loader, self._source.mapping)
 
         self._loaders = {
             'train': self.train_loader,
@@ -49,6 +49,11 @@ class BucketLoader:
         return self._loaders[item]
 
     @property
+    def source(self):
+        """ Return the source for this loader """
+        return self._source
+
+    @property
     def loader(self):
         """ Get a dict of loaders """
         return self._loaders
@@ -61,7 +66,7 @@ class BucketLoader:
     @property
     def alphabet_size(self):
         """ Size of the text alphabet """
-        return self.source.metadata.get('alphabet_size', 0)
+        return self._source.metadata.get('alphabet_size', 0)
 
 
 def create(model_config: ModelConfig, source: LanguageSource, batch_size: int):

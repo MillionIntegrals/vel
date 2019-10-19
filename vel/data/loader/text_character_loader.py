@@ -81,18 +81,18 @@ class TextCharacterLoader:
     """ Loader for the text character data source """
 
     def __init__(self, source, sequence_length: int, batch_size: int):
-        self.source = source
+        self._source = source
         self.sequence_length = sequence_length
         self.batch_size = batch_size
-        self.alphabet = self.source.metadata['alphabet']
+        self.alphabet = self._source.metadata['alphabet']
 
-        self.train_loader = TextLoader(self.source.train, self.sequence_length, self.batch_size, len(self.alphabet))
-        self.val_loader = TextLoader(self.source.validation, self.sequence_length, self.batch_size, len(self.alphabet))
+        self.train_loader = TextLoader(self._source.train, self.sequence_length, self.batch_size, len(self.alphabet))
+        self.val_loader = TextLoader(self._source.validation, self.sequence_length, self.batch_size, len(self.alphabet))
 
-        if self.source.test is None:
+        if self._source.test is None:
             self.test_loader = None
         else:
-            self.test_loader = TextLoader(self.source.test, self.sequence_length, self.batch_size, len(self.alphabet))
+            self.test_loader = TextLoader(self._source.test, self.sequence_length, self.batch_size, len(self.alphabet))
 
         self._loaders = {
             'train': self.train_loader,
@@ -108,6 +108,11 @@ class TextCharacterLoader:
 
     def __getitem__(self, item):
         return self._loaders[item]
+
+    @property
+    def source(self):
+        """ Return source for this loader """
+        return self._source
 
     @property
     def alphabet_size(self):

@@ -1,7 +1,7 @@
 import matplotlib.pyplot as plt
 import numpy as np
 
-from vel.data import DatasetLoader
+from vel.data.loader import DatasetLoader
 
 
 class AugmentationVisualizationCommand:

@@ -7,7 +7,7 @@ source:
 
 
 loader:
-  name: vel.data.bucket_loader
+  name: vel.data.loader.bucket_loader
   batch_size: 32
 
 

@@ -18,7 +18,7 @@ source:
 
 
 loader:
-  name: vel.data.dataset_loader
+  name: vel.data.loader.dataset_loader
   batch_size: 128
 #  num_workers: 4
 #  pin_memory: true

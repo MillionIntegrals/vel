@@ -9,7 +9,7 @@ source:
 
 
 loader:
-  name: vel.data.text_character_loader
+  name: vel.data.loader.text_character_loader
   sequence_length: 128
   batch_size: 64
 

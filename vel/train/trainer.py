@@ -4,7 +4,7 @@ import torch.nn
 import tqdm
 
 from vel.api import OptimizedModel, TrainingInfo, EpochInfo, BatchInfo
-from vel.data import DatasetLoader
+from vel.data.loader import DatasetLoader
 
 from vel.util.tensor_util import to_device
 

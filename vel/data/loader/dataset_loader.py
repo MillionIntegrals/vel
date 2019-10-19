@@ -3,7 +3,7 @@ import torch.utils.data as data
 
 from vel.api import Source
 
-from .dataflow import DataFlow
+from vel.data.dataflow import DataFlow
 
 
 class DatasetLoader:
@@ -11,14 +11,14 @@ class DatasetLoader:
 
     def __init__(self, source: Source, batch_size: int, num_workers: int,
                  transformations: typing.Optional[list] = None, pin_memory=False):
-        self.source = source
+        self._source = source
         self.batch_size = batch_size
         self.num_workers = num_workers
         self.transformations = transformations
         self.pin_memory = pin_memory
 
         if transformations is not None:
-            self.transformed_source = DataFlow.transform(self.source, transformations)
+            self.transformed_source = DataFlow.transform(self._source, transformations)
         else:
             self.transformed_source = source
 
@@ -53,6 +53,11 @@ class DatasetLoader:
 
     def __getitem__(self, item):
         return self._loaders[item]
+
+    @property
+    def source(self):
+        """ Return the source for this loader """
+        return self.transformed_source
 
     @property
     def loader(self):

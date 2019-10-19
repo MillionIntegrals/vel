@@ -1,5 +1,5 @@
 from vel.api import TrainingInfo, EpochInfo, Model, VelOptimizer
-from vel.data import DatasetLoader
+from vel.data.loader import DatasetLoader
 
 from .trainer import Trainer
 

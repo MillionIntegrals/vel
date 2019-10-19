@@ -15,7 +15,7 @@ source:
   name: vel.data.source.vision.mnist
 
 loader:
-  name: vel.data.dataset_loader
+  name: vel.data.loader.dataset_loader
   batch_size: 128
   num_workers: 4
   pin_memory: true
@@ -43,3 +43,8 @@ commands:
   train:
     name: vel.command.train_command
     epochs: 3280
+
+  nll:
+    name: vel.command.latent.vae_nll
+    max_batch: 10_000
+    samples: !param samples = 10
