@@ -18,8 +18,8 @@ source:
 loader:
   name: vel.data.loader.dataset_loader
   batch_size: 256
-  num_workers: 4
-  pin_memory: true
+#  num_workers: 4
+#  pin_memory: true
 
   transformations:
     - name: vel.data.transformation.to_array
@@ -45,6 +45,7 @@ optimizer:
   name: vel.optimizer.radam
   lr: 1.0e-3
   eps: 1.0e-4
+  max_grad_norm: 1.0
 
 
 scheduler:

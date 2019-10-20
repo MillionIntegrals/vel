@@ -14,6 +14,7 @@ model:
 source:
   name: vel.data.source.vision.mnist
 
+
 loader:
   name: vel.data.loader.dataset_loader
   batch_size: 128
@@ -29,8 +30,9 @@ loader:
 
 optimizer:
   name: vel.optimizer.radam
-  lr: 1.0e-3
+  lr: 1.0e-2
   eps: 1.0e-4
+  max_grad_norm: 1.0
 
 
 scheduler:

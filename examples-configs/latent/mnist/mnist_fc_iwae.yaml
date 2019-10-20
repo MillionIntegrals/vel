@@ -32,7 +32,9 @@ loader:
 optimizer:
   name: vel.optimizer.radam
   lr: 1.0e-3
-  eps: 1.0e-4
+  eps: 1.0e-
+  max_grad_norm: 1.0
+
 
 
 scheduler:

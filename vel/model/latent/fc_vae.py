@@ -1,7 +1,10 @@
+import itertools as it
+
 import torch
 import torch.distributions as dist
 import torch.nn as nn
 import torch.nn.functional as F
+import torch.nn.init as init
 
 from vel.api import ModuleFactory
 from vel.module.layers import Flatten, Reshape
@@ -75,20 +78,19 @@ class FcVae(VaeBase):
         """ Sample from a decoder distribution - we ignore that since it's so weak in this case """
         return decoded
 
-# import torch.nn.init as init
-#     @staticmethod
-#     def _weight_initializer(tensor):
-#         init.xavier_uniform_(tensor.weight, gain=init.calculate_gain('tanh'))
-#         init.constant_(tensor.bias, 0.01)
-#
-#     def reset_weights(self):
-#         for m in it.chain(self.encoder, self.decoder):
-#             if isinstance(m, nn.Conv2d):
-#                 self._weight_initializer(m)
-#             elif isinstance(m, nn.ConvTranspose2d):
-#                 self._weight_initializer(m)
-#             elif isinstance(m, nn.Linear):
-#                 self._weight_initializer(m)
+    @staticmethod
+    def _weight_initializer(tensor):
+        init.xavier_uniform_(tensor.weight, gain=init.calculate_gain('tanh'))
+        init.constant_(tensor.bias, 0.01)
+
+    def reset_weights(self):
+        for m in it.chain(self.encoder, self.decoder):
+            if isinstance(m, nn.Conv2d):
+                self._weight_initializer(m)
+            elif isinstance(m, nn.ConvTranspose2d):
+                self._weight_initializer(m)
+            elif isinstance(m, nn.Linear):
+                self._weight_initializer(m)
 
 
 def create(img_rows, img_cols, img_channels, layers=None, representation_length=32,

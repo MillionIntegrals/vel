@@ -39,6 +39,9 @@ If that's not the case few bits of custom glue code should do the job.
 This repository is still in an early stage of that journey but it will grow
 as I'll be putting work into it.
 
+For up-to-date benchmarks, look here:
+[Benchmarks](docs/Benchmarks.md)
+
 
 # Blogposts
 
@@ -59,7 +62,7 @@ If you want to run YAML config examples, you'll also need a **project configurat
 `.velproject.yaml`. An example is included in this repository.
 
 Default project configuration writes logs to the tensorboard directory `output/tensorboard`
-under the main directory. Outputs to visdom and mongodb are also implemented.
+under the main directory. Output modules to visdom, mongodb and wandb are also implemented.
 
 If you don't want any logging, there is included another example file `.velproject.dummy.yaml`
 that writes training progress to the standard output only.
@@ -77,6 +80,7 @@ To use it, just rename it to `.velproject.yaml`.
   understand what exactly the model is doing for newcomers already comfortable with PyTorch. 
 - All state-of-the-art models should be implemented in the framework with accuracy
   matching published results.
+  For up-to-date benchmarks, look here: [Benchmarks](docs/Benchmarks.md)
 - All common deep learning workflows should be fast to implement, while 
   uncommon ones should be possible, at least as far as PyTorch allows.
   
