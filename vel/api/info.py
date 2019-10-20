@@ -122,7 +122,7 @@ class EpochResultAccumulator:
     def value(self, dataset=None):
         """ Return current dictionary value of the metrics """
         from vel.metric import MetricKey
-        return {MetricKey(dataset, m.name, m.scope): m.value() for m in self.metrics}
+        return {MetricKey(m.name, m.scope, dataset): m.value() for m in self.metrics}
 
     def intermediate_value(self, metric):
         """ Return an intermediate (inter-epoch) value of a metric """
