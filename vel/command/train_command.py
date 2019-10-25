@@ -37,7 +37,7 @@ class SimpleTrainCommand:
         # Check if training was already started and potentially continue where we left off
         training_info = self.start_training(trainer, optimizer)
 
-        training_info.on_train_begin()
+        training_info.on_train_begin(trainer.model)
 
         for global_epoch_idx in range(training_info.start_epoch_idx + 1, self.epochs + 1):
             epoch_info = api.EpochInfo(

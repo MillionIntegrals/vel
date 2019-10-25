@@ -54,13 +54,13 @@ class TrainingInfo(abc.MutableMapping):
         for callback in self.callbacks:
             callback.on_initialization(self)
 
-    def on_train_begin(self):
+    def on_train_begin(self, model):
         """
         Beginning of a training process - is run every time a training process is started, even if it's restarted from
         a checkpoint.
         """
         for callback in self.callbacks:
-            callback.on_train_begin(self)
+            callback.on_train_begin(self, model)
 
     def on_train_end(self):
         """

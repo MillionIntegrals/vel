@@ -213,12 +213,18 @@ class ModelConfig:
         return os.path.join(self.project_dir, self.output_directory_name, *args)
 
     def meta_dir(self, *args) -> str:
-        """ Return directory for openai output files for this model """
+        """ Return directory for metadata output files for this model """
         return self.output_dir('meta', self.run_name, *args)
 
     def data_dir(self, *args) -> str:
         """ Directory where to store data """
         return os.path.normpath(os.path.join(self.project_dir, 'data', *args))
+
+    def model_output_dir(self, *args):
+        """ Return an output directory of given kind for given kind only """
+        fname = os.path.join(self.project_dir, self.output_directory_name, args[0], self.run_name, *(args[1:]))
+        os.makedirs(os.path.dirname(fname), exist_ok=True)
+        return fname
 
     def checkpoint_dir(self, *args) -> str:
         """ Return checkpoint directory for this model """
@@ -227,7 +233,6 @@ class ModelConfig:
     def openai_dir(self, *args) -> str:
         """ Return directory for openai output files for this model """
         return self.output_dir('openai', self.run_name, *args)
-
     ####################################################################################################################
     # NAME UTILITIES
     @property

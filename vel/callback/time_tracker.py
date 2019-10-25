@@ -1,6 +1,6 @@
 import time
 
-from vel.api import BatchInfo, TrainingInfo, Callback
+from vel.api import BatchInfo, TrainingInfo, Callback, Model
 
 
 class TimeTracker(Callback):
@@ -12,7 +12,7 @@ class TimeTracker(Callback):
     def on_initialization(self, training_info: TrainingInfo):
         training_info['time'] = 0.0
 
-    def on_train_begin(self, training_info: TrainingInfo):
+    def on_train_begin(self, training_info: TrainingInfo, model: Model):
         self.start_time = time.time()
 
     def on_batch_end(self, batch_info: BatchInfo, dataset=None):

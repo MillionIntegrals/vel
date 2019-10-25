@@ -135,6 +135,10 @@ class ClassicStorage(Storage):
         """ Return checkpoint filename for this model - hidden state """
         return self.model_config.checkpoint_dir('checkpoint_hidden_{:08}.data'.format(epoch_idx))
 
+    def last_checkpoint_filename(self) -> str:
+        """ return checkpoint filename for the last saved checkpoint """
+        return self.checkpoint_filename(self.last_epoch_idx())
+
     ####################################################################################################################
     # Internal interface
     def _persisted_last_epoch(self) -> int:

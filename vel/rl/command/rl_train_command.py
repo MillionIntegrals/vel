@@ -70,7 +70,7 @@ class RlTrainCommand:
         training_info = self.start_training(reinforcer, optimizer)
 
         reinforcer.initialize_training(training_info)
-        training_info.on_train_begin()
+        training_info.on_train_begin(reinforcer.policy)
 
         global_epoch_idx = training_info.start_epoch_idx + 1
 

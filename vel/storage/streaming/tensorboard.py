@@ -1,7 +1,7 @@
 import os
 import shutil
 
-from vel.api import ModelConfig, Callback, TrainingInfo, EpochInfo
+from vel.api import ModelConfig, Callback, TrainingInfo, EpochInfo, Model
 from torch.utils.tensorboard import SummaryWriter
 
 
@@ -12,7 +12,7 @@ class TensorboardStreaming(Callback):
         self.model_config = model_config
         self.logdir = self.model_config.output_dir('tensorboard', self.model_config.run_name)
 
-    def on_train_begin(self, training_info: TrainingInfo) -> None:
+    def on_train_begin(self, training_info: TrainingInfo, model: Model) -> None:
         """ Potentially cleanup previous runs """
         if training_info.start_epoch_idx == 0:
             if os.path.exists(self.logdir):

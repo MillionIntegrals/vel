@@ -1,3 +1,5 @@
+project_name: 'vel'
+
 storage:
   name: vel.storage.classic
 
@@ -13,6 +15,7 @@ storage:
     - name: vel.storage.streaming.tensorboard
 #    - name: vel.storage.streaming.visdom
     - name: vel.storage.streaming.stdout
+#    - name: vel.storage.streaming.wandb
 
 
 checkpoint_strategy:

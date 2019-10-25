@@ -3,9 +3,9 @@ import bisect
 import typing
 
 import vel.api as api
-import vel.data as data
 import vel.train as train
 
+from vel.data.loader import DatasetLoader
 from vel.metric.samples_per_sec import SamplesPerSec
 from vel.callback.time_tracker import TimeTracker
 from vel.callback.sample_tracker import SampleTracker
@@ -14,7 +14,7 @@ from vel.callback.sample_tracker import SampleTracker
 class PhaseTrainCommand:
     """ Training  command - learn according to a set of phases """
 
-    def __init__(self, model_config: api.ModelConfig, model_factory: api.ModuleFactory, loader: data.DatasetLoader,
+    def __init__(self, model_config: api.ModelConfig, model_factory: api.ModuleFactory, loader: DatasetLoader,
                  storage: api.Storage, phases: typing.List[train.TrainPhase],
                  callbacks=None, restart=True):
         self.model_config = model_config
@@ -72,7 +72,7 @@ class PhaseTrainCommand:
         if training_info.start_epoch_idx > 0:
             current_phase.restore(training_info, local_idx, trainer.model, hidden_state)
 
-        training_info.on_train_begin()
+        training_info.on_train_begin(trainer.model)
 
         for global_epoch_idx in range(training_info.start_epoch_idx + 1, self.full_number_of_epochs + 1):
             iteration_phase_idx = self._select_phase_right_bound(global_epoch_idx-1)

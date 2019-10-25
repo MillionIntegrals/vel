@@ -160,8 +160,5 @@ class VaeBase(GradientModel):
     # Utility methods
     def log_mean_exp(self, inputs, dim=1):
         """ Perform log(mean(exp(data))) in a numerically stable way """
-        if inputs.size(dim) == 1:
-            return inputs
-        else:
-            input_max = inputs.max(dim, keepdim=True)[0]
-            return (inputs - input_max).exp().mean(dim).log() + input_max.squeeze(dim=dim)
+        input_max = inputs.max(dim, keepdim=True)[0]
+        return (inputs - input_max).exp().mean(dim).log() + input_max.squeeze(dim=dim)

@@ -15,10 +15,10 @@ class Callback:
         """
         pass
 
-    def on_train_begin(self, training_info: TrainingInfo) -> None:
+    def on_train_begin(self, training_info: TrainingInfo, model) -> None:
         """
         Beginning of a training process - is run every time a training process is started, even if it's restarted from
-        a checkpoint.
+        a checkpoint. Can access the model that is used for this training.
         """
         pass
 
