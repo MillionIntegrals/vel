@@ -51,10 +51,7 @@ def main():
         # This needs to be called before any of PyTorch module is imported
         multiprocessing.set_start_method(multiprocessing_setting)
 
-    # Set seed already in the launcher
-    from vel.util.random import set_seed
-    set_seed(model_config.seed)
-
+    model_config.set_seed()
     model_config.banner(args.command)
 
     if args.profile:

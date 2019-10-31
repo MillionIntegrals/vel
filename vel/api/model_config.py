@@ -197,8 +197,11 @@ class ModelConfig:
         """ Return object for given command """
         return self.provider.instantiate_from_data(self.command_descriptors[command_name])
 
-    def run_command(self, command_name, varargs):
+    def run_command(self, command_name, varargs=None):
         """ Instantiate model class """
+        if varargs is None:
+            varargs = []
+
         command_descriptor = self.get_command(command_name)
         return command_descriptor.run(*varargs)
 
@@ -333,3 +336,9 @@ class ModelConfig:
         model.load_state_dict(model_state)
 
         return model
+
+    def set_seed(self):
+        """ Set random seeds """
+        # Set seed already in the launcher
+        from vel.util.random import set_seed
+        set_seed(self.seed)
