@@ -14,6 +14,11 @@ on this library:
 - (Sep 2015) **Importance Weighted Autoencoders**
     Yuri Burda, Roger Grosse, Ruslan Salakhutdinov
     https://arxiv.org/abs/1509.00519
+    
+    
+- (Nov 2017) **Neural Discrete Representation Learning**
+    Aaron van den Oord, Oriol Vinyals, Koray Kavukcuoglu
+    https://arxiv.org/abs/1711.00937
 
 
 ### Learning rate and optimization
@@ -91,8 +96,17 @@ on this library:
   https://arxiv.org/abs/1707.06887  
   
 - (Oct 2017) **Rainbow: Combining Improvements in Deep Reinforcement Learning**
-  Matteo Hessel, Joseph Modayil, Hado van Hasselt, Tom Schaul, Georg Ostrovski, Will Dabney, Dan Horgan, Bilal Piot, Mohammad Azar, David Silver
+  Matteo Hessel, Joseph Modayil, Hado van Hasselt, Tom Schaul, Georg Ostrovski, Will Dabney, Dan Horgan,
+  Bilal Piot, Mohammad Azar, David Silver
   https://arxiv.org/abs/1710.02298
+  
+  
+### Generative adversarial networks
+
+- (Jun 2014) **Generative Adversarial Networks**
+  Ian J. Goodfellow, Jean Pouget-Abadie, Mehdi Mirza, Bing Xu, David Warde-Farley, Sherjil Ozair, Aaron Courville,
+  Yoshua Bengio
+  https://arxiv.org/abs/1406.2661
   
   
 ### Policy gradient methods
