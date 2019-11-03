@@ -13,8 +13,8 @@ storage:
 
   streaming:
     - name: vel.storage.streaming.tensorboard
-#    - name: vel.storage.streaming.visdom
     - name: vel.storage.streaming.stdout
+#    - name: vel.storage.streaming.visdom
 #    - name: vel.storage.streaming.wandb
 
 
