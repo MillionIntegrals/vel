@@ -178,7 +178,16 @@ class VelMultiOptimizer(VelOptimizer):
 
         for name, optimizer in self.optimizers.items():
             metrics = optimizer.step()
-            flatten_dict(metrics, output, name)
+            output[name] = metrics
+
+        return output
+
+    def aggregate_metrics(self, metrics) -> dict:
+        """ Aggregate metrics from multiple optimizers """
+        output = {}
+
+        for key, value in metrics.items():
+            flatten_dict(value, output, key)
 
         return output
 
@@ -195,7 +204,11 @@ class VelMultiOptimizer(VelOptimizer):
     def metrics(self) -> list:
         """ Set of metrics for this model """
         # TODO(jerry): aggregate metrics
-        return []
+        return [
+            metric.prefix(name)
+            for name, optimizer in self.optimizers.items()
+            for metric in optimizer.metrics()
+        ]
 
 
 class OptimizerFactory:

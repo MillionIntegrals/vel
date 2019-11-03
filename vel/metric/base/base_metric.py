@@ -42,6 +42,11 @@ class BaseMetric:
         """ Potentially store some metric state to the checkpoint """
         pass
 
+    def prefix(self, prefix: str):
+        """ Prepend a prefix to the name of the metric """
+        self.name = f"{prefix}.{self.name}"
+        return self
+
     def load_state_dict(self, training_info: TrainingInfo, hidden_state_dict: dict) -> None:
         """ Potentially load some metric state from the checkpoint """
         pass

@@ -32,7 +32,7 @@ class Generator(nn.Module):
             *block(256, 512),
             *block(512, 1024),
             nn.Linear(1024, int(np.prod(img_shape))),
-            nn.Tanh()
+            nn.Sigmoid()
         )
 
     def forward(self, z):
@@ -114,7 +114,7 @@ class SimpleGAN(OptimizedModel):
         g_loss = self.adversarial_loss(self.discriminator(gen_imgs), valid)
 
         g_loss.backward()
-        optimizer_G.step()
+        g_metrics = optimizer_G.step()
 
         # ---------------------
         #  Train Discriminator
@@ -123,16 +123,28 @@ class SimpleGAN(OptimizedModel):
         optimizer_D.zero_grad()
 
         # Measure discriminator's ability to classify real from generated samples
-        real_loss = self.adversarial_loss(self.discriminator(input_data), valid)
-        fake_loss = self.adversarial_loss(self.discriminator(gen_imgs.detach()), fake)
+        input_data_prob = self.discriminator(input_data)
+        generated_images_prob = self.discriminator(gen_imgs.detach())
+
+        real_loss = self.adversarial_loss(input_data_prob, valid)
+        fake_loss = self.adversarial_loss(generated_images_prob, fake)
+
         d_loss = (real_loss + fake_loss) / 2
 
         d_loss.backward()
-        optimizer_D.step()
+        d_metrics = optimizer_D.step()
+
+        optimizer_metrics = optimizer.aggregate_metrics({
+            'generator': g_metrics,
+            'discriminator': d_metrics
+        })
 
         return {
+            **optimizer_metrics,
             'gen_loss': g_loss.item(),
-            'disc_loss': d_loss.item()
+            'disc_loss': d_loss.item(),
+            'discriminator_real_accuracy': (input_data_prob > 0.5).float().mean().item(),
+            'discriminator_fake_accuracy': (generated_images_prob < 0.5).float().mean().item(),
         }
 
     def validate(self, data: dict) -> dict:
@@ -142,7 +154,9 @@ class SimpleGAN(OptimizedModel):
         """
         return {
             'gen_loss': 0.0,
-            'disc_loss': 0.0
+            'disc_loss': 0.0,
+            'discriminator_real_accuracy': 0.0,
+            'discriminator_fake_accuracy': 0.0,
         }
 
     def metrics(self):
@@ -150,6 +164,8 @@ class SimpleGAN(OptimizedModel):
         return [
             AveragingNamedMetric('gen_loss', scope="train"),
             AveragingNamedMetric('disc_loss', scope="train"),
+            AveragingNamedMetric('discriminator_real_accuracy', scope="train"),
+            AveragingNamedMetric('discriminator_fake_accuracy', scope="train"),
         ]
 
 
