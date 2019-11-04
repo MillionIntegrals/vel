@@ -10,6 +10,7 @@ class MetricKey:
     name: str
     scope: str
     dataset: typing.Optional[str] = None
+    metric_type: str = 'scalar'
 
     def format(self):
         """ Format a metric key into a string """
@@ -50,3 +51,7 @@ class BaseMetric:
     def load_state_dict(self, training_info: TrainingInfo, hidden_state_dict: dict) -> None:
         """ Potentially load some metric state from the checkpoint """
         pass
+
+    def metric_type(self) -> str:
+        """ Type of the metric """
+        return 'scalar'

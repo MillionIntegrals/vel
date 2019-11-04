@@ -9,7 +9,7 @@ import torch.nn as nn
 
 from vel.api import OptimizedModel, ModuleFactory, OptimizerFactory
 from vel.api.optimizer import VelMultiOptimizer
-from vel.metric import AveragingNamedMetric
+from vel.metric import AveragingNamedMetric, RandomImageMetric
 
 
 class Generator(nn.Module):
@@ -46,11 +46,18 @@ class Discriminator(nn.Module):
         super(Discriminator, self).__init__()
 
         self.model = nn.Sequential(
-            nn.Linear(int(np.prod(img_shape)), 512),
+            # nn.Linear(int(np.prod(img_shape)), 512),
+            # nn.LeakyReLU(0.2, inplace=True),
+            # nn.Linear(512, 256),
+            # nn.LeakyReLU(0.2, inplace=True),
+            # nn.Linear(256, 1),
+            nn.Linear(int(np.prod(img_shape)), 256),
             nn.LeakyReLU(0.2, inplace=True),
-            nn.Linear(512, 256),
+            nn.Dropout(0.2),
+            nn.Linear(256, 128),
             nn.LeakyReLU(0.2, inplace=True),
-            nn.Linear(256, 1),
+            nn.Dropout(0.2),
+            nn.Linear(128, 1),
             nn.Sigmoid(),
         )
 
@@ -139,12 +146,17 @@ class SimpleGAN(OptimizedModel):
             'discriminator': d_metrics
         })
 
+        # Log images to see how we're doing
+        np_image = gen_imgs[0].detach().cpu().numpy()
+        np_image = np.transpose(np_image, (2, 1, 0))
+
         return {
             **optimizer_metrics,
             'gen_loss': g_loss.item(),
             'disc_loss': d_loss.item(),
             'discriminator_real_accuracy': (input_data_prob > 0.5).float().mean().item(),
             'discriminator_fake_accuracy': (generated_images_prob < 0.5).float().mean().item(),
+            'generated_image': np_image
         }
 
     def validate(self, data: dict) -> dict:
@@ -157,6 +169,7 @@ class SimpleGAN(OptimizedModel):
             'disc_loss': 0.0,
             'discriminator_real_accuracy': 0.0,
             'discriminator_fake_accuracy': 0.0,
+            'generated_image': None
         }
 
     def metrics(self):
@@ -166,6 +179,7 @@ class SimpleGAN(OptimizedModel):
             AveragingNamedMetric('disc_loss', scope="train"),
             AveragingNamedMetric('discriminator_real_accuracy', scope="train"),
             AveragingNamedMetric('discriminator_fake_accuracy', scope="train"),
+            RandomImageMetric('generated_image', scope='train')
         ]
 
 

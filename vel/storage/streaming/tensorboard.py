@@ -8,9 +8,10 @@ from torch.utils.tensorboard import SummaryWriter
 class TensorboardStreaming(Callback):
     """ Stream results to tensorboard """
 
-    def __init__(self, model_config: ModelConfig):
+    def __init__(self, model_config: ModelConfig, record_images=True):
         self.model_config = model_config
         self.logdir = self.model_config.output_dir('tensorboard', self.model_config.run_name)
+        self.record_images = record_images
 
     def on_train_begin(self, training_info: TrainingInfo, model: Model) -> None:
         """ Potentially cleanup previous runs """
@@ -32,15 +33,24 @@ class TensorboardStreaming(Callback):
                 if key.dataset == head:
                     tag = '{}/{}'.format(key.scope, key.name)
 
-                    summary_writer.add_scalar(
-                        tag=tag,
-                        scalar_value=value,
-                        global_step=epoch_info.global_epoch_idx,
-                    )
+                    if key.metric_type == 'scalar':
+                        summary_writer.add_scalar(
+                            tag=tag,
+                            scalar_value=value,
+                            global_step=epoch_info.global_epoch_idx,
+                        )
+                    elif key.metric_type == 'image' and self.record_images:
+                        if value is not None:
+                            summary_writer.add_image(
+                                tag=tag,
+                                img_tensor=value,
+                                global_step=epoch_info.global_epoch_idx,
+                                dataformats='WHC'
+                            )
 
             summary_writer.close()
 
 
-def create(model_config):
+def create(model_config, record_images=True):
     """ Vel factory function """
-    return TensorboardStreaming(model_config)
+    return TensorboardStreaming(model_config, record_images=record_images)

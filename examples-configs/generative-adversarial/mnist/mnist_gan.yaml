@@ -41,7 +41,9 @@ loader:
 optimizer:
   name: vel.optimizer.radam
   lr: 2.0e-4
-  eps: 1.0e-4
+  eps: 1.0e-3
+  betas: [0.5, 0.999]
+  max_grad_norm: 5.0
 
 
 #scheduler:
@@ -58,4 +60,4 @@ commands:
 
   train:
     name: vel.command.train_command
-    epochs: 200
+    epochs: 400

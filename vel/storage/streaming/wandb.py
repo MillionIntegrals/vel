@@ -36,7 +36,7 @@ class WandbStreaming(Callback):
 
     def on_epoch_end(self, epoch_info):
         """ Send data to wandb """
-        result = {k.format(): v for k, v in epoch_info.result.items()}
+        result = {k.format(): v for k, v in epoch_info.result.items() if k.metric_type == 'scalar'}
         wandb.log(row=result, step=epoch_info.global_epoch_idx)
 
 

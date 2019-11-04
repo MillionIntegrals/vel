@@ -3,3 +3,4 @@ from .base.averaging_metric import (
     AveragingMetric, AveragingNamedMetric, AveragingSupervisedMetric, DefaultAveragingNamedMetric  # noqa
 )
 from .base.value_metric import ValueMetric  # noqa
+from .base.image_metric import RandomImageMetric  # noqa

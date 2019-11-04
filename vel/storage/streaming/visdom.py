@@ -21,7 +21,8 @@ class VisdomStreaming(Callback):
 
     def on_epoch_end(self, epoch_info):
         """ Update data in visdom on push """
-        metrics_df = pd.DataFrame([epoch_info.result]).set_index('epoch_idx')
+        result = {k.format(): v for k, v in epoch_info.result.items() if k.metric_type == 'scalar'}
+        metrics_df = pd.DataFrame([result], index=[epoch_info.global_epoch_idx])
 
         visdom_append_metrics(
             self.vis,

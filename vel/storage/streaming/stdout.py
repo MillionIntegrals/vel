@@ -31,11 +31,13 @@ class StdoutStreaming(Callback):
             metrics_list = [
                 "{}/{} {:.04f}".format(k.scope, k.name, metrics[k])
                 for k in sorted([k for k in metrics.keys() if k.dataset is None])
+                if k.metric_type == 'scalar'
             ]
         else:
             metrics_list = [
                 "{}/{} {:.04f}".format(k.scope, k.name, metrics[k])
                 for k in sorted([k for k in metrics.keys() if k.dataset == dataset])
+                if k.metric_type == 'scalar'
             ]
 
         print('{0: <10}'.format(dataset.capitalize()), " ".join(metrics_list))
