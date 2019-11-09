@@ -7,7 +7,8 @@ from vel.rl.api import (
     Trajectories, Rollout, ReplayEnvRollerBase, ReplayEnvRollerFactoryBase, ReplayBuffer, ReplayBufferFactory, RlPolicy
 )
 from vel.rl.util.actor import PolicyActor
-from vel.util.tensor_util import TensorAccumulator
+from vel.util.tensor_util import TensorAccumulator, to_device
+from vel.util.datastructure import flatten_dict
 
 
 class TrajectoryReplayEnvRoller(ReplayEnvRollerBase):
@@ -85,11 +86,11 @@ class TrajectoryReplayEnvRoller(ReplayEnvRollerBase):
         accumulated_tensors = accumulator.result()
 
         final_obs = self.actor.act(self.last_observation.to(self.device), advance_state=False)
+        cpu_final_obs = to_device(final_obs, torch.device('cpu'))
 
         rollout_tensors = {}
 
-        for key, value in final_obs.items():
-            rollout_tensors[f"final_{key}"] = value.cpu()
+        flatten_dict(cpu_final_obs, rollout_tensors, root='final')
 
         return Trajectories(
             num_steps=accumulated_tensors['observations'].size(0),

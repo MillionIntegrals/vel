@@ -71,3 +71,7 @@ class RlPolicy(OptimizedModel):
     def action(self, observation, state=None, deterministic=False):
         """ Return policy action for given observation """
         return self.act(observation, state=state, deterministic=deterministic)['actions']
+
+    def value(self, observation, state=None, deterministic=False):
+        """ Return policy action for given observation """
+        return self.act(observation, state=state, deterministic=deterministic)['values']

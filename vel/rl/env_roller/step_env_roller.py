@@ -72,9 +72,6 @@ class StepEnvRoller(EnvRollerBase):
 
         flatten_dict(cpu_final_obs, rollout_tensors, root='final')
 
-        # for key, value in final_obs.items():
-        #     rollout_tensors[f"final_{key}"] = value.cpu()
-
         return Trajectories(
             num_steps=accumulated_tensors['observations'].size(0),
             num_envs=accumulated_tensors['observations'].size(1),
