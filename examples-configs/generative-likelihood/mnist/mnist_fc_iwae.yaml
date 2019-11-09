@@ -32,8 +32,8 @@ loader:
 optimizer:
   name: vel.optimizer.radam
   lr: 1.0e-3
-  eps: 1.0e-
-  max_grad_norm: 1.0
+  eps: 1.0e-4
+  max_grad_norm: 10.0
 
 
 
@@ -47,3 +47,8 @@ commands:
   train:
     name: vel.command.train_command
     epochs: 3280
+
+  nll:
+    name: vel.command.latent.vae_nll
+    max_batch: 10_000
+    samples: !param samples = 10
