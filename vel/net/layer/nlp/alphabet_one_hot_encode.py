@@ -23,7 +23,11 @@ class AlphabetOneHotEncodeLayer(Layer):
 
 
 class AlphabetOneHotEncodeLayerFactory(LayerFactory):
-    """ Factory class for the AlphabetoneHotEncode layer """
+    """ Factory class for the AlphabetOneHotEncode layer """
+
+    def __init__(self, alphabet_size):
+        super().__init__()
+        self.alphabet_size = alphabet_size
 
     @property
     def name_base(self) -> str:
@@ -32,7 +36,11 @@ class AlphabetOneHotEncodeLayerFactory(LayerFactory):
 
     def instantiate(self, direct_input: SizeHints, context: LayerFactoryContext, extra_args: dict) -> Layer:
         """ Create a given layer object """
-        alphabet_size = extra_args['alphabet_size']
+        if 'alphabet_size' in extra_args:
+            alphabet_size = extra_args['alphabet_size']
+        else:
+            alphabet_size = self.alphabet_size
+
         return AlphabetOneHotEncodeLayer(
             info=self.make_info(context),
             alphabet_size=alphabet_size,
@@ -40,6 +48,6 @@ class AlphabetOneHotEncodeLayerFactory(LayerFactory):
         )
 
 
-def create(label=None, group=None):
+def create(alphabet_size=None, label=None, group=None):
     """ Vel factory function """
-    return AlphabetOneHotEncodeLayerFactory().with_given_name(label).with_given_group(group)
+    return AlphabetOneHotEncodeLayerFactory(alphabet_size=alphabet_size).with_given_name(label).with_given_group(group)
