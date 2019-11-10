@@ -37,10 +37,7 @@ test:
 	pytest .
 
 requirements.txt: requirements.in
-	pip-compile requirements.in
-
-requpgrade:
-	pip-compile --upgrade
+	pip-compile --upgrade requirements.in
 
 lint:
 	flake8 vel

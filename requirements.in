@@ -12,6 +12,6 @@ pyyaml
 scikit-learn
 torchtext
 torchvision
-torch~=1.3
+torch~=1.3.1
 tqdm
 visdom
