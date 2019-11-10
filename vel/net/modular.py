@@ -84,8 +84,7 @@ class ModularNetwork(BackboneModule):
         """ Reset the state after the episode has been terminated """
         raise NotImplementedError
 
-    def forward(self, input_data, state=None):
-        context = {}
+    def forward(self, input_data, state=None, context: dict = None):
         return self.layers(input_data, state=None, context=context)
 
     def grouped_parameters(self):
