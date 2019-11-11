@@ -20,7 +20,7 @@ model:
   improvement_acceptance_ratio: 0.1
   cg_damping: 0.001
   vf_iters: 3
-  entropy_coefficient: 0.1
+  entropy_coefficient: 0.01
   discount_factor: 0.99
 
   gae_lambda: 1.00 # Generalized Advantage Estimator Lambda parameter
