@@ -39,6 +39,9 @@ class Model(VModule):
         """ Print a model summary """
         print(self)
         print("-" * 100)
+        for name, module in self.named_parameters():
+            print("> {} {:,}".format(name, module.numel()))
+        print("-" * 100)
         number = sum(p.numel() for p in self.parameters())
         print("Number of model parameters: {:,}".format(number))
         print("-" * 100)
