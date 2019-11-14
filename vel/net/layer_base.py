@@ -38,7 +38,7 @@ class Layer(BackboneModule):
         """ Forward propagation of a single layer """
         raise NotImplementedError
 
-    def grouped_parameters(self):
+    def grouped_parameters(self) -> typing.Iterable[typing.Tuple[str, object]]:
         """ Return iterable of pairs (group, parameters) """
         return [(self.group, self.parameters())]
 

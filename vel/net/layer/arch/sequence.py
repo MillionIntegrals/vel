@@ -1,18 +1,17 @@
 import collections
 
-from vel.api import SizeHints, SizeHint
+from vel.api import SizeHints
 from vel.net.layer_base import LayerFactory, Layer, LayerInfo, LayerFactoryContext
 from vel.net.modular import LayerList
 
 
-class SkipConnectionLayer(Layer):
+class SequenceLayer(Layer):
     """ Container around a skip connection """
 
-    def __init__(self, info: LayerInfo, layers: [Layer], size_hint: SizeHint):
+    def __init__(self, info: LayerInfo, layers: [Layer]):
         super().__init__(info)
 
         self.layers = LayerList(layers)
-        self._size_hints = SizeHints(size_hint)
 
     @property
     def is_stateful(self) -> bool:
@@ -23,19 +22,14 @@ class SkipConnectionLayer(Layer):
 
     def size_hints(self) -> SizeHints:
         """ Size hints for this network """
-        return self._size_hints
+        return self.layers[-1].size_hints()
 
     def forward(self, direct, state: dict = None, context: dict = None):
         """ Forward propagation of a single layer """
-        if self.is_stateful:
-            result, out_state = self.layers(direct, state=state, context=context)
-            return direct + result, out_state
-        else:
-            result = self.layers(direct, state=state, context=context)
-            return direct + result
+        return self.layers(direct, state=state, context=context)
 
 
-class SkipConnectionLayerFactory(LayerFactory):
+class SequenceFactory(LayerFactory):
     """ Factory for skip connection layers """
 
     def __init__(self, layers: [LayerFactory]):
@@ -49,7 +43,7 @@ class SkipConnectionLayerFactory(LayerFactory):
 
     def instantiate(self, direct_input: SizeHints, context: LayerFactoryContext, extra_args: dict) -> Layer:
         """ Create a given layer object """
-        size_hint = loop_size_hint = direct_input.assert_single()
+        loop_size_hints = direct_input
 
         layers = collections.OrderedDict()
 
@@ -66,18 +60,18 @@ class SkipConnectionLayerFactory(LayerFactory):
             )
 
             layer = layer_factory.instantiate(
-                direct_input=SizeHints(loop_size_hint),
+                direct_input=loop_size_hints,
                 context=child_context,
                 extra_args=extra_args
             )
 
-            loop_size_hint = layer.size_hints().assert_single()
+            loop_size_hints = layer.size_hints()
 
             layers[layer.name] = layer
 
-        return SkipConnectionLayer(info, layers=layers, size_hint=size_hint)
+        return SequenceLayer(info, layers=layers)
 
 
 def create(layers: [LayerFactory], label=None, group=None):
     """ Vel factory function """
-    return SkipConnectionLayerFactory(layers=layers).with_given_name(label).with_given_group(group)
+    return SequenceFactory(layers=layers).with_given_name(label).with_given_group(group)
