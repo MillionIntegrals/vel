@@ -22,6 +22,9 @@ class NormalizeEwmaLayer(Layer):
             input_shape=self.input_shape.assert_single()[1:]  # Remove batch axis
         )
 
+    def reset_weights(self):
+        self.normalize.reset_weights()
+
     def forward(self, direct, state: dict = None, context: dict = None):
         return self.normalize(direct)
 

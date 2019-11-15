@@ -21,18 +21,18 @@ class NormalizeEwma(VModule):
     def reset_weights(self):
         self.running_mean.zero_()
         self.running_var.fill_(1.0)
-        self.count.fill_(self.epsilon)
+        self.debiasing_term.fill_(self.epsilon)
 
     def forward(self, input_vector):
         # Make sure input is float32
         input_vector = input_vector.to(torch.float)
 
         if self.training:
-            batch_size = input_vector.size(0)
             batch_mean = input_vector.mean(dim=0)
             batch_var = input_vector.var(dim=0, unbiased=False)
 
             if self.per_element_update:
+                batch_size = input_vector.size(0)
                 weight = self.beta ** batch_size
             else:
                 weight = self.beta
