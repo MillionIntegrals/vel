@@ -20,15 +20,8 @@ class OuNoise(VModule):
         self.register_buffer('low_tensor', torch.from_numpy(self.action_space.low).unsqueeze(0))
         self.register_buffer('high_tensor', torch.from_numpy(self.action_space.high).unsqueeze(0))
 
-    def reset_episodic_state(self, dones):
-        """ A hook for a model to react when during training episode is finished """
-        for idx, done in enumerate(dones.cpu()):
-            if done > 0.5:
-                self.processes[idx].reset()
-
-    def forward(self, actions):
-        """ Return model step after applying noise """
-        while len(self.processes) < actions.shape[0]:
+    def _expand_processes(self, shape):
+        while len(self.processes) < shape:
             len_action_space = self.action_space.shape[-1]
 
             self.processes.append(
@@ -37,8 +30,19 @@ class OuNoise(VModule):
                 )
             )
 
-        noise = torch.from_numpy(np.stack([x() for x in self.processes])).float().to(actions.device)
+    def reset_episodic_state(self, dones):
+        """ A hook for a model to react when during training episode is finished """
+        self._expand_processes(dones.shape[0])
 
+        for idx, done in enumerate(dones.cpu()):
+            if done > 0.5:
+                self.processes[idx].reset()
+
+    def forward(self, actions):
+        """ Return model step after applying noise """
+        self._expand_processes(actions.shape[0])
+
+        noise = torch.from_numpy(np.stack([x() for x in self.processes])).float().to(actions.device)
         return torch.min(torch.max(actions + noise, self.low_tensor), self.high_tensor)
 
 
