@@ -5,6 +5,7 @@ import torch
 import tqdm
 
 from vel.api import ModuleFactory, TrainingInfo, EpochInfo, BatchInfo
+from vel.openai.baselines.common.vec_env import VecEnv
 from vel.rl.api import (
     Reinforcer, ReinforcerFactory, VecEnvFactory, EnvRollerFactoryBase, EnvRollerBase,
     RlPolicy
@@ -36,9 +37,10 @@ class OnPolicyIterationReinforcer(Reinforcer):
     May split the sample into multiple batches and may replay batches a few times.
     """
     def __init__(self, device: torch.device, settings: OnPolicyIterationReinforcerSettings, policy: RlPolicy,
-                 env_roller: EnvRollerBase) -> None:
+                 env: VecEnv, env_roller: EnvRollerBase) -> None:
         self.device = device
         self.settings = settings
+        self.env = env
         self.env_roller = env_roller
 
         self._model: RlPolicy = policy.to(self.device)
@@ -67,6 +69,9 @@ class OnPolicyIterationReinforcer(Reinforcer):
             self.policy.load_state_dict(model_state)
         else:
             self.policy.reset_weights()
+            
+        # Register env in the training info
+        training_info['env'] = self.env
 
     def train_epoch(self, epoch_info: EpochInfo, interactive=True) -> None:
         """ Train model on an epoch of a fixed number of batch updates """
@@ -160,7 +165,7 @@ class OnPolicyIterationReinforcerFactory(ReinforcerFactory):
         env = self.env_factory.instantiate(parallel_envs=self.parallel_envs, seed=self.seed)
         policy = self.model_factory.instantiate(action_space=env.action_space, observation_space=env.observation_space)
         env_roller = self.env_roller_factory.instantiate(environment=env, policy=policy, device=device)
-        return OnPolicyIterationReinforcer(device, self.settings, policy, env_roller)
+        return OnPolicyIterationReinforcer(device, self.settings, policy, env, env_roller)
 
 
 def create(model_config, model, vec_env, env_roller, parallel_envs, number_of_steps,
