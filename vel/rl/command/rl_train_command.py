@@ -141,11 +141,11 @@ class RlTrainCommand:
     def _openai_logging(self, epoch_result):
         """ Use OpenAI logging facilities for the same type of logging """
         for key in sorted(epoch_result.keys()):
-            if key == 'fps':
+            if key.name == 'fps':
                 # Not super elegant, but I like nicer display of FPS
-                openai_logger.record_tabular(key, int(epoch_result[key]))
+                openai_logger.record_tabular(key.name, int(epoch_result[key]))
             else:
-                openai_logger.record_tabular(key, epoch_result[key])
+                openai_logger.record_tabular(key.name, epoch_result[key])
 
         openai_logger.dump_tabular()
 
