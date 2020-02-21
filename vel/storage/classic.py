@@ -36,9 +36,10 @@ class ClassicStorage(Storage):
         Resume learning process and return loaded hidden state dictionary
         """
         last_epoch = train_info.start_epoch_idx
+        device = self.model_config.torch_device()
 
-        model_state = torch.load(self.checkpoint_filename(last_epoch))
-        hidden_state = torch.load(self.checkpoint_hidden_filename(last_epoch))
+        model_state = torch.load(self.checkpoint_filename(last_epoch), map_location=device)
+        hidden_state = torch.load(self.checkpoint_hidden_filename(last_epoch), map_location=device)
 
         self.checkpoint_strategy.restore(hidden_state)
         train_info.restore(hidden_state)

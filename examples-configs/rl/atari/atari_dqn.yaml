@@ -74,3 +74,4 @@ commands:
   evaluate:
     name: vel.rl.command.evaluate_env_command
     takes: 100
+    parallel_envs: 1

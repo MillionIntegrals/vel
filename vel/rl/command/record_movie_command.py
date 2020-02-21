@@ -28,7 +28,7 @@ class RecordMovieCommand:
         device = self.model_config.torch_device()
 
         env = self.env_factory.instantiate_single(preset='record', seed=self.model_config.seed)
-        model = self.model_factory.instantiate(action_space=env.action_space).to(device)
+        model = self.model_factory.instantiate(action_space=env.action_space, observation_space=env.observation_space).to(device)
 
         training_info = TrainingInfo(
             start_epoch_idx=self.storage.last_epoch_idx()
@@ -61,11 +61,11 @@ class RecordMovieCommand:
             observation_tensor = torch.from_numpy(observation_array).to(device)
 
             if model.is_stateful:
-                output = model.step(observation_tensor, hidden_state, **self.sample_args)
+                output = model.act(observation_tensor, hidden_state, **self.sample_args)
                 hidden_state = output['state']
                 actions = output['actions']
             else:
-                actions = model.step(observation_tensor, **self.sample_args)['actions']
+                actions = model.act(observation_tensor, **self.sample_args)['actions']
 
             actions = actions.detach().cpu().numpy()
 
