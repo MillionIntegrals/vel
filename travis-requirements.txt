@@ -34,7 +34,7 @@ PyOpenGL==3.1.0
 pytest==4.3.1
 python-dateutil==2.8.0
 pytz==2018.9
-PyYAML==5.1
+PyYAML==5.4
 pyzmq==18.0.1
 readme-renderer==24.0
 regex==2018.1.10
